@@ -1,0 +1,199 @@
+import type { Request, Response } from "express";
+
+import { inject, injectable } from "tsyringe";
+import type { IRegisterUsecase } from "../../../application/usecase/interfaces/auth/register-usecase-interface.js";
+import type { IAuthController } from "../../interfaces/auth/auth-controller-interface.js";
+
+import { ResponseHelper } from "../../../infrastructure/config/helper/response-helper.js";
+import {
+  COOKIES_NAMES,
+  ERROR_MESSAGE,
+  HTTP_STATUS,
+  SUCCESS_MESSAGE,
+} from "../../../shared/constants/constants.js";
+
+import type { ISendOtpUsecase } from "../../../application/usecase/interfaces/auth/send-otp-usecase-interface.js";
+import type { IResendOtpUsecase } from "../../../application/usecase/interfaces/auth/resend-otp-usecase-interface.js";
+import type { IVerifyOtpUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-usecase-interface.js";
+import type  {IVerifyOtpAndCreateUserUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-user_usecase-interface.js";
+import type { ICheckUserAndSendOtpUsecase } from "../../../application/usecase/interfaces/check-user-verify-usecase-interface.js";
+
+import type { IRefreshTokenUsecase } from "../../../application/usecase/interfaces/auth/refresh-token-usecase-interface.js";
+import { clearCookie, updateCookieWithAccessToken } from "../../../shared/utils/cookieHelper.js";
+
+
+@injectable()
+export class AuthController implements IAuthController {
+  constructor(
+    @inject("IRegisterUsecase")
+    private _registerUsecase: IRegisterUsecase,
+
+ 
+
+    @inject("ISendOtpUsecase")
+    private _sendOtpUsecase: ISendOtpUsecase,
+
+    @inject("IResendOtpUsecase")
+    private _resendOtpUsecase: IResendOtpUsecase,
+
+    @inject("IVerifyOtpUsecase")
+    private _verifyOtpUsecase: IVerifyOtpUsecase,
+
+    @inject("IVerifyOtpAndCreateUserUsecase")
+    private _verifyOtpAndCreateUserUsecase: IVerifyOtpAndCreateUserUsecase,
+
+    @inject("ICheckUserAndSendOtpUsecase")
+    private _checkUserAndSendOtpUsecase: ICheckUserAndSendOtpUsecase,
+
+   
+
+    @inject("IRefreshTokenUsecase")
+    private _refreshTokenUsecase: IRefreshTokenUsecase,
+
+
+  ) {}
+
+  async register(req: Request, res: Response): Promise<void> {
+    const userData = req.body;
+
+    await this._registerUsecase.execute(userData);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.CREATED,
+      SUCCESS_MESSAGE.AUTHORIZATION.ACCOUNT_CREATED
+    );
+  }
+
+
+
+ 
+  async sendOtp(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+
+    await this._sendOtpUsecase.execute(email);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      SUCCESS_MESSAGE.AUTHORIZATION.OTP_SEND_SUCCESS
+    );
+  }
+
+  async resendOtp(req: Request, res: Response): Promise<void> {
+    const { email } = req.body;
+
+    await this._resendOtpUsecase.execute(email);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      SUCCESS_MESSAGE.AUTHORIZATION.OTP_RESENT_SUCCESS
+    );
+  }
+  async verifyOtp(req: Request, res: Response): Promise<void> {
+    const { email, otp } = req.body;
+
+    await this._verifyOtpUsecase.execute(email, otp);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      SUCCESS_MESSAGE.AUTHORIZATION.OTP_VERIFIED
+    );
+  }
+  async verifyOtpAndCreateUser(req: Request, res: Response): Promise<void> {
+    const { email, otp, userData } = req.body;
+    const user = await this._verifyOtpAndCreateUserUsecase.execute(
+      email,
+      otp,
+      userData
+    );
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.CREATED,
+      SUCCESS_MESSAGE.AUTHORIZATION.ACCOUNT_CREATED,
+      user
+    );
+  }
+
+
+  async signupSendOtp(req: Request, res: Response): Promise<void> {
+    const { email,  password } = req.body;
+
+    await this._checkUserAndSendOtpUsecase.execute({
+      email,
+   
+    });
+
+    ResponseHelper.success(res, HTTP_STATUS.OK, "OTP sent successfully");
+  }
+
+
+
+  async refreshToken(req: Request, res: Response): Promise<void> {
+    const refreshToken = req.cookies[COOKIES_NAMES.REFRESH_TOKEN];
+
+    if (!refreshToken) {
+      clearCookie(
+        res,
+        COOKIES_NAMES.ACCESS_TOKEN,
+        COOKIES_NAMES.REFRESH_TOKEN
+      );
+      ResponseHelper.error(
+        res,
+        ERROR_MESSAGE.AUTHENTICATION.TOKEN_MISSING,
+        HTTP_STATUS.UNAUTHORIZED
+      );
+      return;
+    }
+
+    try {
+      const result = await this._refreshTokenUsecase.execute(refreshToken);
+
+      updateCookieWithAccessToken(
+        res,
+        result.accessToken,
+        COOKIES_NAMES.ACCESS_TOKEN
+      );
+
+      ResponseHelper.success(
+        res,
+        HTTP_STATUS.OK,
+        "Access token refreshed successfully",
+        {
+          role: result.role,
+        }
+      );
+    } catch (error) {
+      // Clear cookies on refresh failure
+      clearCookie(
+        res,
+        COOKIES_NAMES.ACCESS_TOKEN,
+        COOKIES_NAMES.REFRESH_TOKEN
+      );
+
+      if (error instanceof Error) {
+        ResponseHelper.error(
+          res,
+          error.message,
+          HTTP_STATUS.UNAUTHORIZED
+        );
+      } else {
+        ResponseHelper.error(
+          res,
+          ERROR_MESSAGE.AUTHENTICATION.TOKEN_EXPIRED_REFRESH,
+          HTTP_STATUS.UNAUTHORIZED
+        );
+      }
+    }
+  }
+
+
+
+
+
+
+
+}
