@@ -11,16 +11,25 @@ import {
   HTTP_STATUS,
   SUCCESS_MESSAGE,
 } from "../../../shared/constants/constants.js";
+import type  { ILoginUsecase } from "../../../application/usecase/interfaces/auth/loginUsecase-interface.js";
+import { LoginRequestDTO } from "../../../application/dto/request/login-request-dto.js";
 
+import { AdminLoginRequestDTO } from "../../../application/dto/request/adminlogin-request-dto.js";
+import type { IAdminLoginUsecase } from "../../../application/usecase/interfaces/auth/adminloginUseCase-interface.js";
 import type { ISendOtpUsecase } from "../../../application/usecase/interfaces/auth/send-otp-usecase-interface.js";
 import type { IResendOtpUsecase } from "../../../application/usecase/interfaces/auth/resend-otp-usecase-interface.js";
 import type { IVerifyOtpUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-usecase-interface.js";
 import type  {IVerifyOtpAndCreateUserUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-user_usecase-interface.js";
 import type { ICheckUserAndSendOtpUsecase } from "../../../application/usecase/interfaces/check-user-verify-usecase-interface.js";
+import type { IGenerateTokenUseCase } from "../../../application/usecase/interfaces/auth/generate-token-usecase-interface.js";
 
 import type { IRefreshTokenUsecase } from "../../../application/usecase/interfaces/auth/refresh-token-usecase-interface.js";
-import { clearCookie, updateCookieWithAccessToken } from "../../../shared/utils/cookieHelper.js";
+import { setAuthCookies, clearCookie, updateCookieWithAccessToken } from "../../../shared/utils/cookieHelper.js";
 
+import type { IVerifyResetTokenUsecase } from "../../../application/usecase/interfaces/auth/verify-reset-token-interface.js";
+import type { IGoogleAuthUsecase } from "../../../application/usecase/interfaces/auth/google-auth-interface.js";
+import { GoogleAuthRequestDTO } from "../../../application/dto/request/google-auth-request-dto.js";
+import { access } from "fs";
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -28,7 +37,11 @@ export class AuthController implements IAuthController {
     @inject("IRegisterUsecase")
     private _registerUsecase: IRegisterUsecase,
 
- 
+    @inject("ILoginUsecase")
+    private _loginUsecase: ILoginUsecase,
+
+    @inject("IAdminLoginUsecase")
+    private _loginAdminUsecase: IAdminLoginUsecase,
 
     @inject("ISendOtpUsecase")
     private _sendOtpUsecase: ISendOtpUsecase,
@@ -45,12 +58,19 @@ export class AuthController implements IAuthController {
     @inject("ICheckUserAndSendOtpUsecase")
     private _checkUserAndSendOtpUsecase: ICheckUserAndSendOtpUsecase,
 
-   
+    @inject("IGenerateTokenUseCase")
+    private _generateTokenUseCase: IGenerateTokenUseCase,
+
 
     @inject("IRefreshTokenUsecase")
     private _refreshTokenUsecase: IRefreshTokenUsecase,
 
 
+    @inject("IVerifyResetTokenUsecase")
+    private _verifyResetTokenUsecase: IVerifyResetTokenUsecase,
+
+    @inject("IGoogleAuthUsecase")
+    private _googleAuthUsecase: IGoogleAuthUsecase
   ) {}
 
   async register(req: Request, res: Response): Promise<void> {
@@ -65,9 +85,79 @@ export class AuthController implements IAuthController {
     );
   }
 
+  async login(req: Request, res: Response): Promise<void> {
+    const userData = req.body;
+
+    const data = await this._loginUsecase.execute(userData as LoginRequestDTO);
+   console.log("data----->",data)
+    const userId = data.id.toString();
+     console.log(userId,"userid-------->")
+    const tokens = await this._generateTokenUseCase.execute(
+      userId,
+      data.email,
+      data.role
+    );
+    console.log(tokens,"---->tokens")
+
+    setAuthCookies(
+      res,
+      tokens.accessToken,
+      tokens.refreshToken,
+      COOKIES_NAMES.ACCESS_TOKEN,
+      COOKIES_NAMES.REFRESH_TOKEN
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGE.AUTHORIZATION.LOGIN_SUCCESS,
+      user: {
+        id: userData,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  }
 
 
- 
+  async AdminLogin(req: Request, res: Response): Promise<void> {
+    const userData = req.body;
+    const data = await this._loginAdminUsecase.execute(
+      userData as AdminLoginRequestDTO
+    );
+    const userId = data.id.toString();
+
+    const tokens = await this._generateTokenUseCase.execute(
+      userId,
+      data.email,
+      data.role
+    );
+
+    setAuthCookies(
+      res,
+      tokens.accessToken,
+      tokens.refreshToken,
+      COOKIES_NAMES.ACCESS_TOKEN,
+      COOKIES_NAMES.REFRESH_TOKEN
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGE.AUTHORIZATION.LOGIN_SUCCESS,
+      user: {
+        id: userData,
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        role: data.role,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  }
   async sendOtp(req: Request, res: Response): Promise<void> {
     const { email } = req.body;
 
@@ -195,5 +285,62 @@ export class AuthController implements IAuthController {
 
 
 
+  async verifyResetToken(req: Request, res: Response): Promise<void> {
+    const { token } = req.query;
 
+    if (!token || typeof token !== "string") {
+      ResponseHelper.error(
+        res,
+        "Token is required",
+        HTTP_STATUS.BAD_REQUEST
+      );
+      return;
+    }
+
+    const result = await this._verifyResetTokenUsecase.execute(token);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      "Reset token is valid",
+      result
+    );
+  }
+
+  async googleAuth(req: Request, res: Response): Promise<void> {
+    const { accessToken } = req.body;
+   console.log(accessToken,"---->,accesstoken")
+    const userData = await this._googleAuthUsecase.execute(accessToken);
+    console.log(userData,"----->,userData")
+    const userId = userData.id.toString();
+      console.log(userId,"----->,useriddddddddd")
+    const tokens = await this._generateTokenUseCase.execute(
+      userId,
+      userData.email,
+      userData.role
+    );
+    console.log(tokens,"----->,useriddddddddd")
+    setAuthCookies(
+      res,
+      tokens.accessToken,
+      tokens.refreshToken,
+      COOKIES_NAMES.ACCESS_TOKEN,
+      COOKIES_NAMES.REFRESH_TOKEN
+    );
+
+    res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGE.AUTHORIZATION.LOGIN_SUCCESS,
+      user: {
+        id: userData.id,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        role: userData.role,
+        profileImage: userData.profileImage,
+      },
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+  }
 }

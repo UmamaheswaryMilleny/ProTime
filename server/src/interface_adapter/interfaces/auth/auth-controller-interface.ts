@@ -4,6 +4,11 @@ export interface IAuthController {
   // AUTH
   register(req: Request, res: Response): Promise<void>;
 
+  //Login
+  login(req: Request, res: Response): Promise<void>;
+
+  //adminlogin
+  AdminLogin(req: Request, res: Response): Promise<void>;
 
   //sendotp
   sendOtp(req: Request, res: Response): Promise<void>;
@@ -21,10 +26,12 @@ export interface IAuthController {
   //Checking details and sendotp
   signupSendOtp(req: Request, res: Response): Promise<void>;
 
-
-
   //Refresh Token
   refreshToken(req: Request, res: Response): Promise<void>;
 
 
+
+
+  //Google Authentication
+  googleAuth(req: Request, res: Response): Promise<void>;
 }
