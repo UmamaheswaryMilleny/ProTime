@@ -12,7 +12,7 @@ export class RegisterUsecase implements IRegisterUsecase {
   ) {}
   async execute(data: Partial<IUserEntity>): Promise<void> {
     if (!data.email ) {
-      throw new Error("email or phone required");
+      throw new Error("email is required");
     }
 
     const isEmailExists = await this._userRepository.findByEmail(data.email);
