@@ -3,4 +3,6 @@ export interface IOtpService{
     storeOtp(email:string,otp:string):Promise<void>
     verifyOtp(data: { email: string; otp: string }): Promise<boolean>;
     deleteOtp(email: string): Promise<void>;
+    getOtp(email: string): Promise<string | null>;
+
 }

@@ -201,11 +201,12 @@ export class AuthController implements IAuthController {
     );
   }
   async verifyOtpAndCreateUser(req: Request, res: Response): Promise<void> {
-    const { email, otp, userData } = req.body;
+    // const { email, otp, userData } = req.body;
+    const { email, otp} = req.body;
     const user = await this._verifyOtpAndCreateUserUsecase.execute(
       email,
       otp,
-      userData
+      // userData
     );
 
     ResponseHelper.success(

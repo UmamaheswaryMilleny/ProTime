@@ -9,6 +9,12 @@ import type { ITokenService } from "../../domain/service-interfaces/token-servic
 import { TokenService } from "../service/token-service.js";
 import type { IBlockedUserMiddleware } from "../../interface_adapter/interfaces/user/blocked-user-middleware-interface.js";
 import { BlockedUserMiddleware } from "../../interface_adapter/middlewares/block-middleware.js";
+import { TempUserService } from "../service/temp-user-service.js";
+import  { OtpService } from "../service/otp-service.js";
+import type { IOtpService } from "../../domain/service-interfaces/otp-service-interface.js";
+import { GoogleAuthService } from "../service/google-auth-service.js";
+import type { IGoogleAuthService } from "../../domain/service-interfaces/google-auth-service-interface.js";
+import type { ITempUserService } from "../../domain/service-interfaces/temp-user-service-interface.js";
 
 export class RepositoryRegister {
   static registerRepository(): void {
@@ -35,5 +41,20 @@ export class RepositoryRegister {
       { useClass: TokenService } as ClassProvider<ITokenService>
     );
  
+    container.register<IOtpService>(
+  "IOtpService",
+  { useClass: OtpService } as ClassProvider<IOtpService>
+);
+
+
+container.register<IGoogleAuthService>(
+  "IGoogleAuthService",
+  { useClass: GoogleAuthService } as ClassProvider<IGoogleAuthService>
+);
+
+container.register<ITempUserService>("ITempUserService", {
+  useClass: TempUserService
+} as ClassProvider<ITempUserService>);
+
   }
 }
