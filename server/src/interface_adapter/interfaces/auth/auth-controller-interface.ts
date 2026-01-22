@@ -26,11 +26,20 @@ export interface IAuthController {
   //Checking details and sendotp
   signupSendOtp(req: Request, res: Response): Promise<void>;
 
+  
+
   //Refresh Token
   refreshToken(req: Request, res: Response): Promise<void>;
 
 
+  //Forgot Password
+  forgotPassword(req: Request, res: Response): Promise<void>;
 
+  //Reset Password
+  resetPassword(req: Request, res: Response): Promise<void>;
+
+  //Verify Reset Token
+  verifyResetToken(req: Request, res: Response): Promise<void>;
 
   //Google Authentication
   googleAuth(req: Request, res: Response): Promise<void>;

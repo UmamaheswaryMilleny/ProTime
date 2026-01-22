@@ -67,10 +67,6 @@ export class AuthRoutes extends BaseRoute {
     );
   
 
-    this.router.post(
-      "/logout",
-      asyncHandler(authController.logout.bind(authController))
-    );
 
     this.router.post(
       "/refresh-token",
@@ -79,7 +75,17 @@ export class AuthRoutes extends BaseRoute {
 
  
 
+    this.router.post(
+      "/forgot-password",
+      validationMiddleware(ForgotPasswordRequestDTO),
+      asyncHandler(authController.forgotPassword.bind(authController))
+    );
 
+    this.router.post(
+      "/reset-password",
+      validationMiddleware(ResetPasswordRequestDTO),
+      asyncHandler(authController.resetPassword.bind(authController))
+    );
 
     this.router.get(
       "/verify-reset-token",
@@ -93,9 +99,6 @@ export class AuthRoutes extends BaseRoute {
       asyncHandler(authController.googleAuth.bind(authController))
     );
 
-    // this.router.get(
-    //   "/profile",
-    //   asyncHandler(userController.getProfile.bind(userController))
-    // );
+  
   }
 }

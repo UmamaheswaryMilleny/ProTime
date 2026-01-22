@@ -83,19 +83,29 @@ export class UsecaseRegistory {
 
 
 
-
     container.register<IRefreshTokenUsecase>("IRefreshTokenUsecase", {
       useClass: RefreshTokenUsecase,
     });
 
 
 
- 
+    // Forgot Password use cases
+    container.register<IForgotPasswordUsecase>("IForgotPasswordUsecase", {
+      useClass: ForgotPasswordUsecase,
+    });
+
+    container.register<IResetPasswordUsecase>("IResetPasswordUsecase", {
+      useClass: ResetPasswordUsecase,
+    });
+
+    container.register<IVerifyResetTokenUsecase>("IVerifyResetTokenUsecase", {
+      useClass: VerifyResetTokenUsecase,
+    });
+
     // Google Authentication use case
     container.register<IGoogleAuthUsecase>("IGoogleAuthUsecase", {
       useClass: GoogleAuthUsecase,
     });
 
- 
   }
 }

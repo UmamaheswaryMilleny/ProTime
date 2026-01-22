@@ -22,10 +22,11 @@ import type { IVerifyOtpUsecase } from "../../../application/usecase/interfaces/
 import type  {IVerifyOtpAndCreateUserUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-user_usecase-interface.js";
 import type { ICheckUserAndSendOtpUsecase } from "../../../application/usecase/interfaces/check-user-verify-usecase-interface.js";
 import type { IGenerateTokenUseCase } from "../../../application/usecase/interfaces/auth/generate-token-usecase-interface.js";
-
+import type { ILogoutUseCase } from "../../../application/usecase/interfaces/auth/logout-usecase-interface.js";
 import type { IRefreshTokenUsecase } from "../../../application/usecase/interfaces/auth/refresh-token-usecase-interface.js";
 import { setAuthCookies, clearCookie, updateCookieWithAccessToken } from "../../../shared/utils/cookieHelper.js";
-
+import type { IForgotPasswordUsecase } from "../../../application/usecase/interfaces/auth/forgot-password-interface.js";
+import type { IResetPasswordUsecase } from "../../../application/usecase/interfaces/auth/reset-password-interface.js";
 import type { IVerifyResetTokenUsecase } from "../../../application/usecase/interfaces/auth/verify-reset-token-interface.js";
 import type { IGoogleAuthUsecase } from "../../../application/usecase/interfaces/auth/google-auth-interface.js";
 import { GoogleAuthRequestDTO } from "../../../application/dto/request/google-auth-request-dto.js";
@@ -65,6 +66,11 @@ export class AuthController implements IAuthController {
     @inject("IRefreshTokenUsecase")
     private _refreshTokenUsecase: IRefreshTokenUsecase,
 
+    @inject("IForgotPasswordUsecase")
+    private _forgotPasswordUsecase: IForgotPasswordUsecase,
+
+    @inject("IResetPasswordUsecase")
+    private _resetPasswordUsecase: IResetPasswordUsecase,
 
     @inject("IVerifyResetTokenUsecase")
     private _verifyResetTokenUsecase: IVerifyResetTokenUsecase,
@@ -221,7 +227,6 @@ export class AuthController implements IAuthController {
   }
 
 
-
   async refreshToken(req: Request, res: Response): Promise<void> {
     const refreshToken = req.cookies[COOKIES_NAMES.REFRESH_TOKEN];
 
@@ -284,6 +289,38 @@ export class AuthController implements IAuthController {
 
 
 
+  async forgotPassword(req: Request, res: Response): Promise<void> {
+    const { email, role } = req.body;
+
+    await this._forgotPasswordUsecase.execute(email, role);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      "Password reset link has been sent to your email. Please check your inbox."
+    );
+  }
+
+  async resetPassword(req: Request, res: Response): Promise<void> {
+    const { token, password, confirmPassword } = req.body;
+
+    if (password !== confirmPassword) {
+      ResponseHelper.error(
+        res,
+        "Passwords do not match",
+        HTTP_STATUS.BAD_REQUEST
+      );
+      return;
+    }
+
+    await this._resetPasswordUsecase.execute(token, password);
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      "Password reset successfully. You can now login with your new password."
+    );
+  }
 
   async verifyResetToken(req: Request, res: Response): Promise<void> {
     const { token } = req.query;
