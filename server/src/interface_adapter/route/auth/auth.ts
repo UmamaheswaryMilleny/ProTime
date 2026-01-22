@@ -67,6 +67,10 @@ export class AuthRoutes extends BaseRoute {
     );
   
 
+    this.router.post(
+      "/logout",
+      asyncHandler(authController.logout.bind(authController))
+    );
 
     this.router.post(
       "/refresh-token",
@@ -99,6 +103,9 @@ export class AuthRoutes extends BaseRoute {
       asyncHandler(authController.googleAuth.bind(authController))
     );
 
-  
+    // this.router.get(
+    //   "/profile",
+    //   asyncHandler(userController.getProfile.bind(userController))
+    // );
   }
 }

@@ -20,5 +20,17 @@ export class AdminRepository extends BaseRepository<IAdminModel, IAdminEntity>
 
 
 
- 
+  async updatePassword(
+    id: string,
+    newPassword: string
+  ): Promise<IAdminEntity | null> {
+    const admin = await adminDB.findByIdAndUpdate(
+      id,
+      {
+        $set: { password: newPassword },
+      },
+      { new: true }
+    ).exec();
+    return admin as unknown as IAdminEntity;
+  }
 }

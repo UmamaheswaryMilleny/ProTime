@@ -10,7 +10,13 @@ export interface UserResponseDTO {
   profileImage?: string;
 }
 
-
+export interface PaginatedUsersResponseDTO {
+  users: UserResponseDTO[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
 
 
 

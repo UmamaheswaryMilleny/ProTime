@@ -81,7 +81,22 @@ export class UsecaseRegistory {
       useClass: GenerateTokenUseCase,
     });
 
+    container.register<ILogoutUseCase>("ILogoutUseCase", {
+      useClass: LogoutUseCase,
+    });
 
+    // Admin use cases
+    container.register<IGetAllUsersUsecase>("IGetAllUsersUsecase", {
+      useClass: GetAllUsersUsecase,
+    });
+
+    container.register<IGetUserDetailsUsecase>("IGetUserDetailsUsecase", {
+      useClass: GetUserDetailsUsecase,
+    });
+
+    container.register<IBlockUnblockUserUsecase>("IBlockUnblockUserUsecase", {
+      useClass: BlockUnblockUserUsecase,
+    });
 
     container.register<IRefreshTokenUsecase>("IRefreshTokenUsecase", {
       useClass: RefreshTokenUsecase,
@@ -107,5 +122,17 @@ export class UsecaseRegistory {
       useClass: GoogleAuthUsecase,
     });
 
+    container.register<IGetUserProfileUsecase>(
+      "IGetUserProfileUsecase",
+      {
+        useClass:GetUserProfileUsecase,
+      }
+    )
+    container.register("IUserController",{
+       useClass:UserController,
+    })
+    container.register("IBlockedUserMiddleware",{
+      useClass:BlockedUserMiddleware,
+    })
   }
 }

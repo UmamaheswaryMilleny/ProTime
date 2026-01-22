@@ -26,7 +26,8 @@ export interface IAuthController {
   //Checking details and sendotp
   signupSendOtp(req: Request, res: Response): Promise<void>;
 
-  
+  //Logout
+  logout(req: Request, res: Response): Promise<void>;
 
   //Refresh Token
   refreshToken(req: Request, res: Response): Promise<void>;

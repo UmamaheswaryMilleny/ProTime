@@ -62,6 +62,8 @@ export class AuthController implements IAuthController {
     @inject("IGenerateTokenUseCase")
     private _generateTokenUseCase: IGenerateTokenUseCase,
 
+    @inject("ILogoutUseCase")
+    private _logoutUseCase: ILogoutUseCase,
 
     @inject("IRefreshTokenUsecase")
     private _refreshTokenUsecase: IRefreshTokenUsecase,
@@ -226,6 +228,21 @@ export class AuthController implements IAuthController {
     ResponseHelper.success(res, HTTP_STATUS.OK, "OTP sent successfully");
   }
 
+  async logout(req: Request, res: Response): Promise<void> {
+    await this._logoutUseCase.execute();
+
+    clearCookie(
+      res,
+      COOKIES_NAMES.ACCESS_TOKEN,
+      COOKIES_NAMES.REFRESH_TOKEN
+    );
+
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      SUCCESS_MESSAGE.AUTHORIZATION.LOGOUT_SUCCESS
+    );
+  }
 
   async refreshToken(req: Request, res: Response): Promise<void> {
     const refreshToken = req.cookies[COOKIES_NAMES.REFRESH_TOKEN];

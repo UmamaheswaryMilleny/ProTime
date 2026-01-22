@@ -19,6 +19,13 @@ DependencyInjection.registerAll();
 export const errorMiddleware =
   container.resolve<IErrorMiddleware>(ErrorMiddleware);
 
+  
+/**
+ * Blocked user middleware
+ */
+export const blockedUserMiddleware = container.resolve<IBlockedUserMiddleware>(
+  BlockedUserMiddleware
+);
 
 export const userController =
   container.resolve<IUserController>(UserController);

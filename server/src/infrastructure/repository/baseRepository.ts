@@ -30,5 +30,31 @@ export class BaseRepository<TDoc extends Document, TEntity>
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }
 
+  async findById(id: string): Promise<TEntity | null> {
+    const doc = await this.model.findById(id).exec();
+    if (!doc) return null;
+    return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
+  }
 
+  async updateById(
+    id: string,
+    data: Partial<TEntity>
+  ): Promise<TEntity | null> {
+    const modelData = this.toModel
+      ? this.toModel(data)
+      : (data as Partial<TDoc>);
+
+    const doc = await this.model
+      .findByIdAndUpdate(id, modelData, { new: true })
+      .exec();
+
+    if (!doc) return null;
+    return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
+  }
+
+  async deleteById(id: string): Promise<TEntity | null> {
+    const doc = await this.model.findByIdAndDelete(id).exec();
+    if (!doc) return null;
+    return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
+  }
 }
