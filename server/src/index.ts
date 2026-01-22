@@ -6,6 +6,8 @@ import { MongoConnect } from "./infrastructure/database/mongoDB/mongoConnect.js"
 import { connectRedis } from "./infrastructure/config/redisConfig.js";
 dotenv.config();
 
+console.log("Using Redis URL:", process.env.REDIS_URL);
+
 async function startServer() {
   try {
     await connectRedis();

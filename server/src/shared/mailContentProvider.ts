@@ -69,7 +69,7 @@ export function mailContentProvider(purpose: string, data?: any): string {
       </p>
 
       <p style="font-size: 15px; color: #374151; line-height: 1.6;">
-        Thank you for registering with <strong>ProTime Mate</strong>.
+        Thank you for registering with <strong>ProTime </strong>.
         To verify your email address and complete your signup, please use the
         One-Time Password (OTP) below:
       </p>

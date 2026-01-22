@@ -10,7 +10,7 @@ export class OtpService implements IOtpService {
   }
 
   async storeOtp(email: string, otp: string): Promise<void> {
-    await redisClient.set(`otp:${email}`, otp, { EX: 60 });
+    await redisClient.set(`otp:${email}`, otp, { EX: 120 });
   }
 
   async verifyOtp({
@@ -21,8 +21,12 @@ export class OtpService implements IOtpService {
     otp: string;
   }): Promise<boolean> {
     const storedOtp = await redisClient.get(`otp:${email}`);
+    console.log("Stored OTP in Redis:", storedOtp);
     return storedOtp === otp;
   }
+async getOtp(email: string): Promise<string | null> {
+  return await redisClient.get(`otp:${email}`);
+}
 
   async deleteOtp(email: string): Promise<void> {
     await redisClient.del(`otp:${email}`);
