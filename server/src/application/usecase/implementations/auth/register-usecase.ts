@@ -14,10 +14,12 @@ export class RegisterUsecase implements IRegisterUsecase {
 private _tempUserService: ITempUserService
 
   ) {}
+  
   async execute(data: Partial<IUserEntity>): Promise<void> {
   if (!data.email || !data.password) {
     throw new Error("email and password required");
   }
+console.log("Register storing temp user:", data.email);
 
   const isEmailExists = await this._userRepository.findByEmail(data.email);
   if (isEmailExists) {

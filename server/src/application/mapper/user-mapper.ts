@@ -3,6 +3,7 @@ import type { IUserModel } from '../../infrastructure/database/models/client-mod
 import type { LoginResponseDTO } from '../dto/response/login-response-dto.js';
 
 export class UserMapper {
+  // Converts Mongo document → Domain entity
   static toEntity(doc: IUserModel): IUserEntity {
     const user: IUserEntity = {
       _id: String(doc._id),
@@ -25,6 +26,7 @@ export class UserMapper {
   }
 
   static mapToLoginResponseDto(doc: IUserEntity): LoginResponseDTO {
+    // Converts Domain entity → Login API response
     return {
       id: String(doc._id),
       email: doc.email,

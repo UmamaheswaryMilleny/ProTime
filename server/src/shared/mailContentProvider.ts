@@ -103,7 +103,7 @@ export function mailContentProvider(purpose: string, data?: any): string {
       <div style="margin-top: 40px; text-align: center; font-size: 13px; color: #9ca3af;">
         <p style="margin: 0;">
           Regards,<br />
-          <strong>ProTime Team</strong> 🌍
+          <strong>ProTime Team</strong> 
         </p>
       </div>
     </div>

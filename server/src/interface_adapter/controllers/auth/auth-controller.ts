@@ -1,9 +1,9 @@
 import type { Request, Response } from "express";
 
 import { inject, injectable } from "tsyringe";
+
 import type { IRegisterUsecase } from "../../../application/usecase/interfaces/auth/register-usecase-interface.js";
 import type { IAuthController } from "../../interfaces/auth/auth-controller-interface.js";
-
 import { ResponseHelper } from "../../../infrastructure/config/helper/response-helper.js";
 import {
   COOKIES_NAMES,
@@ -11,26 +11,27 @@ import {
   HTTP_STATUS,
   SUCCESS_MESSAGE,
 } from "../../../shared/constants/constants.js";
-import type  { ILoginUsecase } from "../../../application/usecase/interfaces/auth/loginUsecase-interface.js";
-import { LoginRequestDTO } from "../../../application/dto/request/login-request-dto.js";
 
-import { AdminLoginRequestDTO } from "../../../application/dto/request/adminlogin-request-dto.js";
+
+import type { ILoginUsecase } from "../../../application/usecase/interfaces/auth/loginUsecase-interface.js";
+import { LoginRequestDTO } from "../../../application/dto/request/login-request-dto.js";
+import type  { AdminLoginRequestDTO } from "../../../application/dto/request/adminlogin-request-dto.js";
 import type { IAdminLoginUsecase } from "../../../application/usecase/interfaces/auth/adminloginUseCase-interface.js";
 import type { ISendOtpUsecase } from "../../../application/usecase/interfaces/auth/send-otp-usecase-interface.js";
 import type { IResendOtpUsecase } from "../../../application/usecase/interfaces/auth/resend-otp-usecase-interface.js";
+import type { IVerifyOtpAndCreateUserUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-user_usecase-interface.js";
 import type { IVerifyOtpUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-usecase-interface.js";
-import type  {IVerifyOtpAndCreateUserUsecase } from "../../../application/usecase/interfaces/auth/verify-otp-user_usecase-interface.js";
 import type { ICheckUserAndSendOtpUsecase } from "../../../application/usecase/interfaces/check-user-verify-usecase-interface.js";
 import type { IGenerateTokenUseCase } from "../../../application/usecase/interfaces/auth/generate-token-usecase-interface.js";
 import type { ILogoutUseCase } from "../../../application/usecase/interfaces/auth/logout-usecase-interface.js";
 import type { IRefreshTokenUsecase } from "../../../application/usecase/interfaces/auth/refresh-token-usecase-interface.js";
-import { setAuthCookies, clearCookie, updateCookieWithAccessToken } from "../../../shared/utils/cookieHelper.js";
+import { setAuthCookies , clearCookie, updateCookieWithAccessToken} from "../../../shared/utils/cookieHelper.js";
 import type { IForgotPasswordUsecase } from "../../../application/usecase/interfaces/auth/forgot-password-interface.js";
 import type { IResetPasswordUsecase } from "../../../application/usecase/interfaces/auth/reset-password-interface.js";
 import type { IVerifyResetTokenUsecase } from "../../../application/usecase/interfaces/auth/verify-reset-token-interface.js";
 import type { IGoogleAuthUsecase } from "../../../application/usecase/interfaces/auth/google-auth-interface.js";
-import { GoogleAuthRequestDTO } from "../../../application/dto/request/google-auth-request-dto.js";
-import { access } from "fs";
+import type { IGetCurrentUserUsecase } from "../../../application/usecase/interfaces/auth/get-current-user-interface.js";
+import type { CustomRequest } from "../../middlewares/auth-middleware.js";
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -78,7 +79,10 @@ export class AuthController implements IAuthController {
     private _verifyResetTokenUsecase: IVerifyResetTokenUsecase,
 
     @inject("IGoogleAuthUsecase")
-    private _googleAuthUsecase: IGoogleAuthUsecase
+    private _googleAuthUsecase: IGoogleAuthUsecase,
+    
+    @inject("IGetCurrentUserUsecase")
+    private _getCurrentUserUsecase: IGetCurrentUserUsecase,
   ) {}
 
   async register(req: Request, res: Response): Promise<void> {
@@ -219,7 +223,7 @@ export class AuthController implements IAuthController {
 
 
   async signupSendOtp(req: Request, res: Response): Promise<void> {
-    const { email,  password } = req.body;
+    const { email} = req.body;
 
     await this._checkUserAndSendOtpUsecase.execute({
       email,
@@ -398,4 +402,26 @@ export class AuthController implements IAuthController {
       refreshToken: tokens.refreshToken,
     });
   }
+
+
+  async getMe(req: Request, res: Response): Promise<void> {
+    const authUser = (req as CustomRequest).user;
+    if (!authUser?.id) {
+      ResponseHelper.error(
+        res,
+        ERROR_MESSAGE.AUTHENTICATION.UNAUTHORIZED_ACCESS,
+        HTTP_STATUS.UNAUTHORIZED,
+      );
+      return;
+    }
+
+    const currentUser = await this._getCurrentUserUsecase.execute(authUser.id);
+    ResponseHelper.success(
+      res,
+      HTTP_STATUS.OK,
+      "Current user retrieved successfully",
+      currentUser,
+    );
+  }
+
 }

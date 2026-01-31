@@ -15,7 +15,11 @@ import type { IOtpService } from "../../domain/service-interfaces/otp-service-in
 import { GoogleAuthService } from "../service/google-auth-service.js";
 import type { IGoogleAuthService } from "../../domain/service-interfaces/google-auth-service-interface.js";
 import type { ITempUserService } from "../../domain/service-interfaces/temp-user-service-interface.js";
+import type { IMulterService } from "../../domain/service-interfaces/multer-service.interface.js";
+import { MulterService } from "../service/multer-service.js";
 
+import { WinstonLoggerAdapter } from "../service/winston-logger-adaper.js";
+import  type{ ILogger } from "../../domain/service-interfaces/logger.interface.js";
 export class RepositoryRegister {
   static registerRepository(): void {
     container.register<IUserRepository>(
@@ -34,7 +38,11 @@ export class RepositoryRegister {
       { useClass: EmailService } as ClassProvider<IEmailService>
     );
 
-  
+  container.register<ILogger>(
+  "ILogger",
+  { useClass: WinstonLoggerAdapter } as ClassProvider<ILogger>
+);
+
 
     container.register<ITokenService>(
       "ITokenService",
@@ -46,6 +54,10 @@ export class RepositoryRegister {
   { useClass: OtpService } as ClassProvider<IOtpService>
 );
 
+container.register<IMulterService>(
+  "IMulterService",
+  { useClass: MulterService } as ClassProvider<IMulterService>
+);
 
 container.register<IGoogleAuthService>(
   "IGoogleAuthService",

@@ -10,6 +10,7 @@ import {
   userRoutes,
 } from '../../dependencyinjection/resolve.js';
 
+// Create and configure the HTTP server
 export class App {
   private _app: Application;
   constructor() {

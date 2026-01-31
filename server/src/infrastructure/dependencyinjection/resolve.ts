@@ -13,7 +13,9 @@ import { BlockedUserMiddleware } from "../../interface_adapter/middlewares/block
 import { UserRoutes } from "../../interface_adapter/route/user/user-route.js";
 import { UserController } from "../../interface_adapter/controllers/user/user-profile-controller.js";
 import type { IUserController } from "../../interface_adapter/interfaces/user/user-profile-controller-interface.js";
-
+import { ProfileUploadController } from "../../interface_adapter/controllers/user/profile-upload-controller.js";
+import { LoggerMiddleware } from "../../interface_adapter/middlewares/logger-middleware.js";
+// DependencyInjection.registerAll() = register everything in container
 DependencyInjection.registerAll();
 
 export const errorMiddleware =
@@ -36,6 +38,8 @@ export const userController =
 export const authController =
   container.resolve<IAuthController>(AuthController);
 
+  export const profileUploadController = container.resolve(ProfileUploadController);
+
 
 
 /**
@@ -54,6 +58,7 @@ export const adminUserController =
  */
 export const adminRoutes = container.resolve(AdminRoutes);
 
+export const loggerMiddleware=container.resolve(LoggerMiddleware);
 
 
 /**

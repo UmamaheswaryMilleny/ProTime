@@ -18,12 +18,13 @@ import { GoogleAuthUsecase } from "../../application/usecase/implementations/aut
 import { ResetPasswordUsecase } from "../../application/usecase/implementations/auth/reset-password-usecase.js";
 import { GetUserProfileUsecase } from "../../application/usecase/implementations/user/get-user-profile-usecase.js";
 import { ForgotPasswordUsecase } from "../../application/usecase/implementations/auth/forgot-password-usecase.js";
-
-
+import { UpdateUserProfileUsecase } from "../../application/usecase/implementations/user/update-user-profile-usecase.js";
+import  type { IUpdateUserProfileUsecase } from "../../application/usecase/interfaces/user/update-user-profile-interface.js";
 import type { IGetAllUsersUsecase } from "../../application/usecase/interfaces/admin/getallusers-interface.js";
 import type { IGetUserDetailsUsecase } from "../../application/usecase/interfaces/admin/get-user-details-interface.js";
 import type { ICheckUserAndSendOtpUsecase } from "../../application/usecase/interfaces/check-user-verify-usecase-interface.js";
-
+import { GetCurrentUserUsecase } from "../../application/usecase/implementations/auth/get-current-user-usecase.js";
+import type { IGetCurrentUserUsecase } from "../../application/usecase/interfaces/auth/get-current-user-interface.js";
 import type { IBlockUnblockUserUsecase } from "../../application/usecase/interfaces/admin/blockUnblock-interface.js";
 import type { IRefreshTokenUsecase } from "../../application/usecase/interfaces/auth/refresh-token-usecase-interface.js";
 import type { IGenerateTokenUseCase } from "../../application/usecase/interfaces/auth/generate-token-usecase-interface.js";
@@ -122,6 +123,18 @@ export class UsecaseRegistory {
       useClass: GoogleAuthUsecase,
     });
 
+        container.register<IGetCurrentUserUsecase>("IGetCurrentUserUsecase", {
+      useClass: GetCurrentUserUsecase,
+    });
+
+
+
+    container.register<IUpdateUserProfileUsecase>(
+      "IUpdateUserProfileUsecase",
+      {
+        useClass: UpdateUserProfileUsecase,
+      }
+    );
     container.register<IGetUserProfileUsecase>(
       "IGetUserProfileUsecase",
       {

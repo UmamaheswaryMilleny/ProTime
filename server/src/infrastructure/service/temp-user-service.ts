@@ -4,9 +4,10 @@ import type { ITempUserService } from "../../domain/service-interfaces/temp-user
 
 @injectable()
 export class TempUserService implements ITempUserService {
-  async storeUser(email: string, data: any) {
-    await redisClient.set(`temp_user:${email}`, JSON.stringify(data), { EX: 600 });
-  }
+async storeUser(email: string, data: any) {
+  console.log("Redis store temp_user:", email);
+  await redisClient.set(`temp_user:${email}`, JSON.stringify(data), { EX: 600 });
+}
 
   async getUser(email: string) {
     const data = await redisClient.get(`temp_user:${email}`);
@@ -16,4 +17,5 @@ export class TempUserService implements ITempUserService {
   async deleteUser(email: string) {
     await redisClient.del(`temp_user:${email}`);
   }
+  
 }

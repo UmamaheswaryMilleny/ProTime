@@ -53,11 +53,11 @@ export class BlockedUserMiddleware implements IBlockedUserMiddleware {
       }
 
       if (user.isBlocked) {
-        clearCookie(
-          res,
-          COOKIES_NAMES.ACCESS_TOKEN,
-          COOKIES_NAMES.REFRESH_TOKEN
-        );
+        // clearCookie(
+        //   res,
+        //   COOKIES_NAMES.ACCESS_TOKEN,
+        //   COOKIES_NAMES.REFRESH_TOKEN
+        // );
 
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,

@@ -2,11 +2,6 @@ import type { Request, Response, NextFunction } from "express";
 import { HTTP_STATUS, ERROR_MESSAGE } from "../../shared/constants/constants.js";
 import type{ CustomRequest } from "./auth-middleware.js";
 
-/**
- * Middleware: adminAuth
- * Verifies that the authenticated user has admin role
- * Must be used after verifyAuth middleware
- */
 export const adminAuth = (
   req: Request,
   res: Response,

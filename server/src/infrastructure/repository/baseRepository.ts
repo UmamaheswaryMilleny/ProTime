@@ -1,4 +1,5 @@
-import { Document, Model } from "mongoose";
+import { Document, Model} from "mongoose";
+import type { ClientSession } from "mongoose";
 import type { IBaseRepository } from "../../domain/repositoryInterface/baseRepository-interface.js";
 
 export class BaseRepository<TDoc extends Document, TEntity>
@@ -18,42 +19,73 @@ export class BaseRepository<TDoc extends Document, TEntity>
     this.toModel = toModel;
   }
 
-  async save(data: Partial<TEntity>): Promise<TEntity> {
+  async save(
+    data: Partial<TEntity>,
+    session?: ClientSession
+  ): Promise<TEntity> {
     const modelData = this.toModel
       ? this.toModel(data)
       : (data as Partial<TDoc>);
 
-   
     const doc = new this.model(modelData);
-    await doc.save();
+
+    
+    if (session) {
+      await doc.save({ session });
+    } else {
+      await doc.save();
+    }
 
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }
 
-  async findById(id: string): Promise<TEntity | null> {
-    const doc = await this.model.findById(id).exec();
+  async findById(
+    id: string,
+    session?: ClientSession
+  ): Promise<TEntity | null> {
+    const query = this.model.findById(id);
+
+    if (session) {
+      query.session(session);
+    }
+
+    const doc = await query.exec();
     if (!doc) return null;
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }
 
   async updateById(
     id: string,
-    data: Partial<TEntity>
+    data: Partial<TEntity>,
+    session?: ClientSession
   ): Promise<TEntity | null> {
     const modelData = this.toModel
       ? this.toModel(data)
       : (data as Partial<TDoc>);
 
-    const doc = await this.model
-      .findByIdAndUpdate(id, modelData, { new: true })
-      .exec();
+    const query = this.model.findByIdAndUpdate(id, modelData, { new: true });
+
+    if (session) {
+      query.session(session);
+    }
+
+    const doc = await query.exec();
 
     if (!doc) return null;
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }
 
-  async deleteById(id: string): Promise<TEntity | null> {
-    const doc = await this.model.findByIdAndDelete(id).exec();
+  async deleteById(
+    id: string,
+    session?: ClientSession
+  ): Promise<TEntity | null> {
+    const query = this.model.findByIdAndDelete(id);
+
+    if (session) {
+      query.session(session);
+    }
+
+    const doc = await query.exec();
     if (!doc) return null;
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }

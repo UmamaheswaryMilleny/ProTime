@@ -16,6 +16,7 @@ import { ForgotPasswordRequestDTO } from "../../../application/dto/request/forgo
 import { ResetPasswordRequestDTO } from "../../../application/dto/request/reset-password-request-dto.js";
 import { VerifyResetTokenRequestDTO } from "../../../application/dto/request/verify-reset-token-request-dto.js";
 import { GoogleAuthRequestDTO } from "../../../application/dto/request/google-auth-request-dto.js";
+import { verifyAuth } from "../../middlewares/auth-middleware.js";
 
 @injectable()
 export class AuthRoutes extends BaseRoute {
@@ -107,5 +108,12 @@ export class AuthRoutes extends BaseRoute {
     //   "/profile",
     //   asyncHandler(userController.getProfile.bind(userController))
     // );
+        // Server-validated session check (used by frontend guards)
+    this.router.get(
+      "/me",
+      asyncHandler(verifyAuth),
+      asyncHandler(blockedUserMiddleware.checkBlockedUser.bind(blockedUserMiddleware)),
+      asyncHandler(authController.getMe.bind(authController))
+    );
   }
 }

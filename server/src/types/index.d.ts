@@ -1,5 +1,5 @@
 import "express";
-import { JwtPayload } from "jsonwebtoken";
+import  { JwtPayload } from "jsonwebtoken";
 
 export interface CustomJwtPayload extends JwtPayload {
   id: string;
@@ -12,6 +12,7 @@ export interface AuthenticatedUser extends CustomJwtPayload {
   refreshToken: string;
 }
 
+// You are modifying Express Request type globally.By default, Express Request does NOT have user.
 declare global {
   namespace Express {
     interface Request {

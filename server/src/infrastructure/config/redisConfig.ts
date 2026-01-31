@@ -12,7 +12,7 @@ redisClient.on("error", (err) => {
   console.error("❌ Redis error", err);
 });
 
-// IMPORTANT: connect once during app startup
+// Make sure Redis is connected. If it already is, do nothing.”
 export const connectRedis = async () => {
   if (!redisClient.isOpen) {
     await redisClient.connect();

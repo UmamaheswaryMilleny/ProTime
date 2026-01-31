@@ -88,8 +88,7 @@ export class AdminUserController implements IAdminUserController {
     ResponseHelper.success(
       res,
       HTTP_STATUS.OK,
-      SUCCESS_MESSAGE.AUTHORIZATION.USER_UNBLOCKED ??
-        "User unblocked successfully"
+      SUCCESS_MESSAGE.AUTHORIZATION.USER_UNBLOCKED 
     );
   }
 }

@@ -39,6 +39,8 @@ export class GetAllUsersUsecase implements IGetAllUsersUsecase {
       sort,
       sortOrder
     );
+    // This line calculates how many pages you need for pagination.
+    // Math.ceil rounds UP(go to the next bigger whole number) to the nearest whole number.
 
     const totalPages = Math.ceil(total / limit);
 

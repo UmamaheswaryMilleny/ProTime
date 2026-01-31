@@ -21,21 +21,24 @@ export class CheckUserAndSendOtpUsecase implements ICheckUserAndSendOtpUsecase {
     private _tempUserService: ITempUserService,
   ) {}
 
-  async execute(data: { email: string; phone: string }): Promise<void> {
+  async execute(data: { email: string}): Promise<void> {
     const { email } = data;
 
     if (!email) {
       throw new ValidationError('Email is required');
     }
 
-    const existingEmail = await this._userRepository.findByEmail(email);
-    if (existingEmail) {
-      throw new ValidationError('Email already exists');
-    }
     const tempUser = await this._tempUserService.getUser(email);
     console.log('Temp User:', tempUser);
     if (!tempUser) {
       throw new ValidationError('User not registered. Call /register first.');
+    }
+
+
+    
+    const existingEmail = await this._userRepository.findByEmail(email);
+    if (existingEmail) {
+      throw new ValidationError('Email already exists');
     }
 
     // ✅ Check if OTP already exists

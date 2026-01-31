@@ -1,7 +1,5 @@
-
-
 import type { Response } from "express";
-
+// standardizes how your API sends responses to the client.
 export class ResponseHelper {
   static success<T>(
     res: Response,

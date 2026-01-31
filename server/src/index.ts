@@ -1,3 +1,12 @@
+process.on("uncaughtException", (err) => {
+  console.error("🔥 UNCAUGHT EXCEPTION:", err);
+});
+
+process.on("unhandledRejection", (reason) => {
+  console.error("🔥 UNHANDLED PROMISE:", reason);
+});
+import multer from "multer";
+
 import "reflect-metadata";
 import dotenv from "dotenv";
 import { App } from "./infrastructure/config/server/server.js";
@@ -19,6 +28,13 @@ async function startServer() {
 
     const app = new App();
     const expressServer = app.getApp();
+const upload = multer({ dest: "uploads/" });
+
+    // ✅ ADD ROUTE HERE
+    expressServer.post("/upload", upload.single("file"), (req, res) => {
+      console.log(req.file);
+      res.send("Uploaded");
+    });
 
     const PORT = Number(config.server.PORT) || 3000;
 

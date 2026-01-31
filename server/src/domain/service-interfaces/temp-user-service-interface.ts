@@ -3,3 +3,4 @@ export interface ITempUserService {
   getUser(email: string): Promise<any | null>;
   deleteUser(email: string): Promise<void>;
 }
+

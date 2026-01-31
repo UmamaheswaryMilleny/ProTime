@@ -29,7 +29,6 @@ private _tempUserService: ITempUserService,
     //   firstName: string;
     //   lastName: string;
     //   password: string;
-    //   phone: string;
     // }
   ): Promise<void> {
     const isValid = await this._otpService.verifyOtp({ email, otp });

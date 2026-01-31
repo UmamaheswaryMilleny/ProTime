@@ -10,9 +10,7 @@ import {
 
 const tokenService = new TokenService();
 
-/* =======================
-   TYPES
-======================= */
+
 
 export interface CustomJwtPayload extends JwtPayload {
   id: string;
@@ -25,32 +23,13 @@ export interface AuthenticatedUser extends CustomJwtPayload {
   refreshToken: string;
 }
 
-/**
- * IMPORTANT:
- * user MUST be optional because Express does not guarantee it.
- * It is added dynamically by middleware.
- */
+
 export interface CustomRequest extends Request {
   user?: AuthenticatedUser;
 }
 
-/* =======================
-   HELPERS
-======================= */
 
-const isBlackListed = async (token: string): Promise<boolean> => {
-  try {
-    const result = await redisClient.get(token);
-    return result !== null;
-  } catch {
-    // Fail-open to avoid blocking valid users if Redis is down
-    return false;
-  }
-};
 
-/* =======================
-   verifyAuth Middleware
-======================= */
 
 export const verifyAuth = async (
   req: Request,
@@ -58,8 +37,17 @@ export const verifyAuth = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const accessToken = req.cookies[COOKIES_NAMES.ACCESS_TOKEN];
+    const authHeader = req.headers.authorization;
+
+    const accessToken =
+      req.cookies[COOKIES_NAMES.ACCESS_TOKEN] ||
+      (authHeader?.startsWith("Bearer ")
+        ? authHeader.split(" ")[1]
+        : undefined);
+
     const refreshToken = req.cookies[COOKIES_NAMES.REFRESH_TOKEN];
+
+   
 
     if (!accessToken) {
       res.status(HTTP_STATUS.UNAUTHORIZED).json({
@@ -68,6 +56,7 @@ export const verifyAuth = async (
       });
       return;
     }
+
 
 
 
@@ -93,8 +82,7 @@ export const verifyAuth = async (
   } catch (error: unknown) {
     if (
       error instanceof Error &&
-      (error.name === "TokenExpiredError" ||
-        error.name === "JsonWebTokenError")
+      (error.name === "TokenExpiredError" || error.name === "JsonWebTokenError")
     ) {
       res.status(HTTP_STATUS.UNAUTHORIZED).json({
         success: false,
@@ -110,10 +98,8 @@ export const verifyAuth = async (
   }
 };
 
-/* =======================
-   decodeToken Middleware
-   (Optional Auth)
-======================= */
+
+
 
 export const decodeToken = async (
   req: Request,
@@ -128,10 +114,6 @@ export const decodeToken = async (
       return;
     }
 
-    if (await isBlackListed(token)) {
-      next();
-      return;
-    }
 
     const payload = tokenService.decodeAcessToken(
       token
@@ -153,9 +135,6 @@ export const decodeToken = async (
   }
 };
 
-/* =======================
-   authorizeRole Middleware
-======================= */
 
 export const authorizeRole = (allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {

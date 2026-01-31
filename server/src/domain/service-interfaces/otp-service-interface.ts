@@ -6,3 +6,5 @@ export interface IOtpService{
     getOtp(email: string): Promise<string | null>;
 
 }
+
+
