@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+
+/* Global font */
+@layer base {
+  html {
+    font-family: "Poppins", system-ui, sans-serif;
+  }
+}
+
+@layer utilities {
+  .font-bitter {
+    font-family: "Bitter", serif;
+  }
+
+  .font-merriweather {
+    font-family: "Merriweather", serif;
+  }
+}
+
+/* Force Google button to fill container */
+div[id^="credential_picker_container"] iframe,
+div.S9gUrf-YoZ4jf {
+  width: 100% !important;
+}
