@@ -39,7 +39,7 @@ export class App {
 
   private configureRoutes() {
     this._app.get("/", (req, res) => {
-    res.send("Server working 🚀");
+    res.send("Server working ");
   });
     this._app.use('/api/v1/auth', authRoutes.router);
     this._app.use('/api/v1/admin', adminRoutes.router);

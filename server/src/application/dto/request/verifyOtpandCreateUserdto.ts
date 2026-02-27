@@ -7,6 +7,5 @@ export class VerifyOtpAndCreateUserDTO {
   @IsString()
   otp!: string;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   userData!: any;
 }

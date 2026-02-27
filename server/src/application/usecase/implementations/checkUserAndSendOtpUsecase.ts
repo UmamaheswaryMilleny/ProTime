@@ -7,7 +7,7 @@ import { mailContentProvider } from '../../../shared/mailContentProvider.js';
 import type { ICheckUserAndSendOtpUsecase } from '../interfaces/check-user-verify-usecase-interface.js';
 import { MAIL_CONTENT_PURPOSE } from '../../../shared/constants/constants.js';
 import type { ITempUserService } from '../../../domain/service-interfaces/temp-user-service-interface.js';
-
+import { logger } from '../../../infrastructure/logger/winston-logger-config.js';
 @injectable()
 export class CheckUserAndSendOtpUsecase implements ICheckUserAndSendOtpUsecase {
   constructor(
@@ -21,7 +21,7 @@ export class CheckUserAndSendOtpUsecase implements ICheckUserAndSendOtpUsecase {
     private _tempUserService: ITempUserService,
   ) {}
 
-  async execute(data: { email: string}): Promise<void> {
+  async execute(data: { email: string }): Promise<void> {
     const { email } = data;
 
     if (!email) {
@@ -34,22 +34,19 @@ export class CheckUserAndSendOtpUsecase implements ICheckUserAndSendOtpUsecase {
       throw new ValidationError('User not registered. Call /register first.');
     }
 
-
-    
     const existingEmail = await this._userRepository.findByEmail(email);
     if (existingEmail) {
       throw new ValidationError('Email already exists');
     }
 
     // ✅ Check if OTP already exists
-const existingOtp = await this._otpService.getOtp(email);
-if (existingOtp) {
-  throw new ValidationError("OTP already sent. Please verify.");
-}
+    const existingOtp = await this._otpService.getOtp(email);
+    if (existingOtp) {
+      throw new ValidationError('OTP already sent. Please verify.');
+    }
     const otp = this._otpService.generateOtp();
     await this._otpService.storeOtp(email, otp);
     // await this._tempUserService.storeUser(email, data);
-
     console.log(otp, '-->otp');
     eventBus.emit(
       'SENDMAIL',

@@ -96,10 +96,11 @@
 //     </div>
 //   );
 // }
-
+import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./User/Card";
+import Sidebar, { SidebarItem } from "./User/Sidebar";
+import { Card, CardHeader, CardTitle, CardContent } from "./User/Card";
 import { Button } from "./User/Button";
 import { logoutUser } from "../store/slices/userSlice";
 import { useLogoutMutation } from "../hooks/auth/auth";
@@ -107,11 +108,18 @@ import { ROUTES } from "../config/env";
 import type { RootState } from "../store/store";
 import toast from "react-hot-toast";
 
+import {
+  LayoutDashboard,
+  User,
+} from "lucide-react";
+
 export function UserHome() {
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { mutate: logout, isPending } = useLogoutMutation();
+
+  const [imageError, setImageError] = useState(false);
 
   const handleLogout = () => {
     logout(undefined, {
@@ -134,71 +142,90 @@ export function UserHome() {
 
   if (!user) return null;
 
-  // ✅ FIX PROFILE IMAGE URL
   const API_URL = "http://localhost:3000";
-
   const profileImage =
     user.profileImage?.startsWith("http")
       ? user.profileImage
       : user.profileImage
       ? `${API_URL}${user.profileImage}`
-      : "/default-avatar.png";
+      : null;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#FAF7F2] px-4">
-      <Card className="w-full max-w-2xl border-border shadow-lg">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-3xl font-bold">
-            Welcome, {user.firstName} {user.lastName}!
-          </CardTitle>
-          <CardDescription className="text-lg">
-            You are logged in as a {user.role}
-          </CardDescription>
-        </CardHeader>
+    <div className="flex h-screen bg-[#0F0F12]">
+      {/* Sidebar */}
+      <Sidebar>
+        <SidebarItem
+          icon={<LayoutDashboard />}
+          text="Home"
+          active
+        />
+        <SidebarItem
+          icon={<User />}
+          text="My Profile"
+          onClick={() => navigate(ROUTES.CLIENT_PROFILE)}
+        />
+      </Sidebar>
 
-        <CardContent className="space-y-6">
-          {/* User Info */}
-          <div className="space-y-2 text-center">
-            <img
-              src={profileImage}
-              alt="Profile"
-              className="w-24 h-24 rounded-full object-cover mx-auto border shadow"
-            />
-
-            <p className="text-sm text-muted-foreground">
-              <strong>Email:</strong> {user.email}
-            </p>
-
-            <p className="text-sm text-muted-foreground">
-              <strong>Role:</strong> {user.role}
-            </p>
+      {/* Main Content */}
+      <main className="flex-1 overflow-y-auto p-8">
+        {/* Header */}
+        <section className="flex items-center justify-between bg-[#1C1C21] p-6 rounded-xl shadow-md mb-8">
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              Welcome, {user.firstName} {user.lastName}
+            </h2>
+            <p className="text-sm text-gray-400">{user.email}</p>
           </div>
 
-          {/* Actions */}
-          <div className="pt-4 border-t space-y-3">
-            <Button
-              onClick={() => navigate(ROUTES.CLIENT_PROFILE)}
-              variant="outline"
-              className="w-full"
-            >
-              View Profile
-            </Button>
+          <Button
+            onClick={handleLogout}
+            disabled={isPending}
+            variant="destructive"
+          >
+            {isPending ? "Logging out..." : "Logout"}
+          </Button>
+        </section>
 
-            <Button
-              onClick={handleLogout}
-              disabled={isPending}
-              className="w-full"
-              variant="destructive"
-            >
-              {isPending ? "Logging out..." : "Logout"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+        {/* Profile Card */}
+        <Card className="max-w-xl bg-[#1C1C21] border-border shadow-xl">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl text-white">
+              User Profile
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent className="space-y-6">
+            <div className="flex flex-col items-center gap-3">
+              {profileImage && !imageError ? (
+                <img
+                  src={profileImage}
+                  alt="Profile"
+                  onError={() => setImageError(true)}
+                  className="w-28 h-28 rounded-full object-cover border shadow-md"
+                />
+              ) : (
+                <div className="w-28 h-28 rounded-full bg-[#2A2A2F] flex items-center justify-center border shadow-md">
+                  <User className="w-12 h-12 text-gray-400" />
+                </div>
+              )}
+
+              <p className="text-gray-300 text-sm">
+                <strong>Email:</strong> {user.email}
+              </p>
+            </div>
+
+            <div className="pt-4 border-t border-gray-700">
+              <Button
+                onClick={() => navigate(ROUTES.CLIENT_PROFILE)}
+                variant="outline"
+                className="w-full"
+              >
+                View Full Profile
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </main>
     </div>
   );
 }
-
-
-
-

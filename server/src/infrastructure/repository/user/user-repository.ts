@@ -26,6 +26,12 @@ export class UserRepository
     }
   }
 
+
+  // async findByName(email: string): Promise<IUserEntity> {
+  //   const user=await userDB.findOne({email})
+  //   const name=user?.firstName.startsWith('A')
+  //   return name
+  // }
   async findAllWithSearch(
     page: number,
     limit: number,

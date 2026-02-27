@@ -1,19 +1,20 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { User } from "../../types/auth-types";
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
 }
 
-// Helper function to sanitize user data - ensures password is never stored
+/* ---------------- Helper: Sanitize User ---------------- */
+// Ensures password or unsafe fields are NEVER stored
 const sanitizeUserData = (user: unknown): User | null => {
   if (!user || typeof user !== "object") {
     return null;
   }
 
   const userObj = user as Record<string, unknown>;
-  
-  // Explicitly pick only safe fields - never include password
+
   const sanitized: User = {
     id: String(userObj.id || ""),
     firstName: String(userObj.firstName || ""),
@@ -22,7 +23,7 @@ const sanitizeUserData = (user: unknown): User | null => {
     role: userObj.role as User["role"],
   };
 
-  // Only add profileImage if it exists
+  // Add profileImage only if valid
   if (userObj.profileImage && typeof userObj.profileImage === "string") {
     sanitized.profileImage = userObj.profileImage;
   }
@@ -30,16 +31,15 @@ const sanitizeUserData = (user: unknown): User | null => {
   return sanitized;
 };
 
-// Load and sanitize initial state from localStorage
+/* ---------------- Load Initial User ---------------- */
 const getInitialUser = (): User | null => {
   try {
     const stored = localStorage.getItem("authSession");
     if (!stored) return null;
-    
+
     const parsed = JSON.parse(stored);
     return sanitizeUserData(parsed);
   } catch {
-    // If parsing fails, clear corrupted data
     localStorage.removeItem("authSession");
     return null;
   }
@@ -50,21 +50,35 @@ const initialState: AuthState = {
   isAuthenticated: !!localStorage.getItem("authSession"),
 };
 
+/* ---------------- Slice ---------------- */
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
+    /* -------- Login -------- */
     loginUser: (state, action: PayloadAction<User>) => {
-      // Sanitize user data before storing - ensures password is never included
       const sanitized = sanitizeUserData(action.payload);
+
       if (sanitized) {
         state.user = sanitized;
         state.isAuthenticated = true;
-        // Store only sanitized data (no password)
         localStorage.setItem("authSession", JSON.stringify(sanitized));
       }
     },
 
+    /* -------- Update User (FIX) -------- */
+    updateUser: (state, action: PayloadAction<Partial<User>>) => {
+      if (!state.user) return;
+
+      state.user = {
+        ...state.user,
+        ...action.payload,
+      };
+
+      localStorage.setItem("authSession", JSON.stringify(state.user));
+    },
+
+    /* -------- Logout -------- */
     logoutUser: (state) => {
       state.user = null;
       state.isAuthenticated = false;
@@ -74,5 +88,6 @@ const authSlice = createSlice({
   },
 });
 
-export const { loginUser, logoutUser } = authSlice.actions;
+/* ---------------- Exports ---------------- */
+export const { loginUser, logoutUser, updateUser } = authSlice.actions;
 export default authSlice.reducer;

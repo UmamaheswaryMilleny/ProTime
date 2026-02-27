@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import type { Secret, JwtPayload } from "jsonwebtoken";
-import ms from "ms";
+import ms from "ms"; //Converts time strings into milliseconds
 import { injectable } from "tsyringe";
 
 import { CustomError } from "../../domain/errors/customError.js";

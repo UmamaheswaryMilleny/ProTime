@@ -1,5 +1,5 @@
 import { inject, injectable } from "tsyringe";
-import type { ICheckUserBlockedUsecase } from "../../interfaces/auth/get-current-user-interface.js";
+import type { ICheckUserBlockedUsecase } from "../../interfaces/user/check-user-blocked-usecase.js";
 import type { IUserRepository } from "../../../../domain/repositoryInterface/user/user-repository-interface.js";
 
 

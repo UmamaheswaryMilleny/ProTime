@@ -1,16 +1,26 @@
 import { useState, useRef, useEffect } from "react";
+import Sidebar, { SidebarItem } from "./User/Sidebar";
 import { useUserProfileQuery } from "../hooks/user/useUserProfile";
 import { useUpdateUserProfile } from "../hooks/user/useUpdateUserProfile";
 import { Card, CardContent, CardHeader, CardTitle } from "./User/Card";
 import { Button } from "./User/Button";
 import { Input } from "./User/input";
 import { Label } from "./User/label";
-import { Loader2, User, Edit2, X, Upload, Save, Lock } from "lucide-react";
-import { ForgotPasswordModal } from "./ForgotPasswordModal";
+import {
+  Loader2,
+  User,
+  Edit2,
+  X,
+  Upload,
+  Save,
+  LayoutDashboard,
+} from "lucide-react";
 import toast from "react-hot-toast";
 import { userProfileSchema } from "../validations/userProfileSchema";
 import type { UserProfileFormData } from "../validations/userProfileSchema";
 import { ZodError } from "zod";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../config/env";
 
 /* ---------------- Types ---------------- */
 type ValidationErrors = {
@@ -27,12 +37,13 @@ const API_URL = "http://localhost:3000";
 
 /* ---------------- Component ---------------- */
 export function UserProfile() {
+  const navigate = useNavigate();
   const { data: profile, isLoading, error, refetch } = useUserProfileQuery();
   const updateProfile = useUpdateUserProfile();
 
   const [isEditMode, setIsEditMode] = useState(false);
-  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const [formData, setFormData] = useState<UserProfileFormData>({
     firstName: "",
@@ -43,7 +54,8 @@ export function UserProfile() {
 
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-  const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
+  const [validationErrors, setValidationErrors] =
+    useState<ValidationErrors>({});
 
   /* ---------------- Load Profile ---------------- */
   useEffect(() => {
@@ -63,9 +75,11 @@ export function UserProfile() {
           : `${API_URL}${profile.profileImage}`
         : null
     );
+
+    setImageError(false);
   }, [profile]);
 
-  /* ---------------- Cleanup Blob Preview ---------------- */
+  /* ---------------- Cleanup ---------------- */
   useEffect(() => {
     return () => {
       if (imagePreview?.startsWith("blob:")) {
@@ -95,7 +109,9 @@ export function UserProfile() {
   };
 
   /* ---------------- Image Upload ---------------- */
-  const handleImageSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageSelect = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -111,6 +127,7 @@ export function UserProfile() {
 
     const preview = URL.createObjectURL(file);
     setImagePreview(preview);
+    setImageError(false);
 
     const uploadData = new FormData();
     uploadData.append("image", file);
@@ -118,11 +135,14 @@ export function UserProfile() {
     try {
       setIsUploadingImage(true);
 
-      const res = await fetch(`${API_URL}/api/v1/user/upload/profile-image`, {
-        method: "POST",
-        body: uploadData,
-        credentials: "include",
-      });
+      const res = await fetch(
+        `${API_URL}/api/v1/user/upload/profile-image`,
+        {
+          method: "POST",
+          body: uploadData,
+          credentials: "include",
+        }
+      );
 
       if (!res.ok) throw new Error("Upload failed");
 
@@ -134,12 +154,12 @@ export function UserProfile() {
       }));
 
       toast.success("Image uploaded. Click Save.");
-    } catch (err) {
-      console.error(err);
+    } catch {
       toast.error("Upload failed");
-
       setImagePreview(
-        profile?.profileImage ? `${API_URL}${profile.profileImage}` : null
+        profile?.profileImage
+          ? `${API_URL}${profile.profileImage}`
+          : null
       );
     } finally {
       setIsUploadingImage(false);
@@ -152,7 +172,7 @@ export function UserProfile() {
 
     updateProfile.mutate(formData, {
       onSuccess: async () => {
-        toast.success("Profile updated");
+        // toast.success("Profile updated");
         setIsEditMode(false);
         await refetch();
       },
@@ -172,133 +192,197 @@ export function UserProfile() {
     });
 
     setImagePreview(
-      profile.profileImage ? `${API_URL}${profile.profileImage}` : null
+      profile.profileImage
+        ? `${API_URL}${profile.profileImage}`
+        : null
     );
+    setImageError(false);
     setIsEditMode(false);
-  };
-
-  /* ---------------- Reset Password ---------------- */
-  const handleResetPassword = () => {
-    if (!profile?.email) return toast.error("Email not found");
-    setShowResetPasswordModal(true);
   };
 
   /* ---------------- Loading ---------------- */
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Loader2 className="animate-spin w-8 h-8" />
+      <div className="h-screen flex items-center justify-center">
+        <Loader2 className="animate-spin w-8 h-8 text-white" />
       </div>
     );
   }
 
-  if (error || !profile) return <p className="text-red-500">Failed to load profile</p>;
+  if (error || !profile)
+    return <p className="text-red-500">Failed to load profile</p>;
 
-  /* ---------------- Final Profile Image ---------------- */
   const finalProfileImage =
     profile.profileImage?.startsWith("http")
       ? profile.profileImage
       : profile.profileImage
       ? `${API_URL}${profile.profileImage}`
-      : "/default-avatar.png";
+      : null;
 
   /* ---------------- UI ---------------- */
   return (
-    <div className="min-h-screen bg-[#FAF7F2] p-4">
-      <div className="max-w-4xl mx-auto">
-        <Card>
+    <div className="flex h-screen bg-[#0F0F12]">
+      {/* Sidebar */}
+      <Sidebar>
+        <SidebarItem
+          icon={<LayoutDashboard />}
+          text="Home"
+          onClick={() => navigate(ROUTES.CLIENT_DASHBOARD)}
+        />
+        <SidebarItem icon={<User />} text="My Profile" active />
+      </Sidebar>
+
+      {/* Main */}
+      <main className="flex-1 overflow-y-auto p-8">
+        {/* Header */}
+        <section className="bg-[#1C1C21] p-6 rounded-xl shadow-md mb-8">
+          <h2 className="text-xl font-semibold text-white">
+            My Profile
+          </h2>
+          <p className="text-sm text-gray-400">
+            Manage your personal information
+          </p>
+        </section>
+
+        {/* Card */}
+        <Card className="max-w-3xl bg-[#1C1C21] border-border shadow-xl">
           <CardHeader className="flex flex-row justify-between items-center">
-            <CardTitle>My Profile</CardTitle>
+            <CardTitle className="text-white">
+              Profile Details
+            </CardTitle>
 
             {!isEditMode && (
-              <div className="flex gap-2">
-                <Button onClick={() => setIsEditMode(true)} variant="outline">
-                  <Edit2 className="w-4 h-4" /> Edit
-                </Button>
-                <Button onClick={handleResetPassword} variant="outline">
-                  <Lock className="w-4 h-4" /> Reset Password
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditMode(true)}
+              >
+                <Edit2 className="w-4 h-4 mr-1" /> Edit
+              </Button>
             )}
           </CardHeader>
 
           <CardContent>
             {isEditMode ? (
               <div className="space-y-6">
-
-                {/* Avatar Upload */}
+                {/* Avatar (Edit Mode) */}
                 <div className="flex flex-col items-center gap-3">
-                  {imagePreview ? (
-                    <img src={imagePreview} className="w-32 h-32 rounded-full object-cover" />
+                  {imagePreview && !imageError ? (
+                    <img
+                      src={imagePreview}
+                      onError={() => setImageError(true)}
+                      className="w-32 h-32 rounded-full object-cover border"
+                    />
                   ) : (
-                    <User className="w-16 h-16" />
+                    <div className="w-32 h-32 rounded-full bg-[#2A2A2F] flex items-center justify-center border">
+                      <User className="w-12 h-12 text-gray-400" />
+                    </div>
                   )}
 
-                  <input ref={fileInputRef} type="file" hidden onChange={handleImageSelect} />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    onChange={handleImageSelect}
+                  />
 
-                  <Button onClick={() => fileInputRef.current?.click()} disabled={isUploadingImage}>
-                    <Upload className="w-4 h-4" /> Upload
+                  <Button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isUploadingImage}
+                  >
+                    <Upload className="w-4 h-4 mr-1" /> Upload
                   </Button>
                 </div>
 
                 {/* Inputs */}
                 <div>
-                  <Label>First Name</Label>
+                  <Label className="text-white">First Name</Label>
                   <Input
+                    className="text-white"
                     value={formData.firstName}
-                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        firstName: e.target.value,
+                      })
+                    }
                   />
-                  {validationErrors.firstName && <p className="text-red-500 text-sm">{validationErrors.firstName}</p>}
+                  {validationErrors.firstName && (
+                    <p className="text-red-500 text-sm">
+                      {validationErrors.firstName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <Label>Last Name</Label>
+                  <Label className="text-white">Last Name</Label>
                   <Input
+                    className="text-white"
                     value={formData.lastName}
-                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        lastName: e.target.value,
+                      })
+                    }
                   />
-                  {validationErrors.lastName && <p className="text-red-500 text-sm">{validationErrors.lastName}</p>}
+                  {validationErrors.lastName && (
+                    <p className="text-red-500 text-sm">
+                      {validationErrors.lastName}
+                    </p>
+                  )}
                 </div>
 
                 <div>
-                  <Label>Bio</Label>
+                  <Label className="text-white">Bio</Label>
                   <textarea
+                    className="w-full rounded-md p-2 bg-black border border-gray-700 text-white"
                     value={formData.bio}
-                    onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                    className="border p-2 w-full rounded"
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        bio: e.target.value,
+                      })
+                    }
                   />
-                  {validationErrors.bio && <p className="text-red-500 text-sm">{validationErrors.bio}</p>}
                 </div>
 
                 {/* Buttons */}
                 <div className="flex gap-3">
                   <Button onClick={handleSave}>
-                    <Save className="w-4 h-4" /> Save
+                    <Save className="w-4 h-4 mr-1" /> Save
                   </Button>
                   <Button variant="outline" onClick={handleCancel}>
-                    <X className="w-4 h-4" /> Cancel
+                    <X className="w-4 h-4 mr-1" /> Cancel
                   </Button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <img src={finalProfileImage} className="w-32 h-32 rounded-full object-cover" />
-                <p className="text-xl font-semibold">{profile.firstName} {profile.lastName}</p>
-                <p className="text-gray-600">{profile.email}</p>
-                <p>{profile.bio || "No bio yet"}</p>
+              <div className="space-y-4 text-center">
+                {/* Avatar (View Mode) */}
+                {finalProfileImage && !imageError ? (
+                  <img
+                    src={finalProfileImage}
+                    onError={() => setImageError(true)}
+                    className="w-32 h-32 rounded-full object-cover mx-auto"
+                  />
+                ) : (
+                  <div className="w-32 h-32 rounded-full bg-[#2A2A2F] flex items-center justify-center mx-auto">
+                    <User className="w-12 h-12 text-gray-400" />
+                  </div>
+                )}
+
+                <p className="text-xl font-semibold text-white">
+                  {profile.firstName} {profile.lastName}
+                </p>
+                <p className="text-gray-400">{profile.email}</p>
+                <p className="text-gray-300">
+                  {profile.bio || "No bio added yet"}
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
-      </div>
-
-      {showResetPasswordModal && (
-        <ForgotPasswordModal
-          isOpen={showResetPasswordModal}
-          onClose={() => setShowResetPasswordModal(false)}
-          role="client"
-        />
-      )}
+      </main>
     </div>
   );
 }

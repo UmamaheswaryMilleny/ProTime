@@ -14,7 +14,7 @@ export class GetAllUsersUsecase implements IGetAllUsersUsecase {
 
   async execute(
     page: number = 1,
-    limit: number = 10,
+    limit: number =10,
     search?: string,
     status: UserStatusFilter = UserStatusFilter.ALL,
     sort: string = "createdAt",

@@ -1,11 +1,11 @@
-import { plainToInstance } from "class-transformer";
-import { validate, ValidationError } from "class-validator";
-import type { NextFunction, Request, Response } from "express";
-import { HTTP_STATUS } from "../../shared/constants/constants.js";
+import { plainToInstance } from 'class-transformer';
+import { validate, ValidationError } from 'class-validator';
+import type { NextFunction, Request, Response } from 'express';
+import { HTTP_STATUS } from '../../shared/constants/constants.js';
 
 function flattenValidationErrors(
   errors: ValidationError[],
-  parentPath = ""
+  parentPath = '',
 ): { property: string; constraints: Record<string, string> }[] {
   return errors.flatMap((error) => {
     const path = parentPath
@@ -27,21 +27,21 @@ function flattenValidationErrors(
 type ClassConstructor<T = object> = new (...args: unknown[]) => T;
 
 export const validationMiddleware = <T extends object>(
-  dtoClass: ClassConstructor<T>
+  dtoClass: ClassConstructor<T>,
 ) => {
   return async (
     req: Request,
     res: Response,
-    next: NextFunction
+    next: NextFunction,
   ): Promise<void> => {
     try {
       const data: Record<string, unknown> = {};
       if (req.body && Object.keys(req.body).length > 0)
         Object.assign(data, req.body);
       if (
-        req.method !== "PUT" &&
-        req.method !== "PATCH" &&
-        req.method !== "POST"
+        req.method !== 'PUT' &&
+        req.method !== 'PATCH' &&
+        req.method !== 'POST'
       ) {
         if (req.params && Object.keys(req.params).length > 0)
           Object.assign(data, req.params);
@@ -61,7 +61,7 @@ export const validationMiddleware = <T extends object>(
         const firstError = detailedErrors[0];
         const firstMessage = firstError
           ? Object.values(firstError.constraints)[0]
-          : "Validation failed";
+          : 'Validation failed';
 
         res.status(HTTP_STATUS.BAD_REQUEST).json({
           success: false,
@@ -72,10 +72,10 @@ export const validationMiddleware = <T extends object>(
 
       next();
     } catch (error) {
-      console.error("Validation Middleware Error:", error);
+      console.error('Validation Middleware Error:', error);
       res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,
-        message: "Internal validation error",
+        message: 'Internal validation error',
       });
       return;
     }

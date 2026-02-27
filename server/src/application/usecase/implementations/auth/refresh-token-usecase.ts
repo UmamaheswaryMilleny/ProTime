@@ -4,7 +4,7 @@ import type { ITokenService } from "../../../../domain/service-interfaces/token-
 import { ERROR_MESSAGE, HTTP_STATUS } from "../../../../shared/constants/constants.js";
 import type { IRefreshTokenUsecase } from "../../interfaces/auth/refresh-token-usecase-interface.js";
 import type  { JwtPayload } from "jsonwebtoken";
-
+// “When the access token expires, create a NEW access token using a refresh token
 interface RefreshTokenPayload extends JwtPayload {
   id: string;
   email: string;
