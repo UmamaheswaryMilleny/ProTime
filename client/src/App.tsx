@@ -2,7 +2,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ROUTES } from "./config/env";
 
  // file: Protected.route.tsx
-import { PublicRoute } from "./shared/components/Public.route";       // file: Public.route.tsx
+import { PublicRoute } from "./shared/components/public.route";       // file: Public.route.tsx
 
 // // Landing
 // import { LandingPage } from "./features/landing/pages/LandingPage";
