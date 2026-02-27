@@ -4,8 +4,8 @@ import { ROUTES } from "./config/env";
  // file: Protected.route.tsx
 import { PublicRoute } from "./shared/components/Public.route";       // file: Public.route.tsx
 
-// Landing
-import { LandingPage } from "./features/landing/pages/LandingPage";
+// // Landing
+// import { LandingPage } from "./features/landing/pages/LandingPage";
 
 // Auth Pages
 import { SigninPage } from "./features/auth/pages/SigninPage";
@@ -33,7 +33,7 @@ function App() {
       <Routes>
 
         {/* ─── Public Landing ───────────────────────────────────────────── */}
-        <Route path={ROUTES.HOME} element={<LandingPage />} />
+        {/* <Route path={ROUTES.HOME} element={<LandingPage />} /> */}
 
         {/* ─── Auth Routes (redirect to dashboard if already logged in) ─── */}
         <Route element={<PublicRoute />}>
