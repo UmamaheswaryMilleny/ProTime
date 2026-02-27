@@ -1,34 +1,29 @@
-import "reflect-metadata";
-import dotenv from "dotenv";
-import { App } from "./infrastructure/config/server/server.js";
-import { config } from "./shared/config.js";
-import { MongoConnect } from "./infrastructure/database/mongoDB/mongoConnect.js";
-import { connectRedis } from "./infrastructure/config/redisConfig.js";
+// index.ts
+import 'reflect-metadata';
+import dotenv from 'dotenv';
 dotenv.config();
 
-console.log("Using Redis URL:", process.env.REDIS_URL);
+console.log('ENV CHECK:', {
+  NODE_ENV: process.env.NODE_ENV,
+  DATABASE_URI: process.env.DATABASE_URI,
+  PORT: process.env.PORT,
+});
 
-async function startServer() {
-  try {
-    await connectRedis();
-    console.log("Redis connected");
+process.on('uncaughtException', (err) => {
+  console.error('🔥 UNCAUGHT EXCEPTION:', err.message);
+  console.error(err.stack);   // ← add stack trace
+  process.exit(1);
+});
 
-    const mongo = new MongoConnect();
-    await mongo.connectDB();
-    console.log("MongoDB connected");
+process.on('unhandledRejection', (reason) => {
+  console.error('🔥 UNHANDLED REJECTION:', reason);
+  process.exit(1);
+});
 
-    const app = new App();
-    const expressServer = app.getApp();
+import { bootstrap } from './server.js';
 
-    const PORT = Number(config.server.PORT) || 3000;
-
-    expressServer.listen(PORT, () =>
-      console.log(`Server running at port ${PORT}`)
-    );
-  } catch (error) {
-    console.error("Server startup failed:", error);
-    process.exit(1);
-  }
-}
-
-startServer();
+bootstrap().catch((err) => {
+  console.error('❌ Server startup failed:', err.message);  // ← add .message
+  console.error(err.stack);   // ← add stack trace
+  process.exit(1);
+});

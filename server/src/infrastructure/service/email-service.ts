@@ -1,41 +1,33 @@
-import nodemailer from "nodemailer";
-import type { Transporter } from "nodemailer";
+import nodemailer, { Transporter } from "nodemailer";
 import { injectable } from "tsyringe";
-
-import type { IEmailService } from "../../domain/service-interfaces/email-service-interface.js";
-import { config } from "../../shared/config.js";
-import { EVENT_EMMITER_TYPE } from "../../shared/constants/constants.js";
-import { eventBus } from "../../shared/eventBus.js";
+import { IEmailService } from "../../application/service_interface/email.service.interface";
+import { config } from "../../shared/config";
 
 @injectable()
-export class EmailService implements IEmailService {
+export class NodemailerEmailService implements IEmailService {
   private transporter: Transporter;
 
   constructor() {
     this.transporter = nodemailer.createTransport({
       service: "gmail",
       auth: {
-        user: config.email.EMAIL,
+        user: config.email.USER,
         pass: config.email.PASSWORD,
       },
     });
-
-    this.registerEventListener();
   }
-
-  private registerEventListener(): void {
-    eventBus.on(EVENT_EMMITER_TYPE.SENDMAIL, this.sendMail.bind(this));
-  }
-
   async sendMail(to: string, subject: string, html: string): Promise<void> {
     const mailOptions = {
-      from: `"ProTIme" <${config.email.EMAIL}>`,
+      from: `"ProTIme" <${config.email.FROM}>`,
       to,
       subject,
       html,
     };
-
-    await this.transporter.sendMail(mailOptions);
-    console.log("✅ Email sent successfully");
+    try {
+      await this.transporter.sendMail(mailOptions);
+      console.log("Email sent successfully");
+    } catch (error) {
+      throw new Error(`failed to send email: ${(error as Error).message}`);
+    }
   }
 }
