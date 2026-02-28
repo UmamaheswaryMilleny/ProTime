@@ -70,6 +70,15 @@ export const SUCCESS_MESSAGE = {
     USER_UNBLOCKED: 'User unblocked successfully',
     NOT_BLOCKED: 'User is not blocked. Middleware passed',
   },
+
+  TODO: {
+    CREATED:            'Todo created successfully',
+    FETCHED:            'Todos fetched successfully',
+    UPDATED:            'Todo updated successfully',
+    DELETED:            'Todo deleted successfully',
+    COMPLETED:          'Todo completed successfully',
+    POMODORO_COMPLETED: 'Pomodoro session completed',
+  },
     
 };
 

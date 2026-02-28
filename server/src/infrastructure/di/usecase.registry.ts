@@ -22,6 +22,20 @@ import type { IforgotPasswordUseCase } from '../../application/usecase/interface
 import type { IResetPasswordUsecase } from '../../application/usecase/interface/auth/reset-password.usecase.interface.js';
 import type { IGoogleAuthUsecase } from '../../application/usecase/interface/auth/google-auth.usecase.interface.js';
 
+import { CreateTodoUsecase } from '../../application/usecase/implementation/todo/todo.create.usecase.js';
+import { GetTodosUsecase } from '../../application/usecase/implementation/todo/todos.get.usecase.js';
+import { UpdateTodoUsecase } from '../../application/usecase/implementation/todo/todo.update.usecase.js';
+import { DeleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.delete.usecase.js';
+import { CompleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.complete.usecase.js';
+import { CompletePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.complete.usecase.js';
+
+import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface.js';
+import type { IGetTodosUsecase } from '../../application/usecase/interface/todo/todos-get.usecase.interface.js';
+import type { IUpdateTodoUsecase } from '../../application/usecase/interface/todo/todo-update.usecase.interface.js';
+import type { IDeleteTodoUsecase } from '../../application/usecase/interface/todo/todo.delete.usecase.interface.js';
+import type { ICompleteTodoUsecase } from '../../application/usecase/interface/todo/todo.complete.usecase.interface.js';
+import type { ICompletePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-complete.usecase.interface.js';
+
 export class UsecaseRegistry {
   static register(): void {
     // ─── Auth Use Cases ───────────────────────────────────────────────
@@ -59,6 +73,31 @@ export class UsecaseRegistry {
 
     container.register<IGoogleAuthUsecase>('IGoogleAuthUsecase', {
       useClass: GoogleAuthUsecase,
+    });
+
+    // todo
+    container.register<ICreateTodoUsecase>('ICreateTodoUsecase', {
+      useClass: CreateTodoUsecase,
+    });
+
+    container.register<IGetTodosUsecase>('IGetTodosUsecase', {
+      useClass: GetTodosUsecase,
+    });
+
+    container.register<IUpdateTodoUsecase>('IUpdateTodoUsecase', {
+      useClass: UpdateTodoUsecase,
+    });
+
+    container.register<IDeleteTodoUsecase>('IDeleteTodoUsecase', {
+      useClass: DeleteTodoUsecase,
+    });
+
+    container.register<ICompleteTodoUsecase>('ICompleteTodoUsecase', {
+      useClass: CompleteTodoUsecase,
+    });
+
+    container.register<ICompletePomodoroUsecase>('ICompletePomodoroUsecase', {
+      useClass: CompletePomodoroUsecase,
     });
   }
 }

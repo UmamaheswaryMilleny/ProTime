@@ -26,6 +26,9 @@ import { WinstonLoggerAdapter } from '../service/logger-service.js';
 import type { IProfileRepository } from '../../domain/repositories/profile/profile.repository.interface.js';
 import { MongoProfileRepository } from '../repositories/user/profile.repository.js';
 
+import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface.js';
+import { MongoTodoRepository } from '../repositories/todo.repository.js';
+
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
@@ -33,6 +36,13 @@ export class ServiceRegistry {
       useClass: MongoUserRepository,
     });
 
+      container.register<IProfileRepository>('ProfileRepository', {
+      useClass: MongoProfileRepository,
+    });
+//todo
+    container.register<ITodoRepository>('ITodoRepository', {
+      useClass: MongoTodoRepository,
+    });
     // ─── Auth Services ────────────────────────────────────────────────
     container.register<ITokenService>('ITokenService', {
       useClass: JwtTokenService,
@@ -73,8 +83,8 @@ export class ServiceRegistry {
     container.register<ILoggerService>('ILoggerService', {
       useClass: WinstonLoggerAdapter,
     });
-    container.register<IProfileRepository>('ProfileRepository', {
-  useClass: MongoProfileRepository,
-});
+  
+
+    
   }
 }

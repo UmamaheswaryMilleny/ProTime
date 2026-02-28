@@ -11,7 +11,7 @@ import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes.js";
 import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes.js";
 import { UserRoutes } from "./interface_adapter/routes/user/user-routes.js";
 import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware.js";
-
+import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes.js";
 export class App {
   private readonly app: Application;
 
@@ -38,6 +38,7 @@ export class App {
     this.app.use('/api/v1/auth', container.resolve(AuthRoutes).router);
     this.app.use('/api/v1/admin', container.resolve(AdminRoutes).router);
     this.app.use('/api/v1/user', container.resolve(UserRoutes).router);
+     this.app.use('/api/v1/todos', container.resolve(TodoRoutes).router); 
   }
 
   private configureErrorHandling(): void {
