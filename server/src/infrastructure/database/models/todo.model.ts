@@ -13,7 +13,7 @@ export interface TodoDocument extends Document {
   pomodoroEnabled: boolean;
   pomodoroCompleted: boolean;
   actualPomodoroTime?: number | null;
-  breakTime?: number | null;
+  smartBreaks?: boolean;
 
   baseXp: number;
   bonusXp: number;

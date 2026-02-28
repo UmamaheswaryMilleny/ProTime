@@ -36,7 +36,7 @@ export const POMODORO_MIN_FOR_BONUS:Record<TodoPriority,number>={
 
 export const DAILY_XP_CAP = 50
 
-export const BREAK_TIME={
-    MIN_MINUTES:5,
-    MAX_MINUTES:15,
-} as const;
+// export const BREAK_TIME={
+//     MIN_MINUTES:5,
+//     MAX_MINUTES:15,
+// } as const;

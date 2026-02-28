@@ -5,38 +5,24 @@ import type { CreateTodoRequestDTO } from "../../../dto/todo/request/todo.create
 import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
 import { TodoMapper } from "../../../mapper/todo.mapper.js";
 
-import { ESTIMATED_TIME_OPTIONS,TodoStatus,BASE_XP, TodoPriority, } from "../../../../domain/enums/todo.enums.js";
-import { BreakTimeRequiredError, InvalidEstimatedTimeError,LowPriorityBreakTimeError } from "../../../../domain/errors/todo.error.js";
+import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, TodoPriority, } from "../../../../domain/enums/todo.enums.js";
+import { InvalidEstimatedTimeError } from "../../../../domain/errors/todo.error.js";
 
 @injectable()
 export class CreateTodoUsecase implements ICreateTodoUsecase {
   constructor(
     @inject("ITodoRepository")
     private readonly todoRepository: ITodoRepository
-  ) {}
+  ) { }
 
   async execute(userId: string, data: CreateTodoRequestDTO): Promise<TodoResponseDTO> {
-    const { title, description, priority, estimatedTime, pomodoroEnabled, breakTime } = data;
+    const { title, description, priority, estimatedTime, pomodoroEnabled, smartBreaks } = data;
 
     // 1. Validate estimatedTime is allowed for the given priority
     const validTimes = ESTIMATED_TIME_OPTIONS[priority];
     if (!validTimes.includes(estimatedTime)) {
       throw new InvalidEstimatedTimeError(priority, estimatedTime);
     }
-
-    // 2. LOW tasks cannot have break time (pomodoro itself is allowed)
-    // ✅ Removed: "LOW tasks cannot have pomodoro" — LOW CAN have pomodoro, just no bonus XP
-    if (priority === TodoPriority.LOW && breakTime !== undefined) {
-      throw new LowPriorityBreakTimeError();
-    }
-
-    if (
-  pomodoroEnabled &&
-  priority !== TodoPriority.LOW &&
-  breakTime === undefined
-) {
-  throw new BreakTimeRequiredError()
-}
 
     // 3. Set baseXp at creation time — correct value locked in immediately
     // ✅ Fixed: was setting baseXp: 0, which CompleteTodoUsecase then overwrote
@@ -54,7 +40,7 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
       pomodoroEnabled,
       pomodoroCompleted: false,
       actualPomodoroTime: undefined,
-      breakTime: pomodoroEnabled ? breakTime : undefined,
+      smartBreaks: pomodoroEnabled ? (smartBreaks ?? true) : undefined,
       baseXp,    // ✅ Set correctly at creation
       bonusXp: 0,
       xpCounted: false,

@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import {
   TodoPriority,
-  BREAK_TIME,
+  
 } from '../../../../domain/enums/todo.enums.js';
 
 export class UpdateTodoRequestDTO {
@@ -38,15 +38,17 @@ priority?:TodoPriority
   @IsOptional()
   @IsBoolean()
   pomodoroEnabled?: boolean;
-
-  @ValidateIf((o) => o.pomodoroEnabled === true)
-  @IsOptional()
-  @IsInt()
-  @Min(BREAK_TIME.MIN_MINUTES, {
-    message: `Break time must be at least ${BREAK_TIME.MIN_MINUTES} minutes`,
-  })
-  @Max(BREAK_TIME.MAX_MINUTES, {
-    message: `Break time cannot exceed ${BREAK_TIME.MAX_MINUTES} minutes`,
-  })
-  breakTime?: number;
+    @IsOptional()
+    @IsBoolean()
+    smartBreaks?: boolean;
+  // @ValidateIf((o) => o.pomodoroEnabled === true)
+  // @IsOptional()
+  // @IsInt()
+  // @Min(BREAK_TIME.MIN_MINUTES, {
+  //   message: `Break time must be at least ${BREAK_TIME.MIN_MINUTES} minutes`,
+  // })
+  // @Max(BREAK_TIME.MAX_MINUTES, {
+  //   message: `Break time cannot exceed ${BREAK_TIME.MAX_MINUTES} minutes`,
+  // })
+  // breakTime?: number;
 }

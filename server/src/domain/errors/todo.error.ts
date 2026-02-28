@@ -30,14 +30,14 @@ export class InvalidEstimatedTimeError extends DomainError {
     super(`Estimated time ${value} is not valid for ${priority} priority`);
   }
 }
-export class LowPriorityBreakTimeError extends DomainError {
-  constructor() {
-    super(`Break time is not available for LOW priority tasks`);
-  }
-}
+// export class LowPriorityBreakTimeError extends DomainError {
+//   constructor() {
+//     super(`Break time is not available for LOW priority tasks`);
+//   }
+// }
 
-export class BreakTimeRequiredError extends DomainError {
-  constructor() {
-    super('Break time is required when Pomodoro is enabled for MEDIUM or HIGH priority tasks');
-  }
-}
+// export class BreakTimeRequiredError extends DomainError {
+//   constructor() {
+//     super('Break time is required when Pomodoro is enabled for MEDIUM or HIGH priority tasks');
+//   }
+// }

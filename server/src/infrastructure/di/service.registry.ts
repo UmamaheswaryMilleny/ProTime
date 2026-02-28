@@ -35,11 +35,6 @@ export class ServiceRegistry {
     container.register<IUserRepository>('UserRepository', {
       useClass: MongoUserRepository,
     });
-
-      container.register<IProfileRepository>('ProfileRepository', {
-      useClass: MongoProfileRepository,
-    });
-//todo
     container.register<ITodoRepository>('ITodoRepository', {
       useClass: MongoTodoRepository,
     });
@@ -83,8 +78,8 @@ export class ServiceRegistry {
     container.register<ILoggerService>('ILoggerService', {
       useClass: WinstonLoggerAdapter,
     });
-  
-
-    
+    container.register<IProfileRepository>('ProfileRepository', {
+      useClass: MongoProfileRepository,
+    });
   }
 }

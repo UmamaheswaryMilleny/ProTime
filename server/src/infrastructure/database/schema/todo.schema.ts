@@ -1,5 +1,5 @@
 import { Schema, Types } from "mongoose";
-import { TodoPriority,TodoStatus } from "../../../domain/enums/todo.enums.js";
+import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums.js";
 
 export const TodoSchema = new Schema(
   {
@@ -50,10 +50,10 @@ export const TodoSchema = new Schema(
       type: Number,
       default: null,
     },
-    breakTime: {
-      type: Number,
+    smartBreaks: {
+      type: Boolean,
       default: null,
-      // null for LOW tasks — MEDIUM and HIGH only
+      // null for LOW tasks — MEDIUM and HIGH evaluate this flag
     },
 
     // ─── XP ────────────────────────────────────────────────────────────────────

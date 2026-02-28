@@ -12,7 +12,8 @@ export interface TodoEntity {
   pomodoroEnabled: boolean;
   pomodoroCompleted: boolean;
   actualPomodoroTime?:number;
-  breakTime?: number;
+  // breakTime?: number;
+  smartBreaks?: boolean;
   completedAt?: Date;
 
   baseXp: number;

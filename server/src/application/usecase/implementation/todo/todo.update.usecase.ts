@@ -16,9 +16,7 @@ import {
   UnauthorizedTodoAccessError,
   TodoAlreadyCompletedError,
   InvalidEstimatedTimeError,
-  LowPriorityBreakTimeError,
-  BreakTimeRequiredError,
-}  from "../../../../domain/errors/todo.error.js";
+} from "../../../../domain/errors/todo.error.js";
 
 
 @injectable()
@@ -26,7 +24,7 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
   constructor(
     @inject("ITodoRepository")
     private readonly todoRepository: ITodoRepository
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
@@ -54,21 +52,6 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
       }
     }
 
-    // 6. LOW tasks cannot have break time
-    // ✅ Removed: "LOW cannot have pomodoro" — LOW CAN have pomodoro, just no bonus XP
-    if (effectivePriority === TodoPriority.LOW && data.breakTime !== undefined) {
-      throw new LowPriorityBreakTimeError();
-    }
-
-    // If enabling pomodoro on MEDIUM/HIGH, breakTime must be provided
-if (
-  data.pomodoroEnabled === true &&
-  effectivePriority !== TodoPriority.LOW &&
-  (data.breakTime === undefined && todo.breakTime === undefined)
-) {
-  throw new BreakTimeRequiredError();
-}
-
     // 7. If priority changed, recalculate baseXp
     const baseXpUpdate =
       data.priority && data.priority !== todo.priority
@@ -78,22 +61,22 @@ if (
     // 8. Build update payload — only include defined fields
     const updateData: Record<string, unknown> = { ...baseXpUpdate };
 
-    if (data.title !== undefined)         updateData.title = data.title;
-    if (data.description !== undefined)   updateData.description = data.description;
-    if (data.priority !== undefined)      updateData.priority = data.priority;
+    if (data.title !== undefined) updateData.title = data.title;
+    if (data.description !== undefined) updateData.description = data.description;
+    if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.estimatedTime !== undefined) updateData.estimatedTime = data.estimatedTime;
     if (data.pomodoroEnabled !== undefined) {
       updateData.pomodoroEnabled = data.pomodoroEnabled;
-      // Disabling pomodoro → clear break time and reset pomodoro state
+      // Disabling pomodoro → clear smart breaks and reset pomodoro state
       if (!data.pomodoroEnabled) {
-        updateData.breakTime = undefined;
+        updateData.smartBreaks = undefined;
         updateData.pomodoroCompleted = false;
         updateData.actualPomodoroTime = undefined;
       }
     }
-   if (data.breakTime !== undefined && data.pomodoroEnabled !== false) {
-  updateData.breakTime = data.breakTime;
-}
+    if (data.smartBreaks !== undefined && data.pomodoroEnabled !== false) {
+      updateData.smartBreaks = data.smartBreaks;
+    }
 
     const updated = await this.todoRepository.updateById(todoId, updateData as never);
     if (!updated) throw new TodoNotFoundError();

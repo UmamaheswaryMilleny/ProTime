@@ -13,7 +13,8 @@ export interface TodoResponseDTO{
     pomodoroEnabled:boolean;
     pomodoroCompleted:boolean;
     actualPomodoroTime:number|undefined;
-    breakTime:number|undefined;
+    // breakTime:number|undefined;
+    smartBreaks: boolean | undefined;
     baseXp:number;
     bonusXp:number;
     xpCounted: boolean;

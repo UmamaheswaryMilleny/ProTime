@@ -18,7 +18,8 @@ export class TodoMapper {
       pomodoroEnabled: todo.pomodoroEnabled,
       pomodoroCompleted: todo.pomodoroCompleted,
       actualPomodoroTime: todo.actualPomodoroTime,
-      breakTime: todo.breakTime,
+      // breakTime: todo.breakTime,
+       smartBreaks: todo.smartBreaks,
 
       baseXp: todo.baseXp,
       bonusXp: todo.bonusXp,

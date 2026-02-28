@@ -23,8 +23,6 @@ import {
   PomodoroNotEnabledError,
   PomodoroAlreadyCompletedError,
   InvalidEstimatedTimeError,
-  LowPriorityBreakTimeError,
-  BreakTimeRequiredError,
 } from '../../domain/errors/todo.error.js';
 
 import { HTTP_STATUS } from '../../shared/constants/constants.js';
@@ -79,9 +77,7 @@ export class ErrorMiddleware {
       err instanceof TodoAlreadyCompletedError ||
       err instanceof PomodoroNotEnabledError ||
       err instanceof PomodoroAlreadyCompletedError ||
-      err instanceof InvalidEstimatedTimeError ||
-      err instanceof LowPriorityBreakTimeError ||
-      err instanceof BreakTimeRequiredError
+      err instanceof InvalidEstimatedTimeError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;
