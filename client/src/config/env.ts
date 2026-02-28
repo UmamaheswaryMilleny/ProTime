@@ -16,11 +16,13 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",                              // main dashboard home
   USER_PROFILE: "/dashboard/profile",                  // profile tab (inside dashboard)
   DASHBOARD_FIND_BUDDY: "/dashboard/find-buddy",
+  DASHBOARD_TODO_LIST: "/dashboard/todo-list",
   DASHBOARD_HELP: "/dashboard/help",
   DASHBOARD_LEVELS: "/dashboard/levels",
   DASHBOARD_SUBSCRIPTION: "/dashboard/subscription",
 
   // ─── Admin ────────────────────────────────────────────────────────────────
+  ADMIN_LOGIN: "/admin/login",
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_USERS: "/admin/users",
 } as const;
