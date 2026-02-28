@@ -20,7 +20,7 @@ process.on('unhandledRejection', (reason) => {
   process.exit(1);
 });
 
-import { bootstrap } from './server.js';
+import { bootstrap } from './server';
 
 bootstrap().catch((err) => {
   console.error('❌ Server startup failed:', err.message);  // ← add .message

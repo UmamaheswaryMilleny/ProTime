@@ -1,10 +1,10 @@
 import { injectable } from "tsyringe";
 import type { Types } from "mongoose";
-import { BaseRepository } from "../base.repository.js";
-import { ProfileModel,type  ProfileDocument } from "../../database/models/profile.model.js";
-import { ProfileMapper } from "../../database/mappers/profile.mapper.js";
-import type { ProfileEntity } from "../../../domain/entities/profile.entity.js";
-import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface.js"; // ✅ correct path
+import { BaseRepository } from "../base.repository";
+import { ProfileModel,type  ProfileDocument } from "../../database/models/profile.model";
+import { ProfileMapper } from "../../database/mappers/profile.mapper";
+import type { ProfileEntity } from "../../../domain/entities/profile.entity";
+import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface"; // ✅ correct path
 
 // ✅ No local interface — removed entirely
 

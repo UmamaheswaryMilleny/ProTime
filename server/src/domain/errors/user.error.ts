@@ -1,4 +1,4 @@
-import { DomainError } from "./base-domain.error.js";
+import { DomainError } from "./base-domain.error";
 
 
 export class UserAlreadyExistsError extends DomainError{

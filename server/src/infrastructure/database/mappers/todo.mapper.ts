@@ -1,6 +1,6 @@
 import { Types } from 'mongoose';
-import type { TodoEntity } from '../../../domain/entities/todo.entity.js';
-import type { TodoDocument } from '../models/todo.model.js';
+import type { TodoEntity } from '../../../domain/entities/todo.entity';
+import type { TodoDocument } from '../models/todo.model';
 
 export class TodoMapper {
   // ─── Document → Domain Entity ─────────────────────────────────────────────

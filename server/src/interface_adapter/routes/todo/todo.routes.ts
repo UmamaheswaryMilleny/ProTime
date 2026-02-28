@@ -1,18 +1,18 @@
 import { injectable } from 'tsyringe';
 import { container } from 'tsyringe';
 
-import { BaseRoute } from '../base-route.js';
-import { asyncHandler } from '../../../shared/asyncHandler.js';
-import { validationMiddleware } from '../../middlewares/validation.middleware.js';
-import { verifyAuth, authorizeRole } from '../../middlewares/auth.middleware.js';
-import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware.js';
+import { BaseRoute } from '../base-route';
+import { asyncHandler } from '../../../shared/asyncHandler';
+import { validationMiddleware } from '../../middlewares/validation.middleware';
+import { verifyAuth, authorizeRole } from '../../middlewares/auth.middleware';
+import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware';
 
-import { TodoController } from '../../controllers/todo/todo.controller.js';
+import { TodoController } from '../../controllers/todo/todo.controller';
 
-import { CreateTodoRequestDTO } from '../../../application/dto/todo/request/todo.create.request.dto.js';
-import { UpdateTodoRequestDTO } from '../../../application/dto/todo/request/todo.update.request.dto.js';
-import { CompletePomodoroRequestDTO } from '../../../application/dto/todo/request/pomodoro.request.dto.js';
-import { UserRole } from '../../../domain/enums/user.enums.js';
+import { CreateTodoRequestDTO } from '../../../application/dto/todo/request/todo.create.request.dto';
+import { UpdateTodoRequestDTO } from '../../../application/dto/todo/request/todo.update.request.dto';
+import { CompletePomodoroRequestDTO } from '../../../application/dto/todo/request/pomodoro.request.dto';
+import { UserRole } from '../../../domain/enums/user.enums';
 
 @injectable()
 export class TodoRoutes extends BaseRoute {

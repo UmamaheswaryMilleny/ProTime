@@ -1,12 +1,12 @@
 import { injectable } from "tsyringe";
 import type { SortOrder } from "mongoose";
 
-import { BaseRepository } from "../base.repository.js";
-import { UserModel, type UserDocument } from "../../database/models/user.model.js";
-import { UserMapper } from "../../database/mappers/user.mapper.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import type { UserEntity } from "../../../domain/entities/user.entity.js";
-import { UserRole } from "../../../domain/enums/user.enums.js";
+import { BaseRepository } from "../base.repository";
+import { UserModel, type UserDocument } from "../../database/models/user.model";
+import { UserMapper } from "../../database/mappers/user.mapper";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { UserEntity } from "../../../domain/entities/user.entity";
+import { UserRole } from "../../../domain/enums/user.enums";
 
 @injectable()
 export class MongoUserRepository

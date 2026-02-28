@@ -1,5 +1,5 @@
-import type { ProfileEntity } from "../../../domain/entities/profile.entity.js";
-import type { ProfileDocument } from "../models/profile.model.js";
+import type { ProfileEntity } from "../../../domain/entities/profile.entity";
+import type { ProfileDocument } from "../models/profile.model";
 
 export class ProfileMapper {
   

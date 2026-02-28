@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Types } from "mongoose";
-import { TodoSchema } from "../schema/todo.schema.js";
-import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums.js";
+import { TodoSchema } from "../schema/todo.schema";
+import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
 
 export interface TodoDocument extends Document {
   userId: Types.ObjectId;

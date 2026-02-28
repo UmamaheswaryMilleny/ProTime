@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import type { ITempUserService } from "../../service_interface/temp-user.service.interface.js";
-import type { IEmailService } from "../../service_interface/email.service.interface.js";
-import type { IOtpService } from "../../service_interface/otp.service.interface.js";
-import { mailContentProvider } from "../../../shared/mailContentProvider.js";
-import type { ISendOtpUsecase } from "../interface/auth/send-otp.usecase.interface.js";
-import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants.js";
+import type { ITempUserService } from "../../service_interface/temp-user.service.interface";
+import type { IEmailService } from "../../service_interface/email.service.interface";
+import type { IOtpService } from "../../service_interface/otp.service.interface";
+import { mailContentProvider } from "../../../shared/mailContentProvider";
+import type { ISendOtpUsecase } from "../interface/auth/send-otp.usecase.interface";
+import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants";
 // import { InvalidOtpError } from "../../../domain/errors/user.error";
-import { RegistrationSessionExpiredError } from "../../../domain/errors/user.error.js";
+import { RegistrationSessionExpiredError } from "../../../domain/errors/user.error";
 
 @injectable()
 export class ResendOtpUseCase implements ISendOtpUsecase {

@@ -1,9 +1,9 @@
-import type { TodoEntity } from '../../domain/entities/todo.entity.js';
-import { DAILY_XP_CAP, TodoStatus } from '../../domain/enums/todo.enums.js';
+import type { TodoEntity } from '../../domain/entities/todo.entity';
+import { DAILY_XP_CAP, TodoStatus } from '../../domain/enums/todo.enums';
 import type {
   TodoResponseDTO,
   TodoListResponseDTO,
-} from '../dto/todo/response/todo.response.dto.js';
+} from '../dto/todo/response/todo.response.dto';
 
 export class TodoMapper {
   static toResponse(todo: TodoEntity): TodoResponseDTO {

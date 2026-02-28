@@ -1,6 +1,6 @@
 import mongoose,{Document,Model} from "mongoose";
-import { UserSchema } from "../schema/user.schema.js";
-import { AuthProvider,UserRole } from "../../../domain/enums/user.enums.js";
+import { UserSchema } from "../schema/user.schema";
+import { AuthProvider,UserRole } from "../../../domain/enums/user.enums";
 
 export interface UserDocument extends Document{
     fullName:string;

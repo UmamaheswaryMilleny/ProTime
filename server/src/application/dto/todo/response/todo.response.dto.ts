@@ -1,4 +1,4 @@
-import { TodoPriority,TodoStatus } from "../../../../domain/enums/todo.enums.js";
+import { TodoPriority,TodoStatus } from "../../../../domain/enums/todo.enums";
 
 //single todo respose returned on create, update, and inside the list response
 

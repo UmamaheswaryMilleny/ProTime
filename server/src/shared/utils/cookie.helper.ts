@@ -1,6 +1,6 @@
 // src/shared/utils/cookie.helper.ts
 import type { Response } from 'express';
-import { COOKIES_NAMES } from '../constants/constants.js';
+import { COOKIES_NAMES } from '../constants/constants';
 
 const isProduction = process.env.NODE_ENV === 'production';
 

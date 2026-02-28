@@ -1,10 +1,10 @@
 import type { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'tsyringe';
 
-import type { IUserRepository } from '../../../domain/repositories/user/user.repository.interface.js';
-import { UserMapper } from '../../../application/mapper/user.mapper.js';
-import { ResponseHelper } from '../../helpers/response.helper.js';
-import { HTTP_STATUS } from '../../../shared/constants/constants.js';
+import type { IUserRepository } from '../../../domain/repositories/user/user.repository.interface';
+import { UserMapper } from '../../../application/mapper/user.mapper';
+import { ResponseHelper } from '../../helpers/response.helper';
+import { HTTP_STATUS } from '../../../shared/constants/constants';
 
 @injectable()
 export class AdminController {

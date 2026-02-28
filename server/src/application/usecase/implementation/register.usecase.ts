@@ -1,14 +1,14 @@
 import { inject, injectable } from "tsyringe";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import type { IRegisterUsecase } from "../interface/auth/register.usecase.interface.js";
-import { UserAlreadyExistsError } from "../../../domain/errors/user.error.js";
-import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface.js";
-import type { ITempUserService } from "../../service_interface/temp-user.service.interface.js";
-import type { IEmailService } from "../../service_interface/email.service.interface.js";
-import type { IOtpService } from "../../service_interface/otp.service.interface.js";
-import { UserRole } from "../../../domain/enums/user.enums.js";
-import { mailContentProvider } from "../../../shared/mailContentProvider.js";
-import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants.js";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { IRegisterUsecase } from "../interface/auth/register.usecase.interface";
+import { UserAlreadyExistsError } from "../../../domain/errors/user.error";
+import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface";
+import type { ITempUserService } from "../../service_interface/temp-user.service.interface";
+import type { IEmailService } from "../../service_interface/email.service.interface";
+import type { IOtpService } from "../../service_interface/otp.service.interface";
+import { UserRole } from "../../../domain/enums/user.enums";
+import { mailContentProvider } from "../../../shared/mailContentProvider";
+import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants";
 
 @injectable()
 export class RegisterUsecase implements IRegisterUsecase {

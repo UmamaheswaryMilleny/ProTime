@@ -1,6 +1,6 @@
 import 'reflect-metadata';
-import { ServiceRegistry } from './service.registry.js';
-import { UsecaseRegistry } from './usecase.registry.js';
+import { ServiceRegistry } from './service.registry';
+import { UsecaseRegistry } from './usecase.registry';
 
 /**
  * Main DI bootstrap — call this ONCE at app startup before anything else.

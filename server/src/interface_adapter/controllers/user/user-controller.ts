@@ -1,13 +1,13 @@
 import type { Response, NextFunction } from "express";
 import { inject, injectable } from "tsyringe";
 
-import type { IUserController } from "../../interfaces/user/user.controller.interface.js";
-import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import { ProfileMapper } from "../../../application/mapper/profile.mapper.js";
-import { ResponseHelper } from "../../helpers/response.helper.js";
-import { HTTP_STATUS } from "../../../shared/constants/constants.js";
-import type { CustomRequest } from "../../middlewares/auth.middleware.js";
+import type { IUserController } from "../../interfaces/user/user.controller.interface";
+import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import { ProfileMapper } from "../../../application/mapper/profile.mapper";
+import { ResponseHelper } from "../../helpers/response.helper";
+import { HTTP_STATUS } from "../../../shared/constants/constants";
+import type { CustomRequest } from "../../middlewares/auth.middleware";
 
 @injectable()
 export class UserController implements IUserController {

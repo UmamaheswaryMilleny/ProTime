@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { config } from "../../shared/config/index.js";
+import { config } from "../../shared/config/index";
 
 export class MongoConnect {
   private _dburl: string;

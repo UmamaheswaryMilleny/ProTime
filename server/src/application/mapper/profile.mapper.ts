@@ -1,5 +1,5 @@
-import type { ProfileEntity } from "../../domain/entities/profile.entity.js";
-import { UserProfileResponseDTO } from "../dto/user/response/user-profile.response.dto.js";
+import type { ProfileEntity } from "../../domain/entities/profile.entity";
+import { UserProfileResponseDTO } from "../dto/user/response/user-profile.response.dto";
 
 export class ProfileMapper {
   static toProfileResponse(

@@ -1,5 +1,5 @@
 import { Schema } from "mongoose";
-import { UserRole, AuthProvider } from "../../../domain/enums/user.enums.js";
+import { UserRole, AuthProvider } from "../../../domain/enums/user.enums";
 
 export const UserSchema = new Schema(
   {

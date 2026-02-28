@@ -1,14 +1,14 @@
 import { injectable } from "tsyringe";
 import { container } from "tsyringe";
 
-import { BaseRoute } from "../base-route.js";
-import { asyncHandler } from "../../../shared/asyncHandler.js";
-import { validationMiddleware } from "../../middlewares/validation.middleware.js";
-import { verifyAuth, authorizeRole } from "../../middlewares/auth.middleware.js";
-import { BlockedUserMiddleware } from "../../middlewares/blocked-user.middleware.js";
-import { UserController } from "../../controllers/user/user-controller.js";
-import { UpdateProfileRequestDTO } from "../../../application/dto/user/request/update-profile.request.dto.js";
-import { UserRole } from "../../../domain/enums/user.enums.js";
+import { BaseRoute } from "../base-route";
+import { asyncHandler } from "../../../shared/asyncHandler";
+import { validationMiddleware } from "../../middlewares/validation.middleware";
+import { verifyAuth, authorizeRole } from "../../middlewares/auth.middleware";
+import { BlockedUserMiddleware } from "../../middlewares/blocked-user.middleware";
+import { UserController } from "../../controllers/user/user-controller";
+import { UpdateProfileRequestDTO } from "../../../application/dto/user/request/update-profile.request.dto";
+import { UserRole } from "../../../domain/enums/user.enums";
 
 @injectable()
 export class UserRoutes extends BaseRoute {

@@ -1,11 +1,11 @@
 import { inject, injectable } from "tsyringe";
-import type { IOtpService } from "../../service_interface/otp.service.interface.js";
-import type { ITempUserService } from "../../service_interface/temp-user.service.interface.js";
-import type { IVerifyOtpUsecase } from "../interface/auth/verify-otp.usecase.interface.js";
-import { InvalidOtpError } from "../../../domain/errors/user.error.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import { AuthProvider } from "../../../domain/enums/user.enums.js";
-import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface.js";
+import type { IOtpService } from "../../service_interface/otp.service.interface";
+import type { ITempUserService } from "../../service_interface/temp-user.service.interface";
+import type { IVerifyOtpUsecase } from "../interface/auth/verify-otp.usecase.interface";
+import { InvalidOtpError } from "../../../domain/errors/user.error";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import { AuthProvider } from "../../../domain/enums/user.enums";
+import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface";
 
 
 @injectable()

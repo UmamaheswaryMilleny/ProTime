@@ -1,4 +1,4 @@
-import type { SuccessResponseDTO } from "../../../dto/common/success.response.dto.js"; 
+import type { SuccessResponseDTO } from "../../../dto/common/success.response.dto"; 
 // export interface ILogoutUseCase{
 //     execute():Promise<SuccessResponseDTO>;
 // }

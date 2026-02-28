@@ -3,15 +3,15 @@ import type { Application } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { container } from "tsyringe";
-import { config } from "./shared/config/index.js";
-import { DependencyContainer } from "./infrastructure/di/index.js";
-import { MongoConnect } from "./infrastructure/database/connection.js";
-import { connectRedis } from "./infrastructure/config/redis.config.js";
-import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes.js";
-import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes.js";
-import { UserRoutes } from "./interface_adapter/routes/user/user-routes.js";
-import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware.js";
-import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes.js";
+import { config } from "./shared/config/index";
+import { DependencyContainer } from "./infrastructure/di/index";
+import { MongoConnect } from "./infrastructure/database/connection";
+import { connectRedis } from "./infrastructure/config/redis.config";
+import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes";
+import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes";
+import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
+import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware";
+import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
 export class App {
   private readonly app: Application;
 

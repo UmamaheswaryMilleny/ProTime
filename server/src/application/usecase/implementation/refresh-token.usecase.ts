@@ -1,10 +1,10 @@
 import { inject, injectable } from "tsyringe";
-import type { ITokenService } from "../../service_interface/token.service.interface.js";
-import type { IRefreshTokenUsecase } from "../interface/auth/refresh-token.usecase.interface.js";
-import type { RefreshTokenResponseDTO } from "../../dto/auth/response/refrsh-token.response.dto.js";
-import { InvalidTokenError } from "../../../domain/errors/user.error.js";
-import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
+import type { ITokenService } from "../../service_interface/token.service.interface";
+import type { IRefreshTokenUsecase } from "../interface/auth/refresh-token.usecase.interface";
+import type { RefreshTokenResponseDTO } from "../../dto/auth/response/refrsh-token.response.dto";
+import { InvalidTokenError } from "../../../domain/errors/user.error";
+import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
 
 @injectable()
 export class RefreshTokenUseCase implements IRefreshTokenUsecase {

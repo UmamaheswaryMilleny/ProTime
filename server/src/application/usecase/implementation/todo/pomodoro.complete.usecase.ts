@@ -1,15 +1,15 @@
 import { inject, injectable } from "tsyringe";
-import type { ICompletePomodoroUsecase } from "../../interface/todo/pomodoro-complete.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
-import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
-import { TodoMapper } from "../../../mapper/todo.mapper.js";
-import { POMODORO_MIN_FOR_BONUS } from "../../../../domain/enums/todo.enums.js";
+import type { ICompletePomodoroUsecase } from "../../interface/todo/pomodoro-complete.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import { TodoMapper } from "../../../mapper/todo.mapper";
+import { POMODORO_MIN_FOR_BONUS } from "../../../../domain/enums/todo.enums";
 import {
   TodoNotFoundError,
   UnauthorizedTodoAccessError,
   PomodoroNotEnabledError,
   PomodoroAlreadyCompletedError,
-} from "../../../../domain/errors/todo.error.js";
+} from "../../../../domain/errors/todo.error";
 
 
 

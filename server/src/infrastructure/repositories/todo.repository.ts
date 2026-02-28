@@ -1,13 +1,13 @@
 import { injectable } from 'tsyringe';
 import type { Types } from 'mongoose';
 
-import { BaseRepository } from './base.repository.js';
-import { TodoModel } from '../database/models/todo.model.js';
-import { TodoMapper } from '../database/mappers/todo.mapper.js';
-import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface.js';
-import type { TodoEntity } from '../../domain/entities/todo.entity.js';
-import { TodoPriority, TodoStatus } from '../../domain/enums/todo.enums.js';
-import type { TodoDocument } from '../database/models/todo.model.js';
+import { BaseRepository } from './base.repository';
+import { TodoModel } from '../database/models/todo.model';
+import { TodoMapper } from '../database/mappers/todo.mapper';
+import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface';
+import type { TodoEntity } from '../../domain/entities/todo.entity';
+import { TodoPriority, TodoStatus } from '../../domain/enums/todo.enums';
+import type { TodoDocument } from '../database/models/todo.model';
 
 @injectable()
 export class MongoTodoRepository

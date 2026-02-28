@@ -1,10 +1,10 @@
 import { inject, injectable } from "tsyringe";
-import type { IDeleteTodoUsecase } from "../../interface/todo/todo.delete.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
+import type { IDeleteTodoUsecase } from "../../interface/todo/todo.delete.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
 import {
   TodoNotFoundError,
   UnauthorizedTodoAccessError,
-}  from "../../../../domain/errors/todo.error.js";
+}  from "../../../../domain/errors/todo.error";
 
 
 @injectable()

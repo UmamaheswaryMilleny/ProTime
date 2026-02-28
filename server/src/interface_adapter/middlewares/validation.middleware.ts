@@ -1,7 +1,7 @@
 import { plainToInstance } from 'class-transformer';
 import { validate, ValidationError } from 'class-validator';
 import type { NextFunction, Request, Response } from 'express';
-import { HTTP_STATUS } from '../../shared/constants/constants.js';
+import { HTTP_STATUS } from '../../shared/constants/constants';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

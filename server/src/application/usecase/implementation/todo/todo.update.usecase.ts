@@ -1,22 +1,22 @@
 import { inject, injectable } from "tsyringe";
-import type { IUpdateTodoUsecase } from "../../interface/todo/todo-update.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
-import type { UpdateTodoRequestDTO } from "../../../dto/todo/request/todo.update.request.dto.js";
-import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
-import { TodoMapper } from "../../../mapper/todo.mapper.js";
+import type { IUpdateTodoUsecase } from "../../interface/todo/todo-update.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { UpdateTodoRequestDTO } from "../../../dto/todo/request/todo.update.request.dto";
+import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import { TodoMapper } from "../../../mapper/todo.mapper";
 import {
   TodoPriority,
   TodoStatus,
   BASE_XP,
   ESTIMATED_TIME_OPTIONS,
-} from "../../../../domain/enums/todo.enums.js";
+} from "../../../../domain/enums/todo.enums";
 
 import {
   TodoNotFoundError,
   UnauthorizedTodoAccessError,
   TodoAlreadyCompletedError,
   InvalidEstimatedTimeError,
-} from "../../../../domain/errors/todo.error.js";
+} from "../../../../domain/errors/todo.error";
 
 
 @injectable()

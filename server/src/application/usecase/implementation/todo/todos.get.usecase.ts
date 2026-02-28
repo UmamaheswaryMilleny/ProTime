@@ -1,8 +1,8 @@
 import { inject, injectable } from "tsyringe";
-import type { IGetTodosUsecase } from "../../interface/todo/todos-get.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
-import type { TodoListResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
-import { TodoMapper } from "../../../mapper/todo.mapper.js";
+import type { IGetTodosUsecase } from "../../interface/todo/todos-get.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { TodoListResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import { TodoMapper } from "../../../mapper/todo.mapper";
 
 @injectable()
 export class GetTodosUsecase implements IGetTodosUsecase {

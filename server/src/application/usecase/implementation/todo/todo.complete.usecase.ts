@@ -1,20 +1,20 @@
 import { inject, injectable } from "tsyringe";
-import type { ICompleteTodoUsecase } from "../../interface/todo/todo.complete.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
-import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
-import { TodoMapper } from "../../../mapper/todo.mapper.js";
+import type { ICompleteTodoUsecase } from "../../interface/todo/todo.complete.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import { TodoMapper } from "../../../mapper/todo.mapper";
 import {
   TodoStatus,
   POMODORO_BONUS_XP,
   DAILY_XP_CAP,
-}  from "../../../../domain/enums/todo.enums.js";
+}  from "../../../../domain/enums/todo.enums";
 
 
 import {
   TodoNotFoundError,
   UnauthorizedTodoAccessError,
   TodoAlreadyCompletedError,
-}  from "../../../../domain/errors/todo.error.js";
+}  from "../../../../domain/errors/todo.error";
 
 
 

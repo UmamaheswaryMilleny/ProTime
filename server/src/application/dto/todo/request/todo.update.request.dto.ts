@@ -12,7 +12,7 @@ import {
 import {
   TodoPriority,
   
-} from '../../../../domain/enums/todo.enums.js';
+} from '../../../../domain/enums/todo.enums';
 
 export class UpdateTodoRequestDTO {
   @IsOptional()

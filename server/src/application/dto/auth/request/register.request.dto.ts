@@ -7,7 +7,7 @@ import {
   Validate,
 } from "class-validator";
 import { Transform } from "class-transformer";
-import { MatchPasswordConstraint } from "./password-validator.js";
+import { MatchPasswordConstraint } from "./password-validator";
 
 export class RegisterRequestDTO {
   @IsString()

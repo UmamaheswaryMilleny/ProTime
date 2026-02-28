@@ -1,6 +1,6 @@
 import { Document, Model} from "mongoose";
 import type { ClientSession } from "mongoose";
-import type { IBaseRepository } from "../../domain/repositories/base.repository.interface.js";
+import type { IBaseRepository } from "../../domain/repositories/base.repository.interface";
 
 
 

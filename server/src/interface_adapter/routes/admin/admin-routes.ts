@@ -1,13 +1,13 @@
 import { injectable } from "tsyringe";
 import { container } from "tsyringe";
 
-import { BaseRoute } from "../base-route.js";
-import { asyncHandler } from "../../../shared/asyncHandler.js";
-import { validationMiddleware } from "../../middlewares/validation.middleware.js";
-import { verifyAuth, authorizeRole } from "../../middlewares/auth.middleware.js";
-import { AdminController } from "../../controllers/admin/admin-controller.js";
-import { GetUsersRequestDTO } from "../../../application/dto/user/request/get-user.request.dto.js";
-import { UserRole } from "../../../domain/enums/user.enums.js";
+import { BaseRoute } from "../base-route";
+import { asyncHandler } from "../../../shared/asyncHandler";
+import { validationMiddleware } from "../../middlewares/validation.middleware";
+import { verifyAuth, authorizeRole } from "../../middlewares/auth.middleware";
+import { AdminController } from "../../controllers/admin/admin-controller";
+import { GetUsersRequestDTO } from "../../../application/dto/user/request/get-user.request.dto";
+import { UserRole } from "../../../domain/enums/user.enums";
 
 @injectable()
 export class AdminRoutes extends BaseRoute {

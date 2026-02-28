@@ -1,15 +1,15 @@
 import { inject, injectable } from "tsyringe";
-import type { IGoogleAuthUsecase } from "../interface/auth/google-auth.usecase.interface.js";
-import type { IgoogleAuth } from "../../service_interface/google-auth.service.interface.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import type { ITokenService } from "../../service_interface/token.service.interface.js";
-import type { LoginResponseDTO } from "../../dto/auth/response/login.response.dto.js";
-import { AuthProvider, UserRole } from "../../../domain/enums/user.enums.js";
+import type { IGoogleAuthUsecase } from "../interface/auth/google-auth.usecase.interface";
+import type { IgoogleAuth } from "../../service_interface/google-auth.service.interface";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { ITokenService } from "../../service_interface/token.service.interface";
+import type { LoginResponseDTO } from "../../dto/auth/response/login.response.dto";
+import { AuthProvider, UserRole } from "../../../domain/enums/user.enums";
 import {
   UserBlockedError,
   UserDeletedError,
-} from "../../../domain/errors/user.error.js";
-import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface.js";
+} from "../../../domain/errors/user.error";
+import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
 
 @injectable()
 export default class GoogleAuthUsecase implements IGoogleAuthUsecase {

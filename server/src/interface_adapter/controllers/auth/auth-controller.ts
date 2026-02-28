@@ -1,25 +1,25 @@
 import type { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'tsyringe';
 
-import type { IAuthController } from '../../interfaces/auth/auth.controller.interface.js';
-import type { IRegisterUsecase } from '../../../application/usecase/interface/auth/register.usecase.interface.js';
-import type { ILoginUsecase } from '../../../application/usecase/interface/auth/login.usecase.interface.js';
-import type { ILogoutUseCase } from '../../../application/usecase/interface/auth/logout.usecase.interface.js';
-import type { ISendOtpUsecase } from '../../../application/usecase/interface/auth/send-otp.usecase.interface.js';
-import type { IVerifyOtpUsecase } from '../../../application/usecase/interface/auth/verify-otp.usecase.interface.js';
-import type { IRefreshTokenUsecase } from '../../../application/usecase/interface/auth/refresh-token.usecase.interface.js';
-import type { IforgotPasswordUseCase } from '../../../application/usecase/interface/auth/forgot-password.usecase.interface.js';
-import type { IResetPasswordUsecase } from '../../../application/usecase/interface/auth/reset-password.usecase.interface.js';
-import type { IGoogleAuthUsecase } from '../../../application/usecase/interface/auth/google-auth.usecase.interface.js';
+import type { IAuthController } from '../../interfaces/auth/auth.controller.interface';
+import type { IRegisterUsecase } from '../../../application/usecase/interface/auth/register.usecase.interface';
+import type { ILoginUsecase } from '../../../application/usecase/interface/auth/login.usecase.interface';
+import type { ILogoutUseCase } from '../../../application/usecase/interface/auth/logout.usecase.interface';
+import type { ISendOtpUsecase } from '../../../application/usecase/interface/auth/send-otp.usecase.interface';
+import type { IVerifyOtpUsecase } from '../../../application/usecase/interface/auth/verify-otp.usecase.interface';
+import type { IRefreshTokenUsecase } from '../../../application/usecase/interface/auth/refresh-token.usecase.interface';
+import type { IforgotPasswordUseCase } from '../../../application/usecase/interface/auth/forgot-password.usecase.interface';
+import type { IResetPasswordUsecase } from '../../../application/usecase/interface/auth/reset-password.usecase.interface';
+import type { IGoogleAuthUsecase } from '../../../application/usecase/interface/auth/google-auth.usecase.interface';
 
 
-import { ResponseHelper } from '../../helpers/response.helper.js';
+import { ResponseHelper } from '../../helpers/response.helper';
 import {
   COOKIES_NAMES,
   HTTP_STATUS,
   SUCCESS_MESSAGE,
-} from '../../../shared/constants/constants.js';
-import { setAuthCookies } from '../../../shared/utils/cookie.helper.js';
+} from '../../../shared/constants/constants';
+import { setAuthCookies } from '../../../shared/utils/cookie.helper';
 
 @injectable()
 export class AuthController implements IAuthController {

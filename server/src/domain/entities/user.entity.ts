@@ -1,4 +1,4 @@
-import { AuthProvider, UserRole } from "../enums/user.enums.js"
+import { AuthProvider, UserRole } from "../enums/user.enums"
 
 export interface UserEntity{
     id:string

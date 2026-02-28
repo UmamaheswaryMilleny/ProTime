@@ -1,15 +1,15 @@
 import { inject, injectable } from "tsyringe";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import type { IEmailService } from "../../service_interface/email.service.interface.js";
-import type { IResetTokenStore } from "../../service_interface/reset-token-store.service.interface.js";
-import { UserNotFoundError } from "../../../domain/errors/user.error.js";
-import { UserBlockedError } from "../../../domain/errors/user.error.js";
-import type { IforgotPasswordUseCase } from "../interface/auth/forgot-password.usecase.interface.js";
-import { UserDeletedError } from "../../../domain/errors/user.error.js";
-import { mailContentProvider } from "../../../shared/mailContentProvider.js";
-import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants.js";
-import type { ITokenService } from "../../service_interface/token.service.interface.js";
-import { config } from "../../../shared/config/index.js";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { IEmailService } from "../../service_interface/email.service.interface";
+import type { IResetTokenStore } from "../../service_interface/reset-token-store.service.interface";
+import { UserNotFoundError } from "../../../domain/errors/user.error";
+import { UserBlockedError } from "../../../domain/errors/user.error";
+import type { IforgotPasswordUseCase } from "../interface/auth/forgot-password.usecase.interface";
+import { UserDeletedError } from "../../../domain/errors/user.error";
+import { mailContentProvider } from "../../../shared/mailContentProvider";
+import { MAIL_CONTENT_PURPOSE } from "../../../shared/constants/constants";
+import type { ITokenService } from "../../service_interface/token.service.interface";
+import { config } from "../../../shared/config/index";
 
 @injectable()
 export class ForgotPasswordUsecase implements IforgotPasswordUseCase {

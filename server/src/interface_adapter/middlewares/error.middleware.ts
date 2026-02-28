@@ -1,6 +1,6 @@
 import type { NextFunction, Response, Request } from 'express';
 
-import { DomainError } from '../../domain/errors/base-domain.error.js';
+import { DomainError } from '../../domain/errors/base-domain.error';
 
 // ─── User errors ───────────────────────────────────────────────────────────
 import {
@@ -13,7 +13,7 @@ import {
   InvalidTokenError,
   WeakPasswordError,
   PasswordMismatchError,
-} from '../../domain/errors/user.error.js';
+} from '../../domain/errors/user.error';
 
 // ─── Todo errors ───────────────────────────────────────────────────────────
 import {
@@ -23,9 +23,9 @@ import {
   PomodoroNotEnabledError,
   PomodoroAlreadyCompletedError,
   InvalidEstimatedTimeError,
-} from '../../domain/errors/todo.error.js';
+} from '../../domain/errors/todo.error';
 
-import { HTTP_STATUS } from '../../shared/constants/constants.js';
+import { HTTP_STATUS } from '../../shared/constants/constants';
 
 export class ErrorMiddleware {
   public handleError(

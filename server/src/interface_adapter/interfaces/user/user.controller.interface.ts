@@ -1,5 +1,5 @@
 import type { Response, NextFunction } from "express";
-import type { CustomRequest } from "../../middlewares/auth.middleware.js";
+import type { CustomRequest } from "../../middlewares/auth.middleware";
 
 export interface IUserController {
   getProfile(

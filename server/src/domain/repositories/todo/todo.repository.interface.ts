@@ -1,6 +1,6 @@
-import type { TodoEntity } from "../../entities/todo.entity.js";
-import type { TodoPriority } from "../../enums/todo.enums.js";
-import type { IBaseRepository } from "../base.repository.interface.js";
+import type { TodoEntity } from "../../entities/todo.entity";
+import type { TodoPriority } from "../../enums/todo.enums";
+import type { IBaseRepository } from "../base.repository.interface";
 
 export interface ITodoRepository extends IBaseRepository<TodoEntity> {
 

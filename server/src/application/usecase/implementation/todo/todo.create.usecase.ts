@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import type { ICreateTodoUsecase } from "../../interface/todo/todo-create.usecase.interface.js";
-import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface.js";
-import type { CreateTodoRequestDTO } from "../../../dto/todo/request/todo.create.request.dto.js";
-import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto.js";
-import { TodoMapper } from "../../../mapper/todo.mapper.js";
+import type { ICreateTodoUsecase } from "../../interface/todo/todo-create.usecase.interface";
+import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { CreateTodoRequestDTO } from "../../../dto/todo/request/todo.create.request.dto";
+import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import { TodoMapper } from "../../../mapper/todo.mapper";
 
-import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, TodoPriority, } from "../../../../domain/enums/todo.enums.js";
-import { InvalidEstimatedTimeError } from "../../../../domain/errors/todo.error.js";
+import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, TodoPriority, } from "../../../../domain/enums/todo.enums";
+import { InvalidEstimatedTimeError } from "../../../../domain/errors/todo.error";
 
 @injectable()
 export class CreateTodoUsecase implements ICreateTodoUsecase {

@@ -1,4 +1,4 @@
-import { TodoPriority, TodoStatus } from '../enums/todo.enums.js';
+import { TodoPriority, TodoStatus } from '../enums/todo.enums';
 
 export interface TodoEntity {
   id: string;

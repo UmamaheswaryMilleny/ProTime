@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Types } from "mongoose";
-import { ProfileSchema } from "../schema/profile.schema.js";
+import { ProfileSchema } from "../schema/profile.schema";
 export interface ProfileDocument extends Document {
   userId: Types.ObjectId;
   fullName: string;

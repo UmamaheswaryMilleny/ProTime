@@ -1,5 +1,5 @@
-import type { ProfileEntity } from "../../entities/profile.entity.js";
-import type { IBaseRepository } from "../base.repository.interface.js";
+import type { ProfileEntity } from "../../entities/profile.entity";
+import type { IBaseRepository } from "../base.repository.interface";
 
 export interface IProfileRepository extends IBaseRepository<ProfileEntity> {
   findByUserId(userId: string): Promise<ProfileEntity | null>;

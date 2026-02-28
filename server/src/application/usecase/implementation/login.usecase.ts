@@ -1,16 +1,16 @@
 import { inject, injectable } from "tsyringe";
-import type { ILoginUsecase } from "../interface/auth/login.usecase.interface.js";
+import type { ILoginUsecase } from "../interface/auth/login.usecase.interface";
 import {
   InvalidPasswordError,
   UserDeletedError,
-} from "../../../domain/errors/user.error.js";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface.js";
-import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface.js";
-import type { LoginResponseDTO } from "../../dto/auth/response/login.response.dto.js";
-import { UserNotFoundError } from "../../../domain/errors/user.error.js";
-import { UserBlockedError } from "../../../domain/errors/user.error.js";
-import type { ITokenService } from "../../service_interface/token.service.interface.js";
-import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface.js";
+} from "../../../domain/errors/user.error";
+import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface";
+import type { LoginResponseDTO } from "../../dto/auth/response/login.response.dto";
+import { UserNotFoundError } from "../../../domain/errors/user.error";
+import { UserBlockedError } from "../../../domain/errors/user.error";
+import type { ITokenService } from "../../service_interface/token.service.interface";
+import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
 
 @injectable()
 export class LoginUsecase implements ILoginUsecase {

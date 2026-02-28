@@ -1,5 +1,5 @@
 import { Schema, Types } from "mongoose";
-import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums.js";
+import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
 
 export const TodoSchema = new Schema(
   {

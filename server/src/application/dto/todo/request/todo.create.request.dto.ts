@@ -1,5 +1,5 @@
 import { IsString,IsNotEmpty,IsOptional,IsEnum,IsInt,IsBoolean,IsDateString,MaxLength,Min,Max,ValidateIf, isInt } from "class-validator";
-import { TodoPriority} from "../../../../domain/enums/todo.enums.js";
+import { TodoPriority} from "../../../../domain/enums/todo.enums";
 
 export class CreateTodoRequestDTO{
   @IsString()

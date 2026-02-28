@@ -1,11 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { container } from "tsyringe";
-import type { ITokenService } from "../../application/service_interface/token.service.interface.js";
+import type { ITokenService } from "../../application/service_interface/token.service.interface";
 import {
   COOKIES_NAMES,
   ERROR_MESSAGE,
   HTTP_STATUS,
-} from "../../shared/constants/constants.js";
+} from "../../shared/constants/constants";
 
 // ─── Extended Request Type ────────────────────────────────────────────────────
 

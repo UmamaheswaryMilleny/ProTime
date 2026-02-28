@@ -1,10 +1,10 @@
 import type { Response, NextFunction } from 'express';
 import { inject, injectable } from 'tsyringe';
 
-import type { IUserRepository } from '../../domain/repositories/user/user.repository.interface.js';
-import { UserRole } from '../../domain/enums/user.enums.js';
-import { HTTP_STATUS, ERROR_MESSAGE } from '../../shared/constants/constants.js';
-import type { CustomRequest } from './auth.middleware.js';
+import type { IUserRepository } from '../../domain/repositories/user/user.repository.interface';
+import { UserRole } from '../../domain/enums/user.enums';
+import { HTTP_STATUS, ERROR_MESSAGE } from '../../shared/constants/constants';
+import type { CustomRequest } from './auth.middleware';
 
 @injectable()
 export class BlockedUserMiddleware {

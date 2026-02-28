@@ -1,17 +1,17 @@
 import type { Response, NextFunction } from 'express';
 import { inject, injectable } from 'tsyringe';
 
-import type { ITodoController } from '../../interfaces/todo/todo.controller.interface.js';
-import type { ICreateTodoUsecase } from '../../../application/usecase/interface/todo/todo-create.usecase.interface.js';
-import type { IGetTodosUsecase } from '../../../application/usecase/interface/todo/todos-get.usecase.interface.js';
-import type { IUpdateTodoUsecase } from '../../../application/usecase/interface/todo/todo-update.usecase.interface.js';
-import type { IDeleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.delete.usecase.interface.js';
-import type { ICompleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.complete.usecase.interface.js';
-import type { ICompletePomodoroUsecase } from '../../../application/usecase/interface/todo/pomodoro-complete.usecase.interface.js';
+import type { ITodoController } from '../../interfaces/todo/todo.controller.interface';
+import type { ICreateTodoUsecase } from '../../../application/usecase/interface/todo/todo-create.usecase.interface';
+import type { IGetTodosUsecase } from '../../../application/usecase/interface/todo/todos-get.usecase.interface';
+import type { IUpdateTodoUsecase } from '../../../application/usecase/interface/todo/todo-update.usecase.interface';
+import type { IDeleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.delete.usecase.interface';
+import type { ICompleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.complete.usecase.interface';
+import type { ICompletePomodoroUsecase } from '../../../application/usecase/interface/todo/pomodoro-complete.usecase.interface';
 
-import type { CustomRequest } from '../../middlewares/auth.middleware.js';
-import { ResponseHelper } from '../../helpers/response.helper.js';
-import { HTTP_STATUS, SUCCESS_MESSAGE } from '../../../shared/constants/constants.js';
+import type { CustomRequest } from '../../middlewares/auth.middleware';
+import { ResponseHelper } from '../../helpers/response.helper';
+import { HTTP_STATUS, SUCCESS_MESSAGE } from '../../../shared/constants/constants';
 
 @injectable()
 export class TodoController implements ITodoController {

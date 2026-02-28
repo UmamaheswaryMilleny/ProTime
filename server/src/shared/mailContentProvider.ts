@@ -1,5 +1,5 @@
 // src/shared/mail-content-provider.ts
-import { MAIL_CONTENT_PURPOSE } from './constants/constants.js';
+import { MAIL_CONTENT_PURPOSE } from './constants/constants';
 
 export function mailContentProvider(purpose: string, data?: string): string {
   switch (purpose) {

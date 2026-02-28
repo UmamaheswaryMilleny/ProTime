@@ -1,5 +1,5 @@
-import type { UserEntity } from "../../../domain/entities/user.entity.js";
-import type { UserDocument } from "../models/user.model.js";
+import type { UserEntity } from "../../../domain/entities/user.entity";
+import type { UserDocument } from "../models/user.model";
 
 export class UserMapper {
   
