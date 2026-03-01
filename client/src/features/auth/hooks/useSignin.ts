@@ -8,7 +8,8 @@ import { AxiosError } from 'axios';
 
 import { signinSchema, type SigninFormData } from '../validation/signin.schema';
 import { loginAPI } from '../services/auth-service';
-import { loginUser } from '../store/authSlice';
+import { loginUser, updateUser } from '../store/authSlice';
+import { userApi } from '../../user/user-service';
 import { ROUTES } from '../../../config/env';
 
 export const useSignin = () => {
@@ -27,9 +28,6 @@ export const useSignin = () => {
   const onSubmit = async (data: SigninFormData) => {
     setIsLoading(true);
     try {
-      // POST /auth/login
-      // Backend response shape: { success, message, data: { accessToken } }
-      // Backend also sets access_token + refresh_token as httpOnly cookies
       const response = await loginAPI(data);
       const accessToken = response.data.data?.accessToken;
 
@@ -38,29 +36,40 @@ export const useSignin = () => {
         return;
       }
 
-      // Backend doesn't return full user on login — only accessToken
-      // Decode role from JWT payload to determine redirect
+      // Decode role + id + email from JWT payload
       const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
       const role = tokenPayload.role as 'ADMIN' | 'CLIENT';
       const id = tokenPayload.id as string;
       const email = tokenPayload.email as string;
 
-      // Store in Redux + localStorage
+      // 1. Store minimal auth state immediately so axios interceptor has the token
       dispatch(loginUser({
         id,
         email,
-        fullName: '',        // ← not returned on login, filled on profile fetch
+        fullName: '',
         role,
         accessToken,
       }));
 
+      // 2. Fetch profile to get fullName + profileImage — fire and forget on error
+      //    Don't block navigation if profile fetch fails
+try {
+  const profile = await userApi.getProfileService();
+  console.log('Profile response:', profile); // ← add this
+  dispatch(updateUser({
+    fullName:     profile.fullName,
+    profileImage: profile.profileImage,
+  }));
+} catch (err) {
+  console.error('Profile fetch failed:', err); // ← and this
+}
+
       toast.success('Welcome back!');
 
-      // Redirect based on role
       if (role === 'ADMIN') {
         navigate(ROUTES.ADMIN_DASHBOARD);
       } else {
-        navigate(ROUTES.DASHBOARD);  // ← /dashboard not /user/profile
+        navigate(ROUTES.DASHBOARD);
       }
 
     } catch (error) {

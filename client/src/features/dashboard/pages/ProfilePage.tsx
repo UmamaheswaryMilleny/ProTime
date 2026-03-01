@@ -147,7 +147,7 @@ export const ProfilePage: React.FC = () => {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm text-zinc-400">Username</label>
-                    <input type="text" className="w-full bg-zinc-800 border-none rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none" />
+                    <input type="text" defaultValue={user?.username || ''} className="w-full bg-zinc-800 border-none rounded-lg px-4 py-2.5 text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none" />
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -3,17 +3,17 @@ import { ProTimeBackend } from "../../api/instance";
 // Matches backend UserProfileResponseDTO exactly
 export interface UserProfile {
   id: string;
-  fullName: string;       // ✅ backend returns fullName
+  fullName: string;
   email: string;
   bio?: string;
-  country?: string;       // ✅ backend has country, not location
+  country?: string;
   profileImage?: string;
   createdAt: string;
 }
 
 // Matches backend UpdateProfileRequestDTO exactly
 export interface UpdateUserProfileRequest {
-  fullName?: string;      // ✅ backend DTO uses fullname (lowercase)
+  fullName?: string;
   username?: string;
   bio?: string;
   country?: string;
@@ -35,11 +35,14 @@ export const userApi = {
     return response.data.data;
   },
 
-  // POST /user/upload/profile-image → returns image URL
-  uploadProfileImage: async (_file: File): Promise<string> => {
+  // PATCH /user/profile/avatar → returns { profileImage: string }
+  // Field name must be 'avatar' — matches multer upload.single('avatar')
+  uploadProfileImage: async (file: File): Promise<string> => {
     const formData = new FormData();
-    formData.append("profileImage", _file);
-    const response = await ProTimeBackend.post("/user/upload/profile-image", formData);
-    return response.data.data;
-  }
+    formData.append("avatar", file);
+    const response = await ProTimeBackend.patch("/user/profile/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+    return response.data.data.profileImage;
+  },
 };

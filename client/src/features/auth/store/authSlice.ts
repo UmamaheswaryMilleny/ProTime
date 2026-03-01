@@ -4,7 +4,8 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface AuthUser {
   id: string;
-  fullName: string;         // ← capital N — matches DashboardHeader + backend DTO
+  fullName: string;  
+  username?:string       // ← capital N — matches DashboardHeader + backend DTO
   email: string;
   role: "ADMIN" | "CLIENT";
   accessToken: string;
