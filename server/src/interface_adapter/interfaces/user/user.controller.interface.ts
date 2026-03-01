@@ -12,4 +12,5 @@ export interface IUserController {
     res: Response,
     next: NextFunction,
   ): Promise<void>;
+  uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

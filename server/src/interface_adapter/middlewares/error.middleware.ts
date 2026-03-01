@@ -25,6 +25,8 @@ import {
   InvalidEstimatedTimeError,
 } from '../../domain/errors/todo.error';
 
+import { ProfileNotFoundError } from '../../domain/errors/profile.error';
+
 import { HTTP_STATUS } from '../../shared/constants/constants';
 
 export class ErrorMiddleware {
@@ -38,7 +40,7 @@ export class ErrorMiddleware {
     // ─── 404 Not Found ────────────────────────────────────────────────
     if (
       err instanceof UserNotFoundError ||
-      err instanceof TodoNotFoundError
+      err instanceof TodoNotFoundError || err instanceof ProfileNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;

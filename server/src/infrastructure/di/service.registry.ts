@@ -1,3 +1,4 @@
+
 import { container } from 'tsyringe';
 
 // Domain interfaces
@@ -26,9 +27,13 @@ import { WinstonLoggerAdapter } from '../service/logger-service';
 import type { IProfileRepository } from '../../domain/repositories/profile/profile.repository.interface';
 import { MongoProfileRepository } from '../repositories/user/profile.repository';
 
+//Todo
 import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface';
 import { MongoTodoRepository } from '../repositories/todo.repository';
+import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface';
+import { CloudinaryService } from '../service/cloudinary-service';
 
+//upload service
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
@@ -81,5 +86,9 @@ export class ServiceRegistry {
     container.register<IProfileRepository>('ProfileRepository', {
       useClass: MongoProfileRepository,
     });
+
+    container.register<ICloudinaryService>('ICloudinaryService', {
+  useClass: CloudinaryService,
+});
   }
 }

@@ -9,6 +9,7 @@ import { BlockedUserMiddleware } from "../../middlewares/blocked-user.middleware
 import { UserController } from "../../controllers/user/user-controller";
 import { UpdateProfileRequestDTO } from "../../../application/dto/user/request/update-profile.request.dto";
 import { UserRole } from "../../../domain/enums/user.enums";
+import { uploadAvatarMiddleware } from "../../middlewares/upload.middleware";
 
 @injectable()
 export class UserRoutes extends BaseRoute {
@@ -35,11 +36,16 @@ export class UserRoutes extends BaseRoute {
     // Get own profile
     this.router.get("/profile", asyncHandler(ctrl.getProfile.bind(ctrl)));
 
-    // Update own profile
+      // Update own profile
     this.router.put(
       "/profile",
       validationMiddleware(UpdateProfileRequestDTO),
       asyncHandler(ctrl.updateProfile.bind(ctrl)),
     );
+    this.router.patch(
+  '/profile/avatar',
+  uploadAvatarMiddleware,
+  asyncHandler(ctrl.uploadAvatar.bind(ctrl)),
+);
   }
 }

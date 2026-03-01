@@ -1,3 +1,4 @@
+
 import { container } from 'tsyringe';
 
 // Use case implementations
@@ -29,12 +30,17 @@ import { DeleteTodoUsecase } from '../../application/usecase/implementation/todo
 import { CompleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.complete.usecase';
 import { CompletePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.complete.usecase';
 
+//todo
 import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface';
 import type { IGetTodosUsecase } from '../../application/usecase/interface/todo/todos-get.usecase.interface';
 import type { IUpdateTodoUsecase } from '../../application/usecase/interface/todo/todo-update.usecase.interface';
 import type { IDeleteTodoUsecase } from '../../application/usecase/interface/todo/todo.delete.usecase.interface';
 import type { ICompleteTodoUsecase } from '../../application/usecase/interface/todo/todo.complete.usecase.interface';
 import type { ICompletePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-complete.usecase.interface';
+
+//profile-upload
+import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
+import type { IUploadProfileImageUsecase } from '../../application/usecase/interface/user/image.usecase.interface';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -99,5 +105,12 @@ export class UsecaseRegistry {
     container.register<ICompletePomodoroUsecase>('ICompletePomodoroUsecase', {
       useClass: CompletePomodoroUsecase,
     });
+
+    container.register<IUploadProfileImageUsecase>(
+      'IUploadProfileImageUsecase',
+      {
+        useClass: UploadProfileImageUsecase,
+      },
+    );
   }
 }

@@ -39,7 +39,7 @@ export class CloudinaryService implements ICloudinaryService {
       uploadStream.end(fileBuffer);
     });
   }
-
+//Cloudinary treats each upload as a replacement, not a new file. Same slot, same URL structure, no orphaned files. deleteImage on the interface exists for when you build account deletion — at that point you'll want to clean 
   async deleteImage(publicId: string): Promise<void> {
     await cloudinary.uploader.destroy(publicId);
   }

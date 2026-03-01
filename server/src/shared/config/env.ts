@@ -67,5 +67,9 @@ SALTROUNDS:required("SALTROUNDS"),
   // Logger
   LOG_LEVEL: process.env.LOG_LEVEL ?? "info",
 
+  // Cloudinary
+  CLOUDINARY_CLOUD_NAME: required("CLOUDINARY_CLOUD_NAME"),
+  CLOUDINARY_API_KEY: required("CLOUDINARY_API_KEY"),
+  CLOUDINARY_API_SECRET: required("CLOUDINARY_API_SECRET"),
 
 };

@@ -8,6 +8,7 @@ import { ProfileMapper } from "../../../application/mapper/profile.mapper";
 import { ResponseHelper } from "../../helpers/response.helper";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
 import type { CustomRequest } from "../../middlewares/auth.middleware";
+import type { IUploadProfileImageUsecase } from "../../../application/usecase/interface/user/image.usecase.interface";
 
 @injectable()
 export class UserController implements IUserController {
@@ -17,6 +18,8 @@ export class UserController implements IUserController {
 
     @inject("ProfileRepository")
     private readonly profileRepository: IProfileRepository,
+    @inject('IUploadProfileImageUsecase')
+private readonly uploadProfileImageUsecase: IUploadProfileImageUsecase
   ) {}
 
   // ─── Get Profile ──────────────────────────────────────────────────────────
@@ -131,4 +134,33 @@ export class UserController implements IUserController {
       next(error);
     }
   }
+
+
+
+async uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+  try {
+    if (!req.user) {
+      ResponseHelper.error(res, 'Unauthorized', HTTP_STATUS.UNAUTHORIZED);
+      return;
+    }
+
+    // multer puts the file in req.file — no file means middleware let it through empty
+    if (!req.file) {
+      ResponseHelper.error(res, 'No image file provided', HTTP_STATUS.BAD_REQUEST);
+      return;
+    }
+
+    const result = await this.uploadProfileImageUsecase.execute(
+      req.user.id,
+      req.file.buffer,
+      req.file.mimetype,
+    );
+
+    ResponseHelper.success(res, HTTP_STATUS.OK, 'Profile image updated successfully', result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+
 }
