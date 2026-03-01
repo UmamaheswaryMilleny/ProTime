@@ -80,29 +80,34 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
 
     // 3. Sync state when task/timerKey changes
     useEffect(() => {
-        if (timerKey && task) {
-            const savedIndex = localStorage.getItem(`${timerKey}_phaseIndex`);
-            const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
-
-            const index = savedIndex ? parseInt(savedIndex, 10) : 0;
-            // Bound index in case sequence changed
-            const safeIndex = index < phaseSequence.length ? index : 0;
-
-            setCurrentPhaseIndex(safeIndex);
-
-            if (savedTime && index === safeIndex) {
-                setTimeRemaining(parseInt(savedTime, 10));
-            } else {
-                setTimeRemaining(phaseSequence[safeIndex].duration);
-            }
-
-            setIsRunning(localStorage.getItem(`${timerKey}_isRunning`) === 'true');
-        } else {
+    if (!timerKey || !task) {
+        queueMicrotask(() => {
             setCurrentPhaseIndex(0);
             setTimeRemaining(phaseSequence[0].duration);
             setIsRunning(false);
+        });
+        return;
+    }
+
+    const savedIndex = localStorage.getItem(`${timerKey}_phaseIndex`);
+    const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
+
+    const index = savedIndex ? parseInt(savedIndex, 10) : 0;
+    const safeIndex = index < phaseSequence.length ? index : 0;
+
+    queueMicrotask(() => {
+        setCurrentPhaseIndex(safeIndex);
+
+        if (savedTime && index === safeIndex) {
+            setTimeRemaining(parseInt(savedTime, 10));
+        } else {
+            setTimeRemaining(phaseSequence[safeIndex].duration);
         }
-    }, [timerKey, task, phaseSequence]);
+
+        setIsRunning(localStorage.getItem(`${timerKey}_isRunning`) === 'true');
+    });
+
+}, [timerKey, task, phaseSequence]);
 
     // 4. Save to Local Storage
     useEffect(() => {
@@ -113,30 +118,35 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
             localStorage.setItem(`${timerKey}_smartBreaks`, isSmartBreaksEnabled.toString());
         }
     }, [currentPhaseIndex, timeRemaining, isRunning, isSmartBreaksEnabled, timerKey]);
+const playSoftBeep = useCallback(() => {
+    try {
+        const AudioCtx =
+            window.AudioContext ||
+            (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+                .webkitAudioContext;
 
-    const playSoftBeep = useCallback(() => {
-        try {
-            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
+        if (!AudioCtx) return;
 
-            osc.connect(gain);
-            gain.connect(ctx.destination);
+        const ctx = new AudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
 
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime); // A5 note
+        osc.connect(gain);
+        gain.connect(ctx.destination);
 
-            // Envelope for a soft chime
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
 
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.8);
-        } catch (err) {
-            // Audio context not supported or failed
-        }
-    }, []);
+        gain.gain.setValueAtTime(0, ctx.currentTime);
+        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.8);
+    } catch {
+        // silently fail
+    }
+}, []);
 
     // 5. Timer Interval & Phase Transitions
     useEffect(() => {
@@ -146,30 +156,35 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
                 setTimeRemaining((prev) => prev - 1);
             }, 1000);
         } else if (isRunning && timeRemaining === 0) {
-            setIsRunning(false);
 
-            const completingPhase = phaseSequence[currentPhaseIndex].phase;
-            if (completingPhase === 'BREAK') {
-                playSoftBeep();
-                toast('Ready to continue?', { icon: '🔄', duration: 4000 });
-            } else if (completingPhase === 'FOCUS' && currentPhaseIndex < phaseSequence.length - 1) {
-                // Focus ended, break starting
-                playSoftBeep();
-                toast.success('Break Time! Relax your eyes.', { duration: 4000 });
-            }
+    queueMicrotask(() => setIsRunning(false));
 
-            const nextIndex = currentPhaseIndex + 1;
-            if (nextIndex < phaseSequence.length) {
-                // Transition to next phase
-                setCurrentPhaseIndex(nextIndex);
-                setTimeRemaining(phaseSequence[nextIndex].duration);
-                // Auto-start next phase after a tiny delay
-                setTimeout(() => setIsRunning(true), 200);
-            } else {
-                // All phases complete
-                onComplete?.();
-            }
-        }
+    const completingPhase = phaseSequence[currentPhaseIndex].phase;
+
+    if (completingPhase === 'BREAK') {
+        playSoftBeep();
+        toast('Ready to continue?', { icon: '🔄', duration: 4000 });
+    } else if (
+        completingPhase === 'FOCUS' &&
+        currentPhaseIndex < phaseSequence.length - 1
+    ) {
+        playSoftBeep();
+        toast.success('Break Time! Relax your eyes.', { duration: 4000 });
+    }
+
+    const nextIndex = currentPhaseIndex + 1;
+
+    if (nextIndex < phaseSequence.length) {
+        queueMicrotask(() => {
+            setCurrentPhaseIndex(nextIndex);
+            setTimeRemaining(phaseSequence[nextIndex].duration);
+        });
+
+        setTimeout(() => setIsRunning(true), 200);
+    } else {
+        onComplete?.();
+    }
+}
         return () => window.clearInterval(interval);
     }, [isRunning, timeRemaining, currentPhaseIndex, phaseSequence, onComplete]);
 

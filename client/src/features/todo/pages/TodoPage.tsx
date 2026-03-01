@@ -188,7 +188,9 @@ export const TodoPage: React.FC = () => {
                         <Filter size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400 pointer-events-none" />
                         <select
                             value={filter}
-                            onChange={(e) => setFilter(e.target.value as any)}
+                          onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+  setFilter(e.target.value as 'All Tasks' | 'Active' | 'Completed')
+}
                             className="bg-black border border-white/10 rounded-xl pl-10 pr-10 py-2.5 text-sm text-white focus:ring-2 focus:ring-[blueviolet] outline-none appearance-none cursor-pointer font-medium"
                         >
                             <option>All Tasks</option>

@@ -33,10 +33,29 @@ const processQueue = (error: unknown): void => {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
+// const clearAuthAndRedirect = (): void => {
+//   localStorage.removeItem("accessToken");
+//   localStorage.removeItem("authSession"); // ← also clear session so Redux rehydrates as null
+//   window.location.href = ROUTES.LOGIN;
+// };
 const clearAuthAndRedirect = (): void => {
-  localStorage.removeItem("accessToken");
-  localStorage.removeItem("authSession"); // ← also clear session so Redux rehydrates as null
-  window.location.href = ROUTES.LOGIN;
+  const sessionStr = localStorage.getItem("authSession");
+
+  const isAdmin =
+    sessionStr &&
+    (() => {
+      try {
+        return JSON.parse(sessionStr)?.role === "ADMIN";
+      } catch {
+        return false;
+      }
+    })();
+
+  localStorage.clear(); // optional: clears everything
+
+  window.location.replace(
+    isAdmin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN
+  );
 };
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────

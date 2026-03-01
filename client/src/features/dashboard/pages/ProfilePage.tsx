@@ -1,9 +1,9 @@
 import React from 'react';
 import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Target, Calendar, Eye, CreditCard, ChevronDown, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { ROUTES } from '../../../config/env';
-// import { userUploadApi, userApi } from '../../user/upload.services';
+import { userApi } from '../../user/user-service';
 import toast from 'react-hot-toast';
 import { updateUser } from '../../auth/store/authSlice';
 
@@ -28,7 +28,7 @@ const badges: Badge[] = [
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
-  // const dispatch = useAppDispatch();
+  const dispatch = useAppDispatch();
   const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
   const [showBadgesModal, setShowBadgesModal] = React.useState(false);
   const [selectedBadge, setSelectedBadge] = React.useState<Badge | null>(null);
@@ -61,13 +61,13 @@ export const ProfilePage: React.FC = () => {
 
     try {
       setIsUploading(true);
-      // const secureUrl = await userUploadApi.uploadAndGetUrl(file);
+      const secureUrl = await userApi.uploadProfileImage(file);
 
-      // // Update profile immediately with the new URL
-      // await userApi.updateProfileService({ profileImage: secureUrl });
+      // Update profile immediately with the new URL
+      await userApi.updateProfileService({ profileImage: secureUrl });
 
       // Update Redux state so the image updates instantly in the UI
-      // dispatch(updateUser({ profileImage: secureUrl }));
+      dispatch(updateUser({ profileImage: secureUrl }));
 
       toast.success("Profile picture updated successfully!");
 

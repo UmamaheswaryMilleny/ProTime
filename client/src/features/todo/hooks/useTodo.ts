@@ -23,8 +23,9 @@ export const useTodo = () => {
                 shared: data.shared,
                 progress: data.progress
             });
-        } catch (err: any) {
-            setError(err.message || 'Failed to fetch todos');
+        } catch (err) {
+            const message = err instanceof Error ? err.message : 'Failed to fetch todos';
+            setError(message);
             toast.error('Failed to load tasks');
         } finally {
             setIsLoading(false);
@@ -37,7 +38,7 @@ export const useTodo = () => {
             setTodos(prev => [newTodo, ...prev]);
             toast.success('Task added successfully');
             return true;
-        } catch (err) {
+        } catch {
             toast.error('Failed to add task');
             return false;
         }
@@ -60,7 +61,6 @@ export const useTodo = () => {
             } else {
                 updatedTodo = await todoService.completeTodo(id);
                 // In standard completion we gain base + bonus (which is 0 unless pomodoro)
-                // Need to calculate delta from previous
                 earnedXp = updatedTodo.baseXp + updatedTodo.bonusXp;
             }
 
@@ -74,14 +74,14 @@ export const useTodo = () => {
             }
 
             // Sync full state in background
-            fetchTodos();
+            void fetchTodos();
 
             return {
                 todo: updatedTodo,
                 earnedXp,
                 capReached: !updatedTodo.xpCounted
             };
-        } catch (err) {
+        } catch {
             // Revert if failed
             toast.error('Failed to complete task');
             await fetchTodos();
@@ -90,13 +90,11 @@ export const useTodo = () => {
     };
 
     const deleteTodo = async (id: string) => {
-        // Use hot-toast directly; for a UI component we often rely on a custom modal,
-        // but removing the native alert here and just performing the action with toast notification.
         try {
             await todoService.deleteTodo(id);
             setTodos(prev => prev.filter(t => t.id !== id));
             toast.success('Task deleted successfully');
-        } catch (err) {
+        } catch {
             toast.error('Failed to delete task');
         }
     };
@@ -107,14 +105,14 @@ export const useTodo = () => {
             setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
             toast.success('Task updated successfully');
             return true;
-        } catch (err) {
+        } catch {
             toast.error('Failed to update task');
             return false;
         }
     };
 
     useEffect(() => {
-        fetchTodos();
+        void fetchTodos();
     }, [fetchTodos]);
 
     return {
