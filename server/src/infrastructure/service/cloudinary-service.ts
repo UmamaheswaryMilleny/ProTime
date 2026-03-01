@@ -1,6 +1,6 @@
 import { injectable } from 'tsyringe';
-import { cloudinary } from '../config/cloudinary.config.js';
-import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface.js';
+import { cloudinary } from '../config/cloudinary.config';
+import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface';
 
 @injectable()
 export class CloudinaryService implements ICloudinaryService {

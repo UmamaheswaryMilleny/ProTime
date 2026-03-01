@@ -1,5 +1,5 @@
 import { v2 as cloudinary } from "cloudinary";
-import { config } from "../../shared/config/index.js";
+import { config } from "../../shared/config/index";
 
 cloudinary.config({
    cloud_name: config.cloudinary.cloudName,
