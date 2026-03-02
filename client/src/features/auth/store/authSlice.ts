@@ -4,12 +4,15 @@ import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 
 export interface AuthUser {
   id: string;
-  fullName: string;  
-  username?:string       // ← capital N — matches DashboardHeader + backend DTO
+  fullName: string;
+  username?: string       // ← capital N — matches DashboardHeader + backend DTO
   email: string;
   role: "ADMIN" | "CLIENT";
   accessToken: string;
   profileImage?: string;    // ← optional, set after profile fetch
+  bio?: string;
+  country?: string;
+  languages?: string[];
 }
 
 interface AuthState {
@@ -35,10 +38,14 @@ const sanitizeUser = (data: unknown): AuthUser | null => {
   return {
     id: String(obj.id),
     fullName: String(obj.fullName || obj.fullname || ""),  // handle both cases
+    username: obj.username ? String(obj.username) : undefined,
     email: String(obj.email),
     role: obj.role as AuthUser["role"],
     accessToken: String(obj.accessToken || ""),
     profileImage: obj.profileImage ? String(obj.profileImage) : undefined,
+    bio: obj.bio ? String(obj.bio) : undefined,
+    country: obj.country ? String(obj.country) : undefined,
+    languages: Array.isArray(obj.languages) ? obj.languages.map(String) : undefined,
   };
 };
 

@@ -2,6 +2,7 @@ import {
   IsString,
   IsOptional,
   MaxLength,
+  IsArray
 } from "class-validator";
 
 export class UpdateProfileRequestDTO {
@@ -20,12 +21,16 @@ export class UpdateProfileRequestDTO {
   @MaxLength(500)
   bio?: string;
 
-    @IsOptional()
+  @IsOptional()
   @IsString()
   country?: string;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  languages?: string[];
 
   @IsOptional()
   @IsString()
-  profileImage?: string; 
+  profileImage?: string;
 }
