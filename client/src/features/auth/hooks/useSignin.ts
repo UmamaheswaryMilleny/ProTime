@@ -53,16 +53,16 @@ export const useSignin = () => {
 
       // 2. Fetch profile to get fullName + profileImage — fire and forget on error
       //    Don't block navigation if profile fetch fails
-try {
-  const profile = await userApi.getProfileService();
-  console.log('Profile response:', profile); // ← add this
-  dispatch(updateUser({
-    fullName:     profile.fullName,
-    profileImage: profile.profileImage,
-  }));
-} catch (err) {
-  console.error('Profile fetch failed:', err); // ← and this
-}
+      try {
+        const profile = await userApi.getProfileService();
+        console.log('Profile response:', profile); // ← add this
+        dispatch(updateUser({
+          fullName: profile.fullName,
+          profileImage: profile.profileImage,
+        }));
+      } catch (err) {
+        console.error('Profile fetch failed:', err); // ← and this
+      }
 
       toast.success('Welcome back!');
 
@@ -74,7 +74,10 @@ try {
 
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      const message = err.response?.data?.message || 'Login failed. Please check your credentials.';
+      const raw = err.response?.data?.message || '';
+      const message = raw.toLowerCase().includes('blocked')
+        ? 'Your account has been blocked. Please contact support.'
+        : raw || 'Login failed. Please check your credentials.';
       toast.error(message);
     } finally {
       setIsLoading(false);

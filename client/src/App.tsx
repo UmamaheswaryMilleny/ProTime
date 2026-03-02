@@ -2,12 +2,11 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { ROUTES } from "./config/env";
 
 // Route Guards
-import { ProtectedRoute } from "./shared/components/Protected.route"; // file: Protected.route.tsx
-import { PublicRoute } from "./shared/components/Public.route";       // file: Public.route.tsx
+import { ProtectedRoute } from "./shared/components/Protected.route";
+import { PublicRoute } from "./shared/components/Public.route";
 
 // Landing
 import { LandingPage } from "./features/landing/pages/LandingPage";
-
 
 // Auth Pages
 import { SigninPage } from "./features/auth/pages/SigninPage";
@@ -26,14 +25,11 @@ import { HelpPage } from "./features/dashboard/pages/HelpPage";
 import { LevelsPage } from "./features/dashboard/pages/LevelsPage";
 import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
 
-// const ComingSoon = ({ page }: { page: string }) => (
-//   <div className="min-h-screen bg-black flex items-center justify-center">
-//     <div className="text-center">
-//       <h1 className="text-4xl font-bold text-white mb-4">{page}</h1>
-//       <p className="text-zinc-400">Coming soon...</p>
-//     </div>
-//   </div>
-// );
+// Admin
+import { AdminLoginPage } from "./features/admin/pages/AdminLoginPage";
+import { AdminLayout } from "./features/admin/layouts/AdminLayout";
+import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
+import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 
 function App() {
   return (
@@ -51,14 +47,15 @@ function App() {
           <Route path={ROUTES.FORGOT_PASSWORD} element={<ForgotPasswordPage />} />
           <Route path={ROUTES.RESET_PASSWORD} element={<ResetPasswordPage />} />
 
-          {/* <Route path={ROUTES.ADMIN_LOGIN} element={<AdminLoginPage />} /> */}
+          {/* Admin Login — public but admin-specific */}
+          <Route path={ROUTES.ADMIN_LOGIN} element={<AdminLoginPage />} />
         </Route>
 
         {/* ─── User Dashboard (nested under DashboardLayout) ────────────── */}
         <Route element={<ProtectedRoute allowedRole="CLIENT" />}>
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
-            <Route path={ROUTES.USER_PROFILE} element={<ProfilePage />} />          {/* /dashboard/profile */}
+            <Route path={ROUTES.USER_PROFILE} element={<ProfilePage />} />
             <Route path={ROUTES.DASHBOARD_TODO_LIST} element={<TodoPage />} />
             <Route path={ROUTES.DASHBOARD_FIND_BUDDY} element={<FindBuddyPage />} />
             <Route path={ROUTES.DASHBOARD_HELP} element={<HelpPage />} />
@@ -67,7 +64,14 @@ function App() {
           </Route>
         </Route>
 
-      
+        {/* ─── Admin Panel (nested under AdminLayout) ───────────────────── */}
+        <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
+          <Route element={<AdminLayout />}>
+            <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
+            <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
+          </Route>
+        </Route>
+
         {/* ─── 404 Fallback ─────────────────────────────────────────────── */}
         <Route path="*" element={<Navigate to={ROUTES.HOME} replace />} />
 

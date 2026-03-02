@@ -162,13 +162,13 @@ ProTimeBackend.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // ─── 403 Handling — Blocked user ──────────────────────────────────────
     if (status === 403) {
       if (errorMessage.toLowerCase().includes("blocked")) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("authSession");
-        toast.error("Your account has been blocked. Please contact support.");
-        window.location.href = ROUTES.LOGIN;
+        const isLoginRoute = originalRequest.url?.includes("/auth/login");
+        if (!isLoginRoute) {
+          toast.error("Your account has been blocked. Please contact support.");
+          clearAuthAndRedirect();
+        }
         return Promise.reject(error);
       }
     }
