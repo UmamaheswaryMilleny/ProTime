@@ -123,8 +123,8 @@ export const ProfilePage: React.FC = () => {
   const currentXP = 0;
   const currentLevel = 0;
   const currentTitle = 'Early Bird';
-  // const nextLevelXP = 100;
-  // const progress = nextLevelXP > 0 ? Math.round((currentXP / nextLevelXP) * 100) : 0;
+  const nextLevelXP = 100;
+  const progress = nextLevelXP > 0 ? Math.round((currentXP / nextLevelXP) * 100) : 0;
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -212,10 +212,10 @@ export const ProfilePage: React.FC = () => {
       </div>
 
       {/* XP Progress Bar */}
-      {/* <div className="relative w-full h-4 bg-zinc-800 rounded-full overflow-hidden">
+      <div className="relative w-full h-4 bg-zinc-800 rounded-full overflow-hidden">
         <div className="absolute top-0 left-0 h-full bg-[#8A2BE2] transition-all duration-500" style={{ width: `${progress}%` }} />
         <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-[#8A2BE2]">{progress}%</span>
-      </div> */}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Left Column */}

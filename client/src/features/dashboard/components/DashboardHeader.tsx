@@ -40,18 +40,9 @@ export const DashboardHeader: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-      <div>
-        <h1 className="text-3xl font-bold text-white flex items-center gap-2">
-          Welcome to ProTime, {user?.fullName || 'User'}{' '}
-          <span className="animate-wave">👋</span>
-        </h1>
-        <p className="text-zinc-400 mt-1">
-          Let's Set You Up For Your First Focused Study Session.
-        </p>
-      </div>
-
-      <div className="flex items-center gap-4">
+    <div className="flex flex-col w-full mb-8">
+      {/* ─── Top Navbar Row (Untouched Layout/Styles) ───────────── */}
+      <div className="flex justify-end items-center gap-4 mb-6">
         <Link
           to={ROUTES.DASHBOARD_HELP}
           className="p-2 rounded-full bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
@@ -102,6 +93,34 @@ export const DashboardHeader: React.FC = () => {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* ─── Section 1: Welcome Header ─────────────────────────── */}
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 fade-in">
+        <div>
+          <h1 className="text-3xl font-bold text-white flex items-center gap-2">
+            Welcome to ProTime, {user?.fullName?.split(' ')[0] || 'User'}{' '}
+            <span className="animate-wave">👋</span>
+          </h1>
+          <p className="text-[#A1A1AA] mt-2">
+            Stay consistent. Build focus. Unlock your potential.
+          </p>
+        </div>
+
+        {/* Right side inline stats */}
+        <div className="flex items-center gap-3 text-sm font-medium">
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
+            <span className="text-[#F97316]">🔥</span>
+            <span>7 Day Streak</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
+            <span>Level 8 – Explorer</span>
+            <span className="text-zinc-500 ml-1">🔒</span>
+          </div>
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-[#22C55E] shadow-sm">
+            <span>420 XP</span>
+          </div>
         </div>
       </div>
     </div>
