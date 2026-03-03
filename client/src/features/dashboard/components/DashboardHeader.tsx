@@ -55,14 +55,17 @@ export const DashboardHeader: React.FC = () => {
             className="cursor-pointer relative"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <img
-              src={
-                user?.profileImage ||
-                'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop'
-              }
-              alt="Profile"
-              className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors"
-            />
+           {user?.profileImage ? (
+  <img
+    src={user.profileImage}
+    alt="Profile"
+    className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors object-cover"
+  />
+) : (
+  <div className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors flex items-center justify-center bg-zinc-800">
+    <UserIcon size={20} className="text-zinc-500" />
+  </div>
+)}
           </button>
 
           {/* Profile Dropdown */}
