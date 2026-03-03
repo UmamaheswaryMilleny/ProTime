@@ -17,8 +17,6 @@ export class GetTodosUsecase implements IGetTodosUsecase {
   ): Promise<TodoListResponseDTO> {
     const todos = await this.todoRepository.findByUserId(userId, filter);
 
-    // ✅ Fixed: now fetches todayXp and passes it to mapper
-    // Previously todayXp was never fetched so the XP bar had no data
     const todayXp = await this.todoRepository.getTotalXpEarnedToday(userId);
 
     return TodoMapper.toListResponse(todos, todayXp);

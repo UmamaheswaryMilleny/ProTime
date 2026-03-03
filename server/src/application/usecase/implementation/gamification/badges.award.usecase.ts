@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import type {
     ICheckAndAwardBadgesUsecase,
-    XpSource,
+    
 } from '../../interface/user/gamification.usecase.interface';
 import type {
     IGamificationRepository,
@@ -16,7 +16,7 @@ import { GamificationNotFoundError } from '../../../../domain/errors/gamificatio
 import { BadgeConditionType } from '../../../../domain/enums/gamification.enums';
 
 import { TodoPriority } from '../../../../domain/enums/todo.enums';
-
+import { XpSource } from '../../../../domain/enums/gamification.enums';
 @injectable()
 export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
     constructor(

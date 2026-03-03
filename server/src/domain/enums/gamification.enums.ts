@@ -104,6 +104,14 @@ export const STREAK_BONUS_XP: Record<number, number> = {
 // Premium-only badges: bonus only awarded if user is PREMIUM at time of earning.
 export const BADGE_XP_BONUS = 50;
 
+
+export type XpSource =
+    | 'TODO_LOW'
+    | 'TODO_MEDIUM'
+    | 'TODO_HIGH'
+    | 'STREAK_BONUS'
+    | 'BADGE_BONUS';
+
 // ─── Free Title Lock ──────────────────────────────────────────────────────────
 // Free users can see all levels but titles above LEARNER are locked (visual only).
 // The actual title is still computed — just displayed as locked in the frontend.

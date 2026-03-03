@@ -41,8 +41,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     const capReached = totalXpToday >= DAILY_XP_CAP;
 
     // 5. Calculate XP
-    // ✅ Fixed: baseXp already set at creation — do NOT overwrite it
-    // Only calculate bonusXp based on pomodoroCompleted flag
+
     // If cap reached → bonusXp = 0, xpCounted = false (task still completes)
     const bonusXp = capReached
       ? 0
@@ -56,9 +55,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     const updated = await this.todoRepository.updateById(todoId, {
       status: TodoStatus.COMPLETED,
       completedAt: new Date(),
-      bonusXp,      // ✅ Only bonusXp updated — baseXp stays as set at creation
+      bonusXp,      // Only bonusXp updated — baseXp stays as set at creation
       xpCounted,
-    } as never);
+    } );
 
     if (!updated) throw new TodoNotFoundError();
 

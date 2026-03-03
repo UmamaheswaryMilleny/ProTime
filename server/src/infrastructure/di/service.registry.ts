@@ -33,6 +33,14 @@ import { MongoTodoRepository } from '../repositories/todo.repository';
 import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface';
 import { CloudinaryService } from '../service/cloudinary-service';
 
+//gamification
+import { IGamificationRepository } from '../../domain/repositories/gamification.repository.interface';
+import { IBadgeDefinitionRepository } from '../../domain/repositories/gamification.repository.interface';
+import { IUserBadgeRepository } from '../../domain/repositories/gamification.repository.interface';
+import { MongoGamificationRepository } from '../repositories/gamification/gamification.repository';
+import { MongoBadgeDefinitionRepository } from '../repositories/gamification/badge.repository';
+import { MongoUserBadgeRepository } from '../repositories/gamification/badge.repository';
+
 //upload service
 export class ServiceRegistry {
   static register(): void {
@@ -89,6 +97,18 @@ export class ServiceRegistry {
 
     container.register<ICloudinaryService>('ICloudinaryService', {
   useClass: CloudinaryService,
+});
+
+
+//gamification
+container.register<IGamificationRepository>('IGamificationRepository', {
+  useClass: MongoGamificationRepository,
+});
+container.register<IBadgeDefinitionRepository>('IBadgeDefinitionRepository', {
+  useClass: MongoBadgeDefinitionRepository,
+});
+container.register<IUserBadgeRepository>('IUserBadgeRepository', {
+  useClass: MongoUserBadgeRepository,
 });
   }
 }

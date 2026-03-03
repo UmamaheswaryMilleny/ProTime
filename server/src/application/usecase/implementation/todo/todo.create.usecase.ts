@@ -25,8 +25,6 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
     }
 
     // 3. Set baseXp at creation time — correct value locked in immediately
-    // ✅ Fixed: was setting baseXp: 0, which CompleteTodoUsecase then overwrote
-    // bonusXp stays 0 until pomodoro is completed
     const baseXp = BASE_XP[priority];
 
     // 4. Create the todo
@@ -41,7 +39,7 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
       pomodoroCompleted: false,
       actualPomodoroTime: undefined,
       smartBreaks: pomodoroEnabled ? (smartBreaks ?? true) : undefined,
-      baseXp,    // ✅ Set correctly at creation
+      baseXp,   
       bonusXp: 0,
       xpCounted: false,
       isShared: false,

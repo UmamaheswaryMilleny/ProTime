@@ -39,11 +39,6 @@ export class UpdateStreakUsecase implements IUpdateStreakUsecase {
             };
         }
 
-        // ─── Streak eligibility check ─────────────────────────────────────────
-        // Streak requires: at least 1 completed todo + pomodoro used today.
-        // todayPomodoroUsed is set by CompletePomodoroUsecase via markPomodoroUsedToday.
-        // If pomodoro not used today — streak does not increment (but doesn't reset yet).
-        // Reset only happens when a full day is missed entirely.
         if (!gamification.todayPomodoroUsed) {
             return {
                 streakUpdated: false,

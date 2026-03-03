@@ -5,14 +5,9 @@ import {
   IsInt,
   IsBoolean,
   Min,
-  Max,
-  ValidateIf,
   MaxLength,
 } from 'class-validator';
-import {
-  TodoPriority,
-  
-} from '../../../../domain/enums/todo.enums';
+import { TodoPriority } from '../../../../domain/enums/todo.enums';
 
 export class UpdateTodoRequestDTO {
   @IsOptional()
@@ -25,22 +20,21 @@ export class UpdateTodoRequestDTO {
   @MaxLength(1000)
   description?: string;
 
-@IsOptional()
-@IsEnum(TodoPriority,{message:"Priority must be LOW, MEDIUM or HIGH"})
-priority?:TodoPriority
+  @IsOptional()
+  @IsEnum(TodoPriority, { message: 'Priority must be LOW, MEDIUM or HIGH' })
+  priority?: TodoPriority;
 
-@IsOptional()
+  @IsOptional()
   @IsInt()
   @Min(1)
-  estimatedTime?:number;
-
+  estimatedTime?: number;
 
   @IsOptional()
   @IsBoolean()
   pomodoroEnabled?: boolean;
-    @IsOptional()
-    @IsBoolean()
-    smartBreaks?: boolean;
+  @IsOptional()
+  @IsBoolean()
+  smartBreaks?: boolean;
   // @ValidateIf((o) => o.pomodoroEnabled === true)
   // @IsOptional()
   // @IsInt()

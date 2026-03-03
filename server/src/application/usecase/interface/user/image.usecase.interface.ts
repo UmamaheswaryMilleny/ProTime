@@ -1,10 +1,8 @@
-// Returns the updated profile response after saving the new image URL.
-// fileBuffer: raw image bytes from multer memory storage
-// mimetype:   e.g. 'image/jpeg' — passed to Cloudinary for format detection
+//user select image multer reads it gives raw bytes which is buffer and this is passed to cloudinary
 export interface IUploadProfileImageUsecase {
   execute(
     userId: string,
     fileBuffer: Buffer,
-    mimetype: string,
+    mimetype: string, //it tell you what type of file uploaded like jpeg,png
   ): Promise<{ profileImage: string }>;
 }

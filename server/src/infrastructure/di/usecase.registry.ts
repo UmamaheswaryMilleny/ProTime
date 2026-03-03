@@ -42,6 +42,19 @@ import type { ICompletePomodoroUsecase } from '../../application/usecase/interfa
 import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
 import type { IUploadProfileImageUsecase } from '../../application/usecase/interface/user/image.usecase.interface';
 
+
+//gamification
+import { AwardXpUsecase } from '../../application/usecase/implementation/gamification/xp.usecase';
+import { UpdateStreakUsecase } from '../../application/usecase/implementation/gamification/streak.update.usecase';
+import { CheckAndAwardBadgesUsecase } from '../../application/usecase/implementation/gamification/badges.award.usecase';
+import { IInitializeGamificationUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { IGetGamificationUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { IAwardXpUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { IUpdateStreakUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { ICheckAndAwardBadgesUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { InitializeGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.initialize.usecase';
+import { GetGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.get.usecase';
+
 export class UsecaseRegistry {
   static register(): void {
     // ─── Auth Use Cases ───────────────────────────────────────────────
@@ -112,5 +125,23 @@ export class UsecaseRegistry {
         useClass: UploadProfileImageUsecase,
       },
     );
+
+
+    //gamification
+    container.register<IInitializeGamificationUsecase>('IInitializeGamificationUsecase', {
+  useClass: InitializeGamificationUsecase,
+});
+container.register<IGetGamificationUsecase>('IGetGamificationUsecase', {
+  useClass: GetGamificationUsecase,
+});
+container.register<IAwardXpUsecase>('IAwardXpUsecase', {
+  useClass: AwardXpUsecase,
+});
+container.register<IUpdateStreakUsecase>('IUpdateStreakUsecase', {
+  useClass: UpdateStreakUsecase,
+});
+container.register<ICheckAndAwardBadgesUsecase>('ICheckAndAwardBadgesUsecase', {
+  useClass: CheckAndAwardBadgesUsecase,
+});
   }
 }

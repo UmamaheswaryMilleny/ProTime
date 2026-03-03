@@ -1,8 +1,7 @@
 import type { LevelTitle } from '../../../../domain/enums/gamification.enums.js';
 import type { BadgeCategory } from '../../../../domain/enums/gamification.enums.js';
 
-// ─── Badge Definition Response ────────────────────────────────────────────────
-// Used in badge gallery — shows all available badges with lock state
+// shows all available badges
 export interface BadgeDefinitionResponseDTO {
   id: string;
   key: string;
@@ -10,27 +9,24 @@ export interface BadgeDefinitionResponseDTO {
   description: string;
   iconUrl?: string;
   category: BadgeCategory;
-  conditionType: string;
-  conditionValue: number;
+  conditionType: string; //eg complete 10podoro or focus time this minutes
+  conditionValue: number; //like 10 pomodoro or 120 focus minutes
   xpReward: number;
   premiumRequired: boolean;
 }
 
-// ─── Earned Badge Response ────────────────────────────────────────────────────
 // Used on profile and badge gallery to show earned badges
 export interface UserBadgeResponseDTO {
   id: string;
-  badgeKey: string;
+  badgeKey: string; //eg 'learner','warrior'
   name: string; // denormalized from BadgeDefinition for convenience
   description: string; // denormalized
   iconUrl?: string; // denormalized
   category: BadgeCategory; // denormalized
   xpAwarded: boolean; // false if earned while FREE (no XP bonus given)
-  earnedAt: string; // ISO string
+  earnedAt: string;
 }
 
-// ─── Gamification Response ────────────────────────────────────────────────────
-// Main response returned by GetGamification usecase.
 // Frontend uses this to render XP bar, level badge, streak counter, title.
 export interface GamificationResponseDTO {
   userId: string;
@@ -38,28 +34,23 @@ export interface GamificationResponseDTO {
   currentLevel: number;
   currentTitle: LevelTitle;
 
-  // ─── Title lock info ─────────────────────────────────────────────────────
   // isTitleLocked = true when user is FREE and title is above Learner
-  // Frontend shows: "🔒 Explorer — Upgrade to unlock"
   isTitleLocked: boolean;
 
-  // ─── Level progress ──────────────────────────────────────────────────────
   // XP needed to reach next level — for progress bar rendering
-  xpForCurrentLevel: number; // XP threshold of current level
-  xpForNextLevel: number; // XP threshold of next level (null if max level)
+  xpForCurrentLevel: number; 
+  xpForNextLevel: number; 
   xpProgress: number; // XP earned within current level (totalXp - xpForCurrentLevel)
 
-  // ─── Streak ──────────────────────────────────────────────────────────────
   currentStreak: number;
   longestStreak: number;
-  lastStreakDate: string | null; // ISO string
+  lastStreakDate: string | null; //used to determine if their streak is still alive.
 
-  // ─── Daily counters ──────────────────────────────────────────────────────
   // Frontend uses these to show daily limit warnings
-dailyXpEarned: number;       // XP earned today (cap: 50)
+  dailyXpEarned: number; // XP earned today (cap: 50)
   dailyChatMessageCount: number; // out of 10 (free users)
 
-  // ─── Earned badges ───────────────────────────────────────────────────────
+
   earnedBadges: UserBadgeResponseDTO[];
   totalBadgeCount: number;
 
@@ -67,8 +58,8 @@ dailyXpEarned: number;       // XP earned today (cap: 50)
   updatedAt: string;
 }
 
-// ─── Award XP Response ───────────────────────────────────────────────────────
-// Returned after every XP award — frontend uses to show XP popup animation
+
+//returned instantly after an action (completing a Pomodoro, sending a chat, etc.) to drive real-time UI feedback.
 export interface AwardXpResponseDTO {
   xpAwarded: number; // actual XP credited (0 if daily cap hit)
   totalXp: number; // new total XP
@@ -81,8 +72,8 @@ export interface AwardXpResponseDTO {
   capReached: boolean; // true if daily XP cap was hit
 }
 
-// ─── Initialize Gamification Response ────────────────────────────────────────
-// Returned when gamification profile is first created on signup
+
+// Returned when profile is first created on signup
 export interface InitializeGamificationResponseDTO {
   userId: string;
   totalXp: number; // always 0

@@ -44,7 +44,7 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
     // 4. Determine effective priority (new one if changing, existing if not)
     const effectivePriority = (data.priority ?? todo.priority) as TodoPriority;
 
-    // 5. Validate estimatedTime against effective priority if provided
+    // 5. Validate estimatedTime if user changing it
     if (data.estimatedTime !== undefined) {
       const validTimes = ESTIMATED_TIME_OPTIONS[effectivePriority];
       if (!validTimes.includes(data.estimatedTime)) {
@@ -67,7 +67,6 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
     if (data.estimatedTime !== undefined) updateData.estimatedTime = data.estimatedTime;
     if (data.pomodoroEnabled !== undefined) {
       updateData.pomodoroEnabled = data.pomodoroEnabled;
-      // Disabling pomodoro → clear smart breaks and reset pomodoro state
       if (!data.pomodoroEnabled) {
         updateData.smartBreaks = undefined;
         updateData.pomodoroCompleted = false;
@@ -78,7 +77,7 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
       updateData.smartBreaks = data.smartBreaks;
     }
 
-    const updated = await this.todoRepository.updateById(todoId, updateData as never);
+    const updated = await this.todoRepository.updateById(todoId, updateData);
     if (!updated) throw new TodoNotFoundError();
 
     return TodoMapper.toResponse(updated);

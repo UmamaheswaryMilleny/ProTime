@@ -1,7 +1,6 @@
 import { inject, injectable } from 'tsyringe';
 import type {
     IAwardXpUsecase,
-    XpSource,
     IUpdateStreakUsecase,
     ICheckAndAwardBadgesUsecase,
 } from '../../interface/user/gamification.usecase.interface';
@@ -16,20 +15,8 @@ import {
     getTitleForLevel,
     BADGE_XP_BONUS,
 } from '../../../../domain/enums/gamification.enums';
+import { XpSource } from '../../../../domain/enums/gamification.enums';
 
-// ─── AwardXpUsecase ───────────────────────────────────────────────────────────
-// Central orchestrator for all XP-related events.
-// Called by CompleteTodoUsecase after todo is marked complete.
-//
-// Flow:
-//   1. Fetch gamification + check daily reset
-//   2. Award XP (check daily cap — todos already enforce this via xpCounted)
-//   3. Recalculate level + title
-//   4. Update streak
-//   5. Check + award badges
-//   6. Award badge bonus XP if any badges earned
-//   7. Persist final state
-//   8. Return AwardXpResponseDTO for frontend animation
 
 @injectable()
 export class AwardXpUsecase implements IAwardXpUsecase {

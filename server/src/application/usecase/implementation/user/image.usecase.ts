@@ -24,8 +24,6 @@ export class UploadProfileImageUsecase implements IUploadProfileImageUsecase {
     if (!profile) throw new ProfileNotFoundError();
 
     // 2. Upload new image to Cloudinary
-    //    publicId = userId so each user occupies exactly one slot —
-    //    uploading again overwrites the old file automatically
     const { url } = await this.cloudinaryService.uploadImage(
       fileBuffer,
       'protime/avatars',

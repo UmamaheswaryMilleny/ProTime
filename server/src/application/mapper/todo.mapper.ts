@@ -19,7 +19,7 @@ export class TodoMapper {
       pomodoroCompleted: todo.pomodoroCompleted,
       actualPomodoroTime: todo.actualPomodoroTime,
       // breakTime: todo.breakTime,
-       smartBreaks: todo.smartBreaks,
+      smartBreaks: todo.smartBreaks,
 
       baseXp: todo.baseXp,
       bonusXp: todo.bonusXp,
@@ -34,6 +34,7 @@ export class TodoMapper {
     };
   }
 
+  // used when the main todo dashboard loads:
   static toListResponse(
     todos: TodoEntity[],
     todayXp: number,
