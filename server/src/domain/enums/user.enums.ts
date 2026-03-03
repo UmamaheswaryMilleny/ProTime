@@ -1,9 +1,9 @@
-export enum UserRole{
-    ADMIN='ADMIN',
-    CLIENT='CLIENT'
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  CLIENT = 'CLIENT',
 }
 
-export enum AuthProvider{
-    LOCAL='LOCAL',
-    GOOGLE='GOOGLE'
+export enum AuthProvider {
+  LOCAL = 'LOCAL',
+  GOOGLE = 'GOOGLE',
 }
