@@ -26,6 +26,10 @@ export const TodoSchema = new Schema(
       required: true,
       index: true,
     },
+    expiryDate: {
+  type: Date,
+  default: null,
+},
     estimatedTime: {
       type: Number,
       required: true,

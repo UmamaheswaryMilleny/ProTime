@@ -13,6 +13,7 @@ import {
   InvalidTokenError,
   WeakPasswordError,
   PasswordMismatchError,
+  RegistrationSessionExpiredError,
 } from '../../domain/errors/user.error';
 
 // ─── Todo errors ───────────────────────────────────────────────────────────
@@ -23,9 +24,19 @@ import {
   PomodoroNotEnabledError,
   PomodoroAlreadyCompletedError,
   InvalidEstimatedTimeError,
+  TodoExpiredError,
 } from '../../domain/errors/todo.error';
 
 import { ProfileNotFoundError } from '../../domain/errors/profile.error';
+
+// ─── Gamification errors ───────────────────────────────────────────────────
+import {
+  GamificationNotFoundError,
+  BadgeDefinitionNotFoundError,
+  BadgeAlreadyEarnedError,
+  PremiumBadgeRequiredError,
+  DailyChatLimitError,
+} from '../../domain/errors/gamification.error';
 
 import { HTTP_STATUS } from '../../shared/constants/constants';
 
@@ -34,20 +45,26 @@ export class ErrorMiddleware {
     err: Error,
     _req: Request,
     res: Response,
-    _next: NextFunction
+    _next: NextFunction,
   ): void {
 
     // ─── 404 Not Found ────────────────────────────────────────────────
     if (
       err instanceof UserNotFoundError ||
-      err instanceof TodoNotFoundError || err instanceof ProfileNotFoundError
+      err instanceof TodoNotFoundError ||
+      err instanceof ProfileNotFoundError ||
+      err instanceof GamificationNotFoundError ||
+      err instanceof BadgeDefinitionNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
     }
 
     // ─── 409 Conflict ─────────────────────────────────────────────────
-    if (err instanceof UserAlreadyExistsError) {
+    if (
+      err instanceof UserAlreadyExistsError ||
+      err instanceof BadgeAlreadyEarnedError
+    ) {
       res.status(HTTP_STATUS.CONFLICT).json({ success: false, message: err.message });
       return;
     }
@@ -56,7 +73,9 @@ export class ErrorMiddleware {
     if (
       err instanceof UserBlockedError ||
       err instanceof UserDeletedError ||
-      err instanceof UnauthorizedTodoAccessError  // user trying to edit/delete someone else's todo
+      err instanceof UnauthorizedTodoAccessError ||
+      err instanceof PremiumBadgeRequiredError ||
+      err instanceof DailyChatLimitError
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
       return;
@@ -76,7 +95,9 @@ export class ErrorMiddleware {
       err instanceof InvalidOtpError ||
       err instanceof WeakPasswordError ||
       err instanceof PasswordMismatchError ||
+      err instanceof RegistrationSessionExpiredError ||
       err instanceof TodoAlreadyCompletedError ||
+      err instanceof TodoExpiredError ||
       err instanceof PomodoroNotEnabledError ||
       err instanceof PomodoroAlreadyCompletedError ||
       err instanceof InvalidEstimatedTimeError

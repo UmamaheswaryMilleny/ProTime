@@ -1,10 +1,10 @@
 import { inject, injectable } from "tsyringe";
-import type { ITokenService } from "../../service_interface/token.service.interface";
-import type { IRefreshTokenUsecase } from "../interface/auth/refresh-token.usecase.interface";
-import type { RefreshTokenResponseDTO } from "../../dto/auth/response/refrsh-token.response.dto";
-import { InvalidTokenError } from "../../../domain/errors/user.error";
-import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { ITokenService } from "../../../service_interface/token.service.interface";
+import type { IRefreshTokenUsecase } from "../../interface/auth/refresh-token.usecase.interface";
+import type { RefreshTokenResponseDTO } from "../../../dto/auth/response/refresh-token.response.dto";
+import { InvalidTokenError } from "../../../../domain/errors/user.error";
+import type { IRefreshTokenStore } from "../../../service_interface/refresh-token-store-service.interface";
+import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
 
 @injectable()
 export class RefreshTokenUseCase implements IRefreshTokenUsecase {
@@ -56,7 +56,7 @@ private tokenPort: ITokenService,
       throw new InvalidTokenError()
     }
     //4. generate new access token
-    const accessToken = this.tokenPort.generateAccess({id:user.id,email:user.email,role:user.role});
+    const accessToken = this.tokenPort.generateAccess({id:user.id,email:user.email,role:user.role,isPremium:user.isPremium});
 
     //5. return new access token
 

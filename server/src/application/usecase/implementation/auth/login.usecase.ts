@@ -1,27 +1,27 @@
-import { inject, injectable } from "tsyringe";
-import type { ILoginUsecase } from "../interface/auth/login.usecase.interface";
+import { inject, injectable } from 'tsyringe';
+import type { ILoginUsecase } from '../../interface/auth/login.usecase.interface';
 import {
   InvalidPasswordError,
   UserDeletedError,
-} from "../../../domain/errors/user.error";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
-import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface";
-import type { LoginResponseDTO } from "../../dto/auth/response/login.response.dto";
-import { UserNotFoundError } from "../../../domain/errors/user.error";
-import { UserBlockedError } from "../../../domain/errors/user.error";
-import type { ITokenService } from "../../service_interface/token.service.interface";
-import type { IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
+  UserBlockedError,
+  UserNotFoundError,
+} from '../../../../domain/errors/user.error';
+import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
+import type { IPasswordHasherService } from '../../../service_interface/password-hasher.service.interface';
+import type { LoginResponseDTO } from '../../../dto/auth/response/login.response.dto';
+import type { ITokenService } from '../../../service_interface/token.service.interface';
+import type { IRefreshTokenStore } from '../../../service_interface/refresh-token-store-service.interface';
 
 @injectable()
 export class LoginUsecase implements ILoginUsecase {
   constructor(
-    @inject("UserRepository")
+    @inject('UserRepository')
     private readonly userReposiroy: IUserRepository,
-    @inject("ITokenService")
+    @inject('ITokenService')
     private readonly tokenService: ITokenService,
-    @inject("IPasswordHasherService")
+    @inject('IPasswordHasherService')
     private readonly passwordHasherService: IPasswordHasherService,
-    @inject("IRefreshTokenStore")
+    @inject('IRefreshTokenStore')
     private readonly refreshTokenStore: IRefreshTokenStore,
   ) {}
 
@@ -60,6 +60,7 @@ export class LoginUsecase implements ILoginUsecase {
       id: user.id,
       email: user.email,
       role: user.role,
+      isPremium:user.isPremium
     };
 
     const accessToken = this.tokenService.generateAccess(payload);

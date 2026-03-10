@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Types } from 'mongoose';
-import { UserGamificationSchema } from '../schema/user-gamification.schema.js';
+import { UserGamificationSchema } from '../schema/user-gamification.schema';
 import { LevelTitle } from '../../../domain/enums/gamification.enums';
 
 export interface UserGamificationDocument extends Document {

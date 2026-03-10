@@ -1,4 +1,4 @@
-import { DomainError } from './base-domain.error.js';
+import { DomainError } from './base-domain.error';
 
 
 // Thrown when no gamification document exists for the given userId.
@@ -41,8 +41,8 @@ export class DailyChatLimitError extends DomainError {
     }
 }
 
-export class DailyXpCapReachedError extends DomainError {
-  constructor() {
-    super('Daily XP cap reached. Tasks still count but no XP until tomorrow.');
-  }
-}
+// export class DailyXpCapReachedError extends DomainError {
+//   constructor() {
+//     super('Daily XP cap reached. Tasks still count but no XP until tomorrow.');
+//   }
+// }

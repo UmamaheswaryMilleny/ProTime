@@ -1,5 +1,5 @@
 import mongoose, { Document, Model, Types } from 'mongoose';
-import { BadgeDefinitionSchema, UserBadgeSchema } from '../schema/badge.schema.js';
+import { BadgeDefinitionSchema, UserBadgeSchema } from '../schema/badge.schema';
 import { BadgeCategory, BadgeConditionType } from '../../../domain/enums/gamification.enums'
 
 // ─── BadgeDefinition Document ─────────────────────────────────────────────────

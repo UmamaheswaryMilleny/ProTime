@@ -6,6 +6,7 @@ import {
   IsBoolean,
   Min,
   MaxLength,
+  IsDateString,
 } from 'class-validator';
 import { TodoPriority } from '../../../../domain/enums/todo.enums';
 
@@ -19,7 +20,9 @@ export class UpdateTodoRequestDTO {
   @IsString()
   @MaxLength(1000)
   description?: string;
-
+  @IsOptional()
+  @IsDateString()
+  expiryDate?: string;
   @IsOptional()
   @IsEnum(TodoPriority, { message: 'Priority must be LOW, MEDIUM or HIGH' })
   priority?: TodoPriority;

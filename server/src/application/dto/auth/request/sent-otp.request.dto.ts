@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, Matches } from "class-validator";
+import { IsEmail} from "class-validator";
 
 export class SendOtpRequestDTO {
   @IsEmail({}, { message: "Invalid email address" })

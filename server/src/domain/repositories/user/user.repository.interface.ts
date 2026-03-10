@@ -1,5 +1,5 @@
 import type { UserEntity } from "../../entities/user.entity";
-import type { IBaseRepository } from "../base.repository.interface";
+import type { IBaseRepository } from "../base/base.repository.interface";
 
 export interface IUserRepository extends IBaseRepository<UserEntity> {
 

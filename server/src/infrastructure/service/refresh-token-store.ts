@@ -1,6 +1,6 @@
 import { injectable } from "tsyringe";
 import { redisClient } from "../config/redis.config";
-import { IRefreshTokenStore } from "../../application/service_interface/refreshTokenStore";
+import { IRefreshTokenStore } from "../../application/service_interface/refresh-token-store-service.interface";
 
 @injectable()
 export class RedisRefreshTokenStore implements IRefreshTokenStore {

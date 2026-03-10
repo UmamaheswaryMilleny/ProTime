@@ -2,15 +2,15 @@
 import { container } from 'tsyringe';
 
 // Use case implementations
-import { RegisterUsecase } from '../../application/usecase/implementation/register.usecase';
-import { LoginUsecase } from '../../application/usecase/implementation/login.usecase';
-import { LogoutUseCase } from '../../application/usecase/implementation/logout.usecase';
-import { VerifyOtpUseCase } from '../../application/usecase/implementation/verify-otp.usecase';
-import { ResendOtpUseCase } from '../../application/usecase/implementation/resend-otp.usecase';
-import { RefreshTokenUseCase } from '../../application/usecase/implementation/refresh-token.usecase';
-import { ForgotPasswordUsecase } from '../../application/usecase/implementation/forgot-password.usecase';
-import { ResetPasswordUsecase } from '../../application/usecase/implementation/reset-password.usecase';
-import GoogleAuthUsecase from '../../application/usecase/implementation/google-auth.usecase';
+import { RegisterUsecase } from '../../application/usecase/implementation/auth/register.usecase';
+import { LoginUsecase } from '../../application/usecase/implementation/auth/login.usecase';
+import { LogoutUseCase } from '../../application/usecase/implementation/auth/logout.usecase';
+import { VerifyOtpUseCase } from '../../application/usecase/implementation/auth/verify-otp.usecase';
+import { ResendOtpUseCase } from '../../application/usecase/implementation/auth/resend-otp.usecase';
+import { RefreshTokenUseCase } from '../../application/usecase/implementation/auth/refresh-token.usecase';
+import { ForgotPasswordUsecase } from '../../application/usecase/implementation/auth/forgot-password.usecase';
+import { ResetPasswordUsecase } from '../../application/usecase/implementation/auth/reset-password.usecase';
+import GoogleAuthUsecase from '../../application/usecase/implementation/auth/google-auth.usecase';
 
 // Use case interfaces
 import type { IRegisterUsecase } from '../../application/usecase/interface/auth/register.usecase.interface';
@@ -47,11 +47,11 @@ import type { IUploadProfileImageUsecase } from '../../application/usecase/inter
 import { AwardXpUsecase } from '../../application/usecase/implementation/gamification/xp.usecase';
 import { UpdateStreakUsecase } from '../../application/usecase/implementation/gamification/streak.update.usecase';
 import { CheckAndAwardBadgesUsecase } from '../../application/usecase/implementation/gamification/badges.award.usecase';
-import { IInitializeGamificationUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
-import { IGetGamificationUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
-import { IAwardXpUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
-import { IUpdateStreakUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
-import { ICheckAndAwardBadgesUsecase } from '../../application/usecase/interface/user/gamification.usecase.interface';
+import { IInitializeGamificationUsecase } from '../../application/usecase/interface/gamification/initialize.usecase.interface';
+import { IGetGamificationUsecase } from '../../application/usecase/interface/gamification/get-gamification.usecase.interface';
+import { IAwardXpUsecase } from '../../application/usecase/interface/gamification/award-xp.usecase.interface';
+import { IUpdateStreakUsecase } from '../../application/usecase/interface/gamification/update.streak.usecase.interface';
+import { ICheckAndAwardBadgesUsecase } from '../../application/usecase/interface/gamification/check-and-award-badges.usecase.interface';
 import { InitializeGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.initialize.usecase';
 import { GetGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.get.usecase';
 

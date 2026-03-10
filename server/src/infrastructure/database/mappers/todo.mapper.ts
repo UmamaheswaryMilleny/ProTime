@@ -9,25 +9,25 @@ export class TodoMapper {
       id: (doc._id as { toString(): string }).toString(),
       userId: doc.userId.toString(),
       title: doc.title,
-      description: doc.description ?? undefined,
+      description: doc.description ?? null,
       priority: doc.priority,
       estimatedTime: doc.estimatedTime,
       status: doc.status,
 
       pomodoroEnabled: doc.pomodoroEnabled,
       pomodoroCompleted: doc.pomodoroCompleted,
-      actualPomodoroTime: doc.actualPomodoroTime ?? undefined,
-      smartBreaks: doc.smartBreaks ?? undefined,
-
+      actualPomodoroTime: doc.actualPomodoroTime ?? null,
+      smartBreaks: doc.smartBreaks ?? null,
+expiryDate:doc.expiryDate??null,
       baseXp: doc.baseXp,
       bonusXp: doc.bonusXp,
       xpCounted: doc.xpCounted,
 
-      isShared: doc.isShared,
+      // isShared: doc.isShared,
       // sharedWith is ObjectId[] in DB — convert to string[] for domain
       sharedWith: doc.sharedWith.map((id) => id.toString()),
 
-      completedAt: doc.completedAt ?? undefined,
+      completedAt: doc.completedAt ?? null,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -43,7 +43,7 @@ export class TodoMapper {
     if (data.priority !== undefined) result.priority = data.priority;
     if (data.estimatedTime !== undefined) result.estimatedTime = data.estimatedTime;
     if (data.status !== undefined) result.status = data.status;
-
+if (data.expiryDate !== undefined) result.expiryDate = data.expiryDate;
     if (data.pomodoroEnabled !== undefined) result.pomodoroEnabled = data.pomodoroEnabled;
     if (data.pomodoroCompleted !== undefined) result.pomodoroCompleted = data.pomodoroCompleted;
     if (data.actualPomodoroTime !== undefined) result.actualPomodoroTime = data.actualPomodoroTime;
@@ -53,7 +53,7 @@ export class TodoMapper {
     if (data.bonusXp !== undefined) result.bonusXp = data.bonusXp;
     if (data.xpCounted !== undefined) result.xpCounted = data.xpCounted;
 
-    if (data.isShared !== undefined) result.isShared = data.isShared;
+    // if (data.isShared !== undefined) result.isShared = data.isShared;
 
     // ✅ Bug 3 fix — domain holds string[], schema expects ObjectId[]
     if (data.sharedWith !== undefined) {

@@ -1,4 +1,5 @@
 export interface ProfileEntity{
+    id:string
     userId:string
     fullName:string
     username:string

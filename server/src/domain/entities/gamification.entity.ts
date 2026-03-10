@@ -14,7 +14,7 @@ export interface UserGamificationEntity {
   currentStreak: number;
   longestStreak: number;
   lastStreakDate: Date | null; // null = user has never had a streak
-  streakFrozen: boolean; // future: streak freeze powerup (premium feature)
+  // streakFrozen: boolean; 
 
 
   dailyXpEarned: number; // XP earned today (cap: 50)

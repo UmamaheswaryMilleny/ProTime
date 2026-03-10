@@ -1,5 +1,6 @@
 import type { UserEntity } from "../../domain/entities/user.entity";
-import type { UserResponseDTO ,PaginatedUsersResponseDTO} from "../dto/user/response/user.response.dto";
+import type { UserResponseDTO } from "../dto/user/response/user.response.dto";
+import { PaginatedUsersResponseDTO } from "../dto/user/response/paginated-users.response.dto";
 
 //use cases like get users admin list users or any usecase returning user info needs it
 export class UserMapper {

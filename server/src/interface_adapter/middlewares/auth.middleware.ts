@@ -15,6 +15,7 @@ export interface AuthenticatedUser {
   role: string;
   accessToken: string;
   refreshToken: string;
+  isPremium:boolean;
 }
 
 export interface CustomRequest extends Request {
@@ -71,6 +72,7 @@ export const verifyAuth = (
       role: payload.role,
       accessToken,
       refreshToken,
+      isPremium:payload.isPremium??false
     };
 
     next();

@@ -3,14 +3,14 @@ import type {
   UserBadgeEntity,
   BadgeDefinitionEntity,
 } from '../../domain/entities/badge.entity';
-import type {
-  GamificationResponseDTO,
-  AwardXpResponseDTO,
-  UserBadgeResponseDTO,
-  InitializeGamificationResponseDTO,
-} from '../dto/user/response/gamification.response.dto';
+
+import { GamificationResponseDTO } from '../dto/gamification/response/gamification.response.dto';
+import { AwardXpResponseDTO } from '../dto/gamification/response/award-xp.response.dto';
+import { UserBadgeResponseDTO } from '../dto/gamification/response/user-badge.response.dto';
+import { InitializeGamificationResponseDTO } from '../dto/gamification/response/initialize-gamification.response.dto';
+
 import {
-  LevelTitle,
+  FREE_MAX_LEVEL,
   LEVEL_XP_THRESHOLDS,
   MAX_LEVEL,
 } from '../../domain/enums/gamification.enums';
@@ -46,13 +46,15 @@ export class GamificationMapper {
     const xpProgress = entity.totalXp - currentLevelXp;
 
     // Title is locked if user is FREE and title is above Learner
-    const freeTitleOrder = [
-      LevelTitle.EARLY_BIRD,
-      LevelTitle.BEGINNER,
-      LevelTitle.LEARNER,
-    ];
-    const isTitleLocked =
-      !isPremium && !freeTitleOrder.includes(entity.currentTitle);
+    // const freeTitleOrder = [
+    //   LevelTitle.EARLY_BIRD,
+    //   LevelTitle.BEGINNER,
+    //   LevelTitle.LEARNER,
+    // ];
+    // const isTitleLocked =
+    //   !isPremium && !freeTitleOrder.includes(entity.currentTitle);
+    // ✅ fix — uses constant, simpler logic
+const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
 
     return {
       userId: entity.userId,

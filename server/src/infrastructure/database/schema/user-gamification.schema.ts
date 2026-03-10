@@ -43,10 +43,10 @@ export const UserGamificationSchema = new Schema(
       type:    Date,
       default: null,
     },
-    streakFrozen: {
-      type:    Boolean,
-      default: false,
-    },
+    // streakFrozen: {
+    //   type:    Boolean,
+    //   default: false,
+    // },
 
 
     dailyXpEarned: {

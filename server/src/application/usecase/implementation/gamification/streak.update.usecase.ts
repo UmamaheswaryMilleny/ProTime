@@ -1,9 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import type { IUpdateStreakUsecase } from '../../interface/user/gamification.usecase.interface'
-import type { IGamificationRepository }  from '../../../../domain/repositories/gamification.repository.interface';
+import type { IUpdateStreakUsecase } from '../../interface/gamification/update.streak.usecase.interface';
+import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import { GamificationNotFoundError } from '../../../../domain/errors/gamification.error';
-import { STREAK_BONUS_XP } from '../../../../domain/enums/gamification.enums';
-
+import { STREAK_BONUS_XP_FREE,STREAK_BONUS_XP_PREMIUM } from '../../../../domain/enums/gamification.enums';
 @injectable()
 export class UpdateStreakUsecase implements IUpdateStreakUsecase {
     constructor(
@@ -11,11 +10,13 @@ export class UpdateStreakUsecase implements IUpdateStreakUsecase {
         private readonly gamificationRepository: IGamificationRepository,
     ) { }
 
-    async execute(userId: string): Promise<{
+    async execute(userId: string,isPremium:boolean): Promise<{
+        
         streakUpdated: boolean;
         streakBonus: number;
         currentStreak: number;
     }> {
+
         const gamification = await this.gamificationRepository.findByUserId(userId);
         if (!gamification) throw new GamificationNotFoundError();
 
@@ -73,8 +74,8 @@ export class UpdateStreakUsecase implements IUpdateStreakUsecase {
             lastStreakDate: todayDate,
         });
 
-        // Check if this streak hits a milestone for bonus XP
-        const streakBonus = STREAK_BONUS_XP[newStreak] ?? 0;
+const bonusTable=isPremium?STREAK_BONUS_XP_PREMIUM:STREAK_BONUS_XP_FREE
+const streakBonus=bonusTable[newStreak]??0
 
         return {
             streakUpdated: true,

@@ -1,7 +1,8 @@
 import { inject, injectable } from 'tsyringe';
-import type { IInitializeGamificationUsecase } from '../../interface/user/gamification.usecase.interface';
-import type { IGamificationRepository } from '../../../../domain/repositories/gamification.repository.interface';
-import type { InitializeGamificationResponseDTO } from '../../../dto/user/response/gamification.response.dto';
+import type { IInitializeGamificationUsecase } from '../../interface/gamification/initialize.usecase.interface';
+
+import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { InitializeGamificationResponseDTO } from '../../../dto/gamification/response/initialize-gamification.response.dto';
 import { GamificationMapper } from '../../../mapper/gamification.mapper';
 import { LevelTitle } from '../../../../domain/enums/gamification.enums';
 
@@ -22,7 +23,7 @@ export class InitializeGamificationUsecase implements IInitializeGamificationUse
       currentStreak: 0,
       longestStreak: 0,
       lastStreakDate: null,
-      streakFrozen: false,
+      // streakFrozen: false,
 
       dailyXpEarned: 0,
       dailyChatMessageCount: 0,

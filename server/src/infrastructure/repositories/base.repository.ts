@@ -1,6 +1,6 @@
 import { Document, Model} from "mongoose";
 import type { ClientSession } from "mongoose";
-import type { IBaseRepository } from "../../domain/repositories/base.repository.interface";
+import type { IBaseRepository } from "../../domain/repositories/base/base.repository.interface";
 
 
 
@@ -77,18 +77,16 @@ export class BaseRepository<TDoc extends Document, TEntity>
     return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
   }
 
-  async deleteById(
-    id: string,
-    session?: ClientSession
-  ): Promise<TEntity | null> {
-    const query = this.model.findByIdAndDelete(id);
+ async deleteById(
+  id: string,
+  session?: ClientSession
+): Promise<void> {
+  const query = this.model.findByIdAndDelete(id);
 
-    if (session) {
-      query.session(session);
-    }
-
-    const doc = await query.exec();
-    if (!doc) return null;
-    return this.toDomain ? this.toDomain(doc) : (doc as unknown as TEntity);
+  if (session) {
+    query.session(session);
   }
+
+  await query.exec(); // ✅ just await, no return
+}
 }

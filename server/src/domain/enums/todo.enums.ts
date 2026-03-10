@@ -7,7 +7,8 @@ export enum TodoPriority{
 
 export enum TodoStatus{
     PENDING="PENDING",
-    COMPLETED='COMPLETED'
+    COMPLETED='COMPLETED',
+    EXPIRED='EXPIRED'
 }
 
 export const ESTIMATED_TIME_OPTIONS: Record<TodoPriority, number[]> = {
@@ -35,7 +36,7 @@ export const POMODORO_MIN_FOR_BONUS:Record<TodoPriority,number>={
 }
 
 export const DAILY_XP_CAP = 50
-
+export const POMODORO_MAX_PAUSE_MINUTES = 15; 
 // export const BREAK_TIME={
 //     MIN_MINUTES:5,
 //     MAX_MINUTES:15,

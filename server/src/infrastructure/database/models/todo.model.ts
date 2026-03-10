@@ -20,9 +20,9 @@ export interface TodoDocument extends Document {
   // totalXp: number;    // stored for fast aggregation — baseXp + bonusXp
   xpCounted: boolean;
 
-  isShared: boolean;
+  // isShared: boolean;
   sharedWith: Types.ObjectId[];
-
+expiryDate?: Date | null;
   completedAt?: Date | null;
   createdAt: Date;
   updatedAt: Date;

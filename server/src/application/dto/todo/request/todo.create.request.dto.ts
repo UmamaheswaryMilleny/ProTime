@@ -5,12 +5,9 @@ import {
   IsEnum,
   IsInt,
   IsBoolean,
-  IsDateString,
   MaxLength,
   Min,
-  Max,
-  ValidateIf,
-  isInt,
+  IsDateString
 } from 'class-validator';
 import { TodoPriority } from '../../../../domain/enums/todo.enums';
 
@@ -31,6 +28,10 @@ export class CreateTodoRequestDTO {
   @IsInt()
   @Min(1)
   estimatedTime!: number;
+
+  @IsOptional()
+@IsDateString()
+expiryDate?: string;
 
   @IsBoolean()
   pomodoroEnabled!: boolean;

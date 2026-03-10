@@ -1,12 +1,12 @@
 import { inject, injectable } from "tsyringe";
-import type { IOtpService } from "../../service_interface/otp.service.interface";
-import type { ITempUserService } from "../../service_interface/temp-user.service.interface";
-import type { IVerifyOtpUsecase } from "../interface/auth/verify-otp.usecase.interface";
-import { InvalidOtpError } from "../../../domain/errors/user.error";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
-import { AuthProvider } from "../../../domain/enums/user.enums";
-import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface";
-
+import type { IOtpService } from "../../../service_interface/otp.service.interface";
+import type { ITempUserService } from "../../../service_interface/temp-user.service.interface";
+import type { IVerifyOtpUsecase } from "../../interface/auth/verify-otp.usecase.interface";
+import { InvalidOtpError } from "../../../../domain/errors/user.error";
+import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
+import { AuthProvider } from "../../../../domain/enums/user.enums";
+import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
+import type { IInitializeGamificationUsecase } from "../../interface/gamification/initialize.usecase.interface";
 
 @injectable()
 export class VerifyOtpUseCase implements IVerifyOtpUsecase {
@@ -19,6 +19,8 @@ export class VerifyOtpUseCase implements IVerifyOtpUsecase {
     private readonly otpService: IOtpService,
        @inject("ProfileRepository")
     private readonly profileRepository: IProfileRepository,
+    @inject('IInitializeGamificationUsecase')
+private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
   ) {}
 
   async execute(data: { email: string; otp: string }): Promise<void> {
@@ -50,9 +52,9 @@ export class VerifyOtpUseCase implements IVerifyOtpUsecase {
     await this.profileRepository.save({
       userId: user.id,
       fullName: tempUser.fullName,
-      username: email.split('@')[0],  // default username from email
+      username:`${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
     });
-
+await this.initializeGamificationUsecase.execute(user.id);
 
     //4. clean up temp data
     await this.tempUserService.deleteUser(email);

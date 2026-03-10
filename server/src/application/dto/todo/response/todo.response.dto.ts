@@ -5,22 +5,22 @@ import { TodoPriority,TodoStatus } from "../../../../domain/enums/todo.enums";
 export interface TodoResponseDTO{
     id:string;
     title:string;
-    description:string|undefined;
+    description:string | null;
     priority:TodoPriority;
     estimatedTime:number;
     status:TodoStatus
 
     pomodoroEnabled:boolean;
     pomodoroCompleted:boolean;
-    actualPomodoroTime:number|undefined;
+    actualPomodoroTime:number|null;
     // breakTime:number|undefined;
-    smartBreaks: boolean | undefined;
+    smartBreaks: boolean | null;
     baseXp:number;
     bonusXp:number;
     xpCounted: boolean;
-    
+    expiryDate: string | null;
 
-    isShared:boolean;
+    // isShared:boolean;
     sharedWith:string[];
 
     completedAt:string|null;
@@ -28,12 +28,3 @@ export interface TodoResponseDTO{
     updatedAt:string;
 }
 
-export interface TodoListResponseDTO{
-    todos:TodoResponseDTO[];
-    totalTasks:number;
-    completed:number;
-    shared:number;
-    progress:number; // 0–100, calculated as Math.round((completed / totalTasks) * 100)
-    todayXp: number;  //XP earned today for the daily cap progress bar
-    dailyXpCap: number;// always 50, frontend uses this to render bar
-}

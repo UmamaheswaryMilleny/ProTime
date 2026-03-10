@@ -3,6 +3,7 @@ export interface AccessTokenPayload{
   id:string;
   email:string;
   role:string;
+  isPremium:boolean;
 }
 
 export interface RefreshTokenPayload{

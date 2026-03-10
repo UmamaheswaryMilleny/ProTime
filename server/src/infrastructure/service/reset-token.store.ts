@@ -1,6 +1,6 @@
 import { injectable } from "tsyringe";
 import { redisClient } from "../config/redis.config";
-import { IResetTokenStore } from "../../application/service_interface/resetTokenStore.service.interface";
+import { IResetTokenStore } from "../../application/service_interface/reset-token-store.service.interface";
 
 @injectable()
 export class RedisResetTokenStore implements IResetTokenStore {

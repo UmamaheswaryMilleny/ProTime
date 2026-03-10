@@ -1,5 +1,5 @@
-import type { TodoListResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import type { TodoListResponseDTO } from "../../../dto/todo/response/todolist-response.dto";
 
 export interface IGetTodosUsecase {
-  execute(userId: string, filter?: 'all' | 'pending' | 'completed'): Promise<TodoListResponseDTO>;
+  execute(userId: string, filter?: 'all' | 'pending' | 'completed'|'expired'): Promise<TodoListResponseDTO>;
 }

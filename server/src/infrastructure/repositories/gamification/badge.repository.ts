@@ -1,12 +1,12 @@
 import mongoose from 'mongoose';
 import { injectable } from 'tsyringe';
-import type { IBadgeDefinitionRepository, IUserBadgeRepository } from '../../../domain/repositories/gamification.repository.interface.js';
-import type { BadgeDefinitionEntity, UserBadgeEntity } from '../../../domain/entities/badge.entity.js';
-import type { BadgeCategory } from '../../../domain/enums/gamification.enums.js';
-import { BadgeDefinitionModel } from '../../database/models/badge.model.js';
-import { UserBadgeModel } from '../../database/models/badge.model.js';
-import { BadgeDefinitionMapper, UserBadgeMapper } from '../../database/mappers/gamification.mapper.js';
-
+import type { IBadgeDefinitionRepository } from '../../../domain/repositories/gamification/gamification.repository.interface';
+import type { BadgeDefinitionEntity, UserBadgeEntity } from '../../../domain/entities/badge.entity';
+import type { BadgeCategory } from '../../../domain/enums/gamification.enums';
+import { BadgeDefinitionModel } from '../../database/models/badge.model';
+import { UserBadgeModel } from '../../database/models/badge.model';
+import { BadgeDefinitionMapper, UserBadgeMapper } from '../../database/mappers/gamification.mapper';
+import { IUserBadgeRepository } from '../../../domain/repositories/gamification/gamification.repository.interface';
 // ─── MongoBadgeDefinitionRepository ──────────────────────────────────────────
 @injectable()
 export class MongoBadgeDefinitionRepository implements IBadgeDefinitionRepository {

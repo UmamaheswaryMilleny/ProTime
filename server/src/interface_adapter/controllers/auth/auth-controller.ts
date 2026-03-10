@@ -11,7 +11,7 @@ import type { IRefreshTokenUsecase } from '../../../application/usecase/interfac
 import type { IforgotPasswordUseCase } from '../../../application/usecase/interface/auth/forgot-password.usecase.interface';
 import type { IResetPasswordUsecase } from '../../../application/usecase/interface/auth/reset-password.usecase.interface';
 import type { IGoogleAuthUsecase } from '../../../application/usecase/interface/auth/google-auth.usecase.interface';
-
+import type { ITokenService } from '../../../application/service_interface/token.service.interface';
 
 import { ResponseHelper } from '../../helpers/response.helper';
 import {
@@ -50,6 +50,8 @@ export class AuthController implements IAuthController {
 
     @inject('IGoogleAuthUsecase')
     private readonly googleAuthUsecase: IGoogleAuthUsecase,
+    @inject('ITokenService')
+private readonly tokenService: ITokenService,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -236,23 +238,26 @@ export class AuthController implements IAuthController {
   }
 
   // ─── Verify Reset Token ───────────────────────────────────────────────────
+async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const { token } = req.query;
 
-  async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise<void> {
-    try {
-      const { token } = req.query;
-
-      if (!token || typeof token !== 'string') {
-        ResponseHelper.error(res, 'Token is required', HTTP_STATUS.BAD_REQUEST);
-        return;
-      }
-
-      // verifyReset from ITokenService — returns payload or null
-      // We just confirm it's valid, no usecase needed
-      ResponseHelper.success(res, HTTP_STATUS.OK, 'Reset token is valid');
-    } catch (error) {
-      next(error);
+    if (!token || typeof token !== 'string') {
+      ResponseHelper.error(res, 'Token is required', HTTP_STATUS.BAD_REQUEST);
+      return;
     }
+
+    const payload = this.tokenService.verifyReset(token);
+    if (!payload) {
+      ResponseHelper.error(res, 'Invalid or expired reset token', HTTP_STATUS.UNAUTHORIZED);
+      return;
+    }
+
+    ResponseHelper.success(res, HTTP_STATUS.OK, 'Reset token is valid');
+  } catch (error) {
+    next(error);
   }
+}
 
   // ─── Reset Password ───────────────────────────────────────────────────────
 

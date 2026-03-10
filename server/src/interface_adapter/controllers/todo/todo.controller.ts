@@ -62,12 +62,11 @@ export class TodoController implements ITodoController {
       }
 
       const rawFilter = req.query.filter;
-      const filter: 'all' | 'pending' | 'completed' =
-        rawFilter === 'pending'
-          ? 'pending'
-          : rawFilter === 'completed'
-            ? 'completed'
-            : 'all';
+ const filter: 'all' | 'pending' | 'completed' | 'expired' =
+  rawFilter === 'pending' ? 'pending'
+  : rawFilter === 'completed' ? 'completed'
+  : rawFilter === 'expired' ? 'expired'
+  : 'all';
 
       const result = await this.getTodosUsecase.execute(req.user.id, filter);
 
@@ -125,8 +124,9 @@ export class TodoController implements ITodoController {
       }
 
       const todoId = req.params.todoId as string;
+      const isPremium=req.user.isPremium
 
-      const todo = await this.completeTodoUsecase.execute(req.user.id, todoId);
+      const todo = await this.completeTodoUsecase.execute(req.user.id, todoId,isPremium);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.COMPLETED, todo);
     } catch (error) {

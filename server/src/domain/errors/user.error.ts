@@ -51,7 +51,7 @@ export class InvalidTokenError extends DomainError{
 }
 export class UserDeletedError extends DomainError{
     constructor(){
-        super(`User deleted account`)
+        super(`This account has been deleted`)
     }
 }
 

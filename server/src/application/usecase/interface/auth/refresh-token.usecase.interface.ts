@@ -1,4 +1,4 @@
-import type { RefreshTokenResponseDTO } from "../../../dto/auth/response/refrsh-token.response.dto";
+import type { RefreshTokenResponseDTO } from "../../../dto/auth/response/refresh-token.response.dto";
 
 export interface IRefreshTokenUsecase {
   execute(refreshToken: string): Promise<RefreshTokenResponseDTO>;

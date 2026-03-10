@@ -1,11 +1,11 @@
 import { inject, injectable } from 'tsyringe';
-import type { IGetGamificationUsecase } from '../../interface/user/gamification.usecase.interface';
-import type {
-  IGamificationRepository,
-  IBadgeDefinitionRepository,
-  IUserBadgeRepository,
-} from '../../../../domain/repositories/gamification.repository.interface';
-import type { GamificationResponseDTO } from '../../../dto/user/response/gamification.response.dto';
+import type { IGetGamificationUsecase } from '../../interface/gamification/get-gamification.usecase.interface';
+
+import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IUserBadgeRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+
+import type { GamificationResponseDTO } from '../../../dto/gamification/response/gamification.response.dto';
 import { GamificationMapper } from '../../../mapper/gamification.mapper';
 import { GamificationNotFoundError } from '../../../../domain/errors/gamification.error';
 

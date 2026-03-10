@@ -11,9 +11,11 @@ export class ProfileMapper {
       fullName: user.fullName,
       email: user.email,
       bio: profile.bio,
+      username:profile.username,
       country: profile.country,
+      languages:profile.languages,
       profileImage: profile.profileImage,
-      createdAt: profile.createdAt,
+      createdAt: profile.createdAt.toISOString(),
     };
   }
 }

@@ -7,6 +7,7 @@ export class ProfileMapper {
 
   static toDomain(doc: ProfileDocument): ProfileEntity {
     return {
+         id: (doc._id as { toString(): string }).toString(),
       userId: doc.userId.toString(),
       fullName: doc.fullName,
       username: doc.username,

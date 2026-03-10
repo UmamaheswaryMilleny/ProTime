@@ -17,6 +17,7 @@ export class UserMapper {
       isEmailVerified: doc.isEmailVerified,
       isBlocked: doc.isBlocked,
       isDeleted: doc.isDeleted,
+      isPremium:doc.isPremium,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -41,6 +42,7 @@ export class UserMapper {
       result.isEmailVerified = data.isEmailVerified;
     if (data.isBlocked !== undefined) result.isBlocked = data.isBlocked;
     if (data.isDeleted !== undefined) result.isDeleted = data.isDeleted;
+    if (data.isPremium !== undefined) result.isPremium = data.isPremium;
 
     // googleId is schema-only — never on UserEntity, passed separately
     if (data.googleId !== undefined) result.googleId = data.googleId;

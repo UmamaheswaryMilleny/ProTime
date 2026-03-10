@@ -31,20 +31,21 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
     const todo = await this.todoRepository.save({
       userId,
       title,
-      description,
+      description:description??null,
       priority,
       estimatedTime,
       status: TodoStatus.PENDING,
       pomodoroEnabled,
       pomodoroCompleted: false,
-      actualPomodoroTime: undefined,
-      smartBreaks: pomodoroEnabled ? (smartBreaks ?? true) : undefined,
+      actualPomodoroTime: null,
+      smartBreaks: pomodoroEnabled ? (smartBreaks ?? true) : null,
       baseXp,   
       bonusXp: 0,
       xpCounted: false,
-      isShared: false,
+      // isShared: false,
+      expiryDate:data.expiryDate?new Date(data.expiryDate) : null,
       sharedWith: [],
-      completedAt: undefined,
+      completedAt: null,
     });
 
     return TodoMapper.toResponse(todo);

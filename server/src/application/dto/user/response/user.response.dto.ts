@@ -8,17 +8,10 @@ export interface UserResponseDTO {
   isBlocked: boolean;
   createdAt: Date;
   updatedAt: Date;
-  profileImage?: string;
+  // profileImage?: string;
 }
 
 
-export interface PaginatedUsersResponseDTO {
-  users: UserResponseDTO[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
 
 
 

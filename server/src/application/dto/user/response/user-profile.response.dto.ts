@@ -1,10 +1,13 @@
 //returning updated profile
-export class UserProfileResponseDTO {
-  id!: string;
-  fullName!: string;
-  email!: string;
+export interface UserProfileResponseDTO {
+  id: string;
+  fullName: string;
+  email: string;
+  username:string;
   bio?: string;
   country?: string;
   profileImage?: string;
-  createdAt!: Date;
+  languages?:string[];
+  createdAt: string;
 }
+

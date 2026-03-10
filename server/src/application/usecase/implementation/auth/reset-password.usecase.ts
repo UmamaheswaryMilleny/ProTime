@@ -1,16 +1,17 @@
 import { inject, injectable } from "tsyringe";
-import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
-import type { IPasswordHasherService } from "../../service_interface/password-hasher.service.interface";
+import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
+import type { IPasswordHasherService } from "../../../service_interface/password-hasher.service.interface";
 import {
   InvalidTokenError,
   UserBlockedError,
   UserDeletedError,
   UserNotFoundError,
-} from "../../../domain/errors/user.error";
-import type { IResetPasswordUsecase } from "../interface/auth/reset-password.usecase.interface";
-import type { ITokenService } from "../../service_interface/token.service.interface";
-import type{ IRefreshTokenStore } from "../../service_interface/refresh-token-store-service.interface";
-import type{ IResetTokenStore } from "../../service_interface/reset-token-store.service.interface";
+} from "../../../../domain/errors/user.error";
+
+import type { IResetPasswordUsecase } from "../../interface/auth/reset-password.usecase.interface";
+import type { ITokenService } from "../../../service_interface/token.service.interface";
+import type { IRefreshTokenStore } from "../../../service_interface/refresh-token-store-service.interface";
+import type { IResetTokenStore } from "../../../service_interface/reset-token-store.service.interface";
 
 @injectable()
 export class ResetPasswordUsecase implements IResetPasswordUsecase {
@@ -34,9 +35,9 @@ export class ResetPasswordUsecase implements IResetPasswordUsecase {
     if (!payload) {
       throw new InvalidTokenError();
     }
-    if (!payload || !payload.id || !payload.email || !payload.role) {
-      throw new InvalidTokenError();
-    }
+    // if (!payload || !payload.id || !payload.email || !payload.role) {
+    //   throw new InvalidTokenError();
+    // }
 
     //1. check if user exists in redis
 

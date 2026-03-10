@@ -28,6 +28,7 @@ export enum BadgeConditionType {
   STREAK_DAYS = 'STREAK_DAYS', // maintain streak for N days
   BUDDY_MATCHES = 'BUDDY_MATCHES', // match with N buddies (min 4★, min 1hr)
   ROOMS_ATTENDED = 'ROOMS_ATTENDED', // attend N rooms (min 1hr each)
+  
 }
 
 
@@ -84,22 +85,35 @@ export function getLevelFromXp(totalXp: number): number {
   return 0;
 }
 
-
 // Awarded when streak reaches a milestone.
 // Key = streak day milestone, Value = bonus XP awarded once at that milestone.
-export const STREAK_BONUS_XP: Record<number, number> = {
-  3: 5,
-  5: 10,
-  7: 15,
+export const STREAK_BONUS_XP_FREE: Record<number, number> = {
+  1: 5,
+  3: 10,
+  5: 15,
+  7: 20,
   10: 25,
-  15: 40,
-  20: 60,
-  30: 100,
-  50: 200,
-  75: 300,
-  100: 500,
+  15: 30,
+  20: 35,
+  30: 40,
+  50: 45,
+  75: 50,
+  100: 100,
 };
 
+export const STREAK_BONUS_XP_PREMIUM: Record<number, number> = {
+  1: 10,
+  3: 20,
+  5: 30,
+  7: 40,
+  10: 50,
+  15: 60,
+  20: 70,
+  30: 80,
+  50: 95,
+  75: 100,
+  100: 200,
+};
 
 // Premium-only badges: bonus only awarded if user is PREMIUM at time of earning.
 export const BADGE_XP_BONUS = 50;
@@ -112,7 +126,10 @@ export type XpSource =
     | 'STREAK_BONUS'
     | 'BADGE_BONUS';
 
+    export const FREE_MAX_LEVEL = 6; // LEARNER = levels 4-6, above this = locked for free
+
+    
 // ─── Free Title Lock ──────────────────────────────────────────────────────────
 // Free users can see all levels but titles above LEARNER are locked (visual only).
 // The actual title is still computed — just displayed as locked in the frontend.
-export const FREE_MAX_VISIBLE_TITLE = LevelTitle.LEARNER; // Level 6
+// export const FREE_MAX_VISIBLE_TITLE = LevelTitle.LEARNER; // Level 6

@@ -1,16 +1,11 @@
 import { inject, injectable } from 'tsyringe';
-import type {
-    ICheckAndAwardBadgesUsecase,
-    
-} from '../../interface/user/gamification.usecase.interface';
-import type {
-    IGamificationRepository,
-    IBadgeDefinitionRepository,
-    IUserBadgeRepository,
-}from '../../../../domain/repositories/gamification.repository.interface';
+import { ICheckAndAwardBadgesUsecase } from '../../interface/gamification/check-and-award-badges.usecase.interface';
 
+import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IUserBadgeRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { ITodoRepository } from '../../../../domain/repositories/todo/todo.repository.interface';
-import type { UserBadgeResponseDTO } from '../../../dto/user/response/gamification.response.dto';
+import type { UserBadgeResponseDTO } from '../../../dto/gamification/response/user-badge.response.dto';
 import { GamificationMapper } from '../../../mapper/gamification.mapper';
 import { GamificationNotFoundError } from '../../../../domain/errors/gamification.error';
 import { BadgeConditionType } from '../../../../domain/enums/gamification.enums';
@@ -87,7 +82,8 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
             if (!conditionMet) continue;
 
             // Award badge — xpAwarded only if premium or badge is free
-            const xpAwarded = isPremium || !badge.premiumRequired;
+            // const xpAwarded = isPremium || !badge.premiumRequired;
+            const xpAwarded = isPremium;
 
             const userBadge = await this.userBadgeRepository.save({
                 userId,

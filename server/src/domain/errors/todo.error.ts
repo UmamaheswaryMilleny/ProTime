@@ -30,6 +30,12 @@ export class InvalidEstimatedTimeError extends DomainError {
     super(`Estimated time ${value} is not valid for ${priority} priority`);
   }
 }
+
+export class TodoExpiredError extends DomainError {
+  constructor() {
+    super('This task has expired and cannot be modified');
+  }
+}
 // export class LowPriorityBreakTimeError extends DomainError {
 //   constructor() {
 //     super(`Break time is not available for LOW priority tasks`);

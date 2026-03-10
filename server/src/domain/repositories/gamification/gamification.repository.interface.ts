@@ -1,8 +1,8 @@
-import type { IBaseRepository } from './base.repository.interface.js';
-import type { UserGamificationEntity } from '../entities/gamification.entity.js';
-import type { BadgeDefinitionEntity } from '../entities/badge.entity.js';
-import type { UserBadgeEntity } from '../entities/badge.entity.js';
-import type { BadgeCategory, LevelTitle } from '../enums/gamification.enums.js';
+import type { IBaseRepository } from '../base/base.repository.interface.js';
+import type { UserGamificationEntity } from '../../entities/gamification.entity.js';
+import type { BadgeDefinitionEntity } from '../../entities/badge.entity.js';
+import type { UserBadgeEntity } from '../../entities/badge.entity.js';
+import type { BadgeCategory,LevelTitle } from '../../enums/gamification.enums.js';
 
 export interface IGamificationRepository extends IBaseRepository<UserGamificationEntity> {
   findByUserId(userId: string): Promise<UserGamificationEntity | null>;
@@ -23,7 +23,7 @@ export interface IGamificationRepository extends IBaseRepository<UserGamificatio
     data: {
       currentStreak: number;
       longestStreak: number;
-      lastStreakDate: Date;
+      lastStreakDate: Date | null;
     },
   ): Promise<UserGamificationEntity | null>;
 
@@ -35,7 +35,7 @@ export interface IGamificationRepository extends IBaseRepository<UserGamificatio
 
 //   Free users have a 10 message/day limit in community chat. Every time a message is sent this increments by 1.
   incrementDailyChatCount(userId: string): Promise<void>;
-
+// incrementAiTokensUsed(userId: string): Promise<void>;
 
   // Used by UpdateStreakUsecase to verify streak eligibility (needs pomodoro)
   markPomodoroUsedToday(userId: string): Promise<void>;

@@ -16,6 +16,7 @@ import {
   UnauthorizedTodoAccessError,
   TodoAlreadyCompletedError,
   InvalidEstimatedTimeError,
+  TodoExpiredError,
 } from "../../../../domain/errors/todo.error";
 
 
@@ -40,7 +41,7 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
 
     // 3. Cannot edit a completed task
     if (todo.status === TodoStatus.COMPLETED) throw new TodoAlreadyCompletedError();
-
+if(todo.status===TodoStatus.EXPIRED) throw new TodoExpiredError()
     // 4. Determine effective priority (new one if changing, existing if not)
     const effectivePriority = (data.priority ?? todo.priority) as TodoPriority;
 
@@ -68,11 +69,15 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
     if (data.pomodoroEnabled !== undefined) {
       updateData.pomodoroEnabled = data.pomodoroEnabled;
       if (!data.pomodoroEnabled) {
-        updateData.smartBreaks = undefined;
+        updateData.smartBreaks = null;
         updateData.pomodoroCompleted = false;
-        updateData.actualPomodoroTime = undefined;
+        updateData.actualPomodoroTime = null;
       }
     }
+    if(data.expiryDate!==undefined){
+      updateData.expiryDate=data.expiryDate?new Date(data.expiryDate):null
+    }
+    
     if (data.smartBreaks !== undefined && data.pomodoroEnabled !== false) {
       updateData.smartBreaks = data.smartBreaks;
     }

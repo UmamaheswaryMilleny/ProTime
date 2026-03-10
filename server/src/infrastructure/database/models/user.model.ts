@@ -12,6 +12,7 @@ export interface UserDocument extends Document{
     isEmailVerified:boolean;
     isBlocked:boolean;
     isDeleted:boolean;
+    isPremium:boolean;
     createdAt:Date;
     updatedAt:Date;
 }

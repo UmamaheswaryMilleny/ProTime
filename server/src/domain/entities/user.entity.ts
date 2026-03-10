@@ -10,6 +10,7 @@ export interface UserEntity{
     authProvider:AuthProvider
     isBlocked:boolean
     isDeleted:boolean
+    isPremium: boolean
     createdAt:Date
     updatedAt:Date  
 }

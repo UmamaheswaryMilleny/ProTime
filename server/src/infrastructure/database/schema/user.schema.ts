@@ -45,6 +45,10 @@ export const UserSchema = new Schema(
       default: false,
       index: true,
     },
+      isPremium: {
+      type: Boolean,
+      default: false,
+    },
     isDeleted: {
       type: Boolean,
       default: false,

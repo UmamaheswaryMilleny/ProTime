@@ -3,7 +3,9 @@ import {
   IsString,
   Matches,
   MinLength,
+  Validate,
 } from "class-validator";
+import { MatchPasswordConstraint } from "./password-validator";
 
 export class ResetPasswordRequestDTO {
   @IsString()
@@ -29,5 +31,6 @@ export class ResetPasswordRequestDTO {
 
   @IsString()
   @IsNotEmpty({ message: "Confirm password is required" })
+  @Validate(MatchPasswordConstraint)
   confirmPassword!: string;
 }

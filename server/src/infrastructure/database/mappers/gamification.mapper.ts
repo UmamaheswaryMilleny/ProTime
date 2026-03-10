@@ -1,7 +1,7 @@
-import type { UserGamificationDocument } from '../models/user-gamification.model.js';
-import type { BadgeDefinitionDocument, UserBadgeDocument } from '../models/badge.model.js';
-import type { UserGamificationEntity } from '../../../domain/entities/gamification.entity.js';
-import type { BadgeDefinitionEntity,UserBadgeEntity } from '../../../domain/entities/badge.entity.js';
+import type { UserGamificationDocument } from '../models/user-gamification.model';
+import type { BadgeDefinitionDocument, UserBadgeDocument } from '../models/badge.model';
+import type { UserGamificationEntity } from '../../../domain/entities/gamification.entity';
+import type { BadgeDefinitionEntity,UserBadgeEntity } from '../../../domain/entities/badge.entity';
 import { LevelTitle } from '../../../domain/enums/gamification.enums'
 
 // ─── UserGamification Mapper ──────────────────────────────────────────────────
@@ -19,7 +19,7 @@ export class UserGamificationMapper {
       currentStreak:  doc.currentStreak,
       longestStreak:  doc.longestStreak,
       lastStreakDate: doc.lastStreakDate ?? null,
-      streakFrozen:   doc.streakFrozen,
+      // streakFrozen:   doc.streakFrozen,
 
       dailyXpEarned:         doc.dailyXpEarned,
       dailyChatMessageCount: doc.dailyChatMessageCount,
@@ -44,7 +44,7 @@ export class UserGamificationMapper {
     if (data.currentStreak  !== undefined) result.currentStreak  = data.currentStreak;
     if (data.longestStreak  !== undefined) result.longestStreak  = data.longestStreak;
     if (data.lastStreakDate !== undefined) result.lastStreakDate = data.lastStreakDate ?? null;
-    if (data.streakFrozen   !== undefined) result.streakFrozen   = data.streakFrozen;
+    // if (data.streakFrozen   !== undefined) result.streakFrozen   = data.streakFrozen;
 
     if (data.dailyXpEarned         !== undefined) result.dailyXpEarned         = data.dailyXpEarned;
     if (data.dailyChatMessageCount !== undefined) result.dailyChatMessageCount = data.dailyChatMessageCount;
@@ -88,8 +88,8 @@ export class UserBadgeMapper {
       badgeKey:          doc.badgeKey,
       earnedAt:          doc.earnedAt,
       xpAwarded:         doc.xpAwarded,
-      createdAt:         doc.createdAt,
-      updatedAt:         doc.updatedAt,
+      // createdAt:         doc.createdAt,
+      // updatedAt:         doc.updatedAt,
     };
   }
 

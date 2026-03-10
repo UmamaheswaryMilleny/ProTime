@@ -29,14 +29,14 @@ import { MongoProfileRepository } from '../repositories/user/profile.repository'
 
 //Todo
 import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface';
-import { MongoTodoRepository } from '../repositories/todo.repository';
+import { MongoTodoRepository } from '../repositories/todo/todo.repository';
 import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface';
 import { CloudinaryService } from '../service/cloudinary-service';
 
 //gamification
-import { IGamificationRepository } from '../../domain/repositories/gamification.repository.interface';
-import { IBadgeDefinitionRepository } from '../../domain/repositories/gamification.repository.interface';
-import { IUserBadgeRepository } from '../../domain/repositories/gamification.repository.interface';
+import { IGamificationRepository } from '../../domain/repositories/gamification/gamification.repository.interface';
+import { IBadgeDefinitionRepository } from '../../domain/repositories/gamification/gamification.repository.interface';
+import { IUserBadgeRepository } from '../../domain/repositories/gamification/gamification.repository.interface';
 import { MongoGamificationRepository } from '../repositories/gamification/gamification.repository';
 import { MongoBadgeDefinitionRepository } from '../repositories/gamification/badge.repository';
 import { MongoUserBadgeRepository } from '../repositories/gamification/badge.repository';
