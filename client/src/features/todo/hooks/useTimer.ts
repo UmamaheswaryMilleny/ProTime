@@ -26,8 +26,9 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
         if (!task) return [{ phase: 'FOCUS', duration: 25 * 60 }];
 
         // If smart breaks are disabled, or priority is LOW, it's a single continuous focus block
-        if (!isSmartBreaksEnabled || task.priority === 'LOW') {
-            return [{ phase: 'FOCUS', duration: task.estimatedTime * 60 }];
+        if (!isSmartBreaksEnabled || (task && task.priority === 'LOW')) {
+            const focusMinutes = task ? task.estimatedTime : 25; // Use 25 only as a very last resort if task is null
+            return [{ phase: 'FOCUS', duration: focusMinutes * 60 }];
         }
 
         if (task.priority === 'MEDIUM') {
@@ -68,9 +69,11 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
     });
 
     const [timeRemaining, setTimeRemaining] = useState<number>(() => {
-        if (!timerKey) return phaseSequence[0].duration;
-        const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
-        return savedTime ? parseInt(savedTime, 10) : phaseSequence[0].duration;
+        if (timerKey) {
+            const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
+            if (savedTime) return parseInt(savedTime, 10);
+        }
+        return phaseSequence[0].duration;
     });
 
     const [isRunning, setIsRunning] = useState<boolean>(() => {
@@ -78,36 +81,59 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
         return localStorage.getItem(`${timerKey}_isRunning`) === 'true';
     });
 
-    // 3. Sync state when task/timerKey changes
-    useEffect(() => {
-    if (!timerKey || !task) {
-        queueMicrotask(() => {
-            setCurrentPhaseIndex(0);
-            setTimeRemaining(phaseSequence[0].duration);
-            setIsRunning(false);
-        });
-        return;
-    }
-
-    const savedIndex = localStorage.getItem(`${timerKey}_phaseIndex`);
-    const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
-
-    const index = savedIndex ? parseInt(savedIndex, 10) : 0;
-    const safeIndex = index < phaseSequence.length ? index : 0;
-
-    queueMicrotask(() => {
-        setCurrentPhaseIndex(safeIndex);
-
-        if (savedTime && index === safeIndex) {
-            setTimeRemaining(parseInt(savedTime, 10));
-        } else {
-            setTimeRemaining(phaseSequence[safeIndex].duration);
-        }
-
-        setIsRunning(localStorage.getItem(`${timerKey}_isRunning`) === 'true');
+    const [totalPausedSeconds, setTotalPausedSeconds] = useState<number>(() => {
+        if (!timerKey) return 0;
+        const saved = localStorage.getItem(`${timerKey}_totalPausedSeconds`);
+        return saved ? parseInt(saved, 10) : 0;
     });
 
-}, [timerKey, task, phaseSequence]);
+    // 3. Sync state when task/timerKey changes
+    useEffect(() => {
+        // If we have a timer key but NO task yet, we are likely waiting for data during refresh.
+        // DO NOT reset state to 0/false here, otherwise the timer stops on refresh.
+        if (!timerKey) {
+            queueMicrotask(() => {
+                setCurrentPhaseIndex(0);
+                setTimeRemaining(phaseSequence[0].duration);
+                setIsRunning(false);
+                setTotalPausedSeconds(0);
+            });
+            return;
+        }
+
+        // If task is still null, but timerKey exists, we wait for the task to load
+        if (!task) return;
+
+        const savedIndex = localStorage.getItem(`${timerKey}_phaseIndex`);
+        const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
+        const savedPaused = localStorage.getItem(`${timerKey}_totalPausedSeconds`);
+        const savedIsRunning = localStorage.getItem(`${timerKey}_isRunning`) === 'true';
+        const lastUpdated = localStorage.getItem(`${timerKey}_lastUpdated`);
+
+        const index = savedIndex ? parseInt(savedIndex, 10) : 0;
+        const safeIndex = index < phaseSequence.length ? index : 0;
+
+        queueMicrotask(() => {
+            setCurrentPhaseIndex(safeIndex);
+
+            let time = savedTime && index === safeIndex
+                ? parseInt(savedTime, 10)
+                : phaseSequence[safeIndex].duration;
+
+            // ELAPSED TIME RECOVERY: If it was running, subtract the time passed since last update
+            if (savedIsRunning && lastUpdated) {
+                const elapsedSeconds = Math.floor((Date.now() - parseInt(lastUpdated, 10)) / 1000);
+                time = Math.max(0, time - elapsedSeconds);
+
+                // If time ran out during refresh, it will be handled by the main timer effect
+            }
+
+            setTimeRemaining(time);
+            setIsRunning(savedIsRunning);
+            setTotalPausedSeconds(savedPaused ? parseInt(savedPaused, 10) : 0);
+        });
+
+    }, [timerKey, task, phaseSequence]);
 
     // 4. Save to Local Storage
     useEffect(() => {
@@ -116,77 +142,97 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
             localStorage.setItem(`${timerKey}_timeRemaining`, timeRemaining.toString());
             localStorage.setItem(`${timerKey}_isRunning`, isRunning.toString());
             localStorage.setItem(`${timerKey}_smartBreaks`, isSmartBreaksEnabled.toString());
+            localStorage.setItem(`${timerKey}_totalPausedSeconds`, totalPausedSeconds.toString());
+            localStorage.setItem(`${timerKey}_lastUpdated`, Date.now().toString());
         }
-    }, [currentPhaseIndex, timeRemaining, isRunning, isSmartBreaksEnabled, timerKey]);
-const playSoftBeep = useCallback(() => {
-    try {
-        const AudioCtx =
-            window.AudioContext ||
-            (window as typeof window & { webkitAudioContext?: typeof AudioContext })
-                .webkitAudioContext;
+    }, [currentPhaseIndex, timeRemaining, isRunning, isSmartBreaksEnabled, totalPausedSeconds, timerKey]);
 
-        if (!AudioCtx) return;
+    const playSoftBeep = useCallback(() => {
+        try {
+            const AudioCtx =
+                window.AudioContext ||
+                (window as typeof window & { webkitAudioContext?: typeof AudioContext })
+                    .webkitAudioContext;
 
-        const ctx = new AudioCtx();
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+            if (!AudioCtx) return;
 
-        osc.connect(gain);
-        gain.connect(ctx.destination);
+            const ctx = new AudioCtx();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
 
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, ctx.currentTime);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
 
-        gain.gain.setValueAtTime(0, ctx.currentTime);
-        gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(880, ctx.currentTime);
 
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.8);
-    } catch {
-        // silently fail
-    }
-}, []);
+            gain.gain.setValueAtTime(0, ctx.currentTime);
+            gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+
+            osc.start(ctx.currentTime);
+            osc.stop(ctx.currentTime + 0.8);
+        } catch {
+            // silently fail
+        }
+    }, []);
 
     // 5. Timer Interval & Phase Transitions
     useEffect(() => {
         let interval: number;
+
         if (isRunning && timeRemaining > 0) {
             interval = window.setInterval(() => {
                 setTimeRemaining((prev) => prev - 1);
             }, 1000);
+        } else if (!isRunning && timeRemaining > 0 && timeRemaining < phaseSequence[currentPhaseIndex].duration) {
+            // Timer is PAUSED and has started (not at initial state)
+            interval = window.setInterval(() => {
+                setTotalPausedSeconds((prev) => {
+                    const next = prev + 1;
+                    if (next >= 900) { // 15 minutes
+                        setIsRunning(true);
+                        toast.error("Maximum pause time reached. Timer resumed automatically.", {
+                            id: 'pause-limit-toast',
+                            duration: 4000
+                        });
+                        return 900;
+                    }
+                    return next;
+                });
+            }, 1000);
         } else if (isRunning && timeRemaining === 0) {
 
-    queueMicrotask(() => setIsRunning(false));
+            queueMicrotask(() => setIsRunning(false));
 
-    const completingPhase = phaseSequence[currentPhaseIndex].phase;
+            const completingPhase = phaseSequence[currentPhaseIndex].phase;
 
-    if (completingPhase === 'BREAK') {
-        playSoftBeep();
-        toast('Ready to continue?', { icon: '🔄', duration: 4000 });
-    } else if (
-        completingPhase === 'FOCUS' &&
-        currentPhaseIndex < phaseSequence.length - 1
-    ) {
-        playSoftBeep();
-        toast.success('Break Time! Relax your eyes.', { duration: 4000 });
-    }
+            if (completingPhase === 'BREAK') {
+                playSoftBeep();
+                toast('Ready to continue?', { icon: '🔄', duration: 4000 });
+            } else if (
+                completingPhase === 'FOCUS' &&
+                currentPhaseIndex < phaseSequence.length - 1
+            ) {
+                playSoftBeep();
+                toast.success('Break Time! Relax your eyes.', { duration: 4000 });
+            }
 
-    const nextIndex = currentPhaseIndex + 1;
+            const nextIndex = currentPhaseIndex + 1;
 
-    if (nextIndex < phaseSequence.length) {
-        queueMicrotask(() => {
-            setCurrentPhaseIndex(nextIndex);
-            setTimeRemaining(phaseSequence[nextIndex].duration);
-        });
+            if (nextIndex < phaseSequence.length) {
+                queueMicrotask(() => {
+                    setCurrentPhaseIndex(nextIndex);
+                    setTimeRemaining(phaseSequence[nextIndex].duration);
+                });
 
-        setTimeout(() => setIsRunning(true), 200);
-    } else {
-        onComplete?.();
-    }
-}
+                setTimeout(() => setIsRunning(true), 200);
+            } else {
+                onComplete?.();
+            }
+        }
         return () => window.clearInterval(interval);
-    }, [isRunning, timeRemaining, currentPhaseIndex, phaseSequence, onComplete]);
+    }, [isRunning, timeRemaining, currentPhaseIndex, phaseSequence, onComplete, playSoftBeep]);
 
     // 6. Controls
     const start = useCallback(() => setIsRunning(true), []);
@@ -227,6 +273,7 @@ const playSoftBeep = useCallback(() => {
         phase: currentPhase,
         initialTime,
         isSmartBreaksEnabled,
+        totalPausedSeconds,
         start,
         pause,
         reset,

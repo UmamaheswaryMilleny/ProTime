@@ -16,6 +16,7 @@ interface PomodoroModalProps {
     phase: 'FOCUS' | 'BREAK';
     onSkipBreak?: () => void;
     isSmartBreaksEnabled: boolean;
+    totalPausedSeconds: number;
 }
 
 export const PomodoroModal: React.FC<PomodoroModalProps> = ({
@@ -31,7 +32,8 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
     progressPercentage,
     phase,
     onSkipBreak,
-    isSmartBreaksEnabled
+    isSmartBreaksEnabled,
+    totalPausedSeconds
 }) => {
     if (!isOpen || !task) return null;
 
@@ -90,6 +92,22 @@ export const PomodoroModal: React.FC<PomodoroModalProps> = ({
                         <span className="text-4xl font-bold text-white tracking-widest">{timeRemainingFormatted.replace(':', ' : ')}</span>
                     </div>
                 </div>
+
+                {/* Pause Time Indicator */}
+                {!isRunning && phase === 'FOCUS' && totalPausedSeconds > 0 && (
+                    <div className="text-center mb-6">
+                        <p className="text-xs font-bold text-amber-500 uppercase tracking-widest">
+                            Pause time remaining: {
+                                (() => {
+                                    const remaining = Math.max(0, 900 - totalPausedSeconds);
+                                    const m = Math.floor(remaining / 60);
+                                    const s = remaining % 60;
+                                    return `${m}:${s.toString().padStart(2, '0')}`;
+                                })()
+                            }
+                        </p>
+                    </div>
+                )}
 
                 {/* Settings Section */}
                 {/* Smart Break Info */}

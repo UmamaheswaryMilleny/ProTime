@@ -53,9 +53,10 @@ const clearAuthAndRedirect = (): void => {
 
   localStorage.clear(); // optional: clears everything
 
-  window.location.replace(
-    isAdmin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN
-  );
+  const target = isAdmin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN;
+  if (!window.location.pathname.includes(target)) {
+    window.location.replace(target);
+  }
 };
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────

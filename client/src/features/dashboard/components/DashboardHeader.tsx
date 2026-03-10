@@ -6,8 +6,11 @@ import { logoutUser } from '../../auth/store/authSlice';
 import { ProTimeBackend } from '../../../api/instance';
 import { ROUTES, API_ROUTES } from '../../../config/env';
 
+import { useGamification } from '../../gamification/hooks/useGamification';
+
 export const DashboardHeader: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { gamification, isLoading: isGamificationLoading } = useGamification();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -55,17 +58,14 @@ export const DashboardHeader: React.FC = () => {
             className="cursor-pointer relative"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-           {user?.profileImage ? (
-  <img
-    src={user.profileImage}
-    alt="Profile"
-    className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors object-cover"
-  />
-) : (
-  <div className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors flex items-center justify-center bg-zinc-800">
-    <UserIcon size={20} className="text-zinc-500" />
-  </div>
-)}
+            <img
+              src={
+                user?.profileImage ||
+                'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop'
+              }
+              alt="Profile"
+              className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors"
+            />
           </button>
 
           {/* Profile Dropdown */}
@@ -113,17 +113,27 @@ export const DashboardHeader: React.FC = () => {
 
         {/* Right side inline stats */}
         <div className="flex items-center gap-3 text-sm font-medium">
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
-            <span className="text-[#F97316]">🔥</span>
-            <span>7 Day Streak</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
-            <span>Level 8 – Explorer</span>
-            <span className="text-zinc-500 ml-1">🔒</span>
-          </div>
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-[#22C55E] shadow-sm">
-            <span>420 XP</span>
-          </div>
+          {isGamificationLoading ? (
+            <div className="h-8 w-64 animate-pulse bg-zinc-800 rounded-full" />
+          ) : (
+            <>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
+                <span className="text-[#F97316]">🔥</span>
+                <span>{gamification?.currentStreak || 0} Day Streak</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-zinc-300 shadow-sm">
+                <span>
+                  Level {gamification?.currentLevel || 1} – {gamification?.currentTitle || 'Beginner'}
+                </span>
+                {gamification?.isTitleLocked && (
+                  <span className="text-zinc-500 ml-1" title="Upgrade to Premium to unlock titles">🔒</span>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#18181B] border border-[#27272A] text-[#22C55E] shadow-sm">
+                <span>{gamification?.totalXp || 0} XP</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

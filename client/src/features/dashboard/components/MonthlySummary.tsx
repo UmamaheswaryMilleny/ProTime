@@ -1,47 +1,62 @@
 import React from 'react';
-import { Download, Lock } from 'lucide-react';
+import { FileText, Download, Lock } from 'lucide-react';
+import { useAppSelector } from '../../../store/hooks';
 
 export const MonthlySummary: React.FC = () => {
+    const { user } = useAppSelector((state) => state.auth);
+    const isPremium = user?.isPremium || false;
+
+    // NOTE: Monthly summary stats (tasks, pomodoro, xp, rooms) 
+    // are currently hardcoded as there are no backend endpoints for monthly aggregates yet.
+    const stats = [
+        { label: 'Tasks Completed', value: '156', trend: '+12%' },
+        { label: 'Pomodoro Sessions', value: '84', trend: '+5%' },
+        { label: 'XP Earned', value: '4.2k', trend: '+18%' },
+        { label: 'Rooms Joined', value: '12', trend: '+2%' },
+    ];
+
     return (
-        <div className="w-full bg-[#18181B] rounded-2xl shadow-sm border border-[#27272A] p-6 lg:p-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 fade-in hover:shadow-md transition-shadow">
-
-            <div className="flex-1 w-full">
-                <h2 className="text-2xl font-bold text-white mb-6">This Month</h2>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
-                    <div>
-                        <div className="text-3xl font-bold text-white">42</div>
-                        <div className="text-sm font-medium text-[#A1A1AA] mt-1">Tasks Completed</div>
-                    </div>
-                    <div>
-                        <div className="text-3xl font-bold text-white">18</div>
-                        <div className="text-sm font-medium text-[#A1A1AA] mt-1">Pomodoro Sessions</div>
-                    </div>
-                    <div>
-                        <div className="text-3xl font-bold text-[#22C55E]">320</div>
-                        <div className="text-sm font-medium text-[#A1A1AA] mt-1">XP Earned</div>
-                    </div>
-                    <div>
-                        <div className="text-3xl font-bold text-white">3</div>
-                        <div className="text-sm font-medium text-[#A1A1AA] mt-1">Rooms Joined</div>
-                    </div>
+        <div className="w-full bg-[#18181B] rounded-2xl shadow-sm border border-[#27272A] p-6 lg:p-8 flex flex-col gap-6 fade-in h-min">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h2 className="text-2xl font-bold text-white">Monthly Summary</h2>
+                    <p className="text-sm text-[#A1A1AA] mt-1">Your performance snapshot for March 2026.</p>
                 </div>
+                <button
+                    disabled={!isPremium}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all
+                        ${isPremium
+                            ? 'bg-zinc-800 text-white hover:bg-zinc-700 active:scale-95'
+                            : 'bg-zinc-800/50 text-zinc-500 cursor-not-allowed opacity-70'}
+                    `}
+                >
+                    <Download size={16} />
+                    Export
+                    {!isPremium && <Lock size={12} className="ml-1" />}
+                </button>
             </div>
 
-            {/* Right Side: Export Button */}
-            <div className="md:ml-auto group relative self-start md:self-center">
-                <button
-                    disabled
-                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-zinc-800/50 border border-zinc-700/50 text-zinc-500 font-medium cursor-not-allowed transition-all"
-                >
-                    <Download size={18} />
-                    Export
-                    <Lock size={16} className="ml-1" />
-                </button>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((stat, index) => (
+                    <div key={index} className="flex flex-col gap-1">
+                        <span className="text-xs font-medium text-[#A1A1AA] uppercase tracking-wider">{stat.label}</span>
+                        <div className="flex items-baseline gap-2">
+                            <span className="text-2xl font-bold text-white">{stat.value}</span>
+                            <span className="text-[10px] font-bold text-[#22C55E]">{stat.trend}</span>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-                {/* Tooltip */}
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-[#1F1F23] border border-zinc-700 text-xs text-white rounded-lg shadow-xl opacity-0 scale-95 group-hover:opacity-100 group-hover:scale-100 transition-all pointer-events-none whitespace-nowrap z-10">
-                    Export reports with Premium.
+            <div className="bg-[#2563EB]/5 rounded-xl p-4 flex items-center gap-4 border border-[#2563EB]/10">
+                <div className="p-2 rounded-lg bg-[#2563EB]/10 text-[#2563EB]">
+                    <FileText size={20} />
+                </div>
+                <div>
+                    <p className="text-xs text-zinc-300">
+                        <span className="font-bold text-white text-[13px]">Performance Insight:</span> You're most productive on Tuesday mornings.
+                    </p>
+                    <p className="text-[11px] text-[#A1A1AA] mt-0.5">Keep maintaining your current rhythm to hit your goals.</p>
                 </div>
             </div>
         </div>

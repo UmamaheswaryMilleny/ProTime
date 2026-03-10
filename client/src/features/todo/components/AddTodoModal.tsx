@@ -20,7 +20,10 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
         smartBreaks: true, // Medium/High default
     };
 
-    const [formData, setFormData] = useState<CreateTodoDTO>(defaultState);
+    const [formData, setFormData] = useState<CreateTodoDTO>({
+        ...defaultState,
+        expiryDate: '',
+    });
 
     React.useEffect(() => {
         if (initialTodo && isOpen) {
@@ -31,6 +34,7 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                 estimatedTime: initialTodo.estimatedTime,
                 pomodoroEnabled: initialTodo.pomodoroEnabled,
                 smartBreaks: initialTodo.smartBreaks ?? true,
+                expiryDate: initialTodo.expiryDate ? new Date(initialTodo.expiryDate).toISOString().slice(0, 16) : '',
             });
         } else if (isOpen) {
             setFormData(defaultState);
@@ -108,10 +112,15 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
         setIsSubmitting(true);
         let success = false;
 
+        const dataToSend = {
+            ...formData,
+            expiryDate: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : undefined
+        };
+
         if (initialTodo && onEdit) {
-            success = await onEdit(initialTodo.id, formData);
+            success = await onEdit(initialTodo.id, dataToSend);
         } else if (onAdd) {
-            success = await onAdd(formData);
+            success = await onAdd(dataToSend);
         }
 
         setIsSubmitting(false);
@@ -181,7 +190,18 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4 items-end">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                            <label className="text-sm text-zinc-400">Expiry Date (optional)</label>
+                            <input
+                                type="datetime-local"
+                                name="expiryDate"
+                                value={formData.expiryDate || ''}
+                                onChange={handleChange}
+                                className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none"
+                            />
+                        </div>
+
                         <div className="space-y-1.5 flex flex-col justify-end pb-3">
                             {formData.pomodoroEnabled && formData.priority !== 'LOW' && (
                                 <div className="space-y-2">
@@ -206,23 +226,23 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        <div className="flex items-center gap-3 pb-2 pl-2">
-                            {/* Custom Toggle Switch for Pomodoro */}
-                            <button
-                                type="button"
-                                role="switch"
-                                aria-checked={formData.pomodoroEnabled}
-                                onClick={togglePomodoro}
-                                className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.pomodoroEnabled ? 'bg-[#8A2BE2]' : 'bg-zinc-600'}`}
-                            >
-                                <span
-                                    aria-hidden="true"
-                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.pomodoroEnabled ? 'translate-x-4' : 'translate-x-0'}`}
-                                />
-                            </button>
-                            <span className="text-sm text-zinc-300">Pomodoro Timer</span>
-                        </div>
+                    <div className="flex items-center gap-3 pb-2 pl-2">
+                        {/* Custom Toggle Switch for Pomodoro */}
+                        <button
+                            type="button"
+                            role="switch"
+                            aria-checked={formData.pomodoroEnabled}
+                            onClick={togglePomodoro}
+                            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${formData.pomodoroEnabled ? 'bg-[#8A2BE2]' : 'bg-zinc-600'}`}
+                        >
+                            <span
+                                aria-hidden="true"
+                                className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${formData.pomodoroEnabled ? 'translate-x-4' : 'translate-x-0'}`}
+                            />
+                        </button>
+                        <span className="text-sm text-zinc-300">Pomodoro Timer</span>
                     </div>
 
                     <div className="pt-4 flex justify-center gap-4 border-t border-white/5 mt-6 pb-2">

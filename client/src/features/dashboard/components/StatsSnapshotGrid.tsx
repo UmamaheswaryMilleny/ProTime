@@ -1,15 +1,38 @@
 import React, { useState } from 'react';
 import { Timer, CheckCircle2, Award, Flame } from 'lucide-react';
+import { useTodo } from '../../todo/hooks/useTodo';
+import { useGamification } from '../../gamification/hooks/useGamification';
 
 export const StatsSnapshotGrid: React.FC = () => {
+    const { todos, stats, isLoading: isTodoLoading } = useTodo();
+    const { gamification, isLoading: isGamificationLoading } = useGamification();
+
     // Simulating free user state for the click interaction
     const [showPremiumOverlay, setShowPremiumOverlay] = useState<number | null>(null);
 
-    const stats = [
-        { id: 1, label: 'Focus Time Today', value: '4h 20m', icon: Timer, color: 'text-[#2563EB]' },
-        { id: 2, label: 'Tasks Completed', value: '12', icon: CheckCircle2, color: 'text-[#22C55E]' },
-        { id: 3, label: 'Badges Earned', value: '3', icon: Award, color: 'text-[blueviolet]' },
-        { id: 4, label: 'Current Streak', value: '7 Days', icon: Flame, color: 'text-[#F97316]' },
+    if (isTodoLoading || isGamificationLoading) {
+        return (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full animate-pulse">
+                {[1, 2, 3, 4].map(i => (
+                    <div key={i} className="h-32 bg-[#18181B] rounded-2xl border border-[#27272A]" />
+                ))}
+            </div>
+        );
+    }
+
+    // Calculate Focus Time Today: Sum actualPomodoroTime (in minutes) from all todos
+    const totalFocusMinutes = todos.reduce((acc, todo) => acc + (todo.actualPomodoroTime || 0), 0);
+    const focusHours = Math.floor(totalFocusMinutes / 60);
+    const focusRemainingMinutes = totalFocusMinutes % 60;
+    const focusTimeStr = focusHours > 0 || focusRemainingMinutes > 0
+        ? `${focusHours}h ${focusRemainingMinutes}m`
+        : '0h 0m';
+
+    const statRows = [
+        { id: 1, label: 'Focus Time Today', value: focusTimeStr, icon: Timer, color: 'text-[#2563EB]' },
+        { id: 2, label: 'Tasks Completed', value: String(stats.completed || 0), icon: CheckCircle2, color: 'text-[#22C55E]' },
+        { id: 3, label: 'Badges Earned', value: String(gamification?.earnedBadges.length || 0), icon: Award, color: 'text-[blueviolet]' },
+        { id: 4, label: 'Current Streak', value: `${gamification?.currentStreak || 0} Days`, icon: Flame, color: 'text-[#F97316]' },
     ];
 
     const handleCardClick = (id: number) => {
@@ -20,7 +43,7 @@ export const StatsSnapshotGrid: React.FC = () => {
 
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full fade-in">
-            {stats.map((stat) => (
+            {statRows.map((stat) => (
                 <div
                     key={stat.id}
                     onClick={() => handleCardClick(stat.id)}

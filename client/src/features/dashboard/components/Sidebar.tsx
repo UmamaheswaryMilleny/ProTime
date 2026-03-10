@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { ROUTES } from '../../../config/env'; // ✅ added — was using hardcoded path strings
 
+import { NotificationBell } from './NotificationBell';
+
 interface SidebarProps {
     isCollapsed: boolean;
     toggleSidebar: () => void;
@@ -40,7 +42,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
             //    causing sidebar to never hide on mobile. Fix: remove standalone `flex`, keep "hidden lg:flex"
             className={`bg-zinc-900 border-r border-white/10 h-screen fixed left-0 top-0 hidden lg:flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-20' : 'w-64'}`}
         >
-            {/* Logo */}
+            {/* Logo & Top Actions */}
             <div className={`p-6 border-b border-white/10 flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>
                 {!isCollapsed ? (
                     <div className="text-2xl font-bold flex items-center gap-1">
@@ -54,16 +56,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                     </div>
                 )}
 
-                <button
-                    onClick={toggleSidebar}
-                    className="p-1.5 rounded-lg bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
-                >
-                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
-                </button>
+                <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
+                    <NotificationBell />
+                    <button
+                        onClick={toggleSidebar}
+                        className="p-2 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                        {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    </button>
+                </div>
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
+            <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden custom-scrollbar">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.label}

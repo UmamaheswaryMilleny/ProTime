@@ -1,7 +1,7 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../../store/hooks";
 import { ROUTES } from "../../config/env";
-import { useBlockedUserPoll } from "../../features/admin/hooks/useBlockedUserPoll";
+import { useBlockedUserPoll } from "../../hooks/useBlockedUserPoll";
 
 interface ProtectedRouteProps {
   allowedRole: "ADMIN" | "CLIENT";

@@ -71,6 +71,7 @@ export interface AuthUser {
   role: "ADMIN" | "CLIENT";
   accessToken: string;
   profileImage?: string;    // ← from profile, optional
+  isPremium: boolean;
 }
 
 // ─── Redux Auth State ─────────────────────────────────────────────────────────

@@ -1,5 +1,5 @@
 export type TodoPriority = 'LOW' | 'MEDIUM' | 'HIGH';
-export type TodoStatus = 'PENDING' | 'COMPLETED';
+export type TodoStatus = 'PENDING' | 'COMPLETED' | 'EXPIRED';
 
 export interface TodoItem {
     id: string;
@@ -21,6 +21,7 @@ export interface TodoItem {
     isShared: boolean;
     sharedWith: string[];
 
+    expiryDate?: string | null;
     completedAt?: string | null;
     createdAt: string;
     updatedAt: string;
@@ -30,6 +31,7 @@ export interface TodoListResponse {
     todos: TodoItem[];
     totalTasks: number;
     completed: number;
+    expired: number;
     shared: number;
     progress: number;
     todayXp: number;
@@ -43,6 +45,7 @@ export interface CreateTodoDTO {
     estimatedTime: number;
     pomodoroEnabled: boolean;
     smartBreaks?: boolean;
+    expiryDate?: string | null;
 }
 
 export type UpdateTodoDTO = Partial<CreateTodoDTO>;
