@@ -1,4 +1,3 @@
-
 import { container } from 'tsyringe';
 
 // Use case implementations
@@ -42,7 +41,6 @@ import type { ICompletePomodoroUsecase } from '../../application/usecase/interfa
 import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
 import type { IUploadProfileImageUsecase } from '../../application/usecase/interface/user/image.usecase.interface';
 
-
 //gamification
 import { AwardXpUsecase } from '../../application/usecase/implementation/gamification/xp.usecase';
 import { UpdateStreakUsecase } from '../../application/usecase/implementation/gamification/streak.update.usecase';
@@ -54,6 +52,18 @@ import { IUpdateStreakUsecase } from '../../application/usecase/interface/gamifi
 import { ICheckAndAwardBadgesUsecase } from '../../application/usecase/interface/gamification/check-and-award-badges.usecase.interface';
 import { InitializeGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.initialize.usecase';
 import { GetGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.get.usecase';
+
+//subscription
+
+// ─── Subscription ─────────────────────────────────────────────────────────────
+import { GetSubscriptionUsecase } from '../../application/usecase/implementation/subscription/get-subscription.usecase';
+import { CreateCheckoutSessionUsecase } from '../../application/usecase/implementation/subscription/create-checkout-session.usecase';
+import { CancelSubscriptionUsecase } from '../../application/usecase/implementation/subscription/cancel-subscription.usecase';
+import { HandleStripeWebhookUsecase } from '../../application/usecase/implementation/subscription/handle-stripe-webhook.usecase';
+import type { IGetSubscriptionUsecase } from '../../application/usecase/interface/subscription/get-subscription.usecase.interface';
+import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/interface/subscription/create-checkout-session.usecase.interface';
+import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
+import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -126,22 +136,54 @@ export class UsecaseRegistry {
       },
     );
 
-
     //gamification
-    container.register<IInitializeGamificationUsecase>('IInitializeGamificationUsecase', {
-  useClass: InitializeGamificationUsecase,
-});
-container.register<IGetGamificationUsecase>('IGetGamificationUsecase', {
-  useClass: GetGamificationUsecase,
-});
-container.register<IAwardXpUsecase>('IAwardXpUsecase', {
-  useClass: AwardXpUsecase,
-});
-container.register<IUpdateStreakUsecase>('IUpdateStreakUsecase', {
-  useClass: UpdateStreakUsecase,
-});
-container.register<ICheckAndAwardBadgesUsecase>('ICheckAndAwardBadgesUsecase', {
-  useClass: CheckAndAwardBadgesUsecase,
-});
+    container.register<IInitializeGamificationUsecase>(
+      'IInitializeGamificationUsecase',
+      {
+        useClass: InitializeGamificationUsecase,
+      },
+    );
+    container.register<IGetGamificationUsecase>('IGetGamificationUsecase', {
+      useClass: GetGamificationUsecase,
+    });
+    container.register<IAwardXpUsecase>('IAwardXpUsecase', {
+      useClass: AwardXpUsecase,
+    });
+    container.register<IUpdateStreakUsecase>('IUpdateStreakUsecase', {
+      useClass: UpdateStreakUsecase,
+    });
+    container.register<ICheckAndAwardBadgesUsecase>(
+      'ICheckAndAwardBadgesUsecase',
+      {
+        useClass: CheckAndAwardBadgesUsecase,
+      },
+    );
+
+    //subscription
+    // ─── Subscription ─────────────────────────────────────────────────────────────
+    container.register<IGetSubscriptionUsecase>('IGetSubscriptionUsecase', {
+      useClass: GetSubscriptionUsecase,
+    });
+
+    container.register<ICreateCheckoutSessionUsecase>(
+      'ICreateCheckoutSessionUsecase',
+      {
+        useClass: CreateCheckoutSessionUsecase,
+      },
+    );
+
+    container.register<ICancelSubscriptionUsecase>(
+      'ICancelSubscriptionUsecase',
+      {
+        useClass: CancelSubscriptionUsecase,
+      },
+    );
+
+    container.register<IHandleStripeWebhookUsecase>(
+      'IHandleStripeWebhookUsecase',
+      {
+        useClass: HandleStripeWebhookUsecase,
+      },
+    );
   }
 }

@@ -1,4 +1,3 @@
-
 import { container } from 'tsyringe';
 
 // Domain interfaces
@@ -41,6 +40,13 @@ import { MongoGamificationRepository } from '../repositories/gamification/gamifi
 import { MongoBadgeDefinitionRepository } from '../repositories/gamification/badge.repository';
 import { MongoUserBadgeRepository } from '../repositories/gamification/badge.repository';
 
+//subscription
+
+// ─── Subscription ─────────────────────────────────────────────────────────────
+import type { ISubscriptionRepository } from '../../domain/repositories/subscription/subscription.repository.interface';
+import type { IStripeService } from '../../application/service_interface/stripe.service.interface';
+import { SubscriptionRepository } from '../repositories/subscription/subscription.repository';
+import { StripeService } from '../service/stripe-service';
 //upload service
 export class ServiceRegistry {
   static register(): void {
@@ -96,19 +102,31 @@ export class ServiceRegistry {
     });
 
     container.register<ICloudinaryService>('ICloudinaryService', {
-  useClass: CloudinaryService,
-});
+      useClass: CloudinaryService,
+    });
 
+    //gamification
+    container.register<IGamificationRepository>('IGamificationRepository', {
+      useClass: MongoGamificationRepository,
+    });
+    container.register<IBadgeDefinitionRepository>(
+      'IBadgeDefinitionRepository',
+      {
+        useClass: MongoBadgeDefinitionRepository,
+      },
+    );
+    container.register<IUserBadgeRepository>('IUserBadgeRepository', {
+      useClass: MongoUserBadgeRepository,
+    });
 
-//gamification
-container.register<IGamificationRepository>('IGamificationRepository', {
-  useClass: MongoGamificationRepository,
-});
-container.register<IBadgeDefinitionRepository>('IBadgeDefinitionRepository', {
-  useClass: MongoBadgeDefinitionRepository,
-});
-container.register<IUserBadgeRepository>('IUserBadgeRepository', {
-  useClass: MongoUserBadgeRepository,
-});
+    //subscription
+    // ─── Subscription ─────────────────────────────────────────────────────────────
+    container.register<ISubscriptionRepository>('ISubscriptionRepository', {
+      useClass: SubscriptionRepository,
+    });
+
+    container.register<IStripeService>('IStripeService', {
+      useClass: StripeService,
+    });
   }
 }
