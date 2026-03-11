@@ -1,2 +1,10 @@
-export const AI_TOKENS_FREE = 20;
-export const AI_TOKENS_PREMIUM = 100;
+export enum SubscriptionPlan {
+  FREE = 'FREE',
+  PREMIUM = 'PREMIUM',
+}
+
+export enum SubscriptionStatus {
+  ACTIVE = 'ACTIVE',
+  EXPIRED = 'EXPIRED',
+  CANCELLED = 'CANCELLED',
+}
