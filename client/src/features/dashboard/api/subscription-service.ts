@@ -16,8 +16,8 @@ export const subscriptionService = {
         return response.data.data;
     },
 
-    createCheckoutSession: async (plan: string): Promise<{ url: string }> => {
-        const response = await api.post(API_ROUTES.SUBSCRIPTION_CHECKOUT, { plan });
+    createCheckoutSession: async (plan: string, successUrl: string, cancelUrl: string): Promise<{ sessionUrl: string }> => {
+        const response = await api.post(API_ROUTES.SUBSCRIPTION_CHECKOUT, { plan, successUrl, cancelUrl });
         return response.data.data;
     }
 };

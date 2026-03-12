@@ -29,14 +29,12 @@ export const SubscriptionSchema = new Schema(
     // without sparse, unique would reject multiple null values
     stripeCustomerId: {
       type: String,
-      default: null,
       sparse: true,
       unique: true,
     },
 
     stripeSubscriptionId: {
       type: String,
-      default: null,
       sparse: true,
       unique: true,
     },
@@ -44,12 +42,14 @@ export const SubscriptionSchema = new Schema(
  
     currentPeriodStart: {
       type: Date,
-      required: true
+      required: true,
+      default: () => new Date(),
     },
 
     currentPeriodEnd: {
       type: Date,
-      required: true
+      required: true,
+      default: () => new Date(),
     },
 
     // ─── Cancellation ───────────────────────────────────────────────────────

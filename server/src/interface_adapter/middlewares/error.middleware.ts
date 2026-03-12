@@ -122,6 +122,7 @@ export class ErrorMiddleware {
     }
 
     // ─── Unknown / unexpected errors ──────────────────────────────────
+    console.error('[Internal Server Error]:', err);
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Internal server error',

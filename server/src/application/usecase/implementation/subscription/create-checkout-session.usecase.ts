@@ -36,11 +36,11 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
       this.userRepository.findById(userId),
     ]);
 
-    if (!subscription) throw new SubscriptionNotFoundError();
     if (!user) throw new UserNotFoundError();
 
     // 2. Guard — already on active premium, no need to checkout again
     if (
+      subscription &&
       subscription.plan === SubscriptionPlan.PREMIUM &&
       subscription.status === SubscriptionStatus.ACTIVE
     ) {
@@ -49,7 +49,7 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
 
     // 3. Create Stripe customer if this is the user's first checkout
     //    stripeCustomerId is undefined for FREE users who have never paid
-    let stripeCustomerId = subscription.stripeCustomerId;
+    let stripeCustomerId = subscription?.stripeCustomerId;
     if (!stripeCustomerId) {
       stripeCustomerId = await this.stripeService.createCustomer(
         user.email,

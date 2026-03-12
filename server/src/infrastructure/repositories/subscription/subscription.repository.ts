@@ -58,7 +58,7 @@ export class SubscriptionRepository
     const doc = await SubscriptionModel.findOneAndUpdate(
       { userId },
       { $set: update },
-      { new: true }, // return the updated document
+      { new: true, upsert: true }, // return the updated document, create if not exists
     ).lean();
 
     if (!doc) return null;

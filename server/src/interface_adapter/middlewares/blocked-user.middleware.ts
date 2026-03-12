@@ -67,11 +67,8 @@ export class BlockedUserMiddleware {
       }
 
       next();
-    } catch {
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
-        success: false,
-        message: ERROR_MESSAGE.AUTHENTICATION.SERVER_ERROR,
-      });
+    } catch (error) {
+      next(error);
     }
   }
 }

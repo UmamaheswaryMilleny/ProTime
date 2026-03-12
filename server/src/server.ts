@@ -13,6 +13,7 @@ import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
 import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware";
 import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
 import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subscription.routes";
+import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
 
 export class App {
   private readonly app: Application;
@@ -30,7 +31,16 @@ export class App {
   }
 
   private configureMiddleware(): void {
-    this.app.use(express.json());
+    // ─── Global JSON Parser with Raw Body preservation for Webhooks ───
+    this.app.use(
+      express.json({
+        verify: (req: any, _res, buf) => {
+          if (req.originalUrl.includes('/webhook')) {
+            req.rawBody = buf;
+          }
+        },
+      }),
+    );
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
   }
@@ -42,6 +52,7 @@ export class App {
     this.app.use('/api/v1/user', container.resolve(UserRoutes).router);
      this.app.use('/api/v1/todos', container.resolve(TodoRoutes).router); 
      this.app.use('/api/v1/subscription', container.resolve(SubscriptionRoutes).router); 
+     this.app.use('/api/v1/gamification', container.resolve(GamificationRoutes).router); 
   }
 
   private configureErrorHandling(): void {

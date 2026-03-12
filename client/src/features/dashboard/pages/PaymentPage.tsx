@@ -11,9 +11,12 @@ export const PaymentPage: React.FC = () => {
     const handlePayment = async () => {
         try {
             setLoading(true);
-            const { url } = await subscriptionService.createCheckoutSession('PREMIUM');
+            const successUrl = `${window.location.origin}${ROUTES.DASHBOARD_SUBSCRIPTION}?success=true`;
+            const cancelUrl = `${window.location.origin}${ROUTES.DASHBOARD_SUBSCRIPTION_PLAN}`;
+
+            const { sessionUrl } = await subscriptionService.createCheckoutSession('PREMIUM', successUrl, cancelUrl);
             // Redirect to Stripe Checkout
-            window.location.href = url;
+            window.location.href = sessionUrl;
         } catch (error: any) {
             console.error('Checkout failed', error);
             toast.error(error.response?.data?.message || 'Failed to initiate payment. Please try again.');

@@ -30,7 +30,6 @@ export class StripeService implements IStripeService {
     const session = await this.stripe.checkout.sessions.create({
       customer:   params.stripeCustomerId,
       mode:       'subscription',
-      currency:   'inr',
       line_items: [
         {
           price:    config.stripe.priceId,

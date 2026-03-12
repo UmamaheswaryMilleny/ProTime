@@ -1,4 +1,4 @@
-import { IsString, IsUrl } from 'class-validator';
+import { IsString, IsUrl, IsOptional } from 'class-validator';
 
 export class CreateCheckoutSessionRequestDTO {
   @IsString()
@@ -8,4 +8,8 @@ export class CreateCheckoutSessionRequestDTO {
   @IsString()
   @IsUrl({ require_tld: false }, { message: 'cancelUrl must be a valid URL' })
   cancelUrl!: string;
+
+  @IsString()
+  @IsOptional()
+  plan?: string;
 }

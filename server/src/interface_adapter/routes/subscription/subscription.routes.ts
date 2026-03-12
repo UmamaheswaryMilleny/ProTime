@@ -27,7 +27,6 @@ export class SubscriptionRoutes extends BaseRoute {
     // No auth — Stripe calls this directly with its own signature
     this.router.post(
       '/webhook',
-      express.raw({ type: 'application/json' }),
       asyncHandler(ctrl.handleWebhook.bind(ctrl)),
     );
 
@@ -39,9 +38,9 @@ export class SubscriptionRoutes extends BaseRoute {
       asyncHandler(blockedMiddleware.checkBlockedUser.bind(blockedMiddleware)),
     );
 
-    // GET /api/v1/subscription
+    // GET /api/v1/subscription/me
     this.router.get(
-      '/',
+      '/me',
       asyncHandler(ctrl.getSubscription.bind(ctrl)),
     );
 

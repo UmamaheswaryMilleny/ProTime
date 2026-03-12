@@ -84,7 +84,8 @@ export class SubscriptionController implements ISubscriptionController {
   ): Promise<void> {
     try {
       const signature = req.headers['stripe-signature'] as string;
-      const rawBody   = req.body as Buffer;
+      // rawBody was attached in App.ts via express.json verify function
+      const rawBody   = (req as any).rawBody as Buffer;
 
       await this.handleStripeWebhookUsecase.execute(rawBody, signature);
 

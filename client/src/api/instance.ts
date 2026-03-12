@@ -2,10 +2,18 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import toast from "react-hot-toast";
 import { ROUTES } from "../config/env";
 
-// ─── Axios Instance ───────────────────────────────────────────────────────────
+// ─── Axios Instances ──────────────────────────────────────────────────────────
+
+// basicApi: For public routes and internal auth (avoids interceptor loops)
+const basicApi = axios.create({
+  baseURL: import.meta.env.VITE_API_BASE_URL,
+  withCredentials: true,
+});
+
+// ProTimeBackend: The main instance with interceptors for authenticated requests
 export const ProTimeBackend = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true, // sends httpOnly cookies (refresh_token) on every request
+  withCredentials: true,
 });
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -20,7 +28,6 @@ interface ErrorResponse {
 }
 
 // ─── Refresh Queue ────────────────────────────────────────────────────────────
-// Prevents multiple simultaneous refresh calls when several requests 401 at once
 let isRefreshing = false;
 let failedQueue: QueuedRequest[] = [];
 
@@ -33,11 +40,6 @@ const processQueue = (error: unknown): void => {
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-// const clearAuthAndRedirect = (): void => {
-//   localStorage.removeItem("accessToken");
-//   localStorage.removeItem("authSession"); // ← also clear session so Redux rehydrates as null
-//   window.location.href = ROUTES.LOGIN;
-// };
 const clearAuthAndRedirect = (): void => {
   const sessionStr = localStorage.getItem("authSession");
 
@@ -51,7 +53,7 @@ const clearAuthAndRedirect = (): void => {
       }
     })();
 
-  localStorage.clear(); // optional: clears everything
+  localStorage.clear();
 
   const target = isAdmin ? ROUTES.ADMIN_LOGIN : ROUTES.LOGIN;
   if (!window.location.pathname.includes(target)) {
@@ -60,7 +62,6 @@ const clearAuthAndRedirect = (): void => {
 };
 
 // ─── Request Interceptor ──────────────────────────────────────────────────────
-// Attaches accessToken from localStorage to every request as Bearer header
 ProTimeBackend.interceptors.request.use(
   (config) => {
     const accessToken = localStorage.getItem("accessToken");
@@ -87,8 +88,6 @@ ProTimeBackend.interceptors.response.use(
 
     // ─── 401 Handling ─────────────────────────────────────────────────────
     if (status === 401) {
-
-      // Auth routes — 401s here are expected (wrong password, expired refresh, etc.)
       const isAuthRoute =
         originalRequest.url?.includes("/auth/login") ||
         originalRequest.url?.includes("/auth/register") ||
@@ -96,7 +95,6 @@ ProTimeBackend.interceptors.response.use(
         originalRequest.url?.includes("/auth/logout");
 
       if (isAuthRoute) {
-        // Refresh token itself failed → session is unrecoverable → force logout
         if (originalRequest.url?.includes("/auth/refresh-token")) {
           clearAuthAndRedirect();
           toast.error("Session expired. Please login again.");
@@ -104,7 +102,6 @@ ProTimeBackend.interceptors.response.use(
         return Promise.reject(error);
       }
 
-      // Only attempt token refresh for actual token errors
       const isTokenError =
         errorMessage === "Unauthorized access" ||
         errorMessage === "Access token expired" ||
@@ -112,13 +109,14 @@ ProTimeBackend.interceptors.response.use(
         errorMessage === "Authorization token is required";
 
       if (isTokenError && !originalRequest._retry) {
-
-        // Queue this request if a refresh is already in progress
         if (isRefreshing) {
           return new Promise((resolve, reject) => {
             failedQueue.push({ resolve, reject });
           })
-            .then(() => ProTimeBackend(originalRequest))
+            .then(() => {
+              // Interceptor will re-add the NEW token from localStorage
+              return ProTimeBackend(originalRequest);
+            })
             .catch((err) => Promise.reject(err));
         }
 
@@ -126,27 +124,26 @@ ProTimeBackend.interceptors.response.use(
         isRefreshing = true;
 
         try {
-          // POST /auth/refresh-token — backend reads refresh_token from httpOnly cookie
-          // Response: { success: true, data: { accessToken: "..." } }
-          const response = await ProTimeBackend.post("/auth/refresh-token");
+          // Use basicApi to avoid recursive interceptor calls
+          const response = await basicApi.post("/auth/refresh-token");
           const newAccessToken = response.data?.data?.accessToken;
 
           if (newAccessToken) {
-            // ✅ Update localStorage — interceptor will attach it to retried request
             localStorage.setItem("accessToken", newAccessToken);
 
-            // ✅ Sync to Redux store so components reading user.accessToken stay current
-            // Import store directly — hooks (useAppDispatch) only work inside React components
+            // Sync with Redux
             const { store } = await import("../store/store");
             const { updateAccessToken } = await import("../features/auth/store/authSlice");
             store.dispatch(updateAccessToken(newAccessToken));
+
+            // Update header for this specific retry
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+            }
+
+            processQueue(null);
+            return ProTimeBackend(originalRequest);
           }
-
-          processQueue(null);
-
-          // Retry the original failed request — interceptor now attaches new token
-          return ProTimeBackend(originalRequest);
-
         } catch (refreshError) {
           processQueue(refreshError);
           clearAuthAndRedirect();
@@ -157,12 +154,13 @@ ProTimeBackend.interceptors.response.use(
         }
       }
 
-      // 401 but not a token error (e.g. wrong role) → redirect
+      // 401 but not a token error (e.g. wrong role)
       clearAuthAndRedirect();
       toast.error("Please login again.");
       return Promise.reject(error);
     }
 
+    // ─── 403 Blocked Handling ─────────────────────────────────────────────
     if (status === 403) {
       if (errorMessage.toLowerCase().includes("blocked")) {
         const isLoginRoute = originalRequest.url?.includes("/auth/login");
