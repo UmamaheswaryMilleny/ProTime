@@ -191,12 +191,12 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
                 setTotalPausedSeconds((prev) => {
                     const next = prev + 1;
                     if (next >= 900) { // 15 minutes
-                        setIsRunning(true);
-                        toast.error("Maximum pause time reached. Timer resumed automatically.", {
+                        reset();
+                        toast.error("Maximum pause time reached. Pomodoro session has been reset.", {
                             id: 'pause-limit-toast',
-                            duration: 4000
+                            duration: 5000
                         });
-                        return 900;
+                        return 0;
                     }
                     return next;
                 });

@@ -24,6 +24,8 @@ import { FindBuddyPage } from "./features/dashboard/pages/FindBuddyPage";
 import { HelpPage } from "./features/dashboard/pages/HelpPage";
 import { LevelsPage } from "./features/dashboard/pages/LevelsPage";
 import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
+import { PlanDetailPage } from "./features/dashboard/pages/PlanDetailPage";
+import { PaymentPage } from "./features/dashboard/pages/PaymentPage";
 
 // Admin
 import { AdminLoginPage } from "./features/admin/pages/AdminLoginPage";
@@ -61,6 +63,8 @@ function App() {
             <Route path={ROUTES.DASHBOARD_HELP} element={<HelpPage />} />
             <Route path={ROUTES.DASHBOARD_LEVELS} element={<LevelsPage />} />
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION} element={<SubscriptionPage />} />
+            <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PLAN} element={<PlanDetailPage />} />
+            <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PAYMENT} element={<PaymentPage />} />
           </Route>
         </Route>
 

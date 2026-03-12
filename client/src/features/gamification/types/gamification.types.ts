@@ -14,6 +14,7 @@ export interface GamificationData {
     currentLevel: number;
     currentTitle: string;
     isTitleLocked: boolean;
+    rawLevel: number;
     xpForCurrentLevel: number;
     xpForNextLevel: number;
     xpProgress: number;

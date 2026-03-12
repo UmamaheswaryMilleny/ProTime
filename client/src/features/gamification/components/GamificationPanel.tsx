@@ -34,13 +34,30 @@ export const GamificationPanel: React.FC = () => {
                 </div>
 
                 <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-4">
-                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8A2BE2] to-[#4B0082] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#8A2BE2]/20">
-                            {currentLevel}
-                        </div>
-                        <div>
-                            <h3 className="text-white font-bold text-lg leading-tight">{currentTitle}</h3>
-                            <p className="text-zinc-400 text-xs font-medium uppercase tracking-widest">Level {currentLevel}</p>
+                    <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#8A2BE2] to-[#4B0082] flex items-center justify-center text-white font-bold text-xl shadow-lg shadow-[#8A2BE2]/20 relative">
+                                {currentLevel}
+                                {gamification.rawLevel > currentLevel && (
+                                    <div className="absolute -top-1 -right-1 bg-yellow-500 rounded-full p-0.5 border-2 border-zinc-900 shadow-lg" title="Upgrade to unlock more levels">
+                                        <Clock size={8} className="text-zinc-900" strokeWidth={4} />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <h3 className="text-white font-bold text-lg leading-tight flex items-center gap-2">
+                                    {currentTitle}
+                                    {gamification.isTitleLocked && <Clock size={14} className="text-yellow-500/50" />}
+                                </h3>
+                                <p className="text-zinc-400 text-xs font-medium uppercase tracking-widest">
+                                    Level {currentLevel}
+                                    {gamification.rawLevel > currentLevel && (
+                                        <span className="text-yellow-500/80 ml-2 normal-case font-bold">
+                                            ({gamification.rawLevel} Available in Premium)
+                                        </span>
+                                    )}
+                                </p>
+                            </div>
                         </div>
                     </div>
 

@@ -20,6 +20,8 @@ export const ROUTES = {
   DASHBOARD_HELP: "/dashboard/help",
   DASHBOARD_LEVELS: "/dashboard/levels",
   DASHBOARD_SUBSCRIPTION: "/dashboard/subscription",
+  DASHBOARD_SUBSCRIPTION_PLAN: "/dashboard/subscription/plan",
+  DASHBOARD_SUBSCRIPTION_PAYMENT: "/dashboard/subscription/payment",
 
   // ─── Admin ────────────────────────────────────────────────────────────────
   ADMIN_LOGIN: "/admin/login",
@@ -40,6 +42,8 @@ export const API_ROUTES = {
   RESET_PASSWORD: "/auth/reset-password",
   GOOGLE_AUTH: "/auth/google",
   USER_PROFILE: "/user/profile",
+  SUBSCRIPTION: "/subscription/me",
+  SUBSCRIPTION_CHECKOUT: "/subscription/checkout",
   ADMIN_USERS: "/admin/users",
   ADMIN_BLOCK_USER: (id: string) => `/admin/users/${id}/block`,
   ADMIN_UNBLOCK_USER: (id: string) => `/admin/users/${id}/unblock`,
