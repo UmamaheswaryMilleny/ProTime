@@ -60,10 +60,12 @@ import { GetSubscriptionUsecase } from '../../application/usecase/implementation
 import { CreateCheckoutSessionUsecase } from '../../application/usecase/implementation/subscription/create-checkout-session.usecase';
 import { CancelSubscriptionUsecase } from '../../application/usecase/implementation/subscription/cancel-subscription.usecase';
 import { HandleStripeWebhookUsecase } from '../../application/usecase/implementation/subscription/handle-stripe-webhook.usecase';
+import { InitializeSubscriptionUsecase } from '../../application/usecase/implementation/subscription/initialize-subscription.usecase';
 import type { IGetSubscriptionUsecase } from '../../application/usecase/interface/subscription/get-subscription.usecase.interface';
 import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/interface/subscription/create-checkout-session.usecase.interface';
 import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
+import type { IInitializeSubscriptionUsecase } from '../../application/usecase/interface/subscription/initialize-subscription.usecase.interface';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -183,6 +185,13 @@ export class UsecaseRegistry {
       'IHandleStripeWebhookUsecase',
       {
         useClass: HandleStripeWebhookUsecase,
+      },
+    );
+
+    container.register<IInitializeSubscriptionUsecase>(
+      'IInitializeSubscriptionUsecase',
+      {
+        useClass: InitializeSubscriptionUsecase,
       },
     );
   }

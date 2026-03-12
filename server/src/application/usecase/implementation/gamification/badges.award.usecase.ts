@@ -58,13 +58,14 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
             [BadgeConditionType.HIGH_TASK_COUNT, BadgeConditionType.MEDIUM_TASK_COUNT, BadgeConditionType.LOW_TASK_COUNT]
                 .includes(b.conditionType as BadgeConditionType));
 
-        const [highCount, mediumCount, lowCount] = needsTaskCounts
-            ? await Promise.all([
-                this.todoRepository.countCompletedByPriority(userId, TodoPriority.HIGH),
-                this.todoRepository.countCompletedByPriority(userId, TodoPriority.MEDIUM),
-                this.todoRepository.countCompletedByPriority(userId, TodoPriority.LOW),
-            ])
-            : [0, 0, 0];
+        const [highCount, mediumCount, lowCount, buddyCount, roomCount] =
+            await Promise.all([
+                needsTaskCounts ? this.todoRepository.countCompletedByPriority(userId, TodoPriority.HIGH) : Promise.resolve(0),
+                needsTaskCounts ? this.todoRepository.countCompletedByPriority(userId, TodoPriority.MEDIUM) : Promise.resolve(0),
+                needsTaskCounts ? this.todoRepository.countCompletedByPriority(userId, TodoPriority.LOW) : Promise.resolve(0),
+                candidates.some(b => b.conditionType === BadgeConditionType.BUDDY_MATCHES) ? Promise.resolve(gamification.monthlyBuddyMatchCount) : Promise.resolve(0),
+                candidates.some(b => b.conditionType === BadgeConditionType.ROOMS_ATTENDED) ? Promise.resolve(gamification.monthlyRoomJoinCount) : Promise.resolve(0),
+            ]);
 
         // 5. Check each candidate — award if condition met
         const newlyEarned: UserBadgeResponseDTO[] = [];
@@ -76,7 +77,7 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
             const conditionMet = this.checkCondition(
                 badge.conditionType as BadgeConditionType,
                 badge.conditionValue,
-                { highCount, mediumCount, lowCount, streak: gamification.currentStreak },
+                { highCount, mediumCount, lowCount, streak: gamification.currentStreak, buddyCount, roomCount },
             );
 
             if (!conditionMet) continue;
@@ -113,6 +114,8 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
             case 'TODO_MEDIUM': return [BadgeConditionType.MEDIUM_TASK_COUNT];
             case 'TODO_LOW': return [BadgeConditionType.LOW_TASK_COUNT];
             case 'STREAK_BONUS': return [BadgeConditionType.STREAK_DAYS];
+            case 'BUDDY_MATCH': return [BadgeConditionType.BUDDY_MATCHES];
+            case 'ROOM_JOIN': return [BadgeConditionType.ROOMS_ATTENDED];
             default: return [];
         }
     }
@@ -121,13 +124,15 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
     private checkCondition(
         type: BadgeConditionType,
         value: number,
-        stats: { highCount: number; mediumCount: number; lowCount: number; streak: number },
+        stats: { highCount: number; mediumCount: number; lowCount: number; streak: number; buddyCount: number; roomCount: number },
     ): boolean {
         switch (type) {
             case BadgeConditionType.HIGH_TASK_COUNT: return stats.highCount >= value;
             case BadgeConditionType.MEDIUM_TASK_COUNT: return stats.mediumCount >= value;
             case BadgeConditionType.LOW_TASK_COUNT: return stats.lowCount >= value;
             case BadgeConditionType.STREAK_DAYS: return stats.streak >= value;
+            case BadgeConditionType.BUDDY_MATCHES: return stats.buddyCount >= value;
+            case BadgeConditionType.ROOMS_ATTENDED: return stats.roomCount >= value;
             default: return false;
         }
     }

@@ -99,5 +99,15 @@ export enum MAIL_CONTENT_PURPOSE {
   OTP = 'otp',
 }
 
-export const AI_TOKENS_FREE = 20;
-export const AI_TOKENS_PREMIUM = 100;
+// ─── AI Tokens (resets daily) ─────────────────────────────────────────────────
+export const FREE_DAILY_AI_TOKENS    = 20;
+export const PREMIUM_DAILY_AI_TOKENS = 100;
+
+// ─── Community Chat (resets daily) ────────────────────────────────────────────
+export const FREE_DAILY_COMMUNITY_CHATS = 10;
+
+// ─── Buddy Matching (resets monthly) ─────────────────────────────────────────
+export const FREE_MONTHLY_BUDDY_MATCHES = 5;
+
+// ─── Room Access (resets monthly) ─────────────────────────────────────────────
+export const FREE_MONTHLY_ROOM_JOINS = 3;

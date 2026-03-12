@@ -12,6 +12,9 @@ import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes";
 import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
 import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware";
 import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
+import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subscription.routes";
+import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
+
 export class App {
   private readonly app: Application;
 
@@ -31,14 +34,22 @@ export class App {
     this.app.use(express.json());
     this.app.use(express.urlencoded({ extended: true }));
     this.app.use(cookieParser());
+    
+    // Fix Google Login COOP policy issue
+    this.app.use((_req, res, next) => {
+      res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+      next();
+    });
   }
 
   private configureRoutes(): void {
-    this.app.get('/', (_req, res) => res.send('Server is running'));
-    this.app.use('/api/v1/auth', container.resolve(AuthRoutes).router);
-    this.app.use('/api/v1/admin', container.resolve(AdminRoutes).router);
-    this.app.use('/api/v1/user', container.resolve(UserRoutes).router);
-     this.app.use('/api/v1/todos', container.resolve(TodoRoutes).router); 
+    this.app.get("/", (_req, res) => res.send("Server is running"));
+    this.app.use("/api/v1/auth", container.resolve(AuthRoutes).router);
+    this.app.use("/api/v1/admin", container.resolve(AdminRoutes).router);
+    this.app.use("/api/v1/user", container.resolve(UserRoutes).router);
+    this.app.use("/api/v1/todos", container.resolve(TodoRoutes).router);
+    this.app.use("/api/v1/subscription", container.resolve(SubscriptionRoutes).router);
+    this.app.use("/api/v1/gamification", container.resolve(GamificationRoutes).router);
   }
 
   private configureErrorHandling(): void {
@@ -53,10 +64,10 @@ export class App {
 
 // ✅ Bootstrap — controls startup order
 export const bootstrap = async (): Promise<void> => {
-  DependencyContainer.registerAll();        // 1. DI first
-  await new MongoConnect().connectDB();     // 2. MongoDB second
-  await connectRedis();                     // 3. Redis third
-  const app = new App().getApp();           // 4. Express last
+  DependencyContainer.registerAll(); // 1. DI first
+  await new MongoConnect().connectDB(); // 2. MongoDB second
+  await connectRedis(); // 3. Redis third
+  const app = new App().getApp(); // 4. Express last
   app.listen(config.server.port, () => {
     console.log(`🚀 Server running on port ${config.server.port}`);
   });

@@ -16,12 +16,12 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
     @inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
 
-    @inject('IUserRepository')
+    @inject('UserRepository')
     private readonly userRepository: IUserRepository,
 
     @inject('IStripeService')
     private readonly stripeService: IStripeService,
-  ) {}
+  ) { }
 
   async execute(rawBody: Buffer, signature: string): Promise<void> {
     const event = this.stripeService.constructWebhookEvent(rawBody, signature);
@@ -108,11 +108,8 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
   private async handleInvoicePaymentSucceeded(
     invoice: Stripe.Invoice,
   ): Promise<void> {
-    const parent = invoice.parent as Stripe.Invoice.Parent | null;
     const stripeSubscriptionId =
-      parent?.type === 'subscription_details'
-        ? (parent.subscription_details?.subscription as string | undefined)
-        : undefined;
+      (invoice as any).subscription as string | undefined;
 
     if (!stripeSubscriptionId) return;
 

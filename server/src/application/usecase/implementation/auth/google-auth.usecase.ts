@@ -9,6 +9,7 @@ import type { IRefreshTokenStore } from "../../../service_interface/refresh-toke
 import type { IGoogleAuthUsecase } from "../../interface/auth/google-auth.usecase.interface";
 import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
 import type { IInitializeGamificationUsecase } from "../../interface/gamification/initialize.usecase.interface";
+import type { IInitializeSubscriptionUsecase } from "../../interface/subscription/initialize-subscription.usecase.interface";
 
 @injectable()
 export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
@@ -30,7 +31,10 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
 
     @inject("IInitializeGamificationUsecase")
     private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
-  ) {}
+
+    @inject("IInitializeSubscriptionUsecase")
+    private readonly initializeSubscriptionUsecase: IInitializeSubscriptionUsecase,
+  ) { }
 
   async execute(idToken: string): Promise<LoginResponseDTO> {
     // 1. Verify Google ID token
@@ -70,6 +74,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
       });
 
       await this.initializeGamificationUsecase.execute(savedUser.id);
+      await this.initializeSubscriptionUsecase.execute(savedUser.id);
 
       user = savedUser;
       isNewUser = true;
@@ -88,7 +93,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
       id: user.id,
       email: user.email,
       role: user.role,
-      isPremium:user.isPremium
+      isPremium: user.isPremium
     };
 
     const accessToken = this.tokenPort.generateAccess(payload);

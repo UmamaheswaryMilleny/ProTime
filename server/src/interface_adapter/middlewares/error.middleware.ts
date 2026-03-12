@@ -40,6 +40,15 @@ import {
 
 import { HTTP_STATUS } from '../../shared/constants/constants';
 
+
+// ─── Subscription errors ───────────────────────────────────────────────────
+import {
+  SubscriptionNotFoundError,
+  AlreadyPremiumError,
+  SubscriptionNotCancellableError,
+  InvalidWebhookSignatureError,
+} from '../../domain/errors/subscription.error';
+
 export class ErrorMiddleware {
   public handleError(
     err: Error,
@@ -54,7 +63,7 @@ export class ErrorMiddleware {
       err instanceof TodoNotFoundError ||
       err instanceof ProfileNotFoundError ||
       err instanceof GamificationNotFoundError ||
-      err instanceof BadgeDefinitionNotFoundError
+      err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -63,7 +72,7 @@ export class ErrorMiddleware {
     // ─── 409 Conflict ─────────────────────────────────────────────────
     if (
       err instanceof UserAlreadyExistsError ||
-      err instanceof BadgeAlreadyEarnedError
+      err instanceof BadgeAlreadyEarnedError || err instanceof AlreadyPremiumError
     ) {
       res.status(HTTP_STATUS.CONFLICT).json({ success: false, message: err.message });
       return;
@@ -84,7 +93,7 @@ export class ErrorMiddleware {
     // ─── 401 Unauthorized ─────────────────────────────────────────────
     if (
       err instanceof InvalidPasswordError ||
-      err instanceof InvalidTokenError
+      err instanceof InvalidTokenError || err instanceof InvalidWebhookSignatureError
     ) {
       res.status(HTTP_STATUS.UNAUTHORIZED).json({ success: false, message: err.message });
       return;
@@ -100,7 +109,7 @@ export class ErrorMiddleware {
       err instanceof TodoExpiredError ||
       err instanceof PomodoroNotEnabledError ||
       err instanceof PomodoroAlreadyCompletedError ||
-      err instanceof InvalidEstimatedTimeError
+      err instanceof InvalidEstimatedTimeError || err instanceof SubscriptionNotCancellableError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

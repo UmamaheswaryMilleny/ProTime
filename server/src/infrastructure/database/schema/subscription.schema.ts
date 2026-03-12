@@ -41,15 +41,17 @@ export const SubscriptionSchema = new Schema(
       unique: true,
     },
 
- 
+
     currentPeriodStart: {
       type: Date,
-      required: true
+      required: false,
+      default: null,
     },
 
     currentPeriodEnd: {
       type: Date,
-      required: true
+      required: false,
+      default: null,
     },
 
     // ─── Cancellation ───────────────────────────────────────────────────────

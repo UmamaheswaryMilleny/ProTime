@@ -10,10 +10,11 @@ export interface GamificationResponseDTO {
 
   // isTitleLocked = true when user is FREE and title is above Learner
   isTitleLocked: boolean;
+  rawLevel: number;
 
   // XP needed to reach next level — for progress bar rendering
-  xpForCurrentLevel: number; 
-  xpForNextLevel: number; 
+  xpForCurrentLevel: number;
+  xpForNextLevel: number;
   xpProgress: number; // XP earned within current level (totalXp - xpForCurrentLevel)
 
   currentStreak: number;
@@ -23,6 +24,10 @@ export interface GamificationResponseDTO {
   // Frontend uses these to show daily limit warnings
   dailyXpEarned: number; // XP earned today (cap: 50)
   dailyChatMessageCount: number; // out of 10 (free users)
+  dailyAiTokenCount: number;
+  monthlyBuddyMatchCount: number;
+  monthlyRoomJoinCount: number;
+  todayPomodoroUsed: boolean;
 
 
   earnedBadges: UserBadgeResponseDTO[];
