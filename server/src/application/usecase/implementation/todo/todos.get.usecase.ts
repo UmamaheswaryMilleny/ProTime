@@ -13,15 +13,12 @@ export class GetTodosUsecase implements IGetTodosUsecase {
 
     @inject('IGamificationRepository')
     private readonly gamificationRepository: IGamificationRepository,
-  ) { }
+  ) {}
 
   async execute(
     userId: string,
-    filter: 'all' | 'pending' | 'completed' | 'expired' = 'all',
+    filter: 'all' | 'pending' | 'completed' | 'expired'='all',
   ): Promise<TodoListResponseDTO> {
-    // 0. Mark expired todos first (lazy expiry)
-    await this.todoRepository.markExpiredTodos();
-
     // 1. Fetch todos
     const todos = await this.todoRepository.findByUserId(userId, filter);
 

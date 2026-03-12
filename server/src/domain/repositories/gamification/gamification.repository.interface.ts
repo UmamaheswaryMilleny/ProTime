@@ -2,7 +2,7 @@ import type { IBaseRepository } from '../base/base.repository.interface.js';
 import type { UserGamificationEntity } from '../../entities/gamification.entity.js';
 import type { BadgeDefinitionEntity } from '../../entities/badge.entity.js';
 import type { UserBadgeEntity } from '../../entities/badge.entity.js';
-import type { BadgeCategory, LevelTitle } from '../../enums/gamification.enums.js';
+import type { BadgeCategory,LevelTitle } from '../../enums/gamification.enums.js';
 
 export interface IGamificationRepository extends IBaseRepository<UserGamificationEntity> {
   findByUserId(userId: string): Promise<UserGamificationEntity | null>;
@@ -27,20 +27,15 @@ export interface IGamificationRepository extends IBaseRepository<UserGamificatio
     },
   ): Promise<UserGamificationEntity | null>;
 
-  // Every new day all daily counters need to reset to zero in one  DB call.
+// Every new day all daily counters need to reset to zero in one  DB call.
   resetDailyCounters(userId: string): Promise<UserGamificationEntity | null>;
-
-  // Every month buddy and room limits reset
-  resetMonthlyCounters(userId: string): Promise<UserGamificationEntity | null>;
 
 
   incrementDailyXpEarned(userId: string, xp: number): Promise<void>;
 
-  //   Free users have a 10 message/day limit in community chat. Every time a message is sent this increments by 1.
+//   Free users have a 10 message/day limit in community chat. Every time a message is sent this increments by 1.
   incrementDailyChatCount(userId: string): Promise<void>;
-  incrementDailyAiTokenCount(userId: string): Promise<void>;
-  incrementMonthlyBuddyMatchCount(userId: string): Promise<void>;
-  incrementMonthlyRoomJoinCount(userId: string): Promise<void>;
+// incrementAiTokensUsed(userId: string): Promise<void>;
 
   // Used by UpdateStreakUsecase to verify streak eligibility (needs pomodoro)
   markPomodoroUsedToday(userId: string): Promise<void>;

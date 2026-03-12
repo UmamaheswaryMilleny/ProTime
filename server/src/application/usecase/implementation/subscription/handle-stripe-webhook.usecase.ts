@@ -21,7 +21,7 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
 
     @inject('IStripeService')
     private readonly stripeService: IStripeService,
-  ) { }
+  ) {}
 
   async execute(rawBody: Buffer, signature: string): Promise<void> {
     const event = this.stripeService.constructWebhookEvent(rawBody, signature);
@@ -108,8 +108,11 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
   private async handleInvoicePaymentSucceeded(
     invoice: Stripe.Invoice,
   ): Promise<void> {
+    const parent = invoice.parent as Stripe.Invoice.Parent | null;
     const stripeSubscriptionId =
-      (invoice as any).subscription as string | undefined;
+      parent?.type === 'subscription_details'
+        ? (parent.subscription_details?.subscription as string | undefined)
+        : undefined;
 
     if (!stripeSubscriptionId) return;
 

@@ -17,12 +17,9 @@ export interface UserGamificationEntity {
   // streakFrozen: boolean; 
 
 
-  dailyXpEarned: number;
-  dailyChatMessageCount: number;
-  dailyAiTokenCount: number; // NEW
-  monthlyBuddyMatchCount: number; // NEW
-  monthlyRoomJoinCount: number; // NEW
-  todayPomodoroUsed: boolean;
+  dailyXpEarned: number; // XP earned today (cap: 50)
+  dailyChatMessageCount: number; // community chat messages sent today (free cap: 10)
+  todayPomodoroUsed: boolean; // true if any pomodoro was completed today streak requires: 1 todo + pomodoro used
   lastDailyResetDate: Date | null;// Daily counters (dailyXpEarned, dailyChatMessageCount, todayPomodoroUsed) need to reset to zero every new day. 
   // null = never reset (brand new user)
 

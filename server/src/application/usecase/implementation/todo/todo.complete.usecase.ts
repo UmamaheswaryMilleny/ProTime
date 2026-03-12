@@ -19,7 +19,7 @@ import {
   TodoAlreadyCompletedError,
 } from "../../../../domain/errors/todo.error";
 import { GamificationNotFoundError } from "../../../../domain/errors/gamification.error";
-import { TodoExpiredError, TodoPomodoroNotCompletedError } from "../../../../domain/errors/todo.error";
+import { TodoExpiredError } from "../../../../domain/errors/todo.error";
 @injectable()
 export class CompleteTodoUsecase implements ICompleteTodoUsecase {
   constructor(
@@ -31,7 +31,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
 
     @inject("IAwardXpUsecase")
     private readonly awardXpUsecase: IAwardXpUsecase,
-  ) { }
+  ) {}
 
   async execute(
     userId: string,
@@ -47,13 +47,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
 
     // 3. Already completed?
     if (todo.status === TodoStatus.COMPLETED) throw new TodoAlreadyCompletedError();
-    if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
-
-    // ─── Pomodoro Enhancement ────────────────────────────────────────────────
-    // If pomodoro is enabled, it MUST be completed before the todo can be closed
-    if (todo.pomodoroEnabled && !todo.pomodoroCompleted) {
-      throw new TodoPomodoroNotCompletedError();
-    }
+if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
     // 4. Check daily XP cap — read from gamification entity (single source of truth)
     const gamification = await this.gamificationRepository.findByUserId(userId);
     if (!gamification) throw new GamificationNotFoundError();
@@ -83,9 +77,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     const xpToAward = xpCounted ? todo.baseXp + bonusXp : 0;
 
     const source: XpSource =
-      todo.priority === TodoPriority.HIGH ? 'TODO_HIGH'
-        : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'
-          : 'TODO_LOW';
+      todo.priority === TodoPriority.HIGH   ? 'TODO_HIGH'
+      : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'
+      : 'TODO_LOW';
 
     await this.awardXpUsecase.execute({
       userId,

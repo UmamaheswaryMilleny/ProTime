@@ -11,7 +11,6 @@ import { InitializeGamificationResponseDTO } from '../dto/gamification/response/
 
 import {
   FREE_MAX_LEVEL,
-  getLevelFromXp,
   LEVEL_XP_THRESHOLDS,
   MAX_LEVEL,
 } from '../../domain/enums/gamification.enums';
@@ -55,7 +54,7 @@ export class GamificationMapper {
     // const isTitleLocked =
     //   !isPremium && !freeTitleOrder.includes(entity.currentTitle);
     // ✅ fix — uses constant, simpler logic
-    const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
+const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
 
     return {
       userId: entity.userId,
@@ -63,7 +62,6 @@ export class GamificationMapper {
       currentLevel: entity.currentLevel,
       currentTitle: entity.currentTitle,
       isTitleLocked,
-      rawLevel: getLevelFromXp(entity.totalXp),
 
       xpForCurrentLevel: currentLevelXp,
       xpForNextLevel: nextLevelXp!,
@@ -77,10 +75,6 @@ export class GamificationMapper {
 
       dailyXpEarned: entity.dailyXpEarned,
       dailyChatMessageCount: entity.dailyChatMessageCount,
-      dailyAiTokenCount: entity.dailyAiTokenCount,
-      monthlyBuddyMatchCount: entity.monthlyBuddyMatchCount,
-      monthlyRoomJoinCount: entity.monthlyRoomJoinCount,
-      todayPomodoroUsed: entity.todayPomodoroUsed,
 
       earnedBadges,
       totalBadgeCount: earnedBadges.length,

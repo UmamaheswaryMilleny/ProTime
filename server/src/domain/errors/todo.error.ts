@@ -26,7 +26,7 @@ export class UnauthorizedTodoAccessError extends DomainError {
   }
 }
 export class InvalidEstimatedTimeError extends DomainError {
-  constructor(priority: string, value: number) {
+  constructor(priority:string,value:number) {
     super(`Estimated time ${value} is not valid for ${priority} priority`);
   }
 }
@@ -34,12 +34,6 @@ export class InvalidEstimatedTimeError extends DomainError {
 export class TodoExpiredError extends DomainError {
   constructor() {
     super('This task has expired and cannot be modified');
-  }
-}
-
-export class TodoPomodoroNotCompletedError extends DomainError {
-  constructor() {
-    super('You must complete the Pomodoro session before closing this task');
   }
 }
 // export class LowPriorityBreakTimeError extends DomainError {

@@ -1,7 +1,7 @@
 import { injectable } from 'tsyringe';
 
 import { BaseRepository } from '../base.repository';
-import { SubscriptionModel, SubscriptionDocument } from '../../database/models/subscription.model';
+import { SubscriptionModel,SubscriptionDocument } from '../../database/models/subscription.model';
 import { SubscriptionInfraMapper } from '../../database/mappers/subscription.mapper';
 import type { ISubscriptionRepository } from '../../../domain/repositories/subscription/subscription.repository.interface';
 import type { SubscriptionEntity } from '../../../domain/entities/subscription.entity';
@@ -9,7 +9,8 @@ import type { SubscriptionEntity } from '../../../domain/entities/subscription.e
 @injectable()
 export class SubscriptionRepository
   extends BaseRepository<SubscriptionDocument, SubscriptionEntity>
-  implements ISubscriptionRepository {
+  implements ISubscriptionRepository
+{
   constructor() {
     super(SubscriptionModel, SubscriptionInfraMapper.toDomain);
   }
@@ -52,7 +53,7 @@ export class SubscriptionRepository
       | 'cancelledAt'
     >>,
   ): Promise<SubscriptionEntity | null> {
-    const update = SubscriptionInfraMapper.toPersistence(data as any);
+    const update = SubscriptionInfraMapper.toPersistence(data);
 
     const doc = await SubscriptionModel.findOneAndUpdate(
       { userId },

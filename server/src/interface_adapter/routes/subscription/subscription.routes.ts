@@ -39,9 +39,9 @@ export class SubscriptionRoutes extends BaseRoute {
       asyncHandler(blockedMiddleware.checkBlockedUser.bind(blockedMiddleware)),
     );
 
-    // GET /api/v1/subscription/me
+    // GET /api/v1/subscription
     this.router.get(
-      '/me',
+      '/',
       asyncHandler(ctrl.getSubscription.bind(ctrl)),
     );
 

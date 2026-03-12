@@ -7,7 +7,6 @@ import type { IUserRepository } from "../../../../domain/repositories/user/user.
 import { AuthProvider } from "../../../../domain/enums/user.enums";
 import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
 import type { IInitializeGamificationUsecase } from "../../interface/gamification/initialize.usecase.interface";
-import type { IInitializeSubscriptionUsecase } from "../../interface/subscription/initialize-subscription.usecase.interface";
 
 @injectable()
 export class VerifyOtpUseCase implements IVerifyOtpUsecase {
@@ -18,13 +17,11 @@ export class VerifyOtpUseCase implements IVerifyOtpUsecase {
     private readonly tempUserService: ITempUserService,
     @inject("IOtpService")
     private readonly otpService: IOtpService,
-    @inject("ProfileRepository")
+       @inject("ProfileRepository")
     private readonly profileRepository: IProfileRepository,
     @inject('IInitializeGamificationUsecase')
-    private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
-    @inject('IInitializeSubscriptionUsecase')
-    private readonly initializeSubscriptionUsecase: IInitializeSubscriptionUsecase,
-  ) { }
+private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
+  ) {}
 
   async execute(data: { email: string; otp: string }): Promise<void> {
     const { email, otp } = data;
@@ -37,9 +34,9 @@ export class VerifyOtpUseCase implements IVerifyOtpUsecase {
     const tempUser = await this.tempUserService.getUser(email);
     if (!tempUser) throw new InvalidOtpError();
 
-
+    
     //3. create real user entity
-    const user = await this.userRepository.save({
+    const user =   await this.userRepository.save({
       email,
       fullName: tempUser.fullName,
       passwordHash: tempUser.passwordHash,
@@ -51,14 +48,13 @@ export class VerifyOtpUseCase implements IVerifyOtpUsecase {
     })
 
 
-    // 4. Create profile for this user  ← ADD THIS
+        // 4. Create profile for this user  ← ADD THIS
     await this.profileRepository.save({
       userId: user.id,
       fullName: tempUser.fullName,
-      username: `${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
+      username:`${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
     });
-    await this.initializeGamificationUsecase.execute(user.id);
-    await this.initializeSubscriptionUsecase.execute(user.id);
+await this.initializeGamificationUsecase.execute(user.id);
 
     //4. clean up temp data
     await this.tempUserService.deleteUser(email);

@@ -5,20 +5,20 @@ export class SubscriptionInfraMapper {
 
   static toDomain(doc: SubscriptionDocument): SubscriptionEntity {
     return {
-      id: (doc._id as object).toString(),
+      id:     (doc._id as object).toString(),
       userId: doc.userId.toString(),
-      plan: doc.plan,
+      plan:   doc.plan,
       status: doc.status,
 
       // ─── Stripe fields ────────────────────────────────────────────────────
       // Convert null → undefined to match domain entity optional fields
-      stripeCustomerId: doc.stripeCustomerId ?? undefined,
+      stripeCustomerId:     doc.stripeCustomerId     ?? undefined,
       stripeSubscriptionId: doc.stripeSubscriptionId ?? undefined,
 
       // ─── Billing period ───────────────────────────────────────────────────
       // Null is valid for FREE users — preserved as-is
-      currentPeriodStart: doc.currentPeriodStart,
-      currentPeriodEnd: doc.currentPeriodEnd,
+      currentPeriodStart: doc.currentPeriodStart ?? new Date(),
+      currentPeriodEnd:   doc.currentPeriodEnd ?? new Date(),
 
       // ─── Cancellation ─────────────────────────────────────────────────────
       cancelledAt: doc.cancelledAt ?? undefined,
@@ -33,7 +33,7 @@ export class SubscriptionInfraMapper {
   ): Record<string, unknown> {
     const data: Record<string, unknown> = {};
 
-    if (entity.plan !== undefined) data['plan'] = entity.plan;
+    if (entity.plan   !== undefined) data['plan']   = entity.plan;
     if (entity.status !== undefined) data['status'] = entity.status;
 
     // ─── Stripe fields ───────────────────────────────────────────────────────

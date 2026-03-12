@@ -11,7 +11,7 @@ export class InitializeGamificationUsecase implements IInitializeGamificationUse
   constructor(
     @inject('IGamificationRepository')
     private readonly gamificationRepository: IGamificationRepository,
-  ) { }
+  ) {}
 
   async execute(userId: string): Promise<InitializeGamificationResponseDTO> {
     const gamification = await this.gamificationRepository.save({
@@ -27,9 +27,6 @@ export class InitializeGamificationUsecase implements IInitializeGamificationUse
 
       dailyXpEarned: 0,
       dailyChatMessageCount: 0,
-      dailyAiTokenCount: 0,
-      monthlyBuddyMatchCount: 0,
-      monthlyRoomJoinCount: 0,
       todayPomodoroUsed: false,
       lastDailyResetDate: null,
     });

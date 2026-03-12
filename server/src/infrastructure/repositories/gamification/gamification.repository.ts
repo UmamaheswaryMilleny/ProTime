@@ -16,7 +16,7 @@ export class MongoGamificationRepository implements IGamificationRepository {
   ): Promise<UserGamificationEntity> {
     const doc = await UserGamificationModel.create({
       ...data,
-      userId: new mongoose.Types.ObjectId(data.userId),
+      userId: new mongoose.Types.ObjectId(data.userId), // explicit cast — consistent with other repos
     });
     return UserGamificationMapper.toDomain(doc);
   }
@@ -27,11 +27,11 @@ export class MongoGamificationRepository implements IGamificationRepository {
   }
 
   async updateById(
-    id: string,
+    id:   string,
     data: Partial<UserGamificationEntity>,
   ): Promise<UserGamificationEntity | null> {
     const update = UserGamificationMapper.toPersistence(data);
-    const doc = await UserGamificationModel.findByIdAndUpdate(
+    const doc    = await UserGamificationModel.findByIdAndUpdate(
       id,
       { $set: update },
       { new: true },
@@ -53,7 +53,7 @@ export class MongoGamificationRepository implements IGamificationRepository {
   async updateXpAndLevel(
     userId: string,
     data: {
-      totalXp: number;
+      totalXp:      number;
       currentLevel: number;
       currentTitle: LevelTitle;
     },
@@ -69,9 +69,9 @@ export class MongoGamificationRepository implements IGamificationRepository {
   async updateStreak(
     userId: string,
     data: {
-      currentStreak: number;
-      longestStreak: number;
-      lastStreakDate: Date | null;
+      currentStreak:  number;
+      longestStreak:  number;
+      lastStreakDate: Date;
     },
   ): Promise<UserGamificationEntity | null> {
     const doc = await UserGamificationModel.findOneAndUpdate(
@@ -83,29 +83,16 @@ export class MongoGamificationRepository implements IGamificationRepository {
   }
 
   async resetDailyCounters(userId: string): Promise<UserGamificationEntity | null> {
+    // Resets all daily counters + stamps lastDailyResetDate = now
+    // Called lazily on first dashboard load of each new day — no cron needed
     const doc = await UserGamificationModel.findOneAndUpdate(
       { userId },
       {
         $set: {
-          dailyXpEarned: 0,
+          dailyXpEarned:         0,
           dailyChatMessageCount: 0,
-          dailyAiTokenCount: 0,
-          todayPomodoroUsed: false,
-          lastDailyResetDate: new Date(),
-        },
-      },
-      { new: true },
-    );
-    return doc ? UserGamificationMapper.toDomain(doc) : null;
-  }
-
-  async resetMonthlyCounters(userId: string): Promise<UserGamificationEntity | null> {
-    const doc = await UserGamificationModel.findOneAndUpdate(
-      { userId },
-      {
-        $set: {
-          monthlyBuddyMatchCount: 0,
-          monthlyRoomJoinCount: 0,
+          todayPomodoroUsed:     false,
+          lastDailyResetDate:    new Date(),
         },
       },
       { new: true },
@@ -114,6 +101,7 @@ export class MongoGamificationRepository implements IGamificationRepository {
   }
 
   async incrementDailyXpEarned(userId: string, xp: number): Promise<void> {
+    // $inc is atomic — safe if two requests fire simultaneously
     await UserGamificationModel.updateOne(
       { userId },
       { $inc: { dailyXpEarned: xp } },
@@ -127,28 +115,8 @@ export class MongoGamificationRepository implements IGamificationRepository {
     );
   }
 
-  async incrementDailyAiTokenCount(userId: string): Promise<void> {
-    await UserGamificationModel.updateOne(
-      { userId },
-      { $inc: { dailyAiTokenCount: 1 } },
-    );
-  }
-
-  async incrementMonthlyBuddyMatchCount(userId: string): Promise<void> {
-    await UserGamificationModel.updateOne(
-      { userId },
-      { $inc: { monthlyBuddyMatchCount: 1 } },
-    );
-  }
-
-  async incrementMonthlyRoomJoinCount(userId: string): Promise<void> {
-    await UserGamificationModel.updateOne(
-      { userId },
-      { $inc: { monthlyRoomJoinCount: 1 } },
-    );
-  }
-
   async markPomodoroUsedToday(userId: string): Promise<void> {
+    // $set: true is idempotent — safe to call multiple times in a day
     await UserGamificationModel.updateOne(
       { userId },
       { $set: { todayPomodoroUsed: true } },

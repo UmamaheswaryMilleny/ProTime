@@ -25,7 +25,7 @@ export class SubscriptionController implements ISubscriptionController {
 
     @inject('IHandleStripeWebhookUsecase')
     private readonly handleStripeWebhookUsecase: IHandleStripeWebhookUsecase,
-  ) { }
+  ) {}
 
   // ─── GET /api/v1/subscription ─────────────────────────────────────────────
   async getSubscription(
@@ -50,7 +50,7 @@ export class SubscriptionController implements ISubscriptionController {
   ): Promise<void> {
     try {
       const userId = req.user!.id;
-      const dto = req.body as CreateCheckoutSessionRequestDTO;
+      const dto    = req.body as CreateCheckoutSessionRequestDTO;
 
       const result = await this.createCheckoutSessionUsecase.execute(userId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Checkout session created', result);
@@ -84,7 +84,7 @@ export class SubscriptionController implements ISubscriptionController {
   ): Promise<void> {
     try {
       const signature = req.headers['stripe-signature'] as string;
-      const rawBody = req.body as Buffer;
+      const rawBody   = req.body as Buffer;
 
       await this.handleStripeWebhookUsecase.execute(rawBody, signature);
 

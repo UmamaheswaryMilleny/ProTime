@@ -28,8 +28,7 @@ export enum BadgeConditionType {
   STREAK_DAYS = 'STREAK_DAYS', // maintain streak for N days
   BUDDY_MATCHES = 'BUDDY_MATCHES', // match with N buddies (min 4★, min 1hr)
   ROOMS_ATTENDED = 'ROOMS_ATTENDED', // attend N rooms (min 1hr each)
-  LEVEL_REACHED = 'LEVEL_REACHED', // reach level N
-
+  
 }
 
 
@@ -61,7 +60,6 @@ export const LEVEL_XP_THRESHOLDS: number[] = [
 ];
 
 export const MAX_LEVEL = 20;
-export const FREE_MAX_LEVEL = 6;
 
 
 // Used by gamification usecase after every XP award.
@@ -73,7 +71,7 @@ export function getTitleForLevel(level: number): LevelTitle {
   if (level >= 10 && level <= 12) return LevelTitle.ACHIEVER;
   if (level >= 13 && level <= 15) return LevelTitle.EXPERT;
   if (level >= 16 && level <= 18) return LevelTitle.PRODIGY;
-  return LevelTitle.MASTER; // Level 19-20
+  return LevelTitle.MASTER; // level 19–20
 }
 
 
@@ -122,33 +120,16 @@ export const BADGE_XP_BONUS = 50;
 
 
 export type XpSource =
-  | 'TODO_LOW'
-  | 'TODO_MEDIUM'
-  | 'TODO_HIGH'
-  | 'STREAK_BONUS'
-  | 'BADGE_BONUS'
-  | 'BUDDY_MATCH'
-  | 'ROOM_JOIN';
+    | 'TODO_LOW'
+    | 'TODO_MEDIUM'
+    | 'TODO_HIGH'
+    | 'STREAK_BONUS'
+    | 'BADGE_BONUS';
 
+    export const FREE_MAX_LEVEL = 6; // LEARNER = levels 4-6, above this = locked for free
 
-// ─── Daily Limits ───────────────────────────────────────────────────────────
-export const DAILY_XP_CAP = 50;
-export const DAILY_CHAT_CAP_FREE = 10;
-export const DAILY_AI_TOKEN_FREE = 20;
-export const DAILY_AI_TOKEN_PREMIUM = 100;
-
-// ─── Monthly/Total Limits ────────────────────────────────────────────────────
-export const MONTHLY_BUDDY_MATCH_FREE = 5;
-export const MONTHLY_ROOM_JOIN_FREE = 3;
-
-// ─── Level Progression ───────────────────────────────────────────────────────
-export const LEVEL_TITLES = {
-  EARLY_BIRD: 'Early Bird',
-  BEGINNER: 'Beginner',
-  LEARNER: 'Learner',
-  EXPLORER: 'Explorer',
-  ACHIEVER: 'Achiever',
-  EXPERT: 'Expert',
-  PRODIGY: 'Prodigy',
-  MASTER: 'Master',
-} as const;
+    
+// ─── Free Title Lock ──────────────────────────────────────────────────────────
+// Free users can see all levels but titles above LEARNER are locked (visual only).
+// The actual title is still computed — just displayed as locked in the frontend.
+// export const FREE_MAX_VISIBLE_TITLE = LevelTitle.LEARNER; // Level 6
