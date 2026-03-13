@@ -65,6 +65,22 @@ import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/in
 import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
 
+//buddy match
+
+import { SaveBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/save-buddy-preference.usecase';
+import { GetBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-preference.usecase';
+import { FindBuddyMatchesUsecase } from '../../application/usecase/implementation/buddy-match/find-buddy-matches.usecase';
+import { SendBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/send-buddy-request.usecase';
+import { RespondToBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/respond-to-buddy-request.usecase';
+import { GetBuddyListUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-list.usecase';
+import { GetPendingRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-pending-requests.usecase';
+import type { ISaveBuddyPreferenceUsecase }   from '../../application/usecase/interface/buddy-match/save-buddy-preference.usecase.interface';
+import type { IGetBuddyPreferenceUsecase }    from '../../application/usecase/interface/buddy-match/get-buddy-preference.usecase.interface';
+import type { IFindBuddyMatchesUsecase }      from '../../application/usecase/interface/buddy-match/find-buddy-matches.usecase.interface';
+import type { ISendBuddyRequestUsecase }      from '../../application/usecase/interface/buddy-match/send-buddy-request.usecase.interface';
+import type { IRespondToBuddyRequestUsecase } from '../../application/usecase/interface/buddy-match/respond-to-buddy-request.usecase.interface';
+import type { IGetBuddyListUsecase }          from '../../application/usecase/interface/buddy-match/get-buddy-list.usecase.interface';
+import type { IGetPendingRequestsUsecase }    from '../../application/usecase/interface/buddy-match/get-pending-requests.usecase.interface';
 export class UsecaseRegistry {
   static register(): void {
     // ─── Auth Use Cases ───────────────────────────────────────────────
@@ -185,5 +201,14 @@ export class UsecaseRegistry {
         useClass: HandleStripeWebhookUsecase,
       },
     );
+
+    //buddy match
+container.register<ISaveBuddyPreferenceUsecase>  ('ISaveBuddyPreferenceUsecase',   { useClass: SaveBuddyPreferenceUsecase });
+container.register<IGetBuddyPreferenceUsecase>   ('IGetBuddyPreferenceUsecase',    { useClass: GetBuddyPreferenceUsecase });
+container.register<IFindBuddyMatchesUsecase>     ('IFindBuddyMatchesUsecase',      { useClass: FindBuddyMatchesUsecase });
+container.register<ISendBuddyRequestUsecase>     ('ISendBuddyRequestUsecase',      { useClass: SendBuddyRequestUsecase });
+container.register<IRespondToBuddyRequestUsecase>('IRespondToBuddyRequestUsecase', { useClass: RespondToBuddyRequestUsecase });
+container.register<IGetBuddyListUsecase>         ('IGetBuddyListUsecase',          { useClass: GetBuddyListUsecase });
+container.register<IGetPendingRequestsUsecase>   ('IGetPendingRequestsUsecase',    { useClass: GetPendingRequestsUsecase });
   }
 }

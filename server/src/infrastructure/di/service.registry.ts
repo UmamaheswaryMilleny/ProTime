@@ -48,6 +48,14 @@ import type { IStripeService } from '../../application/service_interface/stripe.
 import { SubscriptionRepository } from '../repositories/subscription/subscription.repository';
 import { StripeService } from '../service/stripe-service';
 //upload service
+
+
+//buddy-match
+import type { IBuddyPreferenceRepository } from '../../domain/repositories/buddy/buddy.preference.repository.interface';
+import type { IBuddyConnectionRepository } from '../../domain/repositories/buddy/buddy.connection.repository.interface';
+
+import { BuddyConnectionRepository } from '../repositories/buddy-match/buddy-connection.repository';
+import { BuddyPreferenceRepository } from '../repositories/buddy-match/buddy-preference.repository';
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
@@ -128,5 +136,10 @@ export class ServiceRegistry {
     container.register<IStripeService>('IStripeService', {
       useClass: StripeService,
     });
+
+
+    //buddy match
+container.register<IBuddyPreferenceRepository>('IBuddyPreferenceRepository', { useClass: BuddyPreferenceRepository });
+container.register<IBuddyConnectionRepository>('IBuddyConnectionRepository', { useClass: BuddyConnectionRepository });
   }
 }
