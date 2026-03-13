@@ -15,7 +15,6 @@ export class BuddyConnectionRepository
     super(BuddyConnectionModel, BuddyConnectionMapper.toDomain);
   }
 
-  // Returns all connections where user is either sender or receiver
   async findByUserId(userId: string): Promise<BuddyConnectionEntity[]> {
     const docs = await BuddyConnectionModel
       .find({ $or: [{ userId }, { buddyId: userId }] })
@@ -24,7 +23,6 @@ export class BuddyConnectionRepository
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
   }
 
-  // Checks both directions: (A→B) OR (B→A)
   async findConnection(
     userId:  string,
     buddyId: string,
@@ -39,7 +37,6 @@ export class BuddyConnectionRepository
     return BuddyConnectionMapper.toDomain(doc as BuddyConnectionDocument);
   }
 
-  // Rolling 30-day window — counts accepted connections on both sides
   async countAcceptedThisMonth(userId: string): Promise<number> {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     return BuddyConnectionModel.countDocuments({
@@ -49,7 +46,6 @@ export class BuddyConnectionRepository
     });
   }
 
-  // Badge criteria: rating >= minRating AND totalSessionMinutes >= minMinutes
   async findQualifiedConnections(
     userId:     string,
     minRating:  number,
@@ -64,7 +60,6 @@ export class BuddyConnectionRepository
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
   }
 
-  // Incoming pending requests — receiver side only
   async findPendingByReceiverId(receiverId: string): Promise<BuddyConnectionEntity[]> {
     const docs = await BuddyConnectionModel.find({
       buddyId: receiverId,
@@ -73,7 +68,6 @@ export class BuddyConnectionRepository
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
   }
 
-  // Sets addedAt automatically when status transitions to CONNECTED
   async updateStatus(
     connectionId: string,
     status:       BuddyConnectionStatus,
@@ -93,7 +87,6 @@ export class BuddyConnectionRepository
     return BuddyConnectionMapper.toDomain(doc as BuddyConnectionDocument);
   }
 
-  // Updates session stats after a 1:1 session ends — checks both directions
   async updateSessionStats(
     userId:  string,
     buddyId: string,
@@ -109,6 +102,7 @@ export class BuddyConnectionRepository
           { userId, buddyId },
           { userId: buddyId, buddyId: userId },
         ],
+        status: BuddyConnectionStatus.CONNECTED,  // ← only update confirmed connections
       },
       { $set: update },
       { new: true },

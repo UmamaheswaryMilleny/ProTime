@@ -14,6 +14,7 @@ import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middlewar
 import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
 import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subscription.routes";
 import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
+import { BuddyRoutes } from "./interface_adapter/routes/buddy-match/buddy.routes";
 
 export class App {
   private readonly app: Application;
@@ -53,6 +54,7 @@ export class App {
      this.app.use('/api/v1/todos', container.resolve(TodoRoutes).router); 
      this.app.use('/api/v1/subscription', container.resolve(SubscriptionRoutes).router); 
      this.app.use('/api/v1/gamification', container.resolve(GamificationRoutes).router); 
+     this.app.use('/api/v1/buddy', container.resolve(BuddyRoutes).router);
   }
 
   private configureErrorHandling(): void {

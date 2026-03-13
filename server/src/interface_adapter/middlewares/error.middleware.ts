@@ -49,6 +49,18 @@ import {
   InvalidWebhookSignatureError,
 } from '../../domain/errors/subscription.error';
 
+// ─── Buddy match errors ────────────────────────────────────────────────────
+import {
+  BuddyMatchLimitError,
+  UnauthorizedBuddyActionError,
+  BuddyNotFoundError,
+  BuddyPreferenceNotFoundError,
+  BuddyAlreadyConnectedError,
+  BuddySelfMatchError,
+  BuddyRequestAlreadyRespondedError,
+} from '../../domain/errors/buddy.errors';
+
+
 export class ErrorMiddleware {
   public handleError(
     err: Error,
@@ -63,7 +75,9 @@ export class ErrorMiddleware {
       err instanceof TodoNotFoundError ||
       err instanceof ProfileNotFoundError ||
       err instanceof GamificationNotFoundError ||
-      err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError
+      err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError  ||
+  err instanceof BuddyNotFoundError       ||        // ← add
+  err instanceof BuddyPreferenceNotFoundError       // ← add
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -84,7 +98,8 @@ export class ErrorMiddleware {
       err instanceof UserDeletedError ||
       err instanceof UnauthorizedTodoAccessError ||
       err instanceof PremiumBadgeRequiredError ||
-      err instanceof DailyChatLimitError
+      err instanceof DailyChatLimitError ||   err instanceof BuddyMatchLimitError      ||       // ← add
+  err instanceof UnauthorizedBuddyActionError  
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
       return;
@@ -109,7 +124,10 @@ export class ErrorMiddleware {
       err instanceof TodoExpiredError ||
       err instanceof PomodoroNotEnabledError ||
       err instanceof PomodoroAlreadyCompletedError ||
-      err instanceof InvalidEstimatedTimeError || err instanceof SubscriptionNotCancellableError
+      err instanceof InvalidEstimatedTimeError || err instanceof SubscriptionNotCancellableError ||
+  err instanceof BuddyAlreadyConnectedError       ||  // ← add
+  err instanceof BuddySelfMatchError              ||  // ← add
+  err instanceof BuddyRequestAlreadyRespondedError    // ← add
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;
