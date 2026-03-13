@@ -55,9 +55,9 @@ export class BuddyRequestAlreadyRespondedError extends DomainError {
   }
 }
 
-// Free user attempted to use advanced matching filters
-export class AdvancedFilterNotAllowedError extends DomainError {
-  constructor() {
-    super('Advanced filters are a Premium feature. Upgrade to access subject, availability, and more filters');
-  }
-}
+// // Free user attempted to use advanced matching filters
+// export class AdvancedFilterNotAllowedError extends DomainError {
+//   constructor() {
+//     super('Advanced filters are a Premium feature. Upgrade to access subject, availability, and more filters');
+//   }
+// }

@@ -21,14 +21,12 @@ export class SendBuddyRequestUsecase implements ISendBuddyRequestUsecase {
     const existing = await this.buddyConnectionRepo.findConnection(requesterId, buddyId);
     if (existing) throw new BuddyAlreadyConnectedError();
 
-    await this.buddyConnectionRepo.save({
-      userId:                 requesterId,
-      buddyId,
-      status:                 BuddyConnectionStatus.PENDING,
-      totalSessionsCompleted: 0,
-      totalSessionMinutes:    0,
-      createdAt:              new Date(),
-      updatedAt:              new Date(),
-    });
+ await this.buddyConnectionRepo.save({
+  userId:                 requesterId,
+  buddyId,
+  status:                 BuddyConnectionStatus.PENDING,
+  totalSessionsCompleted: 0,
+  totalSessionMinutes:    0,
+});
   }
 }

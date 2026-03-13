@@ -5,10 +5,7 @@ import type { IBuddyConnectionRepository } from '../../../../domain/repositories
 import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { FindBuddyMatchesRequestDTO } from '../../../dto/buddy-match/request/find-buddy-matches.request.dto';
 import type { PaginatedBuddyProfileResponseDTO } from '../../../dto/buddy-match/response/paginated-buddy-profile.response.dto';
-import {
-  BuddyPreferenceNotFoundError,
-  AdvancedFilterNotAllowedError,
-} from '../../../../domain/errors/buddy.errors';
+import { BuddyPreferenceNotFoundError } from '../../../../domain/errors/buddy.errors';
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
 
 @injectable()
@@ -29,7 +26,6 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
     dto:    FindBuddyMatchesRequestDTO,
   ): Promise<PaginatedBuddyProfileResponseDTO> {
 
-    // Must have preferences set before searching
     const myPreference = await this.buddyPreferenceRepo.findByUserId(userId);
     if (!myPreference) throw new BuddyPreferenceNotFoundError();
 
@@ -37,19 +33,7 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
     const user      = await this.userRepo.findById(userId);
     const isPremium = user?.isPremium ?? false;
 
-    // Guard: free users cannot trigger advanced filter matching
-    const hasAdvancedFilters =
-      myPreference.subjectDomain   !== undefined ||
-      myPreference.availability    !== undefined ||
-      myPreference.sessionDuration !== undefined ||
-      myPreference.focusLevel      !== undefined ||
-      myPreference.studyPreference !== undefined;
-
-    if (!isPremium && hasAdvancedFilters) {
-      throw new AdvancedFilterNotAllowedError();
-    }
-
-    // Exclude users already connected (any status — don't re-show declined/blocked either)
+    // Exclude users already connected (any status)
     const existingConnections = await this.buddyConnectionRepo.findByUserId(userId);
     const excludeUserIds = existingConnections.map(c =>
       c.userId === userId ? c.buddyId : c.userId,
@@ -89,9 +73,8 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
       total    = result.total;
     }
 
-    // Fetch user identity for each match in parallel
-    const userIds  = profiles.map(p => p.userId);
-    const users    = await Promise.all(userIds.map(id => this.userRepo.findById(id)));
+    const userIds = profiles.map(p => p.userId);
+    const users   = await Promise.all(userIds.map(id => this.userRepo.findById(id)));
 
     const profileDTOs = profiles.map((preference, i) => {
       const matchedUser = users[i];
