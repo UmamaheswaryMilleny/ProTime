@@ -16,6 +16,8 @@ export const ROUTES = {
   DASHBOARD: "/dashboard",                              // main dashboard home
   USER_PROFILE: "/dashboard/profile",                  // profile tab (inside dashboard)
   DASHBOARD_FIND_BUDDY: "/dashboard/find-buddy",
+  DASHBOARD_MY_BUDDIES: "/dashboard/my-buddies",
+  DASHBOARD_BUDDY_REQUESTS: "/dashboard/buddy-requests",
   DASHBOARD_TODO_LIST: "/dashboard/todo-list",
   DASHBOARD_HELP: "/dashboard/help",
   DASHBOARD_LEVELS: "/dashboard/levels",
@@ -47,6 +49,15 @@ export const API_ROUTES = {
   ADMIN_USERS: "/admin/users",
   ADMIN_BLOCK_USER: (id: string) => `/admin/users/${id}/block`,
   ADMIN_UNBLOCK_USER: (id: string) => `/admin/users/${id}/unblock`,
+
+  BUDDY_PREFERENCE:        "/buddy/preference",
+  BUDDY_MATCHES:           "/buddy/matches",
+  BUDDY_LIST:              "/buddy/list",
+  BUDDY_PENDING_REQUESTS:  "/buddy/requests/pending",
+  BUDDY_SENT_REQUESTS:     "/buddy/requests/sent",
+  BUDDY_SEND_REQUEST:      (buddyId: string) => `/buddy/request/${buddyId}`,
+  BUDDY_RESPOND_REQUEST:   (connectionId: string) => `/buddy/request/${connectionId}/respond`,
+  UTILITY_LOCATION: "/utility/location",
 } as const;
 
 export const ROLES = {

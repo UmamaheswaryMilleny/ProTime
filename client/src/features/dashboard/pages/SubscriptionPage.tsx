@@ -5,9 +5,13 @@ import { ROUTES } from '../../../config/env';
 import { subscriptionService } from '../api/subscription-service';
 import type { SubscriptionResponse } from '../api/subscription-service';
 import toast from 'react-hot-toast';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import { updateUser } from '../../auth/store/authSlice';
 
 export const SubscriptionPage: React.FC = () => {
     const navigate = useNavigate();
+    const dispatch = useAppDispatch();
+    const authUser = useAppSelector(state => state.auth.user);
     const [subscription, setSubscription] = useState<SubscriptionResponse | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -16,6 +20,14 @@ export const SubscriptionPage: React.FC = () => {
             try {
                 const data = await subscriptionService.getSubscription();
                 setSubscription(data);
+
+                // ─── Sync isPremium into Redux if stale JWT ───────────────────
+                // The JWT is issued at login time — if user just paid, the token
+                // still has isPremium=false. We fix this by reading the fresh DB
+                // value and patching the Redux state + localStorage directly.
+                if (data?.isPremium && !authUser?.isPremium) {
+                    dispatch(updateUser({ isPremium: true }));
+                }
             } catch (error) {
                 console.error('Failed to fetch subscription', error);
                 toast.error('Could not load subscription details');

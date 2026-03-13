@@ -33,13 +33,18 @@ export const useGoogleAuth = () => {
       const role = tokenPayload.role as 'ADMIN' | 'CLIENT';
       const id = tokenPayload.id as string;
       const email = tokenPayload.email as string;
+      const fullName = tokenPayload.fullName as string;
+      const username = tokenPayload.username as string;
+      const isPremium = tokenPayload.isPremium as boolean;
 
       dispatch(loginUser({
         id,
         email,
-        fullName: '',   // filled on profile fetch
+        fullName: fullName || '',
+        username: username || '',
         role,
         accessToken,
+        isPremium: !!isPremium,
       }));
 
       toast.success('Welcome to ProTime!');

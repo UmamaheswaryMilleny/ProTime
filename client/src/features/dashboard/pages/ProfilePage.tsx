@@ -1,11 +1,14 @@
 import React from 'react';
-import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Target, Calendar, Eye, CreditCard, ChevronDown, X, Trash2, Edit2, Save } from 'lucide-react';
+import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Eye, CreditCard, ChevronDown, X, Trash2, Edit2, Save, Library } from 'lucide-react';
+import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
 import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { ROUTES } from '../../../config/env';
+import { ROUTES, API_ROUTES } from '../../../config/env';
 import { userApi } from '../../user/user-service';
 import toast from 'react-hot-toast';
 import { updateUser } from '../../auth/store/authSlice';
+import { fetchPreferences, savePreferences } from '../../buddy-match/store/buddySlice';
+import { BuddyPreferenceForm } from '../../buddy-match/components/BuddyPreferenceForm';
 
 interface Badge { name: string; color: string; icon: string; criteria: string; reward: string; }
 
@@ -26,14 +29,11 @@ const badges: Badge[] = [
   { name: 'Room Leader', color: 'bg-pink-500', icon: '🎯', criteria: 'Attend 10 group study rooms for min 1 hour each', reward: '+50 XP' },
 ];
 
-const ALL_LANGUAGES = [
-  "Afrikaans", "Albanian", "Amharic", "Arabic", "Armenian", "Azerbaijani", "Basque", "Belarusian", "Bengali", "Bosnian", "Bulgarian", "Catalan", "Cebuano", "Chichewa", "Chinese", "Corsican", "Croatian", "Czech", "Danish", "Dutch", "English", "Esperanto", "Estonian", "Filipino", "Finnish", "French", "Frisian", "Galician", "Georgian", "German", "Greek", "Gujarati", "Haitian Creole", "Hausa", "Hawaiian", "Hebrew", "Hindi", "Hmong", "Hungarian", "Icelandic", "Igbo", "Indonesian", "Irish", "Italian", "Japanese", "Javanese", "Kannada", "Kazakh", "Khmer", "Kinyarwanda", "Korean", "Kurdish (Kurmanji)", "Kyrgyz", "Lao", "Latin", "Latvian", "Lithuanian", "Luxembourgish", "Macedonian", "Malagasy", "Malay", "Malayalam", "Maltese", "Maori", "Marathi", "Mongolian", "Myanmar (Burmese)", "Nepali", "Norwegian", "Odia (Oriya)", "Pashto", "Persian", "Polish", "Portuguese", "Punjabi", "Romanian", "Russian", "Samoan", "Scots Gaelic", "Serbian", "Sesotho", "Shona", "Sindhi", "Sinhala", "Slovak", "Slovenian", "Somali", "Spanish", "Sundanese", "Swahili", "Swedish", "Tajik", "Tamil", "Tatar", "Telugu", "Thai", "Turkish", "Turkmen", "Ukrainian", "Urdu", "Uyghur", "Uzbek", "Vietnamese", "Welsh", "Xhosa", "Yiddish", "Yoruba", "Zulu"
-];
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { preferences, loading } = useAppSelector((state) => state.buddy);
   const dispatch = useAppDispatch();
-  const [showAdvancedSettings, setShowAdvancedSettings] = React.useState(false);
   const [showBadgesModal, setShowBadgesModal] = React.useState(false);
   const [selectedBadge, setSelectedBadge] = React.useState<Badge | null>(null);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -41,9 +41,13 @@ export const ProfilePage: React.FC = () => {
 
   const [isEditingProfile, setIsEditingProfile] = React.useState(false);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
+  const detectionAttempted = React.useRef(false);
 
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = React.useState(false);
   const [languageSearch, setLanguageSearch] = React.useState('');
+  
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = React.useState(false);
+  const [countrySearch, setCountrySearch] = React.useState('');
 
   const [profileForm, setProfileForm] = React.useState({
     fullName: user?.fullName || '',
@@ -57,6 +61,10 @@ export const ProfilePage: React.FC = () => {
   const [aboutText, setAboutText] = React.useState(user?.bio || '');
 
   React.useEffect(() => {
+    dispatch(fetchPreferences());
+  }, [dispatch]);
+
+  React.useEffect(() => {
     if (user) {
       // Always sync state when user object updates (e.g. from refresh/API)
       setProfileForm(prev => ({
@@ -68,15 +76,21 @@ export const ProfilePage: React.FC = () => {
       setAboutText(user.bio || '');
 
       // Auto-detect location if they don't have one set yet
-      if (!user.country) {
-        fetch('https://ipapi.co/json/')
-          .then(res => res.json())
-          .then(data => {
-            if (data && data.country_name) {
-              setProfileForm(prev => ({ ...prev, country: data.country_name }));
-            }
-          })
-          .catch(err => console.error('Failed to auto-detect location:', err));
+      if (!user.country && !profileForm.country && !detectionAttempted.current) {
+        detectionAttempted.current = true;
+        
+        import('../../../api/instance').then(({ ProTimeBackend }) => {
+          ProTimeBackend.get(API_ROUTES.UTILITY_LOCATION)
+            .then(res => {
+              const data = res.data?.data;
+              if (data && data.country) {
+                setProfileForm(prev => ({ ...prev, country: data.country }));
+              }
+            })
+            .catch(() => {
+              // Silently fail
+            });
+        });
       }
     }
   }, [user]);
@@ -182,6 +196,15 @@ export const ProfilePage: React.FC = () => {
       toast.error("Failed to remove profile picture.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const handleSaveBuddyPreferences = async (data: any) => {
+    try {
+      await dispatch(savePreferences(data)).unwrap();
+      toast.success("Buddy preferences saved successfully!");
+    } catch (err) {
+      // toast.error handled by effect or handled by unwrap if necessary
     }
   };
 
@@ -307,17 +330,60 @@ export const ProfilePage: React.FC = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-sm text-zinc-400">Location (Auto-detected)</label>
+                  <div className="space-y-1.5 hover:cursor-pointer relative">
+                    <label className="text-sm text-zinc-400">Location</label>
                     <div className="relative">
-                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                      <input
-                        type="text"
-                        value={profileForm.country}
-                        disabled={true}
-                        placeholder="Detecting..."
-                        className="w-full bg-zinc-800 border-none rounded-lg pl-10 pr-4 py-2.5 text-zinc-400 opacity-70 cursor-not-allowed focus:outline-none"
-                      />
+                      <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 z-10 pointer-events-none" />
+                      <div
+                        onClick={() => {
+                          if (isEditingProfile) {
+                            setIsCountryDropdownOpen(!isCountryDropdownOpen);
+                            setCountrySearch('');
+                          }
+                        }}
+                        className={`w-full bg-zinc-800 border-none rounded-lg pl-10 pr-10 py-2.5 text-white outline-none select-none ${isEditingProfile ? 'cursor-pointer focus:ring-2 focus:ring-[#8A2BE2]' : 'opacity-70 cursor-not-allowed'}`}
+                        tabIndex={isEditingProfile ? 0 : -1}
+                      >
+                        {profileForm.country || 'Select Country...'}
+                      </div>
+                      <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+
+                      {isEditingProfile && isCountryDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsCountryDropdownOpen(false)} />
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-white/10 rounded-xl shadow-2xl z-50 flex flex-col">
+                            <div className="p-2 border-b border-white/5 relative z-50">
+                              <input
+                                autoFocus
+                                type="text"
+                                placeholder="Search country..."
+                                value={countrySearch}
+                                onChange={(e) => setCountrySearch(e.target.value)}
+                                className="w-full bg-zinc-900 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-1 focus:ring-[#8A2BE2]"
+                              />
+                            </div>
+                            <div className="max-h-60 overflow-y-auto relative z-50">
+                              {ALL_COUNTRIES.filter(c => c.toLowerCase().includes(countrySearch.toLowerCase())).length > 0 ? (
+                                ALL_COUNTRIES.filter(c => c.toLowerCase().includes(countrySearch.toLowerCase())).map(country => (
+                                  <button
+                                    key={country}
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setProfileForm({ ...profileForm, country });
+                                      setIsCountryDropdownOpen(false);
+                                    }}
+                                    className={`w-full text-left px-4 py-2.5 text-sm transition-colors ${profileForm.country === country ? 'bg-[#8A2BE2]/20 text-[#8A2BE2] font-semibold' : 'text-zinc-300 hover:bg-zinc-700'}`}
+                                  >
+                                    {country}
+                                  </button>
+                                ))
+                              ) : (
+                                <div className="px-4 py-3 text-sm text-zinc-500 text-center">No countries found</div>
+                              )}
+                            </div>
+                          </div>
+                        </>
+                      )}
                     </div>
                   </div>
                   <div className="space-y-1.5 hover:cursor-pointer relative">
@@ -421,36 +487,6 @@ export const ProfilePage: React.FC = () => {
             </div>
           </section>
 
-          {/* Study Preferences */}
-          <section className="bg-zinc-900 rounded-2xl p-6 border border-white/5">
-            <div className="flex items-center gap-2 mb-6">
-              <span className="text-[#8A2BE2] text-xl font-bold">⚡</span>
-              <h2 className="text-xl font-bold text-white">Learning & Study Preferences</h2>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {[
-                { label: 'Time Zone', Icon: Clock, options: ['EST', 'PST', 'IST'] },
-                { label: 'Study Goal', Icon: Target, options: ['Technology', 'Academics', 'Languages', 'Test Preparation', 'Other'] },
-                { label: 'Frequency', Icon: Calendar, options: ['Daily', 'Weekly', 'Weekends'] },
-                { label: 'Language', Icon: Globe, options: ['Hindi', 'English', 'Spanish'] },
-              ].map(({ label, Icon, options }) => (
-                <div key={label} className="space-y-1.5">
-                  <label className="text-sm text-zinc-400">{label}</label>
-                  <div className="relative">
-                    <Icon size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
-                    <select className="w-full bg-zinc-800 border-none rounded-lg pl-10 pr-10 py-2.5 text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none appearance-none cursor-pointer">
-                      {options.map(o => <option key={o}>{o}</option>)}
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <button onClick={() => setShowAdvancedSettings(true)} className="hover:opacity-80 transition-opacity text-left">
-              <span className="text-[#FFD700] text-sm font-bold">Advanced Settings</span>
-              <span className="text-zinc-500 text-xs ml-2">(Not Available For Free Users)</span>
-            </button>
-          </section>
         </div>
 
         {/* Right Column */}
@@ -502,37 +538,6 @@ export const ProfilePage: React.FC = () => {
         </div>
       </div>
 
-      {/* Advanced Settings Modal */}
-      {showAdvancedSettings && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-          <div className="bg-zinc-900 rounded-3xl w-full max-w-2xl border border-white/10 overflow-hidden shadow-2xl">
-            <div className="flex items-center justify-between p-6 border-b border-white/10">
-              <h2 className="text-xl font-bold text-white">Advanced Settings</h2>
-              <button onClick={() => setShowAdvancedSettings(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400 hover:text-white"><X size={20} /></button>
-            </div>
-            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-              {[
-                { label: 'Subject/Domain', options: ['Web Development', 'App Development', 'UI/UX', 'Data Science', 'Machine Learning', 'DevOps', 'AI / ML', 'Cyber Security', 'Others'] },
-                { label: 'Availability', options: ['Morning', 'Noon', 'Evening', 'Night', 'Flexible'] },
-                { label: 'Study Duration', options: ['25 Min', '45 Min', '1 Hour', '2 Hours', 'Flexible'] },
-                { label: 'Study Preference', options: ['Chat Only', 'Video Only', 'Flexible'] },
-                { label: 'Focus Level', options: ['Casual', 'Moderate', 'High Intensity'] },
-                { label: 'Group Study', options: ['Yes', 'No', 'Maybe'] },
-              ].map(({ label, options }) => (
-                <div key={label} className="space-y-1.5">
-                  <label className="text-sm text-zinc-400">{label}</label>
-                  <div className="relative">
-                    <select className="w-full bg-zinc-800 border-none rounded-lg pl-4 pr-10 py-2.5 text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none appearance-none cursor-pointer">
-                      {options.map(o => <option key={o}>{o}</option>)}
-                    </select>
-                    <ChevronDown size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Badges Modal */}
       {showBadgesModal && (
@@ -580,6 +585,26 @@ export const ProfilePage: React.FC = () => {
           )}
         </div>
       )}
+
+      {/* Buddy Preferences Section */}
+      <section className="bg-zinc-900 rounded-3xl p-8 border border-white/5 shadow-2xl">
+        <div className="flex items-center gap-3 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-[blueviolet]/10 flex items-center justify-center">
+            <Library className="text-[blueviolet]" size={24} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-white tracking-tight">Learning & Study Preferences</h2>
+            <p className="text-zinc-500 text-sm">Fine-tune your study goals to find the perfect study partner.</p>
+          </div>
+        </div>
+        
+        <BuddyPreferenceForm 
+          initialData={preferences}
+          isPremium={user?.isPremium || false}
+          onSave={handleSaveBuddyPreferences}
+          isSaving={loading.preferences}
+        />
+      </section>
     </div>
   );
 };

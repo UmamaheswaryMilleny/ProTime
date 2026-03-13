@@ -20,7 +20,7 @@ import { DashboardLayout } from "./features/dashboard/layouts/DashboardLayout";
 import { DashboardPage } from "./features/dashboard/pages/DashboardPage";
 import { ProfilePage } from "./features/dashboard/pages/ProfilePage";
 import { TodoPage } from "./features/todo/pages/TodoPage";
-import { FindBuddyPage } from "./features/dashboard/pages/FindBuddyPage";
+import { FindBuddyPage } from "./features/buddy-match/pages/FindBuddyPage";
 import { HelpPage } from "./features/dashboard/pages/HelpPage";
 import { LevelsPage } from "./features/dashboard/pages/LevelsPage";
 import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
@@ -60,6 +60,8 @@ function App() {
             <Route path={ROUTES.USER_PROFILE} element={<ProfilePage />} />
             <Route path={ROUTES.DASHBOARD_TODO_LIST} element={<TodoPage />} />
             <Route path={ROUTES.DASHBOARD_FIND_BUDDY} element={<FindBuddyPage />} />
+            <Route path={ROUTES.DASHBOARD_MY_BUDDIES} element={<FindBuddyPage />} />
+            <Route path={ROUTES.DASHBOARD_BUDDY_REQUESTS} element={<FindBuddyPage />} />
             <Route path={ROUTES.DASHBOARD_HELP} element={<HelpPage />} />
             <Route path={ROUTES.DASHBOARD_LEVELS} element={<LevelsPage />} />
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION} element={<SubscriptionPage />} />

@@ -36,19 +36,24 @@ export const useSignin = () => {
         return;
       }
 
-      // Decode role + id + email from JWT payload
+      // Decode role + id + email + fullName from JWT payload
       const tokenPayload = JSON.parse(atob(accessToken.split('.')[1]));
       const role = tokenPayload.role as 'ADMIN' | 'CLIENT';
       const id = tokenPayload.id as string;
       const email = tokenPayload.email as string;
+      const fullName = tokenPayload.fullName as string;
+      const username = tokenPayload.username as string;
+      const isPremium = tokenPayload.isPremium as boolean;
 
-      // 1. Store minimal auth state immediately so axios interceptor has the token
+      // 1. Store auth state immediately
       dispatch(loginUser({
         id,
         email,
-        fullName: '',
+        fullName: fullName || '',
+        username: username || '',
         role,
         accessToken,
+        isPremium: !!isPremium,
       }));
 
       // 2. Fetch profile to get fullName + profileImage — fire and forget on error

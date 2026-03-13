@@ -2,17 +2,18 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import {
     LayoutDashboard,
-    Users,
     CheckSquare,
     Video,
     Calendar,
     MessageSquare,
     BarChart2,
-    Trophy,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    Trophy as TrophyIcon,
+    Search
 } from 'lucide-react';
-import { ROUTES } from '../../../config/env'; // ✅ added — was using hardcoded path strings
+import { ROUTES } from '../../../config/env';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 
 import { NotificationBell } from './NotificationBell';
 
@@ -23,17 +24,39 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
     const [hoveredItem, setHoveredItem] = React.useState<{ label: string; top: number } | null>(null);
+    const { user } = useAppSelector((state) => state.auth);
+    const { pendingRequests } = useAppSelector((state) => state.buddy);
+    const dispatch = useAppDispatch();
+
+    React.useEffect(() => {
+        if (!user) return;
+
+        const fetchPending = () => {
+            import('../../../features/buddy-match/store/buddySlice').then(({ fetchPendingRequests }) => {
+                dispatch(fetchPendingRequests());
+            });
+        };
+
+        fetchPending();
+        const interval = setInterval(fetchPending, 30000);
+        return () => clearInterval(interval);
+    }, [dispatch, user]);
 
     const navItems = [
-        // ✅ was hardcoded '/dashboard' and '/dashboard/find-buddy' — now uses ROUTES constants
         { icon: LayoutDashboard, label: 'Dashboard', path: ROUTES.DASHBOARD, end: true },
-        { icon: Users, label: 'Find Buddy', path: ROUTES.DASHBOARD_FIND_BUDDY, end: false },
+        { 
+            icon: Search, 
+            label: 'Find Buddy', 
+            path: ROUTES.DASHBOARD_FIND_BUDDY, 
+            end: false,
+            badge: true 
+        },
         { icon: CheckSquare, label: 'To-Do List', path: ROUTES.DASHBOARD_TODO_LIST, end: false },
         { icon: Video, label: 'Study Rooms', path: '#', end: false },
         { icon: Calendar, label: 'Calender', path: '#', end: false },
         { icon: MessageSquare, label: 'Community', path: '#', end: false },
         { icon: BarChart2, label: 'Reports', path: '#', end: false },
-        { icon: Trophy, label: 'Leaderboard', path: '#', end: false },
+        { icon: TrophyIcon, label: 'Leaderboard', path: '#', end: false },
     ];
 
     return (
@@ -90,6 +113,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                     >
                         <item.icon size={20} className="flex-shrink-0" />
                         {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
+                        {item.badge && pendingRequests?.length > 0 && (
+                            <span className={`absolute ${isCollapsed ? 'top-2 right-2' : 'right-4'} flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-zinc-900 group-hover:border-zinc-800 transition-colors`}>
+                                {pendingRequests.length}
+                            </span>
+                        )}
                     </NavLink>
                 ))}
             </nav>
