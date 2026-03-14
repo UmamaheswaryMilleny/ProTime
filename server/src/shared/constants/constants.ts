@@ -104,7 +104,7 @@ export const FREE_DAILY_AI_TOKENS    = 20;
 export const PREMIUM_DAILY_AI_TOKENS = 100;
 
 // ─── Community Chat (resets daily) ────────────────────────────────────────────
-export const FREE_DAILY_COMMUNITY_CHATS = 10;
+export const FREE_MONTHLY_COMMUNITY_MESSAGES = 50;
 
 
 
@@ -115,3 +115,4 @@ export const FREE_MONTHLY_BUDDY_MATCHES    = 5;   // already exists
 export const BUDDY_ROLLING_WINDOW_DAYS     = 30;
 export const MIN_SESSION_MINUTES_FOR_BADGE = 60;
 export const MIN_RATING_FOR_BADGE          = 4;
+

@@ -35,11 +35,11 @@ export class PremiumBadgeRequiredError extends DomainError {
 
 // Thrown when FREE user hits daily community chat message limit (10/day).
 // Premium users have unlimited messages.
-export class DailyChatLimitError extends DomainError {
-    constructor() {
-        super('Daily message limit reached. Upgrade to Premium for unlimited messages.');
-    }
-}
+// export class DailyChatLimitError extends DomainError {
+//     constructor() {
+//         super('Daily message limit reached. Upgrade to Premium for unlimited messages.');
+//     }
+// }
 
 // export class DailyXpCapReachedError extends DomainError {
 //   constructor() {
