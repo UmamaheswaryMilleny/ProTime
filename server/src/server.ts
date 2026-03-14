@@ -15,6 +15,7 @@ import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
 import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subscription.routes";
 import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
 import { BuddyRoutes } from "./interface_adapter/routes/buddy-match/buddy.routes";
+import { UtilityRoutes } from "./interface_adapter/routes/utility/utility-routes";
 
 export class App {
   private readonly app: Application;
@@ -32,6 +33,12 @@ export class App {
   }
 
   private configureMiddleware(): void {
+    // ─── Security Headers ───
+    this.app.use((_req, res, next) => {
+      res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+      next();
+    });
+
     // ─── Global JSON Parser with Raw Body preservation for Webhooks ───
     this.app.use(
       express.json({
@@ -55,6 +62,7 @@ export class App {
      this.app.use('/api/v1/subscription', container.resolve(SubscriptionRoutes).router); 
      this.app.use('/api/v1/gamification', container.resolve(GamificationRoutes).router); 
      this.app.use('/api/v1/buddy', container.resolve(BuddyRoutes).router);
+    this.app.use('/api/v1/utility', container.resolve(UtilityRoutes).router);
   }
 
   private configureErrorHandling(): void {
