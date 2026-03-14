@@ -1,4 +1,4 @@
-import { IsInt, IsOptional, Min, Max } from 'class-validator';
+import { IsInt, IsOptional, Min, Max, IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class FindBuddyMatchesRequestDTO {
@@ -14,4 +14,12 @@ export class FindBuddyMatchesRequestDTO {
   @Min(1)
   @Max(20)
   limit: number = 10;
+  
+  @IsOptional()
+  @IsString()
+  search?: string;
+
+  @IsOptional()
+  @IsString()
+  global?: string; // 'true' or 'false'
 }

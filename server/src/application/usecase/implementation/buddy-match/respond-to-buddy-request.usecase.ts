@@ -19,7 +19,7 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
     @inject('IBuddyConnectionRepository')
     private readonly buddyConnectionRepo: IBuddyConnectionRepository,
 
-    @inject('IUserRepository')
+    @inject('UserRepository')
     private readonly userRepo: IUserRepository,
   ) {}
 

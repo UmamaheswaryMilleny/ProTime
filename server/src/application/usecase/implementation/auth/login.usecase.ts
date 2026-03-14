@@ -11,6 +11,7 @@ import type { IPasswordHasherService } from '../../../service_interface/password
 import type { LoginResponseDTO } from '../../../dto/auth/response/login.response.dto';
 import type { ITokenService } from '../../../service_interface/token.service.interface';
 import type { IRefreshTokenStore } from '../../../service_interface/refresh-token-store-service.interface';
+import type { IProfileRepository } from '../../../../domain/repositories/profile/profile.repository.interface';
 
 @injectable()
 export class LoginUsecase implements ILoginUsecase {
@@ -23,6 +24,8 @@ export class LoginUsecase implements ILoginUsecase {
     private readonly passwordHasherService: IPasswordHasherService,
     @inject('IRefreshTokenStore')
     private readonly refreshTokenStore: IRefreshTokenStore,
+    @inject('ProfileRepository')
+    private readonly profileRepository: IProfileRepository,
   ) {}
 
   async execute(data: {
@@ -56,11 +59,14 @@ export class LoginUsecase implements ILoginUsecase {
     }
 
     //4. Generate tokens
+    const profile = await this.profileRepository.findByUserId(user.id);
     const payload = {
       id: user.id,
       email: user.email,
       role: user.role,
-      isPremium:user.isPremium
+      fullName: user.fullName,
+      username: profile?.username || user.email.split('@')[0],
+      isPremium: user.isPremium
     };
 
     const accessToken = this.tokenService.generateAccess(payload);

@@ -11,6 +11,7 @@ export interface UserEntity{
     isBlocked:boolean
     isDeleted:boolean
     isPremium: boolean
-    createdAt:Date
+    googleId?: string
+    createdAt: Date
     updatedAt:Date  
 }

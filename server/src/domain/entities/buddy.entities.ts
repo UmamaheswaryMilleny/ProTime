@@ -23,12 +23,10 @@ export interface BuddyPreferenceEntity {
   userId:        string;
 
   // ─── Free fields ──────────────────────────────────────────────────────────
-  timeZone:      string;          // IANA e.g. "Asia/Kolkata", "America/New_York"
   country:       string;          // e.g. "India", "USA" — used for free matching
   studyGoal:     StudyGoal;
   studyLanguage: string;          // e.g. "English", "Hindi"
   frequency:     StudyFrequency;
-  bio?:          string;          // max 300 chars — shown on public profile
   isVisible:     boolean;         // false = hidden from all search results
   lastActiveAt?: Date;            // updated on every pomodoro completion — drives activity sort
 

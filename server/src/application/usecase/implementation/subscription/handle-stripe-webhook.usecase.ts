@@ -76,30 +76,38 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
   private async handleCheckoutCompleted(
     session: Stripe.Checkout.Session,
   ): Promise<void> {
-    const stripeCustomerId = session.customer as string;
+    const stripeCustomerId    = session.customer as string;
     const stripeSubscriptionId = session.subscription as string;
 
-    const subscription =
-      await this.subscriptionRepository.findByStripeCustomerId(
-        stripeCustomerId,
-      );
-    if (!subscription) return;
+    // ① Primary path — read userId from metadata (zero race condition risk)
+    let userId: string | undefined = session.metadata?.userId;
 
-    const stripeSub =
-      await this.stripeService.retrieveSubscription(stripeSubscriptionId);
-    const periods = this.getPeriodDates(stripeSub);
+    // ② Fallback — look up via stripeCustomerId if metadata was missing
+    if (!userId) {
+      const subscription = await this.subscriptionRepository.findByStripeCustomerId(stripeCustomerId);
+      userId = subscription?.userId;
+    }
 
+    if (!userId) {
+      console.error('[Stripe Webhook] checkout.session.completed: could not resolve userId', { stripeCustomerId });
+      return;
+    }
+
+    const stripeSub = await this.stripeService.retrieveSubscription(stripeSubscriptionId);
+    const periods   = this.getPeriodDates(stripeSub);
     if (!periods) return;
 
+    // ③ Single atomic update — upsert so even first-time users are covered
     await Promise.all([
-      this.subscriptionRepository.updateByUserId(subscription.userId, {
-        plan: SubscriptionPlan.PREMIUM,
-        status: SubscriptionStatus.ACTIVE,
+      this.subscriptionRepository.updateByUserId(userId, {
+        plan:                SubscriptionPlan.PREMIUM,
+        status:              SubscriptionStatus.ACTIVE,
+        stripeCustomerId,
         stripeSubscriptionId,
-        currentPeriodStart: periods.currentPeriodStart,
-        currentPeriodEnd: periods.currentPeriodEnd,
+        currentPeriodStart:  periods.currentPeriodStart,
+        currentPeriodEnd:    periods.currentPeriodEnd,
       }),
-      this.userRepository.updateById(subscription.userId, { isPremium: true }),
+      this.userRepository.updateById(userId, { isPremium: true }),
     ]);
   }
 

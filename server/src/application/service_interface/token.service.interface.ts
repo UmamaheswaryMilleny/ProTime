@@ -3,6 +3,8 @@ export interface AccessTokenPayload{
   id:string;
   email:string;
   role:string;
+  fullName:string;
+  username?:string;
   isPremium:boolean;
 }
 

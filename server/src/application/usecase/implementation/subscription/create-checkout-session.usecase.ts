@@ -64,6 +64,7 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
       stripeCustomerId,
       successUrl: dto.successUrl,
       cancelUrl:  dto.cancelUrl,
+      metadata: { userId },  // ← embed userId so webhook can find user without race condition
     });
 
     return {

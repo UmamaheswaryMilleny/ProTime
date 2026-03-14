@@ -12,9 +12,9 @@ export class GetBuddyPreferenceUsecase implements IGetBuddyPreferenceUsecase {
     private readonly buddyPreferenceRepo: IBuddyPreferenceRepository,
   ) {}
 
-  async execute(userId: string): Promise<BuddyPreferenceResponseDTO> {
+  async execute(userId: string): Promise<BuddyPreferenceResponseDTO | null> {
     const preference = await this.buddyPreferenceRepo.findByUserId(userId);
-    if (!preference) throw new BuddyPreferenceNotFoundError();
+    if (!preference) return null;
     return BuddyMapper.preferenceToResponse(preference);
   }
 }

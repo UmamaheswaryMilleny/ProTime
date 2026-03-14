@@ -12,7 +12,7 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
     @inject('IBuddyPreferenceRepository')
     private readonly buddyPreferenceRepo: IBuddyPreferenceRepository,
 
-    @inject('IUserRepository')
+    @inject('UserRepository')
     private readonly userRepo: IUserRepository,
   ) {}
 
@@ -27,13 +27,11 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
 
     // Always save free fields
     const data: Parameters<IBuddyPreferenceRepository['upsertByUserId']>[1] = {
-      timeZone:      dto.timeZone,
       country:       dto.country,
       studyGoal:     dto.studyGoal,
       studyLanguage: dto.studyLanguage,
       frequency:     dto.frequency,
       isVisible:     dto.isVisible,
-      bio:           dto.bio,
     };
 
     // Premium fields only saved if user is on premium plan

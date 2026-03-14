@@ -12,32 +12,23 @@ export interface IBuddyPreferenceRepository
   // Matches on studyGoal + country, excludes already-connected users,
   // sorted by lastActiveAt desc — active users appear first.
   // Returns paginated results.
-  findMatchesByGoalAndCountry(
+  findMatches(
     excludeUserId:  string,
     studyGoal:      StudyGoal,
+    studyLanguage:  string,
     country:        string,
     excludeUserIds: string[],   // already connected — exclude from results
     page:           number,
     limit:          number,
-  ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }>;
-
-  // ─── Premium matching ──────────────────────────────────────────────────────
-  // All filter fields are optional — only provided ones are applied.
-  // Also sorted by lastActiveAt desc and paginated.
-  findMatchesByAdvancedFilters(
-    excludeUserId:  string,
-    filters: Partial<Pick<BuddyPreferenceEntity,
-      | 'studyGoal'
-      | 'country'
+    search?:        string,
+    global?:        boolean,
+    premiumFilters?: Partial<Pick<BuddyPreferenceEntity,
       | 'subjectDomain'
       | 'availability'
       | 'sessionDuration'
       | 'focusLevel'
       | 'studyPreference'
     >>,
-    excludeUserIds: string[],
-    page:           number,
-    limit:          number,
   ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }>;
 
   // Create if not exists, update if exists
@@ -45,4 +36,6 @@ export interface IBuddyPreferenceRepository
     userId: string,
     data: Partial<Omit<BuddyPreferenceEntity, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,
   ): Promise<BuddyPreferenceEntity>;
+
+  findByUserIds(userIds: string[]): Promise<BuddyPreferenceEntity[]>;
 }

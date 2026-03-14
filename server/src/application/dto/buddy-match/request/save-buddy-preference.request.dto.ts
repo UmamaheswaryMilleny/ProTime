@@ -20,9 +20,6 @@ import {
 
 export class SaveBuddyPreferenceRequestDTO {
   // ─── Free fields — required for all users ─────────────────────────────────
-  @IsString()
-  @IsNotEmpty()
-  timeZone!: string;
 
   @IsString()
   @IsNotEmpty()
@@ -41,10 +38,6 @@ export class SaveBuddyPreferenceRequestDTO {
   @IsBoolean()
   isVisible!: boolean;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(300)
-  bio?: string;
 
   // ─── Premium fields — ignored for free users in the usecase ───────────────
   @IsOptional()

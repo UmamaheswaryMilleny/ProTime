@@ -1,5 +1,5 @@
 import { inject, injectable } from 'tsyringe';
-import type { IGetPendingRequestsUsecase } from '../../interface/buddy-match/get-pending-requests.usecase.interface';
+import type { IGetSentRequestsUsecase } from '../../interface/buddy-match/get-sent-requests.usecase.interface';
 import type { IBuddyConnectionRepository } from '../../../../domain/repositories/buddy/buddy.connection.repository.interface';
 import type { IProfileRepository } from '../../../../domain/repositories/profile/profile.repository.interface';
 import type { IBuddyPreferenceRepository } from '../../../../domain/repositories/buddy/buddy.preference.repository.interface';
@@ -9,7 +9,7 @@ import type { BuddyPreferenceEntity } from '../../../../domain/entities/buddy.en
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
 
 @injectable()
-export class GetPendingRequestsUsecase implements IGetPendingRequestsUsecase {
+export class GetSentRequestsUsecase implements IGetSentRequestsUsecase {
   constructor(
     @inject('IBuddyConnectionRepository')
     private readonly buddyConnectionRepo: IBuddyConnectionRepository,
@@ -20,21 +20,21 @@ export class GetPendingRequestsUsecase implements IGetPendingRequestsUsecase {
   ) {}
 
   async execute(userId: string): Promise<BuddyConnectionResponseDTO[]> {
-    const pending = await this.buddyConnectionRepo.findPendingByReceiverId(userId);
-    if (pending.length === 0) return [];
+    const connections = await this.buddyConnectionRepo.findPendingByRequesterId(userId);
+    if (connections.length === 0) return [];
 
-    const requesterIds = pending.map(c => c.userId);
+    const receiverIds = connections.map(c => c.buddyId);
     const [profiles, preferences] = await Promise.all([
-      this.profileRepo.findByUserIds(requesterIds),
-      this.buddyPreferenceRepo.findByUserIds(requesterIds),
+      this.profileRepo.findByUserIds(receiverIds),
+      this.buddyPreferenceRepo.findByUserIds(receiverIds),
     ]);
 
     const profileMap = new Map<string, ProfileEntity>(profiles.map(p => [p.userId, p]));
     const prefMap = new Map<string, BuddyPreferenceEntity>(preferences.map(p => [p.userId, p]));
 
-    return pending.map(conn => {
-      const profile = profileMap.get(conn.userId);
-      const pref = prefMap.get(conn.userId);
+    return connections.map(conn => {
+      const profile = profileMap.get(conn.buddyId);
+      const pref = prefMap.get(conn.buddyId);
       
       let buddyDto = undefined;
       if (profile && pref) {

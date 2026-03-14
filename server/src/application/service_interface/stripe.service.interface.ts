@@ -16,6 +16,7 @@ export interface IStripeService {
     stripeCustomerId: string;
     successUrl: string;
     cancelUrl: string;
+    metadata?: Record<string, string>;
   }): Promise<{ sessionId: string; sessionUrl: string }>;
 
   // ─── Subscription Management ──────────────────────────────────────────────

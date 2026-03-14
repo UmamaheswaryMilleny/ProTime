@@ -10,4 +10,5 @@ export interface IProfileRepository extends IBaseRepository<ProfileEntity> {
   ): Promise<ProfileEntity | null>;
 
   existsByUsername(username: string, excludeUserId?: string): Promise<boolean>;
+  findByUserIds(userIds: string[]): Promise<ProfileEntity[]>;
 }

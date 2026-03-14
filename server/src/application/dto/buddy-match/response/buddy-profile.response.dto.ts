@@ -5,10 +5,11 @@ import type {
 
 export interface BuddyProfileResponseDTO {
   userId:        string;
-  fullName:      string;   // ✅ was username
-  bio?:          string;   // ✅ avatar removed — not on UserEntity
+  fullName:      string;
+  username:      string;
+  bio?:          string;
+  profileImage?: string;
   country:       string;
-  timeZone:      string;
   studyGoal:     StudyGoal;
   studyLanguage: string;
   frequency:     StudyFrequency;

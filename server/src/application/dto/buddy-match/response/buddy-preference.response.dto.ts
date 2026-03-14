@@ -7,12 +7,10 @@ export interface BuddyPreferenceResponseDTO {
   id:            string;
   userId:        string;
   // free fields
-  timeZone:      string;
   country:       string;
   studyGoal:     StudyGoal;
   studyLanguage: string;
   frequency:     StudyFrequency;
-  bio?:          string;
   isVisible:     boolean;
   lastActiveAt?: Date;
   // premium fields

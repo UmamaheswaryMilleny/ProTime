@@ -9,6 +9,7 @@ import type { IRefreshTokenStore } from "../../../service_interface/refresh-toke
 import type { IGoogleAuthUsecase } from "../../interface/auth/google-auth.usecase.interface";
 import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
 import type { IInitializeGamificationUsecase } from "../../interface/gamification/initialize.usecase.interface";
+import type { UserEntity } from "../../../../domain/entities/user.entity";
 
 @injectable()
 export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
@@ -42,29 +43,29 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
       (await this.userRepository.findByEmail(email)) ||
       (await this.userRepository.findByGoogleID(googleId));
 
-    let user = existingUser;
-
     // 3. Check if user is blocked or deleted
-    if (user?.isBlocked) throw new UserBlockedError();
-    if (user?.isDeleted) throw new UserDeletedError();
+    if (existingUser?.isBlocked) throw new UserBlockedError();
+    if (existingUser?.isDeleted) throw new UserDeletedError();
 
+    let user: UserEntity;
     let isNewUser = false;
 
     // 4. New user — create user, profile, and gamification
-    if (!user) {
+    if (!existingUser) {
       const savedUser = await this.userRepository.save({
         email,
-        fullName: name,
+        fullName: name || 'User',
         isEmailVerified: true,
         authProvider: AuthProvider.GOOGLE,
         role: UserRole.CLIENT,
         isBlocked: false,
         isDeleted: false,
-      });
+        googleId, 
+      } as any);
 
       await this.profileRepository.save({
         userId: savedUser.id,
-        fullName: name,
+        fullName: name || 'User',
         username: `${email.split('@')[0]}_${Date.now()}`,
         profileImage: picture ?? undefined,
       });
@@ -73,22 +74,45 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
 
       user = savedUser;
       isNewUser = true;
-    }
+    } else {
+      user = existingUser;
 
-    // 5. Existing user — update profile picture if they have none
-    if (!isNewUser && picture) {
+      // 5. Existing user — synchronize name and link googleId if missing
+      const updates: any = {};
+      if (!user.googleId) updates.googleId = googleId;
+      
+      const shouldUpdateUserName = name && (!user.fullName || user.fullName === 'User');
+      if (shouldUpdateUserName) updates.fullName = name;
+
+      if (Object.keys(updates).length > 0) {
+        const updatedUser = await this.userRepository.updateById(user.id, updates);
+        if (updatedUser) {
+          user = updatedUser;
+        }
+      }
+
       const existingProfile = await this.profileRepository.findByUserId(user.id);
-      if (existingProfile && !existingProfile.profileImage) {
-        await this.profileRepository.updateByUserId(user.id, { profileImage: picture });
+      if (existingProfile) {
+        const profileUpdates: any = {};
+        const shouldUpdateProfileName = name && (!existingProfile.fullName || existingProfile.fullName === 'User');
+        if (shouldUpdateProfileName) profileUpdates.fullName = name;
+        if (picture && !existingProfile.profileImage) profileUpdates.profileImage = picture;
+
+        if (Object.keys(profileUpdates).length > 0) {
+          await this.profileRepository.updateByUserId(user.id, profileUpdates);
+        }
       }
     }
 
     // 6. Generate tokens
+    const profile = await this.profileRepository.findByUserId(user.id);
     const payload = {
       id: user.id,
       email: user.email,
       role: user.role,
-      isPremium:user.isPremium
+      fullName: user.fullName,
+      username: profile?.username || user.email.split('@')[0],
+      isPremium: user.isPremium,
     };
 
     const accessToken = this.tokenPort.generateAccess(payload);

@@ -1,4 +1,5 @@
-import type { BuddyPreferenceEntity,BuddyConnectionEntity } from '../../domain/entities/buddy.entities';
+import type { BuddyPreferenceEntity, BuddyConnectionEntity } from '../../domain/entities/buddy.entities';
+import type { ProfileEntity } from '../../domain/entities/profile.entity';
 import type { UserEntity } from '../../domain/entities/user.entity';
 import type { BuddyPreferenceResponseDTO } from '../dto/buddy-match/response/buddy-preference.response.dto';
 import type { BuddyProfileResponseDTO } from '../dto/buddy-match/response/buddy-profile.response.dto';
@@ -13,12 +14,10 @@ export class BuddyMapper {
     return {
       id:               entity.id,
       userId:           entity.userId,
-      timeZone:         entity.timeZone,
       country:          entity.country,
       studyGoal:        entity.studyGoal,
       studyLanguage:    entity.studyLanguage,
       frequency:        entity.frequency,
-      bio:              entity.bio,
       isVisible:        entity.isVisible,
       lastActiveAt:     entity.lastActiveAt,
       subjectDomain:    entity.subjectDomain,
@@ -35,36 +34,39 @@ export class BuddyMapper {
 
   // Public search result — merges preference data with user identity
   // groupStudy and studyMode are intentionally excluded
-static preferenceToPublicProfile(
-  entity: BuddyPreferenceEntity,
-  user:   Pick<UserEntity, 'id' | 'fullName'>,
-): BuddyProfileResponseDTO {
-  return {
-    userId:          entity.userId,
-    fullName:        user.fullName,
-    bio:             entity.bio,
-    country:         entity.country,
-    timeZone:        entity.timeZone,
-    studyGoal:       entity.studyGoal,
-    studyLanguage:   entity.studyLanguage,
-    frequency:       entity.frequency,
-    lastActiveAt:    entity.lastActiveAt,
-    subjectDomain:   entity.subjectDomain,
-    availability:    entity.availability,
-    sessionDuration: entity.sessionDuration,
-    focusLevel:      entity.focusLevel,
-    studyPreference: entity.studyPreference,
-  };
-}
+  static preferenceToPublicProfile(
+    entity:  BuddyPreferenceEntity,
+    profile: ProfileEntity,
+  ): BuddyProfileResponseDTO {
+    return {
+      userId:          entity.userId,
+      fullName:        profile.fullName,
+      username:        profile.username,
+      bio:             profile.bio,
+      profileImage:    profile.profileImage,
+      country:         entity.country,
+      studyGoal:       entity.studyGoal,
+      studyLanguage:   entity.studyLanguage,
+      frequency:       entity.frequency,
+      lastActiveAt:    entity.lastActiveAt,
+      subjectDomain:   entity.subjectDomain,
+      availability:    entity.availability,
+      sessionDuration: entity.sessionDuration,
+      focusLevel:      entity.focusLevel,
+      studyPreference: entity.studyPreference,
+    };
+  }
 
   static connectionToResponse(
     entity: BuddyConnectionEntity,
+    buddy?: BuddyProfileResponseDTO,
   ): BuddyConnectionResponseDTO {
     return {
       id:                     entity.id,
-      userId:                 entity.userId,
-      buddyId:                entity.buddyId,
+      requesterId:            entity.userId,
+      receiverId:             entity.buddyId,
       status:                 entity.status,
+      buddy:                  buddy,
       addedAt:                entity.addedAt,
       rating:                 entity.rating,
       totalSessionsCompleted: entity.totalSessionsCompleted,
