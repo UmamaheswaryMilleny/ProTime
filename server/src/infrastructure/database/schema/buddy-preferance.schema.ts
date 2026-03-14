@@ -21,10 +21,6 @@ export const BuddyPreferenceSchema = new Schema(
     },
 
     // ─── Free fields ──────────────────────────────────────────────────────
-    timeZone: {
-      type: String,
-      required: true,
-    },
 
     country: {
       type: String,
@@ -48,10 +44,6 @@ export const BuddyPreferenceSchema = new Schema(
       required: true,
     },
 
-    bio: {
-      type: String,
-      default: null,
-    },
 
     isVisible: {
       type: Boolean,

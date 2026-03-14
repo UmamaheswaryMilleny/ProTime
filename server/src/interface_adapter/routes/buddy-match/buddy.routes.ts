@@ -55,10 +55,15 @@ this.router.get(
     );
 
     // GET /api/v1/buddy/requests/pending
-    // — must be registered BEFORE /:buddyId to avoid route collision
     this.router.get(
       '/requests/pending',
       asyncHandler(ctrl.getPendingRequests.bind(ctrl)),
+    );
+
+    // GET /api/v1/buddy/requests/sent
+    this.router.get(
+      '/requests/sent',
+      asyncHandler(ctrl.getSentRequests.bind(ctrl)),
     );
 
     // POST /api/v1/buddy/request/:buddyId

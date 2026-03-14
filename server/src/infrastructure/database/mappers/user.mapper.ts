@@ -18,6 +18,7 @@ export class UserMapper {
       isBlocked: doc.isBlocked,
       isDeleted: doc.isDeleted,
       isPremium:doc.isPremium,
+      googleId: doc.googleId,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };

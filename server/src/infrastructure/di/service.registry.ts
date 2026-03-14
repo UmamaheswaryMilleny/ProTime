@@ -56,6 +56,20 @@ import type { IBuddyConnectionRepository } from '../../domain/repositories/buddy
 
 import { BuddyConnectionRepository } from '../repositories/buddy-match/buddy-connection.repository';
 import { BuddyPreferenceRepository } from '../repositories/buddy-match/buddy-preference.repository';
+
+// usecases
+import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
+import { SaveBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/save-buddy-preference.usecase';
+import { GetBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-preference.usecase';
+import { FindBuddyMatchesUsecase } from '../../application/usecase/implementation/buddy-match/find-buddy-matches.usecase';
+import { SendBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/send-buddy-request.usecase';
+import { RespondToBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/respond-to-buddy-request.usecase';
+import { GetBuddyListUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-list.usecase';
+import { GetPendingRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-pending-requests.usecase';
+import { GetSentRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-sent-requests.usecase';
+//middlewares
+import { BlockedUserMiddleware } from '../../interface_adapter/middlewares/blocked-user.middleware';
+
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
@@ -139,7 +153,10 @@ export class ServiceRegistry {
 
 
     //buddy match
-container.register<IBuddyPreferenceRepository>('IBuddyPreferenceRepository', { useClass: BuddyPreferenceRepository });
-container.register<IBuddyConnectionRepository>('IBuddyConnectionRepository', { useClass: BuddyConnectionRepository });
+    container.register<IBuddyPreferenceRepository>('IBuddyPreferenceRepository', { useClass: BuddyPreferenceRepository });
+    container.register<IBuddyConnectionRepository>('IBuddyConnectionRepository', { useClass: BuddyConnectionRepository });
+
+    // Middlewares
+    container.register(BlockedUserMiddleware, { useClass: BlockedUserMiddleware });
   }
 }

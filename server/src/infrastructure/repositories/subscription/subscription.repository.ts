@@ -1,4 +1,5 @@
 import { injectable } from 'tsyringe';
+import mongoose from 'mongoose';
 
 import { BaseRepository } from '../base.repository';
 import { SubscriptionModel,SubscriptionDocument } from '../../database/models/subscription.model';
@@ -17,7 +18,7 @@ export class SubscriptionRepository
 
   // ─── Primary lookup ───────────────────────────────────────────────────────
   async findByUserId(userId: string): Promise<SubscriptionEntity | null> {
-    const doc = await SubscriptionModel.findOne({ userId }).lean();
+    const doc = await SubscriptionModel.findOne({ userId: new mongoose.Types.ObjectId(userId) }).lean();
     if (!doc) return null;
     return SubscriptionInfraMapper.toDomain(doc as SubscriptionDocument);
   }
@@ -54,9 +55,10 @@ export class SubscriptionRepository
     >>,
   ): Promise<SubscriptionEntity | null> {
     const update = SubscriptionInfraMapper.toPersistence(data);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const doc = await SubscriptionModel.findOneAndUpdate(
-      { userId },
+      { userId: userObjectId },
       { $set: update },
       { new: true, upsert: true }, // return the updated document, create if not exists
     ).lean();

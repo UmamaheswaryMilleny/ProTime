@@ -1,4 +1,5 @@
 import { injectable } from 'tsyringe';
+import mongoose from 'mongoose';
 import { BaseRepository } from '../base.repository';
 import { BuddyConnectionModel, BuddyConnectionDocument } from '../../database/models/buddy-connection.model';
 import { BuddyConnectionMapper } from '../../database/mappers/buddy-connection.mapper';
@@ -16,8 +17,9 @@ export class BuddyConnectionRepository
   }
 
   async findByUserId(userId: string): Promise<BuddyConnectionEntity[]> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     const docs = await BuddyConnectionModel
-      .find({ $or: [{ userId }, { buddyId: userId }] })
+      .find({ $or: [{ userId: userObjectId }, { buddyId: userObjectId }] })
       .sort({ lastSessionAt: -1 })
       .lean();
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
@@ -27,10 +29,12 @@ export class BuddyConnectionRepository
     userId:  string,
     buddyId: string,
   ): Promise<BuddyConnectionEntity | null> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const buddyObjectId = new mongoose.Types.ObjectId(buddyId);
     const doc = await BuddyConnectionModel.findOne({
       $or: [
-        { userId, buddyId },
-        { userId: buddyId, buddyId: userId },
+        { userId: userObjectId, buddyId: buddyObjectId },
+        { userId: buddyObjectId, buddyId: userObjectId },
       ],
     }).lean();
     if (!doc) return null;
@@ -39,8 +43,9 @@ export class BuddyConnectionRepository
 
   async countAcceptedThisMonth(userId: string): Promise<number> {
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     return BuddyConnectionModel.countDocuments({
-      $or: [{ userId }, { buddyId: userId }],
+      $or: [{ userId: userObjectId }, { buddyId: userObjectId }],
       status:  BuddyConnectionStatus.CONNECTED,
       addedAt: { $gte: since },
     });
@@ -51,8 +56,9 @@ export class BuddyConnectionRepository
     minRating:  number,
     minMinutes: number,
   ): Promise<BuddyConnectionEntity[]> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     const docs = await BuddyConnectionModel.find({
-      $or: [{ userId }, { buddyId: userId }],
+      $or: [{ userId: userObjectId }, { buddyId: userObjectId }],
       status:              BuddyConnectionStatus.CONNECTED,
       rating:              { $gte: minRating },
       totalSessionMinutes: { $gte: minMinutes },
@@ -60,9 +66,17 @@ export class BuddyConnectionRepository
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
   }
 
+  async findPendingByRequesterId(requesterId: string): Promise<BuddyConnectionEntity[]> {
+    const docs = await BuddyConnectionModel.find({
+      userId: new mongoose.Types.ObjectId(requesterId),
+      status: BuddyConnectionStatus.PENDING,
+    }).lean();
+    return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
+  }
+
   async findPendingByReceiverId(receiverId: string): Promise<BuddyConnectionEntity[]> {
     const docs = await BuddyConnectionModel.find({
-      buddyId: receiverId,
+      buddyId: new mongoose.Types.ObjectId(receiverId),
       status:  BuddyConnectionStatus.PENDING,
     }).lean();
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
@@ -96,11 +110,14 @@ export class BuddyConnectionRepository
   ): Promise<BuddyConnectionEntity | null> {
     const update = BuddyConnectionMapper.toPersistence(data);
 
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const buddyObjectId = new mongoose.Types.ObjectId(buddyId);
+
     const doc = await BuddyConnectionModel.findOneAndUpdate(
       {
         $or: [
-          { userId, buddyId },
-          { userId: buddyId, buddyId: userId },
+          { userId: userObjectId, buddyId: buddyObjectId },
+          { userId: buddyObjectId, buddyId: userObjectId },
         ],
         status: BuddyConnectionStatus.CONNECTED,  // ← only update confirmed connections
       },

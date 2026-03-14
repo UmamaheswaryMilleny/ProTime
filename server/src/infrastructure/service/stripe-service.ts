@@ -26,6 +26,7 @@ export class StripeService implements IStripeService {
     stripeCustomerId: string;
     successUrl: string;
     cancelUrl: string;
+    metadata?: Record<string, string>;
   }): Promise<{ sessionId: string; sessionUrl: string }> {
     const session = await this.stripe.checkout.sessions.create({
       customer:   params.stripeCustomerId,
@@ -38,6 +39,7 @@ export class StripeService implements IStripeService {
       ],
       success_url: params.successUrl,
       cancel_url:  params.cancelUrl,
+      metadata:    params.metadata,
     });
 
     return {

@@ -13,6 +13,8 @@ export interface AuthenticatedUser {
   id: string;
   email: string;
   role: string;
+  fullName: string;
+  username?: string;
   accessToken: string;
   refreshToken: string;
   isPremium:boolean;
@@ -70,6 +72,8 @@ export const verifyAuth = (
       id: payload.id,
       email: payload.email,
       role: payload.role,
+      fullName: payload.fullName,
+      username: payload.username,
       accessToken,
       refreshToken,
       isPremium:payload.isPremium??false

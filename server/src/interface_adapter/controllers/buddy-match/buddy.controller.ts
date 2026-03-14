@@ -9,6 +9,7 @@ import type { ISendBuddyRequestUsecase }      from '../../../application/usecase
 import type { IRespondToBuddyRequestUsecase } from '../../../application/usecase/interface/buddy-match/respond-to-buddy-request.usecase.interface';
 import type { IGetBuddyListUsecase }          from '../../../application/usecase/interface/buddy-match/get-buddy-list.usecase.interface';
 import type { IGetPendingRequestsUsecase }    from '../../../application/usecase/interface/buddy-match/get-pending-requests.usecase.interface';
+import type { IGetSentRequestsUsecase }       from '../../../application/usecase/interface/buddy-match/get-sent-requests.usecase.interface';
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import type { SaveBuddyPreferenceRequestDTO } from '../../../application/dto/buddy-match/request/save-buddy-preference.request.dto';
 import type { RespondToBuddyRequestDTO }      from '../../../application/dto/buddy-match/request/respond-to-buddy-request.request.dto';
@@ -39,115 +40,67 @@ export class BuddyController implements IBuddyController {
 
     @inject('IGetPendingRequestsUsecase')
     private readonly getPendingRequestsUsecase: IGetPendingRequestsUsecase,
+
+    @inject('IGetSentRequestsUsecase')
+    private readonly getSentRequestsUsecase: IGetSentRequestsUsecase,
   ) {}
 
-  // ─── PUT /api/v1/buddy/preference ─────────────────────────────────────────
-  async savePreference(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async savePreference(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const dto    = req.body as SaveBuddyPreferenceRequestDTO;
-      const result = await this.saveBuddyPreferenceUsecase.execute(userId, dto);
+      const result = await this.saveBuddyPreferenceUsecase.execute(userId, req.body as SaveBuddyPreferenceRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy preference saved successfully', result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── GET /api/v1/buddy/preference ─────────────────────────────────────────
-  async getPreference(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getPreference(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
       const result = await this.getBuddyPreferenceUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy preference fetched successfully', result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── GET /api/v1/buddy/matches ────────────────────────────────────────────
-  async findMatches(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async findMatches(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const dto    = req.query as unknown as FindBuddyMatchesRequestDTO;
-      const result = await this.findBuddyMatchesUsecase.execute(userId, dto);
+      const result = await this.findBuddyMatchesUsecase.execute(userId, req.query as any);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy matches fetched successfully', result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── POST /api/v1/buddy/request/:buddyId ──────────────────────────────────
-  async sendRequest(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async sendRequest(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const requesterId = req.user!.id;
-      const buddyId = req.params.buddyId as string;
-      await this.sendBuddyRequestUsecase.execute(requesterId, buddyId);
+      await this.sendBuddyRequestUsecase.execute(req.user!.id, req.params.buddyId as string);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy request sent successfully', null);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── PATCH /api/v1/buddy/request/:connectionId/respond ───────────────────
-  async respondToRequest(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async respondToRequest(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const receiverId   = req.user!.id;
-   const connectionId = req.params.connectionId as string;
-      const dto          = req.body as RespondToBuddyRequestDTO;
-      await this.respondToBuddyRequestUsecase.execute(receiverId, connectionId, dto);
+      await this.respondToBuddyRequestUsecase.execute(req.user!.id, req.params.connectionId as string, req.body as RespondToBuddyRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy request responded successfully', null);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── GET /api/v1/buddy/list ───────────────────────────────────────────────
-  async getBuddyList(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getBuddyList(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user!.id;
-      const result = await this.getBuddyListUsecase.execute(userId);
+      const result = await this.getBuddyListUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy list fetched successfully', result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
   }
 
-  // ─── GET /api/v1/buddy/requests/pending ───────────────────────────────────
-  async getPendingRequests(
-    req: CustomRequest,
-    res: Response,
-    next: NextFunction,
-  ): Promise<void> {
+  async getPendingRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
-      const userId = req.user!.id;
-      const result = await this.getPendingRequestsUsecase.execute(userId);
+      const result = await this.getPendingRequestsUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pending requests fetched successfully', result);
-    } catch (error) {
-      next(error);
-    }
+    } catch (error) { next(error); }
+  }
+
+  async getSentRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const result = await this.getSentRequestsUsecase.execute(req.user!.id);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Sent requests fetched successfully', result);
+    } catch (error) { next(error); }
   }
 }

@@ -1,5 +1,17 @@
 import { injectable } from 'tsyringe';
+import mongoose from 'mongoose';
+import * as fs from 'fs';
 import { BaseRepository } from '../base.repository';
+
+const logFile = 'C:\\Users\\umama\\AppData\\Local\\Temp\\buddy_debug.log';
+const log = (msg: string) => {
+  const timestamp = new Date().toISOString();
+  try {
+    fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
+  } catch (err) {
+    // ignore
+  }
+};
 import { BuddyPreferenceModel, BuddyPreferenceDocument } from '../../database/models/buddy-preference.model';
 import { BuddyPreferenceMapper } from '../../database/mappers/buddy-preference.mapper';
 import type { IBuddyPreferenceRepository } from '../../../domain/repositories/buddy/buddy.preference.repository.interface';
@@ -16,67 +28,65 @@ export class BuddyPreferenceRepository
   }
 
   async findByUserId(userId: string): Promise<BuddyPreferenceEntity | null> {
-    const doc = await BuddyPreferenceModel.findOne({ userId }).lean();
+    const doc = await BuddyPreferenceModel.findOne({ userId: new mongoose.Types.ObjectId(userId) }).lean();
     if (!doc) return null;
     return BuddyPreferenceMapper.toDomain(doc as BuddyPreferenceDocument);
   }
 
-  // ─── Free matching ────────────────────────────────────────────────────────
-  async findMatchesByGoalAndCountry(
+  // ─── Unified Matching ─────────────────────────────────────────────────────
+  async findMatches(
     excludeUserId:  string,
     studyGoal:      StudyGoal,
+    studyLanguage:  string,
     country:        string,
     excludeUserIds: string[],
     page:           number,
     limit:          number,
-  ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }> {
-    const query = {
-      userId:    { $nin: [excludeUserId, ...excludeUserIds] },
-      studyGoal,
-      country,
-      isVisible: true,
-    };
-
-    const [docs, total] = await Promise.all([
-      BuddyPreferenceModel
-        .find(query)
-        .sort({ lastActiveAt: -1 })
-        .skip((page - 1) * limit)
-        .limit(limit)
-        .lean(),
-      BuddyPreferenceModel.countDocuments(query),
-    ]);
-
-    return {
-      profiles: docs.map(d => BuddyPreferenceMapper.toDomain(d as BuddyPreferenceDocument)),
-      total,
-    };
-  }
-
-  // ─── Premium matching ─────────────────────────────────────────────────────
-  async findMatchesByAdvancedFilters(
-    excludeUserId:  string,
-    filters:        Partial<Pick<BuddyPreferenceEntity,
-      | 'studyGoal' | 'country' | 'subjectDomain' | 'availability'
-      | 'sessionDuration' | 'focusLevel' | 'studyPreference'
+    search?:        string,
+    global?:        boolean,
+    premiumFilters?: Partial<Pick<BuddyPreferenceEntity,
+      | 'subjectDomain'
+      | 'availability'
+      | 'sessionDuration'
+      | 'focusLevel'
+      | 'studyPreference'
     >>,
-    excludeUserIds: string[],
-    page:           number,
-    limit:          number,
   ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }> {
-
-    const query: Record<string, unknown> = {
-      userId:    { $nin: [excludeUserId, ...excludeUserIds] },
+    const query: any = {
+      userId:    { $nin: [new mongoose.Types.ObjectId(excludeUserId), ...excludeUserIds.map(id => new mongoose.Types.ObjectId(id))] },
       isVisible: true,
     };
 
-    if (filters.studyGoal)       query.studyGoal       = filters.studyGoal;
-    if (filters.country)         query.country         = filters.country;
-    if (filters.subjectDomain)   query.subjectDomain   = filters.subjectDomain;
-    if (filters.availability)    query.availability    = filters.availability;
-    if (filters.sessionDuration) query.sessionDuration = filters.sessionDuration;
-    if (filters.focusLevel)      query.focusLevel      = filters.focusLevel;
-    if (filters.studyPreference) query.studyPreference = filters.studyPreference;
+    // Base filters: Goal and Language are always required for a good match
+    query.studyGoal = studyGoal;
+    query.studyLanguage = studyLanguage;
+
+    if (!global) {
+      query.country = country;
+    }
+
+    // Apply Premium Filters if provided
+    if (premiumFilters) {
+      if (premiumFilters.subjectDomain)   query.subjectDomain   = premiumFilters.subjectDomain;
+      if (premiumFilters.availability)    query.availability    = premiumFilters.availability;
+      if (premiumFilters.sessionDuration) query.sessionDuration = premiumFilters.sessionDuration;
+      if (premiumFilters.focusLevel)      query.focusLevel      = premiumFilters.focusLevel;
+      if (premiumFilters.studyPreference) query.studyPreference = premiumFilters.studyPreference;
+    }
+
+    // Search complements the filters rather than overriding them
+    if (search) {
+        const searchRegex = { $regex: search, $options: 'i' };
+        // If searching, we check keywords in goal or language or country
+        // but we still want them to be somewhat relevant to the user's base preferences
+        // Or we can just add the search as another required filter field if it's broad
+        query.$or = [
+            { studyGoal: searchRegex },
+            { studyLanguage: searchRegex },
+            { country: searchRegex },
+            { subjectDomain: searchRegex }
+        ];
+    }
 
     const [docs, total] = await Promise.all([
       BuddyPreferenceModel
@@ -87,6 +97,9 @@ export class BuddyPreferenceRepository
         .lean(),
       BuddyPreferenceModel.countDocuments(query),
     ]);
+
+    log(`[BuddyPrefRepo] unified query: ${JSON.stringify(query)}`);
+    log(`[BuddyPrefRepo] total: ${total} | docs: ${docs.length}`);
 
     return {
       profiles: docs.map(d => BuddyPreferenceMapper.toDomain(d as BuddyPreferenceDocument)),
@@ -100,16 +113,23 @@ export class BuddyPreferenceRepository
     data:   Partial<Omit<BuddyPreferenceEntity, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,
   ): Promise<BuddyPreferenceEntity> {
     const update = BuddyPreferenceMapper.toPersistence(data);
+    const userObjectId = new mongoose.Types.ObjectId(userId);
 
     const doc = await BuddyPreferenceModel.findOneAndUpdate(
-      { userId },
+      { userId: userObjectId },
       {
         $set:         update,
-        $setOnInsert: { userId },
+        $setOnInsert: { userId: userObjectId },
       },
       { upsert: true, new: true },
     ).lean();
 
     return BuddyPreferenceMapper.toDomain(doc as BuddyPreferenceDocument);
+  }
+
+  async findByUserIds(userIds: string[]): Promise<BuddyPreferenceEntity[]> {
+    const objectIds = userIds.map(id => new mongoose.Types.ObjectId(id));
+    const docs = await BuddyPreferenceModel.find({ userId: { $in: objectIds } }).lean();
+    return docs.map(d => BuddyPreferenceMapper.toDomain(d as BuddyPreferenceDocument));
   }
 }

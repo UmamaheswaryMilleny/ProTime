@@ -7,12 +7,10 @@ export class BuddyPreferenceMapper {
     return {
       id:              doc._id.toString(),
       userId:          doc.userId.toString(),
-      timeZone:        doc.timeZone,
       country:         doc.country,
       studyGoal:       doc.studyGoal,
       studyLanguage:   doc.studyLanguage,
       frequency:       doc.frequency,
-      bio:             doc.bio       ?? undefined,
       isVisible:       doc.isVisible,
       lastActiveAt:    doc.lastActiveAt  ?? undefined,
       // premium fields — null in DB becomes undefined in entity
@@ -33,7 +31,6 @@ export class BuddyPreferenceMapper {
   ): Record<string, unknown> {
     const result: Record<string, unknown> = {};
 
-    if (data.timeZone        !== undefined) result.timeZone        = data.timeZone;
     if (data.country         !== undefined) result.country         = data.country;
     if (data.studyGoal       !== undefined) result.studyGoal       = data.studyGoal;
     if (data.studyLanguage   !== undefined) result.studyLanguage   = data.studyLanguage;
@@ -41,8 +38,6 @@ export class BuddyPreferenceMapper {
     if (data.isVisible       !== undefined) result.isVisible       = data.isVisible;
     if (data.lastActiveAt    !== undefined) result.lastActiveAt    = data.lastActiveAt;
 
-    // bio — allow explicit undefined to store null (clearing bio)
-    if ('bio' in data) result.bio = data.bio ?? null;
 
     // premium fields — undefined means "not provided, skip"
     // explicitly passing undefined clears the field to null in DB

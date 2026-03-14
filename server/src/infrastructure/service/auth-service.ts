@@ -22,9 +22,17 @@ export class GoogleAuthService implements IgoogleAuth{
             throw new Error("Invalid google token")
         }
 
+        // Construct name from fallback fields if primary 'name' is missing
+        let fullName = payload.name;
+        if (!fullName && payload.given_name) {
+            fullName = payload.family_name 
+                ? `${payload.given_name} ${payload.family_name}` 
+                : payload.given_name;
+        }
+
         return {
             email:payload.email,
-            name:payload.name??"",
+            name:fullName??"",
             picture:payload.picture,
             googleId:payload.sub,
         }

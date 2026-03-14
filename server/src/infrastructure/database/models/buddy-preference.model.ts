@@ -14,12 +14,10 @@ import type {
 
 export interface BuddyPreferenceDocument extends Document {
   userId:          mongoose.Types.ObjectId;
-  timeZone:        string;
   country:         string;
   studyGoal:       StudyGoal;
   studyLanguage:   string;
   frequency:       StudyFrequency;
-  bio:             string | null;
   isVisible:       boolean;
   lastActiveAt:    Date | null;
   // premium fields — null when not set

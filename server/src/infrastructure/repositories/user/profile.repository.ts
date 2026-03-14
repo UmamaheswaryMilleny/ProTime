@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import type { Types } from "mongoose";
+import mongoose, { type Types } from "mongoose";
 import { BaseRepository } from "../base.repository";
 import { ProfileModel,type  ProfileDocument } from "../../database/models/profile.model";
 import { ProfileMapper } from "../../database/mappers/profile.mapper";
@@ -26,7 +26,7 @@ export class MongoProfileRepository
 
   async findByUserId(userId: string): Promise<ProfileEntity | null> {
     const doc = await this.model
-      .findOne({ userId: userId as unknown as Types.ObjectId })
+      .findOne({ userId: new mongoose.Types.ObjectId(userId) })
       .exec();
     if (!doc) return null;
     return ProfileMapper.toDomain(doc);
@@ -39,7 +39,7 @@ export class MongoProfileRepository
     const updateData = ProfileMapper.toPersistence(data);
     const doc = await this.model
       .findOneAndUpdate(
-        { userId: userId as unknown as Types.ObjectId },
+        { userId: new mongoose.Types.ObjectId(userId) },
         { $set: { ...updateData, updatedAt: new Date() } },
         { new: true },
       )
@@ -56,9 +56,15 @@ export class MongoProfileRepository
       username: username.toLowerCase().trim(),
     };
     if (excludeUserId) {
-      filter.userId = { $ne: excludeUserId as unknown as Types.ObjectId };
+      filter.userId = { $ne: new mongoose.Types.ObjectId(excludeUserId) };
     }
     const count = await this.model.countDocuments(filter).exec();
     return count > 0;
+  }
+
+  async findByUserIds(userIds: string[]): Promise<ProfileEntity[]> {
+    const objectIds = userIds.map((id) => new mongoose.Types.ObjectId(id));
+    const docs = await this.model.find({ userId: { $in: objectIds } }).exec();
+    return docs.map((doc) => ProfileMapper.toDomain(doc));
   }
 }
