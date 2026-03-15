@@ -10,7 +10,7 @@ import {
 } from '../../../../domain/errors/community.errors';
 import { CommunityMapper } from '../../../mapper/community.mapper';
 import { FREE_MONTHLY_COMMUNITY_MESSAGES } from '../../../../shared/constants/constants';
-import type { ISocketService } from '../../../service_interface/socket-service';
+import type { ISocketService } from '../../../service_interface/socket-service.interface';
 
 
 @injectable()

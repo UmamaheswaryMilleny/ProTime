@@ -5,6 +5,7 @@ import type { IUserRepository }              from '../../../../domain/repositori
 import type { GetMessagesResponseDTO } from '../../../dto/community-chat/response/get-messages.response.dto';
 import type { GetMessagesRequestDTO } from '../../../dto/community-chat/request/get-messages.request.dto';
 import { CommunityMapper } from '../../../mapper/community.mapper';
+import { UserEntity } from '../../../../domain/entities/user.entity';
 
 @injectable()
 export class GetMessagesUsecase implements IGetMessagesUsecase {
@@ -37,7 +38,7 @@ export class GetMessagesUsecase implements IGetMessagesUsecase {
 
     // 5. Map — null guard with 'Deleted User' fallback
     const mapped = messages.map((msg, i) => {
-      const user = users[i] ?? { id: msg.userId, fullName: 'Deleted User' };
+    const user = users[i] ?? { id: msg.userId, fullName: 'Deleted User' } as Pick<UserEntity, 'id' | 'fullName'>;
       return CommunityMapper.toResponse(msg, user);
     });
 

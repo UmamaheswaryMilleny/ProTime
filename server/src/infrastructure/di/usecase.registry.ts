@@ -85,6 +85,14 @@ import type { IGetPendingRequestsUsecase }    from '../../application/usecase/in
 import type { IGetSentRequestsUsecase }       from '../../application/usecase/interface/buddy-match/get-sent-requests.usecase.interface';
 import { IGetLocationUsecase } from '../../application/usecase/interface/utility/get-location.usecase.interface';
 import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
+
+// community
+import { GetMessagesUsecase }  from '../../application/usecase/implementation/community-chat/get-messages.usecase';
+import { SendMessageUsecase }  from '../../application/usecase/implementation/community-chat/send-message.usecase';
+import type { IGetMessagesUsecase }  from '../../application/usecase/interface/community-chat/get-messages.usecase.interface';
+import type { ISendMessageUsecase }  from '../../application/usecase/interface/community-chat/send-message.usecase.interface'
+
+
 export class UsecaseRegistry {
   static register(): void {
     // ─── Auth Use Cases ───────────────────────────────────────────────
@@ -218,5 +226,9 @@ container.register<IGetSentRequestsUsecase>      ('IGetSentRequestsUsecase',    
     
     // utility
     container.register<IGetLocationUsecase>('IGetLocationUsecase', { useClass: GetLocationUsecase });
+
+    // community
+    container.register<IGetMessagesUsecase>('IGetMessagesUsecase',   { useClass: GetMessagesUsecase });
+container.register<ISendMessageUsecase>('ISendMessageUsecase',   { useClass: SendMessageUsecase });
   }
 }

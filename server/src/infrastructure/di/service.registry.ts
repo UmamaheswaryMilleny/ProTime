@@ -49,7 +49,6 @@ import { SubscriptionRepository } from '../repositories/subscription/subscriptio
 import { StripeService } from '../service/stripe-service';
 //upload service
 
-
 //buddy-match
 import type { IBuddyPreferenceRepository } from '../../domain/repositories/buddy/buddy.preference.repository.interface';
 import type { IBuddyConnectionRepository } from '../../domain/repositories/buddy/buddy.connection.repository.interface';
@@ -58,17 +57,13 @@ import { BuddyConnectionRepository } from '../repositories/buddy-match/buddy-con
 import { BuddyPreferenceRepository } from '../repositories/buddy-match/buddy-preference.repository';
 
 // usecases
-import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
-import { SaveBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/save-buddy-preference.usecase';
-import { GetBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-preference.usecase';
-import { FindBuddyMatchesUsecase } from '../../application/usecase/implementation/buddy-match/find-buddy-matches.usecase';
-import { SendBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/send-buddy-request.usecase';
-import { RespondToBuddyRequestUsecase } from '../../application/usecase/implementation/buddy-match/respond-to-buddy-request.usecase';
-import { GetBuddyListUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-list.usecase';
-import { GetPendingRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-pending-requests.usecase';
-import { GetSentRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-sent-requests.usecase';
+
 //middlewares
 import { BlockedUserMiddleware } from '../../interface_adapter/middlewares/blocked-user.middleware';
+
+//community
+import type { ICommunityMessageRepository } from '../../domain/repositories/community/community.repository.interface';
+import { CommunityMessageRepository } from '../repositories/community/community.repository';
 
 export class ServiceRegistry {
   static register(): void {
@@ -151,12 +146,25 @@ export class ServiceRegistry {
       useClass: StripeService,
     });
 
-
     //buddy match
-    container.register<IBuddyPreferenceRepository>('IBuddyPreferenceRepository', { useClass: BuddyPreferenceRepository });
-    container.register<IBuddyConnectionRepository>('IBuddyConnectionRepository', { useClass: BuddyConnectionRepository });
+    container.register<IBuddyPreferenceRepository>(
+      'IBuddyPreferenceRepository',
+      { useClass: BuddyPreferenceRepository },
+    );
+    container.register<IBuddyConnectionRepository>(
+      'IBuddyConnectionRepository',
+      { useClass: BuddyConnectionRepository },
+    );
 
     // Middlewares
-    container.register(BlockedUserMiddleware, { useClass: BlockedUserMiddleware });
+    container.register(BlockedUserMiddleware, {
+      useClass: BlockedUserMiddleware,
+    });
+    container.register<ICommunityMessageRepository>(
+      'ICommunityMessageRepository',
+      {
+        useClass: CommunityMessageRepository,
+      },
+    );
   }
 }

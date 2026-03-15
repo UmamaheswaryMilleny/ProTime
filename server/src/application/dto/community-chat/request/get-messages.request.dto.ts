@@ -1,4 +1,4 @@
-import { IsOptional, IsInt, IsDateString, Min, Max } from 'class-validator';
+import { IsOptional, IsInt, IsString, Min, Max } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class GetMessagesRequestDTO {
@@ -10,6 +10,6 @@ export class GetMessagesRequestDTO {
   limit: number = 20;
 
   @IsOptional()
-  @IsDateString()
+  @IsString()
   before?: string; // ISO string — cursor for pagination
 }

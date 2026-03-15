@@ -13,7 +13,7 @@ export class CommunityMapper {
       fullName:  user.fullName,
       content:   entity.content,
       createdAt: entity.createdAt,
-      updatedAt: entity.updatedAt,
+      // updatedAt: entity.updatedAt,
     };
   }
 }

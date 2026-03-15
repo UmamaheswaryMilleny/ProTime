@@ -4,5 +4,5 @@ export interface CommunityChatResponseDTO {
   fullName:  string;
   content:   string;
   createdAt: Date;
-  updatedAt: Date;
+  // updatedAt: Date;
 }
