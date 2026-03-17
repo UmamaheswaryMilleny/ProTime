@@ -6,7 +6,6 @@ import type { IUserRepository } from '../../../../domain/repositories/user/user.
 import type { IProfileRepository } from '../../../../domain/repositories/profile/profile.repository.interface';
 import type { FindBuddyMatchesRequestDTO } from '../../../dto/buddy-match/request/find-buddy-matches.request.dto';
 import type { PaginatedBuddyProfileResponseDTO } from '../../../dto/buddy-match/response/paginated-buddy-profile.response.dto';
-import { BuddyPreferenceNotFoundError } from '../../../../domain/errors/buddy.errors';
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
 import * as fs from 'fs';
 
@@ -15,7 +14,7 @@ const log = (msg: string) => {
   const timestamp = new Date().toISOString();
   try {
     fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
-  } catch (err) {
+  } catch (_err) {
     // ignore
   }
 };

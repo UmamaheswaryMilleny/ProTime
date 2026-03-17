@@ -15,20 +15,21 @@ export class UserMapper {
       updatedAt: user.updatedAt,
     };
   }
-static toPaginatedResponse(
-  users: UserEntity[],
-  meta: { total: number; page: number; limit: number }
-): PaginatedUsersResponseDTO {
-  const totalPages = Math.ceil(meta.total / meta.limit);
+  static toPaginatedResponse(
+    users: UserEntity[],
+    //Meta = extra information about the list
+    meta: { total: number; page: number; limit: number }
+  ): PaginatedUsersResponseDTO {
+    const totalPages = Math.ceil(meta.total / meta.limit);
 
-  return {
-    users: users.map(this.toUserResponse),
-    total: meta.total,
-    page: meta.page,
-    limit: meta.limit,
-    totalPages,
-  };
-}
+    return {
+      users: users.map(this.toUserResponse),
+      total: meta.total, //total users in DB
+      page: meta.page,
+      limit: meta.limit,
+      totalPages,
+    };
+  }
 
 
 }

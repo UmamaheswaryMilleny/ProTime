@@ -6,6 +6,7 @@ export interface BuddyConnectionResponseDTO {
   requesterId:            string;
   receiverId:             string;
   status:                 BuddyConnectionStatus;
+  blockedBy?:             string;
   buddy?:                 BuddyProfileResponseDTO;
   addedAt?:               Date;
   rating?:                number;

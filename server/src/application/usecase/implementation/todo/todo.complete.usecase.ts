@@ -31,7 +31,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
 
     @inject("IAwardXpUsecase")
     private readonly awardXpUsecase: IAwardXpUsecase,
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
@@ -47,21 +47,26 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
 
     // 3. Already completed?
     if (todo.status === TodoStatus.COMPLETED) throw new TodoAlreadyCompletedError();
-if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
-    // 4. Check daily XP cap — read from gamification entity (single source of truth)
+    if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
+    // 4. Check daily XP cap — read from gamification entity 
     const gamification = await this.gamificationRepository.findByUserId(userId);
     if (!gamification) throw new GamificationNotFoundError();
-    const capReached = gamification.dailyXpEarned >= DAILY_XP_CAP;
+
 
     // 5. Calculate XP
-    // If cap reached → bonusXp = 0, xpCounted = false (task still completes)
-    const bonusXp = capReached
-      ? 0
-      : todo.pomodoroCompleted
-        ? POMODORO_BONUS_XP[todo.priority]
-        : 0;
+    const potentialBonusXp = todo.pomodoroCompleted
+      ? POMODORO_BONUS_XP[todo.priority]
+      : 0;
 
-    const xpCounted = !capReached;
+    const potentialTotalXp = todo.baseXp + potentialBonusXp;
+
+    // remaining daily cap
+    const remainingCap = Math.max(0, DAILY_XP_CAP - gamification.dailyXpEarned);
+    const xpToAward = Math.min(potentialTotalXp, remainingCap);
+
+
+    const bonusXp = Math.max(0, xpToAward - todo.baseXp);
+    const xpCounted = xpToAward > 0;
 
     // 6. Update todo to COMPLETED
     const updated = await this.todoRepository.updateById(todoId, {
@@ -74,12 +79,13 @@ if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
 
     // 7. Award XP to gamification — runs even if cap hit (xp=0)
     //    streak + badge checks always run regardless of cap
-    const xpToAward = xpCounted ? todo.baseXp + bonusXp : 0;
+
+
 
     const source: XpSource =
-      todo.priority === TodoPriority.HIGH   ? 'TODO_HIGH'
-      : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'
-      : 'TODO_LOW';
+      todo.priority === TodoPriority.HIGH ? 'TODO_HIGH'
+        : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'
+          : 'TODO_LOW';
 
     await this.awardXpUsecase.execute({
       userId,
@@ -89,10 +95,6 @@ if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
       todoId,
     });
 
-    // 8. Increment daily XP counter — only if XP was actually awarded
-    // if (xpToAward > 0) {
-    //   await this.gamificationRepository.incrementDailyXpEarned(userId, xpToAward);
-    // }
 
     return TodoMapper.toResponse(updated);
   }

@@ -61,7 +61,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
         isBlocked: false,
         isDeleted: false,
         googleId, 
-      } as any);
+      } as Parameters<IUserRepository['save']>[0]);
 
       await this.profileRepository.save({
         userId: savedUser.id,
@@ -78,7 +78,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
       user = existingUser;
 
       // 5. Existing user — synchronize name and link googleId if missing
-      const updates: any = {};
+      const updates: Partial<UserEntity> = {};
       if (!user.googleId) updates.googleId = googleId;
       
       const shouldUpdateUserName = name && (!user.fullName || user.fullName === 'User');
@@ -93,7 +93,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
 
       const existingProfile = await this.profileRepository.findByUserId(user.id);
       if (existingProfile) {
-        const profileUpdates: any = {};
+        const profileUpdates: Record<string, unknown> = {};
         const shouldUpdateProfileName = name && (!existingProfile.fullName || existingProfile.fullName === 'User');
         if (shouldUpdateProfileName) profileUpdates.fullName = name;
         if (picture && !existingProfile.profileImage) profileUpdates.profileImage = picture;

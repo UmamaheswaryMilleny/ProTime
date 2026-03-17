@@ -11,12 +11,14 @@ export class GetSubscriptionUsecase implements IGetSubscriptionUsecase {
   constructor(
     @inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
-  ) {}
+  ) { }
 
   async execute(userId: string): Promise<SubscriptionResponseDTO> {
     const subscription = await this.subscriptionRepository.findByUserId(userId);
-    
+
     if (!subscription) {
+      //There is no real document in the DB so there is no real ID. 
+      // The string 'free' is just a placeholder so the response shape stays consisten
       return {
         id: 'free',
         userId,

@@ -10,7 +10,7 @@ export class MatchPasswordConstraint
   implements ValidatorConstraintInterface
 {
   validate(confirmPassword: string, args: ValidationArguments) {
-    const object = args.object as any;
+    const object = args.object as { password?: string };
     return confirmPassword === object.password;
   }
 

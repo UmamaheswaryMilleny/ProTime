@@ -6,6 +6,7 @@ export class FindBuddyMatchesRequestDTO {
   @Type(() => Number)
   @IsInt()
   @Min(1)
+  // / which page of results to return. Defaults to 1.
   page: number = 1;
 
   @IsOptional()
@@ -14,12 +15,12 @@ export class FindBuddyMatchesRequestDTO {
   @Min(1)
   @Max(20)
   limit: number = 10;
-  
+
   @IsOptional()
   @IsString()
   search?: string;
 
   @IsOptional()
   @IsString()
-  global?: string; // 'true' or 'false'
+  global?: string;
 }

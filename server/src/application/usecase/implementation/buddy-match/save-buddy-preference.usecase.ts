@@ -4,6 +4,8 @@ import type { IBuddyPreferenceRepository } from '../../../../domain/repositories
 import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { SaveBuddyPreferenceRequestDTO } from '../../../dto/buddy-match/request/save-buddy-preference.request.dto';
 import type { BuddyPreferenceResponseDTO } from '../../../dto/buddy-match/response/buddy-preference.response.dto';
+import { STUDY_GOAL_DOMAIN_MAP } from '../../../../domain/enums/buddy.enums';
+import { InvalidSubjectDomainError } from '../../../../domain/errors/buddy.errors';
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
 
 @injectable()
@@ -25,6 +27,13 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
     const user      = await this.userRepo.findById(userId);
     const isPremium = user?.isPremium ?? false;
 
+    if (isPremium && dto.subjectDomain) {
+      const validDomains = STUDY_GOAL_DOMAIN_MAP[dto.studyGoal];
+      if (!validDomains.includes(dto.subjectDomain)) {
+        throw new InvalidSubjectDomainError();
+      }
+    }
+
     // Always save free fields
     const data: Parameters<IBuddyPreferenceRepository['upsertByUserId']>[1] = {
       country:       dto.country,
@@ -34,17 +43,15 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
       isVisible:     dto.isVisible,
     };
 
-    // Premium fields only saved if user is on premium plan
-    // If free user sends premium fields they are silently stripped
-    if (isPremium) {
-      data.subjectDomain   = dto.subjectDomain;
-      data.availability    = dto.availability;
-      data.sessionDuration = dto.sessionDuration;
-      data.focusLevel      = dto.focusLevel;
-      data.studyPreference = dto.studyPreference;
-      data.groupStudy      = dto.groupStudy;
-      data.studyMode       = dto.studyMode;
-    }
+    // Always save all fields (identity traits)
+    // This allows free users to be found by premium filters, ensuring reciprocity
+    data.subjectDomain   = dto.subjectDomain;
+    data.availability    = dto.availability;
+    data.sessionDuration = dto.sessionDuration;
+    data.focusLevel      = dto.focusLevel;
+    data.studyPreference = dto.studyPreference;
+    data.groupStudy      = dto.groupStudy;
+    data.studyMode       = dto.studyMode;
 
     const preference = await this.buddyPreferenceRepo.upsertByUserId(userId, data);
     return BuddyMapper.preferenceToResponse(preference);

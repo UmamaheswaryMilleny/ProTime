@@ -23,14 +23,14 @@ export class CancelSubscriptionUsecase implements ICancelSubscriptionUsecase {
 
     @inject('IStripeService')
     private readonly stripeService: IStripeService,
-  ) {}
+  ) { }
 
   async execute(userId: string): Promise<SubscriptionResponseDTO> {
     // 1. Fetch current subscription
     const subscription = await this.subscriptionRepository.findByUserId(userId);
     if (!subscription) throw new SubscriptionNotFoundError();
 
-    // 2. Guard — only ACTIVE PREMIUM with a valid Stripe subscription can be cancelled
+    // 2. only ACTIVE PREMIUM with a valid Stripe subscription can be cancelled
     if (
       subscription.plan !== SubscriptionPlan.PREMIUM ||
       subscription.status !== SubscriptionStatus.ACTIVE ||

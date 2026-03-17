@@ -15,6 +15,8 @@ import {
   MAX_LEVEL,
 } from '../../domain/enums/gamification.enums';
 
+
+//to display a badge
 export class GamificationMapper {
   static toBadgeResponse(
     userBadge: UserBadgeEntity,
@@ -32,7 +34,6 @@ export class GamificationMapper {
     };
   }
 
-
   //used in the dashboard to show gamification
   static toResponse(
     entity: UserGamificationEntity,
@@ -45,16 +46,7 @@ export class GamificationMapper {
       LEVEL_XP_THRESHOLDS[nextLevel] ?? LEVEL_XP_THRESHOLDS[MAX_LEVEL];
     const xpProgress = entity.totalXp - currentLevelXp;
 
-    // Title is locked if user is FREE and title is above Learner
-    // const freeTitleOrder = [
-    //   LevelTitle.EARLY_BIRD,
-    //   LevelTitle.BEGINNER,
-    //   LevelTitle.LEARNER,
-    // ];
-    // const isTitleLocked =
-    //   !isPremium && !freeTitleOrder.includes(entity.currentTitle);
-    // ✅ fix — uses constant, simpler logic
-const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
+    const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
 
     return {
       userId: entity.userId,

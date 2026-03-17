@@ -3,7 +3,7 @@ import type { ICompletePomodoroUsecase } from '../../interface/todo/pomodoro-com
 import type { ITodoRepository } from '../../../../domain/repositories/todo/todo.repository.interface';
 import type { TodoResponseDTO } from '../../../dto/todo/response/todo.response.dto';
 import { TodoMapper } from '../../../mapper/todo.mapper';
-import { POMODORO_MIN_FOR_BONUS,TodoStatus } from '../../../../domain/enums/todo.enums';
+import { POMODORO_MIN_FOR_BONUS, TodoStatus } from '../../../../domain/enums/todo.enums';
 import {
   TodoNotFoundError,
   UnauthorizedTodoAccessError,
@@ -20,8 +20,8 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
     @inject('ITodoRepository')
     private readonly todoRepository: ITodoRepository,
     @inject('IGamificationRepository')
-private readonly gamificationRepository: IGamificationRepository,
-  ) {}
+    private readonly gamificationRepository: IGamificationRepository,
+  ) { }
 
   async execute(
     userId: string,
@@ -37,8 +37,8 @@ private readonly gamificationRepository: IGamificationRepository,
 
     // 3. Pomodoro must be enabled on this task
     if (!todo.pomodoroEnabled) throw new PomodoroNotEnabledError();
-// ✅ add after ownership check
-if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
+    // expiry check
+    if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
     // 4. Already completed this pomodoro session?
     if (todo.pomodoroCompleted) throw new PomodoroAlreadyCompletedError();
 
@@ -50,10 +50,10 @@ if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError();
     const updated = await this.todoRepository.updateById(todoId, {
       pomodoroCompleted: meetsMinimum,
       actualPomodoroTime: actualPomodoroTime,
-    } ); 
+    });
 
     if (!updated) throw new TodoNotFoundError();
-await this.gamificationRepository.markPomodoroUsedToday(userId)
+    await this.gamificationRepository.markPomodoroUsedToday(userId)
     return TodoMapper.toResponse(updated);
   }
 }

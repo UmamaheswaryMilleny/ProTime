@@ -9,7 +9,7 @@ export interface RequestContext {
 export interface ErrorContext {
   // A stack trace is a list showing:Where the error happened and how the code reached there
   stack?: string;
-  code?: string; //A custom error code
+  code?: string; //A custom error code eg INVALID_OTP
   statusCode?: number;
   userId?: string;
 }

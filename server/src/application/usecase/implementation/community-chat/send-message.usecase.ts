@@ -1,7 +1,7 @@
 import { inject, injectable } from 'tsyringe';
 import type { ISendMessageUsecase } from '../../interface/community-chat/send-message.usecase.interface';
-import type { ICommunityMessageRepository }   from '../../../../domain/repositories/community/community.repository.interface';
-import type { IUserRepository }               from '../../../../domain/repositories/user/user.repository.interface';
+import type { ICommunityMessageRepository } from '../../../../domain/repositories/community/community.repository.interface';
+import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { SendMessageRequestDTO } from '../../../dto/community-chat/request/send-message.request.dto';
 import type { CommunityChatResponseDTO } from '../../../dto/community-chat/response/community-chat.response.dto';
 import {
@@ -19,22 +19,22 @@ export class SendMessageUsecase implements ISendMessageUsecase {
     @inject('ICommunityMessageRepository')
     private readonly communityRepo: ICommunityMessageRepository,
 
-    @inject('IUserRepository')
+    @inject('UserRepository')
     private readonly userRepo: IUserRepository,
 
     @inject('ISocketService')
     private readonly socketService: ISocketService,
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
-    dto:    SendMessageRequestDTO,
+    dto: SendMessageRequestDTO,
   ): Promise<CommunityChatResponseDTO> {
 
     const content = dto.content.trim();
     if (!content) throw new EmptyMessageContentError();
 
-    const user      = await this.userRepo.findById(userId);
+    const user = await this.userRepo.findById(userId);
     const isPremium = user?.isPremium ?? false;
 
     if (!isPremium) {
@@ -44,7 +44,8 @@ export class SendMessageUsecase implements ISendMessageUsecase {
       }
     }
 
-    const saved  = await this.communityRepo.save({ userId, content });
+    const saved = await this.communityRepo.save({ userId, content });
+    //The fallback prevents a crash. CommunityMapper.toResponse needs a user object — passing null would throw an error.
     const sender = user ?? { id: userId, fullName: 'Deleted User' };
     const response = CommunityMapper.toResponse(saved, sender);
 

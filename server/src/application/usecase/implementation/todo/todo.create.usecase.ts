@@ -5,8 +5,8 @@ import type { CreateTodoRequestDTO } from "../../../dto/todo/request/todo.create
 import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
 import { TodoMapper } from "../../../mapper/todo.mapper";
 
-import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, TodoPriority, } from "../../../../domain/enums/todo.enums";
-import { InvalidEstimatedTimeError } from "../../../../domain/errors/todo.error";
+import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, } from "../../../../domain/enums/todo.enums";
+import { InvalidEstimatedTimeError, MissingTodoTitleError } from "../../../../domain/errors/todo.error";
 
 @injectable()
 export class CreateTodoUsecase implements ICreateTodoUsecase {
@@ -17,6 +17,11 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
 
   async execute(userId: string, data: CreateTodoRequestDTO): Promise<TodoResponseDTO> {
     const { title, description, priority, estimatedTime, pomodoroEnabled, smartBreaks } = data;
+
+    // 0. Validate title
+    if (!title || title.trim() === '') {
+      throw new MissingTodoTitleError();
+    }
 
     // 1. Validate estimatedTime is allowed for the given priority
     const validTimes = ESTIMATED_TIME_OPTIONS[priority];

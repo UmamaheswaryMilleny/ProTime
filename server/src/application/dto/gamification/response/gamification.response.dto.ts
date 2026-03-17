@@ -1,7 +1,7 @@
-import type { LevelTitle } from '../../../../domain/enums/gamification.enums.js';
 import { UserBadgeResponseDTO } from './user-badge.response.dto.js';
+import { LevelTitle } from '../../../../domain/enums/gamification.enums.js';
 
-// Frontend uses this to render XP bar, level badge, streak counter, title.
+
 export interface GamificationResponseDTO {
   userId: string;
   totalXp: number;
@@ -11,18 +11,18 @@ export interface GamificationResponseDTO {
   // isTitleLocked = true when user is FREE and title is above Learner
   isTitleLocked: boolean;
 
-  // XP needed to reach next level — for progress bar rendering
-  xpForCurrentLevel: number; 
-  xpForNextLevel: number; 
-  xpProgress: number; // XP earned within current level (totalXp - xpForCurrentLevel)
+  // XP needed to reach next level 
+  xpForCurrentLevel: number; //it is just the level's starting threshold
+  xpForNextLevel: number;
+  xpProgress: number;
 
   currentStreak: number;
   longestStreak: number;
-  lastStreakDate: string | null; //used to determine if their streak is still alive.
+  lastStreakDate: string | null;
 
-  // Frontend uses these to show daily limit warnings
-  dailyXpEarned: number; // XP earned today (cap: 50)
-  dailyChatMessageCount: number; // out of 10 (free users)
+
+  dailyXpEarned: number;
+  dailyChatMessageCount: number;
 
 
   earnedBadges: UserBadgeResponseDTO[];

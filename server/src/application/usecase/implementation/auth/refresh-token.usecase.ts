@@ -56,7 +56,7 @@ private tokenPort: ITokenService,
       throw new InvalidTokenError()
     }
     //4. generate new access token
-    const accessToken = this.tokenPort.generateAccess({id:user.id,email:user.email,role:user.role,isPremium:user.isPremium});
+    const accessToken = this.tokenPort.generateAccess({id:user.id,email:user.email,role:user.role,isPremium:user.isPremium,fullName:user.fullName});
 
     //5. return new access token
 

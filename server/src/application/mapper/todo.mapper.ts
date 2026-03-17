@@ -11,7 +11,7 @@ export class TodoMapper {
     return {
       id: todo.id,
       title: todo.title,
-      description: todo.description?? null,
+      description: todo.description ?? null,
       priority: todo.priority,
       estimatedTime: todo.estimatedTime,
       status: todo.status,
@@ -25,7 +25,7 @@ export class TodoMapper {
       baseXp: todo.baseXp,
       bonusXp: todo.bonusXp,
       xpCounted: todo.xpCounted,
-expiryDate: todo.expiryDate ? todo.expiryDate.toISOString() : null,
+      expiryDate: todo.expiryDate ? todo.expiryDate.toISOString() : null,
       // isShared: todo.isShared,
       sharedWith: todo.sharedWith,
 
@@ -47,9 +47,9 @@ expiryDate: todo.expiryDate ? todo.expiryDate.toISOString() : null,
     const shared = todos.filter((t) => t.sharedWith.length > 0).length;
     const progress =
       totalTasks === 0 ? 0 : Math.round((completed / totalTasks) * 100);
-      const expired = todos.filter(
-  (t) => t.status === TodoStatus.EXPIRED
-).length; 
+    const expired = todos.filter(
+      (t) => t.status === TodoStatus.EXPIRED
+    ).length;
     return {
       todos: todos.map(TodoMapper.toResponse),
       totalTasks,

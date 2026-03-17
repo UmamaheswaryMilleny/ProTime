@@ -17,6 +17,7 @@ import {
   TodoAlreadyCompletedError,
   InvalidEstimatedTimeError,
   TodoExpiredError,
+  MissingTodoTitleError,
 } from "../../../../domain/errors/todo.error";
 
 
@@ -41,7 +42,7 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
 
     // 3. Cannot edit a completed task
     if (todo.status === TodoStatus.COMPLETED) throw new TodoAlreadyCompletedError();
-if(todo.status===TodoStatus.EXPIRED) throw new TodoExpiredError()
+    if (todo.status === TodoStatus.EXPIRED) throw new TodoExpiredError()
     // 4. Determine effective priority (new one if changing, existing if not)
     const effectivePriority = (data.priority ?? todo.priority) as TodoPriority;
 
@@ -62,7 +63,12 @@ if(todo.status===TodoStatus.EXPIRED) throw new TodoExpiredError()
     // 8. Build update payload — only include defined fields
     const updateData: Record<string, unknown> = { ...baseXpUpdate };
 
-    if (data.title !== undefined) updateData.title = data.title;
+    if (data.title !== undefined) {
+      if (data.title.trim() === '') {
+        throw new MissingTodoTitleError();
+      }
+      updateData.title = data.title;
+    }
     if (data.description !== undefined) updateData.description = data.description;
     if (data.priority !== undefined) updateData.priority = data.priority;
     if (data.estimatedTime !== undefined) updateData.estimatedTime = data.estimatedTime;
@@ -74,11 +80,12 @@ if(todo.status===TodoStatus.EXPIRED) throw new TodoExpiredError()
         updateData.actualPomodoroTime = null;
       }
     }
-    if(data.expiryDate!==undefined){
-      updateData.expiryDate=data.expiryDate?new Date(data.expiryDate):null
+    if (data.expiryDate !== undefined) {
+      updateData.expiryDate = data.expiryDate ? new Date(data.expiryDate) : null
     }
-    
-    if (data.smartBreaks !== undefined && data.pomodoroEnabled !== false) {
+
+    const effectivePomodoroEnabled = data.pomodoroEnabled ?? todo.pomodoroEnabled;
+    if (data.smartBreaks !== undefined && effectivePomodoroEnabled) {
       updateData.smartBreaks = data.smartBreaks;
     }
 

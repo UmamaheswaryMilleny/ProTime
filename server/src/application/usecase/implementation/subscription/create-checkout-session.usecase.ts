@@ -7,7 +7,6 @@ import type { IStripeService } from '../../../service_interface/stripe.service.i
 import type { CreateCheckoutSessionRequestDTO } from '../../../dto/subscription/request/create-checkout-session.request.dto';
 import type { CheckoutSessionResponseDTO } from '../../../dto/subscription/response/subscription.checkout.session.response.dto';
 import {
-  SubscriptionNotFoundError,
   AlreadyPremiumError,
 } from '../../../../domain/errors/subscription.error';
 import { UserNotFoundError } from '../../../../domain/errors/user.error';
@@ -24,7 +23,7 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
 
     @inject('IStripeService')
     private readonly stripeService: IStripeService,
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
@@ -38,7 +37,7 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
 
     if (!user) throw new UserNotFoundError();
 
-    // 2. Guard — already on active premium, no need to checkout again
+    // 2. already on active premium, no need to checkout again
     if (
       subscription &&
       subscription.plan === SubscriptionPlan.PREMIUM &&
@@ -63,12 +62,12 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
     const session = await this.stripeService.createCheckoutSession({
       stripeCustomerId,
       successUrl: dto.successUrl,
-      cancelUrl:  dto.cancelUrl,
-      metadata: { userId },  // ← embed userId so webhook can find user without race condition
+      cancelUrl: dto.cancelUrl,
+      metadata: { userId },  // ← embed userId so webhook can find user
     });
 
     return {
-      sessionId:  session.sessionId,
+      sessionId: session.sessionId,
       sessionUrl: session.sessionUrl,
     };
   }

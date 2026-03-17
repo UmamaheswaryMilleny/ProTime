@@ -2,5 +2,5 @@ import type { GetMessagesRequestDTO } from '../../../dto/community-chat/request/
 import type { GetMessagesResponseDTO } from '../../../dto/community-chat/response/get-messages.response.dto';
 
 export interface IGetMessagesUsecase {
-  execute(dto: GetMessagesRequestDTO): Promise<GetMessagesResponseDTO>;
+  execute(userId: string | undefined, dto: GetMessagesRequestDTO): Promise<GetMessagesResponseDTO>;
 }

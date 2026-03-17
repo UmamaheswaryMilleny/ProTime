@@ -13,17 +13,18 @@ export class GetTodosUsecase implements IGetTodosUsecase {
 
     @inject('IGamificationRepository')
     private readonly gamificationRepository: IGamificationRepository,
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
-    filter: 'all' | 'pending' | 'completed' | 'expired'='all',
+    // if does not pass a filter, it defaults to 'all' 
+    filter: 'all' | 'pending' | 'completed' | 'expired' = 'all',
   ): Promise<TodoListResponseDTO> {
     // 1. Fetch todos
     const todos = await this.todoRepository.findByUserId(userId, filter);
 
-    // 2. Get today's XP from gamification — single source of truth
-    //    Fallback to 0 if no gamification doc yet (edge case: brand new user)
+    // 2. Get today's XP from gamification 
+    //    Fallback to 0 if no gamification doc yet new user)
     const gamification = await this.gamificationRepository.findByUserId(userId);
     const todayXp = gamification?.dailyXpEarned ?? 0;
 

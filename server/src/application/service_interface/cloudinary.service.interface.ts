@@ -8,6 +8,6 @@ export interface ICloudinaryService {
     mimetype: string,
   ): Promise<{ url: string; publicId: string }>;
 
-//Cloudinary treats each upload as a replacement
+
   deleteImage(publicId: string): Promise<void>;
 }

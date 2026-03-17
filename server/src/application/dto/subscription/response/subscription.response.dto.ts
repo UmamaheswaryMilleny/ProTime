@@ -20,8 +20,7 @@ export interface SubscriptionResponseDTO {
   // Set when user cancels — access continues until currentPeriodEnd
   cancelledAt?: string;
 
-  // ─── Computed convenience fields ──────────────────────────────────────────
-  // Frontend uses these directly without recalculating
+
   isPremium: boolean; // plan === PREMIUM && status === ACTIVE
   isActive: boolean; // status === ACTIVE regardless of plan
   daysRemaining: number; // days until currentPeriodEnd — 0 if null or expired

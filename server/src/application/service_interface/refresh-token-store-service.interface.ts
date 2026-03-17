@@ -7,5 +7,6 @@ export interface IRefreshTokenStore {
 
   delete(userId: string, refreshToken: string): Promise<void>;
 
+  // removes every refresh token for a user at once:"logout from all devices"
   deleteAll(userId: string): Promise<void>;
 }

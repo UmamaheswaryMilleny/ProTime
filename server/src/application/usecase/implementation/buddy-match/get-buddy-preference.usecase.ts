@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IGetBuddyPreferenceUsecase } from '../../interface/buddy-match/get-buddy-preference.usecase.interface';
 import type { IBuddyPreferenceRepository } from '../../../../domain/repositories/buddy/buddy.preference.repository.interface';
 import type { BuddyPreferenceResponseDTO } from '../../../dto/buddy-match/response/buddy-preference.response.dto';
-import { BuddyPreferenceNotFoundError } from '../../../../domain/errors/buddy.errors';
+
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
 
 @injectable()

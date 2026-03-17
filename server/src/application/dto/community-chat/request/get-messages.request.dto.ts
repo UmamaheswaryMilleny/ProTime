@@ -11,5 +11,5 @@ export class GetMessagesRequestDTO {
 
   @IsOptional()
   @IsString()
-  before?: string; // ISO string — cursor for pagination
+  before?: string;
 }

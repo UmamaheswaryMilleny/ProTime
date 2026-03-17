@@ -11,7 +11,8 @@ export class GetLocationUsecase implements IGetLocationUsecase {
       if (data && data.success && data.country) {
         return { country: data.country };
       }
-      
+
+      //lookup succeeded but no country found:
       return { country: "" };
     } catch (error) {
       console.error("Failed to detect location on backend:", error);
