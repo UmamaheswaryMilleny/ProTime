@@ -27,9 +27,9 @@ export const TodoSchema = new Schema(
       index: true,
     },
     expiryDate: {
-  type: Date,
-  default: null,
-},
+      type: Date,
+      default: null,
+    },
     estimatedTime: {
       type: Number,
       required: true,
@@ -41,7 +41,7 @@ export const TodoSchema = new Schema(
       index: true,
     },
 
-    // ─── Pomodoro ──────────────────────────────────────────────────────────────
+
     pomodoroEnabled: {
       type: Boolean,
       default: false,
@@ -57,10 +57,9 @@ export const TodoSchema = new Schema(
     smartBreaks: {
       type: Boolean,
       default: null,
-      // null for LOW tasks — MEDIUM and HIGH evaluate this flag
     },
 
-    // ─── XP ────────────────────────────────────────────────────────────────────
+
     baseXp: {
       type: Number,
       required: true,
@@ -70,18 +69,13 @@ export const TodoSchema = new Schema(
       type: Number,
       default: 0,
     },
-    // Stored for fast aggregation in getTotalXpEarnedToday ($sum query)
-    // Computed as baseXp + bonusXp when task is completed
-    // totalXp: {
-    //   type: Number,
-    //   default: 0,
-    // },
+
     xpCounted: {
       type: Boolean,
       default: false,
     },
 
-    // ─── Sharing ───────────────────────────────────────────────────────────────
+
     isShared: {
       type: Boolean,
       default: false,
@@ -92,7 +86,7 @@ export const TodoSchema = new Schema(
       default: [],
     },
 
-    // ─── Timestamps ────────────────────────────────────────────────────────────
+
     completedAt: {
       type: Date,
       default: null,

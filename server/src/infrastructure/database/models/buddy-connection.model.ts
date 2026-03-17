@@ -7,6 +7,7 @@ export interface BuddyConnectionDocument extends Document {
   buddyId:                mongoose.Types.ObjectId;
   status:                 BuddyConnectionStatus;
   addedAt:                Date | null;
+  blockedBy:              mongoose.Types.ObjectId | null;
   rating:                 number | null;
   totalSessionsCompleted: number;
   totalSessionMinutes:    number;

@@ -2,10 +2,10 @@ import type { UserEntity } from "../../../domain/entities/user.entity";
 import type { UserDocument } from "../models/user.model";
 
 export class UserMapper {
-  
-   //Converts a Mongoose UserDocument → domain UserEntity
-   // This is the ONLY place raw DB data enters the domain
-   
+
+  //Converts a Mongoose UserDocument → domain UserEntity
+  // This is the ONLY place raw DB data enters the domain
+
   static toDomain(doc: UserDocument): UserEntity {
     return {
       id: (doc._id as { toString(): string }).toString(),
@@ -17,7 +17,7 @@ export class UserMapper {
       isEmailVerified: doc.isEmailVerified,
       isBlocked: doc.isBlocked,
       isDeleted: doc.isDeleted,
-      isPremium:doc.isPremium,
+      isPremium: doc.isPremium,
       googleId: doc.googleId,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
@@ -25,8 +25,8 @@ export class UserMapper {
   }
 
   // Converts a partial UserEntity → plain object safe for Mongoose
-   // googleId is infrastructure-only — handled separately in repository
-   
+  // googleId is infrastructure-only — handled separately in repository
+
   static toPersistence(
     data: Partial<UserEntity> & { googleId?: string }, //& means intersection type becasue googleId is NOT part of UserEntity
   ): Record<string, unknown> {
@@ -44,8 +44,6 @@ export class UserMapper {
     if (data.isBlocked !== undefined) result.isBlocked = data.isBlocked;
     if (data.isDeleted !== undefined) result.isDeleted = data.isDeleted;
     if (data.isPremium !== undefined) result.isPremium = data.isPremium;
-
-    // googleId is schema-only — never on UserEntity, passed separately
     if (data.googleId !== undefined) result.googleId = data.googleId;
 
     return result;

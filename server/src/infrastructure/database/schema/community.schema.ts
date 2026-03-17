@@ -16,7 +16,7 @@ export const CommunityChatSchema = new Schema(
   { timestamps: true },
 );
 
-// Cursor-based pagination — always sorted newest first
+// oading messages in the community chat.-1 means descending — newest first.
 CommunityChatSchema.index({ createdAt: -1 });
 
 // Monthly count per user — rolling 30-day quota check

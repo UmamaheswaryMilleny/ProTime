@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import {
   StudyGoal,
   StudyFrequency,
@@ -20,7 +20,7 @@ export const BuddyPreferenceSchema = new Schema(
       unique: true, // one preference document per user
     },
 
-    // ─── Free fields ──────────────────────────────────────────────────────
+    // Free fields 
 
     country: {
       type: String,
@@ -56,7 +56,7 @@ export const BuddyPreferenceSchema = new Schema(
       default: null,
     },
 
-    // ─── Premium fields — all optional, default null ───────────────────────
+    // Premium fields — all optional, default null
     subjectDomain: {
       type: String,
       enum: [...Object.values(SubjectDomain), null],
@@ -104,7 +104,7 @@ export const BuddyPreferenceSchema = new Schema(
   },
 );
 
-// ─── Indexes ──────────────────────────────────────────────────────────────────
+// Indexes 
 
 // Free matching query — studyGoal + country + visible, sorted by activity
 BuddyPreferenceSchema.index(

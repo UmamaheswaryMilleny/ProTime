@@ -8,7 +8,7 @@ const log = (msg: string) => {
   const timestamp = new Date().toISOString();
   try {
     fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
-  } catch (err) {
+  } catch {
     // ignore
   }
 };
@@ -52,17 +52,18 @@ export class BuddyPreferenceRepository
       | 'studyPreference'
     >>,
   ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const query: any = {
       userId:    { $nin: [new mongoose.Types.ObjectId(excludeUserId), ...excludeUserIds.map(id => new mongoose.Types.ObjectId(id))] },
       isVisible: true,
     };
 
     // Base filters: Goal and Language are always required for a good match
-    query.studyGoal = studyGoal;
-    query.studyLanguage = studyLanguage;
+    query.studyGoal = { $regex: `^${studyGoal}$`, $options: 'i' };
+    query.studyLanguage = { $regex: `^${studyLanguage}$`, $options: 'i' };
 
     if (!global) {
-      query.country = country;
+      query.country = { $regex: `^${country}$`, $options: 'i' };
     }
 
     // Apply Premium Filters if provided

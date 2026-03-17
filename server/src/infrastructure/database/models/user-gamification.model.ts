@@ -1,9 +1,9 @@
-import mongoose, { Document, Model, Types } from 'mongoose';
+import mongoose, { Document, Model } from 'mongoose';
 import { UserGamificationSchema } from '../schema/user-gamification.schema';
 import { LevelTitle } from '../../../domain/enums/gamification.enums';
 
 export interface UserGamificationDocument extends Document {
-  userId:              Types.ObjectId;
+  userId:              mongoose.Types.ObjectId;
   totalXp:             number;
   currentLevel:        number;
   currentTitle:        LevelTitle;

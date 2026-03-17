@@ -1,4 +1,4 @@
-import mongoose, { Schema } from 'mongoose';
+import { Schema } from 'mongoose';
 import { SubscriptionPlan, SubscriptionStatus } from '../../../domain/enums/subscription.enums';
 
 export const SubscriptionSchema = new Schema(
@@ -24,8 +24,8 @@ export const SubscriptionSchema = new Schema(
       default: SubscriptionStatus.ACTIVE,
     },
 
-    // ─── Stripe fields ──────────────────────────────────────────────────────
-    // sparse: true — only indexes documents where the field exists
+
+
     // without sparse, unique would reject multiple null values
     stripeCustomerId: {
       type: String,
@@ -39,7 +39,7 @@ export const SubscriptionSchema = new Schema(
       unique: true,
     },
 
- 
+
     currentPeriodStart: {
       type: Date,
       required: true,
@@ -52,13 +52,13 @@ export const SubscriptionSchema = new Schema(
       default: () => new Date(),
     },
 
-    // ─── Cancellation ───────────────────────────────────────────────────────
+
     cancelledAt: {
       type: Date,
       default: null,
     },
   },
   {
-    timestamps: true, // createdAt and updatedAt managed by Mongoose
+    timestamps: true,
   },
 );

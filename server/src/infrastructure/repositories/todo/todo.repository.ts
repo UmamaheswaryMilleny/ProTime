@@ -1,5 +1,5 @@
 import { injectable } from 'tsyringe';
-import type { Types } from 'mongoose';
+
 
 import { BaseRepository } from '../base.repository';
 import { TodoModel } from '../../database/models/todo.model';
@@ -29,7 +29,7 @@ export class MongoTodoRepository
     filter: 'all' | 'pending' | 'completed' | 'expired'= 'all'
   ): Promise<TodoEntity[]> {
     const query: Record<string, unknown> = {
-      userId: userId as unknown as Types.ObjectId,
+      userId: userId,
     };
 if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     if (filter === 'pending')   query.status = TodoStatus.PENDING;
@@ -76,7 +76,7 @@ if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     priority: TodoPriority
   ): Promise<number> {
     return this.model.countDocuments({
-      userId: userId as unknown as Types.ObjectId,
+      userId: userId,
       priority,
       status: TodoStatus.COMPLETED,
     });

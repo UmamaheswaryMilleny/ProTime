@@ -75,22 +75,33 @@ import { RespondToBuddyRequestUsecase } from '../../application/usecase/implemen
 import { GetBuddyListUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-list.usecase';
 import { GetPendingRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-pending-requests.usecase';
 import { GetSentRequestsUsecase } from '../../application/usecase/implementation/buddy-match/get-sent-requests.usecase';
+import { BlockBuddyUsecase } from '../../application/usecase/implementation/buddy-match/block-buddy.usecase';
+import { UnblockBuddyUsecase } from '../../application/usecase/implementation/buddy-match/unblock-buddy.usecase';
+import { GetBlockedUsersUsecase } from '../../application/usecase/implementation/buddy-match/get-blocked-users.usecase';
+
 import type { ISaveBuddyPreferenceUsecase } from '../../application/usecase/interface/buddy-match/save-buddy-preference.usecase.interface';
 import type { IGetBuddyPreferenceUsecase } from '../../application/usecase/interface/buddy-match/get-buddy-preference.usecase.interface';
 import type { IFindBuddyMatchesUsecase } from '../../application/usecase/interface/buddy-match/find-buddy-matches.usecase.interface';
 import type { ISendBuddyRequestUsecase } from '../../application/usecase/interface/buddy-match/send-buddy-request.usecase.interface';
 import type { IRespondToBuddyRequestUsecase } from '../../application/usecase/interface/buddy-match/respond-to-buddy-request.usecase.interface';
-import type { IGetBuddyListUsecase }          from '../../application/usecase/interface/buddy-match/get-buddy-list.usecase.interface';
-import type { IGetPendingRequestsUsecase }    from '../../application/usecase/interface/buddy-match/get-pending-requests.usecase.interface';
-import type { IGetSentRequestsUsecase }       from '../../application/usecase/interface/buddy-match/get-sent-requests.usecase.interface';
+import type { IGetBuddyListUsecase } from '../../application/usecase/interface/buddy-match/get-buddy-list.usecase.interface';
+import type { IGetPendingRequestsUsecase } from '../../application/usecase/interface/buddy-match/get-pending-requests.usecase.interface';
+import type { IGetSentRequestsUsecase } from '../../application/usecase/interface/buddy-match/get-sent-requests.usecase.interface';
+import type { IBlockBuddyUsecase } from '../../application/usecase/interface/buddy-match/block-buddy.usecase.interface';
+import type { IUnblockBuddyUsecase } from '../../application/usecase/interface/buddy-match/unblock-buddy.usecase.interface';
+import type { IGetBlockedUsersUsecase } from '../../application/usecase/interface/buddy-match/get-blocked-users.usecase.interface';
+
 import { IGetLocationUsecase } from '../../application/usecase/interface/utility/get-location.usecase.interface';
 import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
 
 // community
-import { GetMessagesUsecase }  from '../../application/usecase/implementation/community-chat/get-messages.usecase';
-import { SendMessageUsecase }  from '../../application/usecase/implementation/community-chat/send-message.usecase';
-import type { IGetMessagesUsecase }  from '../../application/usecase/interface/community-chat/get-messages.usecase.interface';
-import type { ISendMessageUsecase }  from '../../application/usecase/interface/community-chat/send-message.usecase.interface'
+import { GetMessagesUsecase } from '../../application/usecase/implementation/community-chat/get-messages.usecase';
+import { SendMessageUsecase } from '../../application/usecase/implementation/community-chat/send-message.usecase';
+import type { IGetMessagesUsecase } from '../../application/usecase/interface/community-chat/get-messages.usecase.interface';
+import type { ISendMessageUsecase } from '../../application/usecase/interface/community-chat/send-message.usecase.interface'
+
+
+
 
 
 export class UsecaseRegistry {
@@ -187,6 +198,7 @@ export class UsecaseRegistry {
       },
     );
 
+
     //subscription
     // ─── Subscription ─────────────────────────────────────────────────────────────
     container.register<IGetSubscriptionUsecase>('IGetSubscriptionUsecase', {
@@ -215,20 +227,23 @@ export class UsecaseRegistry {
     );
 
     //buddy match
-container.register<ISaveBuddyPreferenceUsecase>  ('ISaveBuddyPreferenceUsecase',   { useClass: SaveBuddyPreferenceUsecase });
-container.register<IGetBuddyPreferenceUsecase>   ('IGetBuddyPreferenceUsecase',    { useClass: GetBuddyPreferenceUsecase });
-container.register<IFindBuddyMatchesUsecase>     ('IFindBuddyMatchesUsecase',      { useClass: FindBuddyMatchesUsecase });
-container.register<ISendBuddyRequestUsecase>     ('ISendBuddyRequestUsecase',      { useClass: SendBuddyRequestUsecase });
-container.register<IRespondToBuddyRequestUsecase>('IRespondToBuddyRequestUsecase', { useClass: RespondToBuddyRequestUsecase });
-container.register<IGetBuddyListUsecase>         ('IGetBuddyListUsecase',          { useClass: GetBuddyListUsecase });
-container.register<IGetPendingRequestsUsecase>   ('IGetPendingRequestsUsecase',    { useClass: GetPendingRequestsUsecase });
-container.register<IGetSentRequestsUsecase>      ('IGetSentRequestsUsecase',       { useClass: GetSentRequestsUsecase });
-    
+    container.register<ISaveBuddyPreferenceUsecase>('ISaveBuddyPreferenceUsecase', { useClass: SaveBuddyPreferenceUsecase });
+    container.register<IGetBuddyPreferenceUsecase>('IGetBuddyPreferenceUsecase', { useClass: GetBuddyPreferenceUsecase });
+    container.register<IFindBuddyMatchesUsecase>('IFindBuddyMatchesUsecase', { useClass: FindBuddyMatchesUsecase });
+    container.register<ISendBuddyRequestUsecase>('ISendBuddyRequestUsecase', { useClass: SendBuddyRequestUsecase });
+    container.register<IRespondToBuddyRequestUsecase>('IRespondToBuddyRequestUsecase', { useClass: RespondToBuddyRequestUsecase });
+    container.register<IGetBuddyListUsecase>('IGetBuddyListUsecase', { useClass: GetBuddyListUsecase });
+    container.register<IGetPendingRequestsUsecase>('IGetPendingRequestsUsecase', { useClass: GetPendingRequestsUsecase });
+    container.register<IGetSentRequestsUsecase>('IGetSentRequestsUsecase', { useClass: GetSentRequestsUsecase });
+    container.register<IBlockBuddyUsecase>('IBlockBuddyUsecase', { useClass: BlockBuddyUsecase });
+    container.register<IUnblockBuddyUsecase>('IUnblockBuddyUsecase', { useClass: UnblockBuddyUsecase });
+    container.register<IGetBlockedUsersUsecase>('IGetBlockedUsersUsecase', { useClass: GetBlockedUsersUsecase });
+
     // utility
     container.register<IGetLocationUsecase>('IGetLocationUsecase', { useClass: GetLocationUsecase });
 
     // community
-    container.register<IGetMessagesUsecase>('IGetMessagesUsecase',   { useClass: GetMessagesUsecase });
-container.register<ISendMessageUsecase>('ISendMessageUsecase',   { useClass: SendMessageUsecase });
+    container.register<IGetMessagesUsecase>('IGetMessagesUsecase', { useClass: GetMessagesUsecase });
+    container.register<ISendMessageUsecase>('ISendMessageUsecase', { useClass: SendMessageUsecase });
   }
 }

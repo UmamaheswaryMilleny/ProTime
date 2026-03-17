@@ -1,5 +1,5 @@
 import { injectable } from "tsyringe";
-import mongoose, { type Types } from "mongoose";
+import mongoose from "mongoose";
 import { BaseRepository } from "../base.repository";
 import { ProfileModel,type  ProfileDocument } from "../../database/models/profile.model";
 import { ProfileMapper } from "../../database/mappers/profile.mapper";

@@ -128,4 +128,41 @@ export class BuddyConnectionRepository
     if (!doc) return null;
     return BuddyConnectionMapper.toDomain(doc as BuddyConnectionDocument);
   }
+
+  // Returns all connections where this user initiated a block
+  async findBlockedByUserId(userId: string): Promise<BuddyConnectionEntity[]> {
+    const docs = await BuddyConnectionModel
+      .find({
+        blockedBy: userId,
+        status:    BuddyConnectionStatus.BLOCKED,
+      })
+      .sort({ updatedAt: -1 })
+      .lean();
+    return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
+  }
+
+  // Updates status and optionally sets blockedBy in one operation
+  async updateStatusWithBlockedBy(
+    connectionId: string,
+    status:       BuddyConnectionStatus,
+    blockedBy?:   string,
+  ): Promise<BuddyConnectionEntity | null> {
+    const $set: Record<string, unknown> = { status };
+
+    if (status === BuddyConnectionStatus.CONNECTED) {
+      $set['addedAt'] = new Date();
+    }
+    if (blockedBy !== undefined) {
+      $set['blockedBy'] = blockedBy;
+    }
+
+    const doc = await BuddyConnectionModel.findByIdAndUpdate(
+      connectionId,
+      { $set },
+      { new: true },
+    ).lean();
+
+    if (!doc) return null;
+    return BuddyConnectionMapper.toDomain(doc as BuddyConnectionDocument);
+  }
 }

@@ -9,6 +9,7 @@ export class BuddyConnectionMapper {
       buddyId: doc.buddyId.toString(),
       status: doc.status,
       addedAt: doc.addedAt ?? undefined,
+      blockedBy: doc.blockedBy?.toString() ?? undefined,
       rating: doc.rating ?? undefined,
       totalSessionsCompleted: doc.totalSessionsCompleted,
       totalSessionMinutes: doc.totalSessionMinutes,
@@ -31,6 +32,7 @@ export class BuddyConnectionMapper {
     if (data.totalSessionMinutes !== undefined)
       result.totalSessionMinutes = data.totalSessionMinutes;
     if ('addedAt' in data) result.addedAt = data.addedAt ?? null;
+    if ('blockedBy' in data) result.blockedBy = data.blockedBy ?? null;
     if ('rating' in data) result.rating = data.rating ?? null;
     if ('lastSessionAt' in data)
       result.lastSessionAt = data.lastSessionAt ?? null;
