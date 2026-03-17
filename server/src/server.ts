@@ -1,7 +1,7 @@
 import express from "express";
 import type { Application } from "express";
 import http from 'http';
-import { Server as SocketIOServer } from 'socket.io';
+import { Server as SocketIOServer, Socket } from 'socket.io';
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { container } from "tsyringe";
@@ -18,8 +18,14 @@ import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subs
 import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
 import { BuddyRoutes } from "./interface_adapter/routes/buddy-match/buddy.routes";
 import { UtilityRoutes } from "./interface_adapter/routes/utility/utility-routes";
+import { CommunityChatRoutes } from "./interface_adapter/routes/community-chat/community.routes";
 import { SocketIOService } from "./infrastructure/service/socket-service";
 import { JwtTokenService } from './infrastructure/service/token-service';
+import { ROUTES } from "./shared/constants/constants.routes";
+
+interface CustomSocket extends Socket {
+  userId?: string;
+}
 
 export class App {
   private readonly app:        Application;
@@ -38,8 +44,8 @@ export class App {
 
     this.configureCors();
     this.configureMiddleware();
+    this.configureSocket();
     this.configureRoutes();
-    this.configureSocket();        // ← was missing from constructor
     this.configureErrorHandling();
   }
 
@@ -54,6 +60,7 @@ export class App {
     });
     this.app.use(
       express.json({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         verify: (req: any, _res, buf) => {
           if (req.originalUrl.includes('/webhook')) {
             req.rawBody = buf;
@@ -67,14 +74,15 @@ export class App {
 
   private configureRoutes(): void {
     this.app.get('/', (_req, res) => res.send('Server is running'));
-    this.app.use('/api/v1/auth',         container.resolve(AuthRoutes).router);
-    this.app.use('/api/v1/admin',        container.resolve(AdminRoutes).router);
-    this.app.use('/api/v1/user',         container.resolve(UserRoutes).router);
-    this.app.use('/api/v1/todos',        container.resolve(TodoRoutes).router);
-    this.app.use('/api/v1/subscription', container.resolve(SubscriptionRoutes).router);
-    this.app.use('/api/v1/gamification', container.resolve(GamificationRoutes).router);
-    this.app.use('/api/v1/buddy',        container.resolve(BuddyRoutes).router);
-    this.app.use('/api/v1/utility',      container.resolve(UtilityRoutes).router);
+    this.app.use(ROUTES.BASE.AUTH,           container.resolve(AuthRoutes).router);
+    this.app.use(ROUTES.BASE.ADMIN,          container.resolve(AdminRoutes).router);
+    this.app.use(ROUTES.BASE.USER,           container.resolve(UserRoutes).router);
+    this.app.use(ROUTES.BASE.TODO,           container.resolve(TodoRoutes).router);
+    this.app.use(ROUTES.BASE.SUBSCRIPTION,   container.resolve(SubscriptionRoutes).router);
+    this.app.use(ROUTES.BASE.GAMIFICATION,   container.resolve(GamificationRoutes).router);
+    this.app.use(ROUTES.BASE.BUDDY,          container.resolve(BuddyRoutes).router);
+    this.app.use(ROUTES.BASE.UTILITY,        container.resolve(UtilityRoutes).router);
+    this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
   }
 
   private configureSocket(): void {
@@ -91,7 +99,7 @@ export class App {
     const payload = tokenService.verifyAccess(token);
 if (!payload) return next(new Error('Invalid or expired token'));
 
-(socket as any).userId = payload.id;
+(socket as CustomSocket).userId = payload.id;
 next();
       } catch {
         next(new Error('Invalid or expired token'));
@@ -99,7 +107,7 @@ next();
     });
 
     this.io.on('connection', (socket) => {
-      const userId = (socket as any).userId as string;
+      const userId = (socket as CustomSocket).userId;
       console.log(`[Socket] User connected: ${userId}`);
       socket.on('disconnect', () => {
         console.log(`[Socket] User disconnected: ${userId}`);
