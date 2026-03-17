@@ -36,6 +36,12 @@ export class TodoExpiredError extends DomainError {
     super('This task has expired and cannot be modified');
   }
 }
+
+export class MissingTodoTitleError extends DomainError {
+  constructor() {
+    super('Task title is required');
+  }
+}
 // export class LowPriorityBreakTimeError extends DomainError {
 //   constructor() {
 //     super(`Break time is not available for LOW priority tasks`);

@@ -5,23 +5,22 @@ import type { StudyGoal } from '../../enums/buddy.enums';
 export interface IBuddyPreferenceRepository
   extends IBaseRepository<BuddyPreferenceEntity> {
 
-  // One preference document per user
+  // Fetches the single preference document belonging to one specific user.
   findByUserId(userId: string): Promise<BuddyPreferenceEntity | null>;
 
-  // ─── Free matching ─────────────────────────────────────────────────────────
-  // Matches on studyGoal + country, excludes already-connected users,
+
   // sorted by lastActiveAt desc — active users appear first.
-  // Returns paginated results.
+
   findMatches(
-    excludeUserId:  string,
-    studyGoal:      StudyGoal,
-    studyLanguage:  string,
-    country:        string,
+    excludeUserId: string,
+    studyGoal: StudyGoal,
+    studyLanguage: string,
+    country: string,
     excludeUserIds: string[],   // already connected — exclude from results
-    page:           number,
-    limit:          number,
-    search?:        string,
-    global?:        boolean,
+    page: number,
+    limit: number,
+    search?: string,
+    global?: boolean,
     premiumFilters?: Partial<Pick<BuddyPreferenceEntity,
       | 'subjectDomain'
       | 'availability'

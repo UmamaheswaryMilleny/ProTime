@@ -28,7 +28,7 @@ export enum BadgeConditionType {
   STREAK_DAYS = 'STREAK_DAYS', // maintain streak for N days
   BUDDY_MATCHES = 'BUDDY_MATCHES', // match with N buddies (min 4★, min 1hr)
   ROOMS_ATTENDED = 'ROOMS_ATTENDED', // attend N rooms (min 1hr each)
-  
+
 }
 
 
@@ -120,16 +120,16 @@ export const BADGE_XP_BONUS = 50;
 
 
 export type XpSource =
-    | 'TODO_LOW'
-    | 'TODO_MEDIUM'
-    | 'TODO_HIGH'
-    | 'STREAK_BONUS'
-    | 'BADGE_BONUS';
+  | 'TODO_LOW'
+  | 'TODO_MEDIUM'
+  | 'TODO_HIGH'
+  | 'STREAK_BONUS'
+  | 'BADGE_BONUS';
 
-    export const FREE_MAX_LEVEL = 6; // LEARNER = levels 4-6, above this = locked for free
+export const FREE_MAX_LEVEL = 6; // LEARNER = levels 4-6, above this = locked for free
 
-    
-// ─── Free Title Lock ──────────────────────────────────────────────────────────
+
+//  Free Title Lock
 // Free users can see all levels but titles above LEARNER are locked (visual only).
 // The actual title is still computed — just displayed as locked in the frontend.
 // export const FREE_MAX_VISIBLE_TITLE = LevelTitle.LEARNER; // Level 6

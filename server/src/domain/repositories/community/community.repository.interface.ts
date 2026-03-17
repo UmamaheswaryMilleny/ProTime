@@ -4,10 +4,9 @@ import type { CommunityChatEntity } from '../../entities/community.entity';
 export interface ICommunityMessageRepository
   extends IBaseRepository<CommunityChatEntity> {
 
-  // Cursor-based — returns messages older than `before`, sorted createdAt desc
-  // Client reverses array for display (oldest top, newest bottom)
+  //So before is just telling the database:"give me messages older than THIS timestamp"
   findMessages(params: {
-    limit:   number;
+    limit: number;
     before?: Date;
   }): Promise<CommunityChatEntity[]>;
 

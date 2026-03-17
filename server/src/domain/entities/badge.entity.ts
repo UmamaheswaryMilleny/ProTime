@@ -3,13 +3,13 @@ import type {
   BadgeConditionType,
 } from '../enums/gamification.enums';
 
-// badge details
+
 export interface BadgeDefinitionEntity {
   id: string;
   key: string; // unique, used in code to find this badge fast 'HIGH_ACHIEVER', 'FOCUS_BUILDER'
-  name: string; // display name e.g. 'High Achiever'
+  name: string; // display name e.g. 'High_Achiever'
   description: string; // 'Complete 10 High-Priority tasks'
-  iconUrl?: string; // badge image
+  iconUrl?: string;
 
   category: BadgeCategory; // TASK | STREAK | BUDDY | ROOM
   conditionType: BadgeConditionType; // what the system checks to award it
@@ -30,7 +30,7 @@ export interface UserBadgeEntity {
   id: string;
   userId: string;
   badgeDefinitionId: string;
-  badgeKey: string; //The badgeDefinitionId is still there for when you need full badge details.
+  badgeKey: string; //for when you need full badge details.
   // badgeKey is just for the fast "does this user already have this badge" check.
   earnedAt: Date;
   xpAwarded: boolean; // true = 50 XP bonus was credited to gamification
