@@ -1,5 +1,5 @@
 import { ProTimeBackend } from "../../../api/instance";
-import { API_ROUTES } from "../../../config/env";
+import { API_ROUTES } from "../../../shared/constants/constants.routes";
 import type { 
   BuddyPreference, 
   SaveBuddyPreferenceRequest, 
@@ -66,5 +66,26 @@ export const buddyService = {
       { action }
     );
     return response.data;
+  },
+
+  blockUser: async (targetUserId: string) => {
+    const response = await ProTimeBackend.post<{ message: string }>(
+      `/buddy/block/${targetUserId}`
+    );
+    return response.data;
+  },
+
+  unblockUser: async (connectionId: string) => {
+    const response = await ProTimeBackend.post<{ message: string }>(
+      `/buddy/unblock/${connectionId}`
+    );
+    return response.data;
+  },
+
+  getBlockedUsers: async () => {
+    const response = await ProTimeBackend.get<{ data: BuddyConnection[] }>(
+      `/buddy/blocked`
+    );
+    return response.data.data;
   },
 };

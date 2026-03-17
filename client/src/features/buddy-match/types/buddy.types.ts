@@ -17,17 +17,90 @@ export const StudyFrequency = {
 export type StudyFrequency = typeof StudyFrequency[keyof typeof StudyFrequency];
 
 export const SubjectDomain = {
+  // ─── TECHNOLOGY ───────────────────────────────
   WEB_DEVELOPMENT: 'WEB_DEVELOPMENT',
   APP_DEVELOPMENT: 'APP_DEVELOPMENT',
   UI_UX: 'UI_UX',
   DATA_SCIENCE: 'DATA_SCIENCE',
-  MACHINE_LEARNING: 'MACHINE_LEARNING',
   DEVOPS: 'DEVOPS',
   AI_ML: 'AI_ML',
   CYBER_SECURITY: 'CYBER_SECURITY',
+
+  // ─── ACADEMICS ────────────────────────────────
+  MATHEMATICS: 'MATHEMATICS',
+  PHYSICS: 'PHYSICS',
+  CHEMISTRY: 'CHEMISTRY',
+  BIOLOGY: 'BIOLOGY',
+  HISTORY: 'HISTORY',
+
+  // ─── LANGUAGES ────────────────────────────────
+  FRENCH: 'FRENCH',
+  SPANISH: 'SPANISH',
+  JAPANESE: 'JAPANESE',
+  GERMAN: 'GERMAN',
+  ARABIC: 'ARABIC',
+
+  // ─── TEST_PREPARATION ─────────────────────────
+  GATE: 'GATE',
+  GRE: 'GRE',
+  IELTS: 'IELTS',
+  UPSC: 'UPSC',
+  CAT: 'CAT',
+
+  // ─── MACHINE_LEARNING ─────────────────────────
+  DEEP_LEARNING: 'DEEP_LEARNING',
+  NLP: 'NLP',
+  COMPUTER_VISION: 'COMPUTER_VISION',
+  REINFORCEMENT: 'REINFORCEMENT',
+  MLOPS: 'MLOPS',
+
+  // ─── OTHER ────────────────────────────────────
   OTHERS: 'OTHERS',
 } as const;
 export type SubjectDomain = typeof SubjectDomain[keyof typeof SubjectDomain];
+
+export const STUDY_GOAL_DOMAIN_MAP: Record<StudyGoal, SubjectDomain[]> = {
+  [StudyGoal.TECHNOLOGY]: [
+    SubjectDomain.WEB_DEVELOPMENT,
+    SubjectDomain.APP_DEVELOPMENT,
+    SubjectDomain.UI_UX,
+    SubjectDomain.DATA_SCIENCE,
+    SubjectDomain.DEVOPS,
+    SubjectDomain.AI_ML,
+    SubjectDomain.CYBER_SECURITY,
+  ],
+  [StudyGoal.ACADEMICS]: [
+    SubjectDomain.MATHEMATICS,
+    SubjectDomain.PHYSICS,
+    SubjectDomain.CHEMISTRY,
+    SubjectDomain.BIOLOGY,
+    SubjectDomain.HISTORY,
+  ],
+  [StudyGoal.LANGUAGES]: [
+    SubjectDomain.FRENCH,
+    SubjectDomain.SPANISH,
+    SubjectDomain.JAPANESE,
+    SubjectDomain.GERMAN,
+    SubjectDomain.ARABIC,
+  ],
+  [StudyGoal.TEST_PREPARATION]: [
+    SubjectDomain.GATE,
+    SubjectDomain.GRE,
+    SubjectDomain.IELTS,
+    SubjectDomain.UPSC,
+    SubjectDomain.CAT,
+  ],
+  [StudyGoal.MACHINE_LEARNING]: [
+    SubjectDomain.DEEP_LEARNING,
+    SubjectDomain.NLP,
+    SubjectDomain.COMPUTER_VISION,
+    SubjectDomain.REINFORCEMENT,
+    SubjectDomain.MLOPS,
+  ],
+  [StudyGoal.OTHER]: [
+    SubjectDomain.OTHERS,
+  ],
+};
 
 export const Availability = {
   MORNING: 'MORNING',

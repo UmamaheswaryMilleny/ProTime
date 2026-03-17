@@ -11,6 +11,8 @@ interface TodoItemProps {
     onStart?: (id: string) => void;
 }
 
+import toast from 'react-hot-toast';
+
 export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, onEdit, isStarted, onStart }) => {
     // Determine Priority Color
     const priorityColor =
@@ -45,7 +47,39 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
                 <button
                     onClick={() => {
                         if (!todo.pomodoroEnabled && !isExpired) {
-                            onToggle(todo.id);
+                            if (isCompleted) {
+                                // Already completed, just toggle back if the API allows it
+                                onToggle(todo.id);
+                                return;
+                            }
+                            
+                            toast((t) => (
+                                <div className="flex flex-col gap-3 p-1">
+                                    <p className="text-sm font-medium text-zinc-800">
+                                        Are you sure you want to complete this task? This action cannot be undone.
+                                    </p>
+                                    <div className="flex gap-2 justify-end">
+                                        <button 
+                                            className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-semibold rounded-md transition-colors"
+                                            onClick={() => toast.dismiss(t.id)}
+                                        >
+                                            No, Cancel
+                                        </button>
+                                        <button 
+                                            className="px-3 py-1.5 bg-[blueviolet] hover:bg-[#7c2ae8] text-white text-xs font-semibold rounded-md transition-colors"
+                                            onClick={() => {
+                                                toast.dismiss(t.id);
+                                                onToggle(todo.id);
+                                            }}
+                                        >
+                                            Yes, Complete
+                                        </button>
+                                    </div>
+                                </div>
+                            ), {
+                                duration: Infinity,
+                                position: 'top-center',
+                            });
                         }
                     }}
                     disabled={todo.pomodoroEnabled || isExpired}
@@ -96,11 +130,11 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
             <div className="flex items-center gap-4 self-end sm:self-center">
                 {todo.pomodoroEnabled && (
                     <button
-                        onClick={() => !isExpired && onStart && onStart(todo.id)}
-                        disabled={isExpired}
+                        onClick={() => !isExpired && !isCompleted && onStart && onStart(todo.id)}
+                        disabled={isExpired || isCompleted}
                         className={`text-xs font-semibold px-4 py-2 rounded-lg transition-colors shadow-lg whitespace-nowrap min-w-[100px] ${isStarted
                             ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[#22c55e]/20'
-                            : isExpired ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' : 'bg-[blueviolet] hover:bg-[#7c2ae8] text-white shadow-[blueviolet]/20'
+                            : (isExpired || isCompleted) ? 'bg-zinc-700 text-zinc-500 cursor-not-allowed' : 'bg-[blueviolet] hover:bg-[#7c2ae8] text-white shadow-[blueviolet]/20'
                             }`}
                     >
                         {isStarted ? 'Started' : 'Start Timer'}

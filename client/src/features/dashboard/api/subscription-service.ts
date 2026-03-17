@@ -1,4 +1,4 @@
-import { API_ROUTES } from "../../../config/env";
+import { API_ROUTES } from "../../../shared/constants/constants.routes";
 import { ProTimeBackend as api } from "../../../api/instance";
 
 export interface SubscriptionResponse {

@@ -1,10 +1,11 @@
-import { X, Check } from 'lucide-react';
+import { X, Check, ShieldOff, User } from 'lucide-react';
+import React from 'react';
 import type { BuddyProfile, BuddyConnectionStatus } from '../types/buddy.types';
 
 interface BuddyCardProps {
   buddy: BuddyProfile;
   status?: BuddyConnectionStatus | 'NONE';
-  onAction: (action: 'send' | 'accept' | 'decline' | 'chat' | 'video' | 'view') => void;
+  onAction: (action: 'send' | 'accept' | 'decline' | 'chat' | 'video' | 'view' | 'block') => void;
   isLoading?: boolean;
 }
 
@@ -16,19 +17,23 @@ export const BuddyCard: React.FC<BuddyCardProps> = ({
 }) => {
   if (!buddy) return null;
 
-  const avatarUrl = buddy.profileImage || buddy.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(buddy.fullName)}&background=8A2BE2&color=fff`;
-
   return (
     <div className="bg-[#18181B] border border-white/5 rounded-[24px] p-5 transition-all duration-300 relative group hover:border-[blueviolet]/30 hover:shadow-2xl hover:shadow-[blueviolet]/5 flex flex-col h-full">
       {/* Top Section: Avatar and Info */}
       <div className="flex items-start justify-between mb-4 gap-3">
         <div className="flex gap-3 min-w-0">
           <div className="relative shrink-0">
-            <img 
-              src={avatarUrl} 
-              alt={buddy.fullName} 
-              className="w-14 h-14 rounded-full object-cover ring-2 ring-[blueviolet]/20"
-            />
+            {buddy.profileImage || buddy.avatar ? (
+              <img 
+                src={buddy.profileImage || buddy.avatar} 
+                alt={buddy.fullName || 'User'} 
+                className="w-14 h-14 rounded-full object-cover ring-2 ring-[blueviolet]/20"
+              />
+            ) : (
+              <div className="w-14 h-14 rounded-full bg-zinc-800 border-2 border-[blueviolet]/20 flex items-center justify-center text-zinc-500">
+                <User size={28} />
+              </div>
+            )}
             <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 border-2 border-[#18181B] rounded-full" />
           </div>
           <div className="min-w-0 pt-1">
@@ -39,13 +44,29 @@ export const BuddyCard: React.FC<BuddyCardProps> = ({
           </div>
         </div>
         
-        <button 
-          className="shrink-0 p-1.5 rounded-lg bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10 transition-all"
-          title="Ignore"
-          onClick={() => onAction('decline')}
-        >
-          <X size={14} />
-        </button>
+        <div className="flex gap-1.5 shrink-0">
+          <button
+            className="p-1.5 rounded-lg bg-red-500/5 text-red-500/50 hover:text-red-400 hover:bg-red-500/10 transition-all border border-transparent hover:border-red-500/20"
+            title="Block user"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction('block');
+            }}
+          >
+            <ShieldOff size={14} />
+          </button>
+          
+          <button 
+            className="p-1.5 rounded-lg bg-white/5 text-zinc-500 hover:text-white hover:bg-white/10 transition-all border border-transparent hover:border-white/10"
+            title="Ignore"
+            onClick={(e) => {
+              e.stopPropagation();
+              onAction('decline');
+            }}
+          >
+            <X size={14} />
+          </button>
+        </div>
       </div>
 
       {/* Bio Section */}

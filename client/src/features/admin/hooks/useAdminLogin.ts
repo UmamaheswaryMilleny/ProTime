@@ -9,7 +9,7 @@ import { AxiosError } from 'axios';
 import { signinSchema, type SigninFormData } from '../../auth/validation/signin.schema';
 import { loginAPI } from '../../auth/services/auth-service';
 import { loginUser } from '../../auth/store/authSlice';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useAdminLogin = () => {
     const [isLoading, setIsLoading] = useState(false);

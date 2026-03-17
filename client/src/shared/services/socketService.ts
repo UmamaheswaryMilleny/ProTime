@@ -1,0 +1,47 @@
+import { io, Socket } from 'socket.io-client';
+import { store } from '../../store/store';
+import { addMessage, type CommunityMessage } from '../../features/community-chat/store/communitySlice';
+
+class SocketService {
+    private socket: Socket | null = null;
+
+    connect(token: string) {
+        if (this.socket?.connected) return;
+
+        const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '');
+        
+        this.socket = io(baseUrl, {
+            auth: { token },
+            transports: ['websocket'],
+        });
+
+        this.socket.on('connect', () => {
+            console.log('[Socket] Connected to server');
+        });
+
+        this.socket.on('new_community_message', (message: CommunityMessage) => {
+            store.dispatch(addMessage(message));
+        });
+
+        this.socket.on('disconnect', () => {
+            console.log('[Socket] Disconnected');
+        });
+
+        this.socket.on('connect_error', (error) => {
+            console.error('[Socket] Connection error:', error.message);
+        });
+    }
+
+    disconnect() {
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
+        }
+    }
+
+    emit(event: string, data: unknown) {
+        this.socket?.emit(event, data);
+    }
+}
+
+export const socketService = new SocketService();

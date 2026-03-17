@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 
 import { resetPasswordAPI } from '../services/auth-service';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 const resetPasswordSchema = z.object({
   password: z

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader } from 'lucide-react';
 import { useSignin } from '../hooks/useSignin';
 import { GoogleButton } from './GoogleButton';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const SigninForm = () => {
   const { form, onSubmit, isLoading } = useSignin();

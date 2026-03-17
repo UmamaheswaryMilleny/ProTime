@@ -2,7 +2,7 @@ import React from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAppSelector } from '../../../store/hooks';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 interface UserWithXp { xp?: number; }
 

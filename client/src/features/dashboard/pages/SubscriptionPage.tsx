@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Check, Loader2, Clock } from 'lucide-react';
+import { ArrowLeft, Check, Loader2, } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 import { subscriptionService } from '../api/subscription-service';
 import type { SubscriptionResponse } from '../api/subscription-service';
 import toast from 'react-hot-toast';

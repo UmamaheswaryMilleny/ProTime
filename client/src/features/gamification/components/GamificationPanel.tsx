@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Flame, ChevronRight } from 'lucide-react';
+import { Trophy, Flame, ChevronRight, Clock } from 'lucide-react';
 import { useGamification } from '../hooks/useGamification';
 
 export const GamificationPanel: React.FC = () => {

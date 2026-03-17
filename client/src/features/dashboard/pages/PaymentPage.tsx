@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { ArrowLeft, Loader2, CreditCard, ShieldCheck } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 import { subscriptionService } from '../api/subscription-service';
 import toast from 'react-hot-toast';
 

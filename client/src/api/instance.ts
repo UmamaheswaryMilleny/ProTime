@@ -1,6 +1,6 @@
 import axios, { type AxiosError, type InternalAxiosRequestConfig } from "axios";
 import toast from "react-hot-toast";
-import { ROUTES } from "../config/env";
+import { ROUTES } from "../shared/constants/constants.routes";
 
 // ─── Axios Instances ──────────────────────────────────────────────────────────
 

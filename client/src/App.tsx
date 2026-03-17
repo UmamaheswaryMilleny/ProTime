@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { ROUTES } from "./config/env";
+import { ROUTES } from "./shared/constants/constants.routes";
 
 // Route Guards
 import { ProtectedRoute } from "./shared/components/Protected.route";
@@ -26,6 +26,7 @@ import { LevelsPage } from "./features/dashboard/pages/LevelsPage";
 import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
 import { PlanDetailPage } from "./features/dashboard/pages/PlanDetailPage";
 import { PaymentPage } from "./features/dashboard/pages/PaymentPage";
+import { CommunityChatPage } from "./features/community-chat/pages/CommunityChatPage";
 
 // Admin
 import { AdminLoginPage } from "./features/admin/pages/AdminLoginPage";
@@ -67,6 +68,7 @@ function App() {
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION} element={<SubscriptionPage />} />
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PLAN} element={<PlanDetailPage />} />
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PAYMENT} element={<PaymentPage />} />
+            <Route path={ROUTES.DASHBOARD_COMMUNITY_CHAT} element={<CommunityChatPage />} />
           </Route>
         </Route>
 

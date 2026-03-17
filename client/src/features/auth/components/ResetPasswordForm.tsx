@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye, EyeOff, Loader } from 'lucide-react';
 import { useResetPassword } from '../hooks/useResetpassword';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const ResetPasswordForm = () => {
   const { form, onSubmit, isLoading, token } = useResetPassword();

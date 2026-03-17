@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { ProTimeBackend } from '../api/instance';
-import { API_ROUTES } from '../config/env';
+import { API_ROUTES } from '../shared/constants/constants.routes';
 import { useAppSelector } from '../store/hooks';
 
 const POLL_INTERVAL_MS = 60_000; // check every minute

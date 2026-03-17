@@ -4,7 +4,7 @@ import { LayoutDashboard, Users, LogOut, Shield, ChevronLeft, ChevronRight, Cale
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { logoutUser } from '../../auth/store/authSlice';
 import { ProTimeBackend } from '../../../api/instance';
-import { ROUTES, API_ROUTES } from '../../../config/env';
+import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 
 const realRoutes = [
     { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },

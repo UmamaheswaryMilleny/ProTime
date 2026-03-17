@@ -3,7 +3,7 @@ import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Eye, CreditCard, Chevron
 import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
 import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
-import { ROUTES, API_ROUTES } from '../../../config/env';
+import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 import { userApi } from '../../user/user-service';
 import toast from 'react-hot-toast';
 import { updateUser } from '../../auth/store/authSlice';
@@ -505,7 +505,7 @@ export const ProfilePage: React.FC = () => {
               <p className="text-zinc-400 text-sm">Earned Badges (0)</p>
             </div>
             <Link to={ROUTES.DASHBOARD_SUBSCRIPTION} className="block w-full bg-[#5b2091] hover:bg-[#8A2BE2] text-white font-medium py-3 rounded-full transition-all shadow-lg shadow-[#8A2BE2]/20 text-sm mb-4">
-              Subscribe To Premium
+              {user?.isPremium ? 'Subscribed To Premium' : 'Subscribe To Premium'}
             </Link>
             <div className="grid grid-cols-2 gap-4">
               <button onClick={() => setShowBadgesModal(true)} className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-medium py-2 rounded-full transition-colors border border-white/5">View All Badges</button>

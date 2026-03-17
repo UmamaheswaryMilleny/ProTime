@@ -1,4 +1,5 @@
 import { ProTimeBackend } from "../../api/instance";
+import { API_ROUTES } from "../../shared/constants/constants.routes";
 
 // Matches backend UserProfileResponseDTO exactly
 export interface UserProfile {
@@ -23,7 +24,7 @@ export interface UpdateUserProfileRequest {
 export const userApi = {
   // GET /user/profile → returns UserProfile
   getProfileService: async (): Promise<UserProfile> => {
-    const response = await ProTimeBackend.get("/user/profile");
+    const response = await ProTimeBackend.get(API_ROUTES.USER_PROFILE);
     return response.data.data;
   },
 
@@ -31,7 +32,7 @@ export const userApi = {
   updateProfileService: async (
     data: UpdateUserProfileRequest
   ): Promise<UserProfile> => {
-    const response = await ProTimeBackend.put("/user/profile", data);
+    const response = await ProTimeBackend.put(API_ROUTES.USER_PROFILE, data);
     return response.data.data;
   },
 
@@ -40,7 +41,7 @@ export const userApi = {
   uploadProfileImage: async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append("avatar", file);
-    const response = await ProTimeBackend.patch("/user/profile/avatar", formData, {
+    const response = await ProTimeBackend.patch(API_ROUTES.USER_AVATAR, formData, {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data.data.profileImage;

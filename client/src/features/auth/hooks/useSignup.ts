@@ -9,7 +9,7 @@ import { AxiosError } from 'axios';
 import { signupSchema, type SignupFormData } from '../validation/signup.schema';
 import { registerAPI } from '../services/auth-service';
 import { setPendingEmail } from '../store/authSlice';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useSignup = () => {
   const [isLoading, setIsLoading] = useState(false);

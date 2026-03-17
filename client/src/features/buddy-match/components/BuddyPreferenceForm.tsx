@@ -9,6 +9,7 @@ import {
   StudyPreference, 
   GroupStudy, 
   StudyMode,
+  STUDY_GOAL_DOMAIN_MAP,
   type BuddyPreference
 } from '../types/buddy.types';
 import { ChevronDown, ShieldCheck, Search } from 'lucide-react';
@@ -63,10 +64,16 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
   }, [initialData]);
 
   const handleChange = (key: string, value: any) => {
-    const newData = { ...formData, [key]: value };
+    let newData = { ...formData, [key]: value };
+    
+    // Auto-reset subjectDomain if studyGoal changes
+    if (key === 'studyGoal') {
+      const validDomains = STUDY_GOAL_DOMAIN_MAP[value as StudyGoal];
+      newData.subjectDomain = validDomains[0]; // Reset to first valid option
+    }
+    
     setFormData(newData);
     if (onChange) {
-      // For real-time sync, we can send the whole thing or just the diff
       onChange(newData);
     }
   };
@@ -86,15 +93,6 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
         submissionData[field] = formData[field];
       }
     });
-
-    if (!isPremium) {
-      // Stripping premium fields for non-premium users
-      const premiumFields = [
-        'subjectDomain', 'availability', 'sessionDuration', 
-        'focusLevel', 'studyPreference', 'groupStudy', 'studyMode'
-      ];
-      premiumFields.forEach(field => delete submissionData[field]);
-    }
 
     onSave(submissionData);
   };
@@ -120,9 +118,12 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
             title={isLocked ? "Upgrade to Premium to unlock advanced matching" : ""}
             className={`w-full bg-[#27272A] rounded-lg pl-3 pr-10 py-2.5 text-xs text-zinc-300 border border-white/5 focus:border-white/10 outline-none transition-all appearance-none cursor-pointer ${isLocked ? 'cursor-not-allowed select-none' : 'hover:bg-zinc-800 group-hover:border-white/10'}`}
           >
-            {Object.entries(options).map(([k, v]) => (
-              <option key={k} value={v} className="bg-zinc-900 text-zinc-200">{v.replace(/_/g, ' ')}</option>
-            ))}
+            {Array.isArray(options) 
+              ? options.map(opt => <option key={opt} value={opt} className="bg-zinc-900 text-zinc-200">{opt.replace(/_/g, ' ')}</option>)
+              : Object.entries(options).map(([k, v]) => (
+                  <option key={k} value={v} className="bg-zinc-900 text-zinc-200">{v.replace(/_/g, ' ')}</option>
+                ))
+            }
           </select>
           <div className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none">
             <ChevronDown size={14} />
@@ -200,16 +201,20 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
   );
 
 
-  const renderAdvancedFields = () => (
-    <div className="space-y-4">
-      {renderSelect('Subject/ Domain', formData.subjectDomain, SubjectDomain, 'subjectDomain', true)}
-      {renderSelect('Focul Level', formData.focusLevel, FocusLevel, 'focusLevel', true)}
-      {renderSelect('Study Preference', formData.studyPreference, StudyPreference, 'studyPreference', true)}
-      {renderSelect('Availability', formData.availability, Availability, 'availability', true)}
-      {renderSelect('Study Duration', formData.sessionDuration, SessionDuration, 'sessionDuration', true)}
-      {renderSelect('Study Mode', formData.studyMode, StudyMode, 'studyMode', true)}
-    </div>
-  );
+  const renderAdvancedFields = () => {
+    const validDomains = STUDY_GOAL_DOMAIN_MAP[formData.studyGoal as StudyGoal] || [SubjectDomain.OTHERS];
+    
+    return (
+      <div className="space-y-4">
+        {renderSelect('Subject/ Domain', formData.subjectDomain, validDomains as any, 'subjectDomain', true)}
+        {renderSelect('Focul Level', formData.focusLevel, FocusLevel, 'focusLevel', true)}
+        {renderSelect('Study Preference', formData.studyPreference, StudyPreference, 'studyPreference', true)}
+        {renderSelect('Availability', formData.availability, Availability, 'availability', true)}
+        {renderSelect('Study Duration', formData.sessionDuration, SessionDuration, 'sessionDuration', true)}
+        {renderSelect('Study Mode', formData.studyMode, StudyMode, 'studyMode', true)}
+      </div>
+    );
+  };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">

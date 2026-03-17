@@ -7,7 +7,7 @@ import { AxiosError } from 'axios';
 import { verifyOtpAPI, resendOtpAPI } from '../services/auth-service';
 import { clearPendingEmail } from '../store/authSlice';
 import { selectPendingEmail } from '../store/authSelectors';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useOtp = () => {
   const [isLoading, setIsLoading] = useState(false);

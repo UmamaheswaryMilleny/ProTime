@@ -1,8 +1,8 @@
 import React from 'react';
 
 interface BuddyNavbarProps {
-  activeTab: 'find' | 'requests' | 'mybuddy';
-  onTabChange: (tab: 'find' | 'requests' | 'mybuddy') => void;
+  activeTab: 'find' | 'requests' | 'mybuddy' | 'blocked';
+  onTabChange: (tab: 'find' | 'requests' | 'mybuddy' | 'blocked') => void;
 }
 
 export const BuddyNavbar: React.FC<BuddyNavbarProps> = ({ activeTab, onTabChange }) => {

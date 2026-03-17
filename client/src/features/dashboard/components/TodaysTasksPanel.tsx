@@ -2,7 +2,7 @@ import React from 'react';
 import { Play, ToggleRight, Calendar, Users, MonitorPlay, Bot } from 'lucide-react';
 
 import { useTodo } from '../../todo/hooks/useTodo';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useNavigate } from 'react-router-dom';
 
 export const TodaysTasksPanel: React.FC = () => {

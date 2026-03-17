@@ -10,7 +10,7 @@ import { signinSchema, type SigninFormData } from '../validation/signin.schema';
 import { loginAPI } from '../services/auth-service';
 import { loginUser, updateUser } from '../store/authSlice';
 import { userApi } from '../../user/user-service';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useSignin = () => {
   const [isLoading, setIsLoading] = useState(false);

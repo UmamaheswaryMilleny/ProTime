@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { logoutUser } from '../../auth/store/authSlice';
 import { ProTimeBackend } from '../../../api/instance';
-import { ROUTES, API_ROUTES } from '../../../config/env';
+import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 
 import { useGamification } from '../../gamification/hooks/useGamification';
 
@@ -58,14 +58,17 @@ export const DashboardHeader: React.FC = () => {
             className="cursor-pointer relative"
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           >
-            <img
-              src={
-                user?.profileImage ||
-                'https://images.unsplash.com/photo-1599566150163-29194dcaad36?w=100&h=100&fit=crop'
-              }
-              alt="Profile"
-              className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors"
-            />
+            {user?.profileImage ? (
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors object-cover"
+              />
+            ) : (
+              <div className="w-10 h-10 rounded-full border-2 border-zinc-700 bg-zinc-800 hover:border-[blueviolet] hover:bg-zinc-700 transition-colors flex items-center justify-center text-zinc-500 hover:text-zinc-300">
+                <UserIcon size={20} />
+              </div>
+            )}
           </button>
 
           {/* Profile Dropdown */}

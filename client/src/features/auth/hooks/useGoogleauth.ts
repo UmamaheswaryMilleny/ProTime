@@ -5,7 +5,7 @@ import { AxiosError } from 'axios';
 
 import { googleAuthAPI } from '../services/auth-service';
 import { loginUser } from '../store/authSlice';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useGoogleAuth = () => {
   const navigate = useNavigate();

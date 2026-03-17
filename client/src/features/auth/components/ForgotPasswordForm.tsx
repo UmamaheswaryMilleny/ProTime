@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Loader, CheckCircle } from 'lucide-react';
 import { useForgotPassword } from '../hooks/useForgotpassword';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const ForgotPasswordForm = () => {
   const { form, onSubmit, isLoading, isEmailSent } = useForgotPassword();

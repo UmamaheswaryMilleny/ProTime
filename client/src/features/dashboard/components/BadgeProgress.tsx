@@ -1,6 +1,5 @@
 import { Award, Lock } from 'lucide-react';
 import { useGamification } from '../../gamification/hooks/useGamification';
-import type { UserBadge } from '../../gamification/types/gamification.types';
 
 export const BadgeProgress: React.FC = () => {
     const { gamification, isLoading } = useGamification();
@@ -11,7 +10,7 @@ export const BadgeProgress: React.FC = () => {
         );
     }
 
-    const earnedBadges: UserBadge[] = gamification?.earnedBadges || [];
+    const earnedBadges = gamification?.earnedBadges || [];
 
     return (
         <div className="w-full bg-[#18181B] rounded-2xl shadow-sm border border-[#27272A] p-6 lg:p-8 flex flex-col gap-8 fade-in h-min">
@@ -30,8 +29,11 @@ export const BadgeProgress: React.FC = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {earnedBadges.length > 0 ? (
                     earnedBadges.map((badge) => (
-                        <div key={badge.id} className="bg-[#1F1F23] rounded-xl p-5 border border-zinc-800 flex items-center gap-5 group hover:border-zinc-700 transition-all">
-                            <div className={`p-4 rounded-2xl bg-zinc-800 text-[blueviolet] group-hover:scale-110 transition-transform`}>
+                        <div 
+                            key={badge.id} 
+                            className="bg-[#1F1F23] rounded-xl p-5 border border-zinc-800 flex items-center gap-5 group hover:border-zinc-700 transition-all"
+                        >
+                            <div className="p-4 rounded-2xl bg-zinc-800 text-[blueviolet] group-hover:scale-110 transition-transform">
                                 <Award size={32} />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -57,7 +59,7 @@ export const BadgeProgress: React.FC = () => {
                     </div>
                 )}
 
-                {/* Show a locked/premium placeholder if user has few badges */}
+                {/* Show a locked placeholder if user has few badges */}
                 {earnedBadges.length < 2 && (
                     <div className="bg-[#1F1F23]/50 rounded-xl p-5 border border-dashed border-zinc-800 flex items-center gap-5 grayscale opacity-60">
                         <div className="p-4 rounded-2xl bg-zinc-900 text-zinc-600">

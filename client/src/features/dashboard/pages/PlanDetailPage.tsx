@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ShieldCheck, Zap, MessageSquare, Trophy, UserPlus, Download } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../../config/env';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const PlanDetailPage: React.FC = () => {
     const navigate = useNavigate();

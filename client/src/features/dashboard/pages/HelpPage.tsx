@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { ROUTES } from '../../../config/env'; // ✅ added — was using hardcoded "/dashboard"
+import { ROUTES } from '../../../shared/constants/constants.routes'; // ✅ added — was using hardcoded "/dashboard"
 
 export const HelpPage: React.FC = () => {
     return (

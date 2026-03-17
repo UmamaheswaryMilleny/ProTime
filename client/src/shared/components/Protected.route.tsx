@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 import { useAppSelector } from "../../store/hooks";
-import { ROUTES } from "../../config/env";
+import { ROUTES } from "../../shared/constants/constants.routes";
 import { useBlockedUserPoll } from "../../hooks/useBlockedUserPoll";
 
 interface ProtectedRouteProps {

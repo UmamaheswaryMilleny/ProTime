@@ -1,5 +1,5 @@
 import { ProTimeBackend } from "../../../api/instance";
-import { API_ROUTES } from "../../../config/env";
+import { API_ROUTES } from "../../../shared/constants/constants.routes";
 import type {
   ApiResponse,
   LoginRequest,

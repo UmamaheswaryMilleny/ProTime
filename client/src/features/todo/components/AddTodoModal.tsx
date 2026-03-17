@@ -42,6 +42,7 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
     }, [initialTodo, isOpen]);
 
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [showTitleError, setShowTitleError] = useState(false);
 
     if (!isOpen) return null;
 
@@ -83,6 +84,10 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                 }
             }
 
+            if (name === 'title' && value.trim()) {
+                setShowTitleError(false);
+            }
+
             return nextData;
         });
     };
@@ -107,7 +112,10 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!formData.title.trim()) return;
+        if (!formData.title.trim()) {
+            setShowTitleError(true);
+            return;
+        }
 
         setIsSubmitting(true);
         let success = false;
@@ -144,13 +152,15 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                     <div className="space-y-1.5">
                         <label className="text-sm text-zinc-400">Title</label>
                         <input
-                            required
                             name="title"
                             value={formData.title}
                             onChange={handleChange}
                             placeholder="Study JavaScript"
-                            className="w-full bg-zinc-800/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none"
+                            className={`w-full bg-zinc-800/50 border rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none transition-colors ${
+                                showTitleError ? 'border-red-500 ring-1 ring-red-500' : 'border-white/10'
+                            }`}
                         />
+                        {showTitleError && <p className="text-[10px] text-red-500 font-medium mt-1">Please enter a task title</p>}
                     </div>
 
                     <div className="space-y-1.5">
