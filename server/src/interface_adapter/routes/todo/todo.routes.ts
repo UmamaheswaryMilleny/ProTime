@@ -13,6 +13,7 @@ import { CreateTodoRequestDTO } from '../../../application/dto/todo/request/todo
 import { UpdateTodoRequestDTO } from '../../../application/dto/todo/request/todo.update.request.dto';
 import { CompletePomodoroRequestDTO } from '../../../application/dto/todo/request/pomodoro.request.dto';
 import { UserRole } from '../../../domain/enums/user.enums';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 @injectable()
 export class TodoRoutes extends BaseRoute {
@@ -38,27 +39,27 @@ export class TodoRoutes extends BaseRoute {
 
     // GET /api/v1/todos?filter=all|pending|completed
     this.router.get(
-      '/',
+      ROUTES.TODO.ROOT,
       asyncHandler(ctrl.getTodos.bind(ctrl)),
     );
 
     // POST /api/v1/todos
     this.router.post(
-      '/',
+      ROUTES.TODO.ROOT,
       validationMiddleware(CreateTodoRequestDTO),
       asyncHandler(ctrl.createTodo.bind(ctrl)),
     );
 
     // PUT /api/v1/todos/:todoId
     this.router.put(
-      '/:todoId',
+      ROUTES.TODO.BY_ID,
       validationMiddleware(UpdateTodoRequestDTO),
       asyncHandler(ctrl.updateTodo.bind(ctrl)),
     );
 
     // DELETE /api/v1/todos/:todoId
     this.router.delete(
-      '/:todoId',
+      ROUTES.TODO.BY_ID,
       asyncHandler(ctrl.deleteTodo.bind(ctrl)),
     );
 
@@ -67,7 +68,7 @@ export class TodoRoutes extends BaseRoute {
     // PATCH /api/v1/todos/:todoId/complete
     // Marks task as done — calculates and locks in XP
     this.router.patch(
-      '/:todoId/complete',
+      ROUTES.TODO.COMPLETE,
       asyncHandler(ctrl.completeTodo.bind(ctrl)),
     );
 
@@ -75,7 +76,7 @@ export class TodoRoutes extends BaseRoute {
     // Called when pomodoro timer finishes — records time, sets pomodoroCompleted flag
     // Body: { actualPomodoroTime?: number }
     this.router.patch(
-      '/:todoId/pomodoro/complete',
+      ROUTES.TODO.POMODORO_COMPLETE,
       validationMiddleware(CompletePomodoroRequestDTO),
       asyncHandler(ctrl.completePomodoro.bind(ctrl)),
     );

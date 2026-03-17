@@ -9,4 +9,7 @@ export interface IBuddyController {
   respondToRequest(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   getBuddyList(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   getPendingRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  blockUser(req: CustomRequest, res: Response, next: NextFunction):       Promise<void>;
+  unblockUser(req: CustomRequest, res: Response, next: NextFunction):     Promise<void>;
+  getBlockedUsers(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

@@ -10,10 +10,15 @@ import type { IRespondToBuddyRequestUsecase } from '../../../application/usecase
 import type { IGetBuddyListUsecase }          from '../../../application/usecase/interface/buddy-match/get-buddy-list.usecase.interface';
 import type { IGetPendingRequestsUsecase }    from '../../../application/usecase/interface/buddy-match/get-pending-requests.usecase.interface';
 import type { IGetSentRequestsUsecase }       from '../../../application/usecase/interface/buddy-match/get-sent-requests.usecase.interface';
+import type { IBlockBuddyUsecase }      from '../../../application/usecase/interface/buddy-match/block-buddy.usecase.interface';
+import type { IUnblockBuddyUsecase }    from '../../../application/usecase/interface/buddy-match/unblock-buddy.usecase.interface';
+import type { IGetBlockedUsersUsecase } from '../../../application/usecase/interface/buddy-match/get-blocked-users.usecase.interface';
+
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import type { SaveBuddyPreferenceRequestDTO } from '../../../application/dto/buddy-match/request/save-buddy-preference.request.dto';
 import type { RespondToBuddyRequestDTO }      from '../../../application/dto/buddy-match/request/respond-to-buddy-request.request.dto';
-import type { FindBuddyMatchesRequestDTO }    from '../../../application/dto/buddy-match/request/find-buddy-matches.request.dto';
+import { FindBuddyMatchesRequestDTO }    from '../../../application/dto/buddy-match/request/find-buddy-matches.request.dto';
+
 import { ResponseHelper } from '../../helpers/response.helper';
 import { HTTP_STATUS } from '../../../shared/constants/constants';
 
@@ -43,6 +48,15 @@ export class BuddyController implements IBuddyController {
 
     @inject('IGetSentRequestsUsecase')
     private readonly getSentRequestsUsecase: IGetSentRequestsUsecase,
+
+    @inject('IBlockBuddyUsecase')
+    private readonly blockBuddyUsecase: IBlockBuddyUsecase,
+
+    @inject('IUnblockBuddyUsecase')
+    private readonly unblockBuddyUsecase: IUnblockBuddyUsecase,
+
+    @inject('IGetBlockedUsersUsecase')
+    private readonly getBlockedUsersUsecase: IGetBlockedUsersUsecase,
   ) {}
 
   async savePreference(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
@@ -64,7 +78,7 @@ export class BuddyController implements IBuddyController {
   async findMatches(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const result = await this.findBuddyMatchesUsecase.execute(userId, req.query as any);
+      const result = await this.findBuddyMatchesUsecase.execute(userId, req.query as unknown as FindBuddyMatchesRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy matches fetched successfully', result);
     } catch (error) { next(error); }
   }
@@ -102,5 +116,52 @@ export class BuddyController implements IBuddyController {
       const result = await this.getSentRequestsUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Sent requests fetched successfully', result);
     } catch (error) { next(error); }
+  }
+
+  // ─── POST /api/v1/buddy/block/:targetUserId ───────────────────────────────
+  async blockUser(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId       = req.user!.id;
+      const targetUserId = req.params.targetUserId as string;
+      await this.blockBuddyUsecase.execute(userId, targetUserId);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'User blocked successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── POST /api/v1/buddy/unblock/:connectionId ─────────────────────────────
+  async unblockUser(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId       = req.user!.id;
+      const connectionId = req.params.connectionId as string;
+      await this.unblockBuddyUsecase.execute(userId, connectionId);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'User unblocked successfully');
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── GET /api/v1/buddy/blocked ────────────────────────────────────────────
+  async getBlockedUsers(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const data   = await this.getBlockedUsersUsecase.execute(userId);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Blocked users retrieved successfully', data);
+    } catch (error) {
+      next(error);
+    }
   }
 }

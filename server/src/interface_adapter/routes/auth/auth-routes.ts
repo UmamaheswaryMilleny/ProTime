@@ -5,6 +5,7 @@ import { BaseRoute } from "../base-route";
 import { asyncHandler } from "../../../shared/asyncHandler";
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import { verifyAuth } from "../../middlewares/auth.middleware";
+import { ROUTES } from "../../../shared/constants/constants.routes";
 
 import { AuthController } from "../../controllers/auth/auth-controller";
 
@@ -30,28 +31,28 @@ export class AuthRoutes extends BaseRoute {
 
     // Step 1: Submit registration data → stores temp user + sends OTP
     this.router.post(
-      "/register",
+      ROUTES.AUTH.REGISTER,
       validationMiddleware(RegisterRequestDTO),
       asyncHandler(ctrl.register.bind(ctrl)),
     );
 
     // Step 2: Send OTP (first time)
     this.router.post(
-      "/send-otp",
+      ROUTES.AUTH.SEND_OTP,
       validationMiddleware(SendOtpRequestDTO),
       asyncHandler(ctrl.sendOtp.bind(ctrl)),
     );
 
     // Step 3: Resend OTP if expired
     this.router.post(
-      "/resend-otp",
+      ROUTES.AUTH.RESEND_OTP,
       validationMiddleware(SendOtpRequestDTO),
       asyncHandler(ctrl.resendOtp.bind(ctrl)),
     );
 
     // Step 4: Verify OTP → promotes temp user to real user
     this.router.post(
-      "/verify-otp",
+      ROUTES.AUTH.VERIFY_OTP,
       validationMiddleware(VerifyOtpRequestDTO),
       asyncHandler(ctrl.verifyOtp.bind(ctrl)),
     );
@@ -59,14 +60,14 @@ export class AuthRoutes extends BaseRoute {
     // ─── Login / Logout ───────────────────────────────────────────────
 
     this.router.post(
-      "/login",
+      ROUTES.AUTH.LOGIN,
       validationMiddleware(LoginRequestDTO),
       asyncHandler(ctrl.login.bind(ctrl)),
     );
 
     // Logout — requires valid refresh token in cookie
     this.router.post(
-      "/logout",
+      ROUTES.AUTH.LOGOUT,
       verifyAuth,
       asyncHandler(ctrl.logout.bind(ctrl)),
     );
@@ -75,7 +76,7 @@ export class AuthRoutes extends BaseRoute {
 
     // Silent refresh — called by frontend when access token expires
     this.router.post(
-      "/refresh-token",
+      ROUTES.AUTH.REFRESH_TOKEN,
       asyncHandler(ctrl.refreshToken.bind(ctrl)),
     );
 
@@ -83,20 +84,20 @@ export class AuthRoutes extends BaseRoute {
 
     // Step 1: Request reset link
     this.router.post(
-      "/forgot-password",
+      ROUTES.AUTH.FORGOT_PASSWORD,
       validationMiddleware(ForgotPasswordRequestDTO),
       asyncHandler(ctrl.forgotPassword.bind(ctrl)),
     );
 
     // Step 2: Verify reset token is valid (called when user clicks link)
     this.router.get(
-      "/verify-reset-token",
+      ROUTES.AUTH.VERIFY_RESET_TOKEN,
       asyncHandler(ctrl.verifyResetToken.bind(ctrl)),
     );
 
     // Step 3: Submit new password
     this.router.post(
-      "/reset-password",
+      ROUTES.AUTH.RESET_PASSWORD,
       validationMiddleware(ResetPasswordRequestDTO),
       asyncHandler(ctrl.resetPassword.bind(ctrl)),
     );
@@ -104,7 +105,7 @@ export class AuthRoutes extends BaseRoute {
     // ─── Google OAuth ─────────────────────────────────────────────────
 
     this.router.post(
-      "/google",
+      ROUTES.AUTH.GOOGLE,
       validationMiddleware(GoogleAuthRequestDTO),
       asyncHandler(ctrl.googleAuth.bind(ctrl)),
     );

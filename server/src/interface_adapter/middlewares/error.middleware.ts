@@ -35,8 +35,12 @@ import {
   BadgeDefinitionNotFoundError,
   BadgeAlreadyEarnedError,
   PremiumBadgeRequiredError,
-  DailyChatLimitError,
 } from '../../domain/errors/gamification.error';
+
+import {
+  CommunityMessageLimitError,
+  EmptyMessageContentError,
+} from '../../domain/errors/community.errors';
 
 import { HTTP_STATUS } from '../../shared/constants/constants';
 
@@ -58,6 +62,9 @@ import {
   BuddyAlreadyConnectedError,
   BuddySelfMatchError,
   BuddyRequestAlreadyRespondedError,
+  InvalidSubjectDomainError,
+  BuddyAlreadyBlockedError,
+  UnauthorizedUnblockError,
 } from '../../domain/errors/buddy.errors';
 
 
@@ -98,7 +105,7 @@ export class ErrorMiddleware {
       err instanceof UserDeletedError ||
       err instanceof UnauthorizedTodoAccessError ||
       err instanceof PremiumBadgeRequiredError ||
-      err instanceof DailyChatLimitError ||   err instanceof BuddyMatchLimitError      ||       // ← add
+      err instanceof CommunityMessageLimitError ||   err instanceof BuddyMatchLimitError      ||       // ← add
   err instanceof UnauthorizedBuddyActionError  
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
@@ -127,7 +134,11 @@ export class ErrorMiddleware {
       err instanceof InvalidEstimatedTimeError || err instanceof SubscriptionNotCancellableError ||
   err instanceof BuddyAlreadyConnectedError       ||  // ← add
   err instanceof BuddySelfMatchError              ||  // ← add
-  err instanceof BuddyRequestAlreadyRespondedError    // ← add
+  err instanceof BuddyRequestAlreadyRespondedError || // ← add
+  err instanceof InvalidSubjectDomainError        ||
+  err instanceof BuddyAlreadyBlockedError         ||
+  err instanceof UnauthorizedUnblockError         ||
+  err instanceof EmptyMessageContentError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

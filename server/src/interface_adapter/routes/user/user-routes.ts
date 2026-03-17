@@ -10,6 +10,7 @@ import { UserController } from "../../controllers/user/user-controller";
 import { UpdateProfileRequestDTO } from "../../../application/dto/user/request/update-profile.request.dto";
 import { UserRole } from "../../../domain/enums/user.enums";
 import { uploadMiddleware } from "../../middlewares/upload.middleware";
+import { ROUTES } from "../../../shared/constants/constants.routes";
 
 @injectable()
 export class UserRoutes extends BaseRoute {
@@ -34,16 +35,16 @@ export class UserRoutes extends BaseRoute {
     // ─── Profile Routes ───────────────────────────────────────────────
 
     // Get own profile
-    this.router.get("/profile", asyncHandler(ctrl.getProfile.bind(ctrl)));
+    this.router.get(ROUTES.USER.PROFILE, asyncHandler(ctrl.getProfile.bind(ctrl)));
 
       // Update own profile
     this.router.put(
-      "/profile",
+      ROUTES.USER.PROFILE,
       validationMiddleware(UpdateProfileRequestDTO),
       asyncHandler(ctrl.updateProfile.bind(ctrl)),
     );
 this.router.patch(
-  '/profile/avatar',
+  ROUTES.USER.AVATAR,
   uploadMiddleware.single('avatar'),
   asyncHandler(ctrl.uploadAvatar.bind(ctrl)),
 );

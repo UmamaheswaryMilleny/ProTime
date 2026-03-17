@@ -1,6 +1,6 @@
 import { injectable } from 'tsyringe';
 import { container } from 'tsyringe';
-import express from 'express';
+
 
 import { BaseRoute } from '../base-route';
 import { asyncHandler } from '../../../shared/asyncHandler';
@@ -10,6 +10,7 @@ import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware
 import { SubscriptionController } from '../../controllers/subscription/subscription.controller';
 import { CreateCheckoutSessionRequestDTO } from '../../../application/dto/subscription/request/create-checkout-session.request.dto';
 import { UserRole } from '../../../domain/enums/user.enums';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 @injectable()
 export class SubscriptionRoutes extends BaseRoute {
@@ -26,7 +27,7 @@ export class SubscriptionRoutes extends BaseRoute {
     // express.raw() gives us the raw Buffer that Stripe requires for signature verification
     // No auth — Stripe calls this directly with its own signature
     this.router.post(
-      '/webhook',
+      ROUTES.SUBSCRIPTION.WEBHOOK,
       asyncHandler(ctrl.handleWebhook.bind(ctrl)),
     );
 
@@ -40,20 +41,20 @@ export class SubscriptionRoutes extends BaseRoute {
 
     // GET /api/v1/subscription/me
     this.router.get(
-      '/me',
+      ROUTES.SUBSCRIPTION.ME,
       asyncHandler(ctrl.getSubscription.bind(ctrl)),
     );
 
     // POST /api/v1/subscription/checkout
     this.router.post(
-      '/checkout',
+      ROUTES.SUBSCRIPTION.CHECKOUT,
       validationMiddleware(CreateCheckoutSessionRequestDTO),
       asyncHandler(ctrl.createCheckoutSession.bind(ctrl)),
     );
 
     // POST /api/v1/subscription/cancel
     this.router.post(
-      '/cancel',
+      ROUTES.SUBSCRIPTION.CANCEL,
       asyncHandler(ctrl.cancelSubscription.bind(ctrl)),
     );
   }

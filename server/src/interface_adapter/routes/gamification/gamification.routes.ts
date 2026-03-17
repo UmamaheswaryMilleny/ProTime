@@ -6,6 +6,7 @@ import { verifyAuth, authorizeRole } from '../../middlewares/auth.middleware';
 import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware';
 import { GamificationController } from '../../controllers/gamification/gamification.controller';
 import { UserRole } from '../../../domain/enums/user.enums';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 @injectable()
 export class GamificationRoutes extends BaseRoute {
@@ -25,7 +26,7 @@ export class GamificationRoutes extends BaseRoute {
     // Returns XP, level, title, streak, badges for the dashboard
     // Also lazily resets daily counters if it's a new day
     this.router.get(
-      '/',
+      ROUTES.GAMIFICATION.ROOT,
       asyncHandler(ctrl.getGamification.bind(ctrl)),
     );
   }
