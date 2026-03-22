@@ -18,7 +18,7 @@ export class CreateCheckoutSessionUsecase implements ICreateCheckoutSessionUseca
     @inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository,
 
     @inject('IStripeService')

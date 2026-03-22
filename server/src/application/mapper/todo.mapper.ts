@@ -19,6 +19,8 @@ export class TodoMapper {
       pomodoroEnabled: todo.pomodoroEnabled,
       pomodoroCompleted: todo.pomodoroCompleted,
       actualPomodoroTime: todo.actualPomodoroTime,
+      pomodoroStatus: todo.pomodoroStatus,
+      lastPausedAt: todo.lastPausedAt ? todo.lastPausedAt.toISOString() : null,
       // breakTime: todo.breakTime,
       smartBreaks: todo.smartBreaks,
 

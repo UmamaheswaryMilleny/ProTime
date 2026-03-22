@@ -1,4 +1,6 @@
-import { TodoPriority,TodoStatus } from "../../../../domain/enums/todo.enums";
+import { PomodoroStatus, TodoPriority, TodoStatus } from "../../../../domain/enums/todo.enums";
+
+import { AwardXpResponseDTO } from "../../gamification/response/award-xp.response.dto";
 
 //single todo respose returned on create, update, and inside the list response
 
@@ -13,6 +15,8 @@ export interface TodoResponseDTO{
     pomodoroEnabled:boolean;
     pomodoroCompleted:boolean;
     actualPomodoroTime:number|null;
+    pomodoroStatus?: PomodoroStatus;
+    lastPausedAt?: string | null;
     // breakTime:number|undefined;
     smartBreaks: boolean | null;
     baseXp:number;
@@ -26,5 +30,10 @@ export interface TodoResponseDTO{
     completedAt:string|null;
     createdAt:string;
     updatedAt:string;
+}
+
+export interface CompleteTodoResponseDTO {
+    todo: TodoResponseDTO;
+    xpResult: AwardXpResponseDTO;
 }
 

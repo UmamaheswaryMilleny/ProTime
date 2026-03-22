@@ -16,7 +16,7 @@ import type { IResetTokenStore } from "../../../service_interface/reset-token-st
 @injectable()
 export class ResetPasswordUsecase implements IResetPasswordUsecase {
   constructor(
-    @inject("UserRepository")
+    @inject("IUserRepository")
     private readonly userRepository: IUserRepository,
 
     @inject("IPasswordHasherService")

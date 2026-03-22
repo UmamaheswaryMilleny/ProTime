@@ -13,8 +13,8 @@ export class RefreshTokenUseCase implements IRefreshTokenUsecase {
 private tokenPort: ITokenService,
     @inject("IRefreshTokenStore")
     private refreshTokenStore: IRefreshTokenStore,
-       @inject("UserRepository")
-    private userRepository: IUserRepository
+       @inject("IUserRepository")
+    private readonly userRepository: IUserRepository
   ) {}
 
   async execute(refreshToken: string): Promise<RefreshTokenResponseDTO> {

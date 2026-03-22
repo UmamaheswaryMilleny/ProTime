@@ -28,10 +28,10 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
     @inject('IBuddyConnectionRepository')
     private readonly buddyConnectionRepo: IBuddyConnectionRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
 
-    @inject('ProfileRepository')
+    @inject('IProfileRepository')
     private readonly profileRepo: IProfileRepository,
   ) {}
 

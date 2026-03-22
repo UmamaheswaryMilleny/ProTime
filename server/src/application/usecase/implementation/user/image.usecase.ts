@@ -10,7 +10,7 @@ export class UploadProfileImageUsecase implements IUploadProfileImageUsecase {
     @inject('ICloudinaryService')
     private readonly cloudinaryService: ICloudinaryService,
 
-    @inject('ProfileRepository')
+    @inject('IProfileRepository')
     private readonly profileRepository: IProfileRepository,
   ) {}
 

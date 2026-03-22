@@ -16,7 +16,7 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
     @inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository,
 
     @inject('IStripeService')

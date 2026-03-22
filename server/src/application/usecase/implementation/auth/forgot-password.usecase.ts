@@ -14,7 +14,7 @@ import { config } from "../../../../shared/config";
 @injectable()
 export class ForgotPasswordUsecase implements IforgotPasswordUseCase {
   constructor(
-    @inject("UserRepository")
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository,
  @inject("ResetTokenStore")
     private readonly resetTokenStore: IResetTokenStore,

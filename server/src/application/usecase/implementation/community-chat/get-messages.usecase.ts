@@ -13,7 +13,7 @@ export class GetMessagesUsecase implements IGetMessagesUsecase {
     @inject('ICommunityMessageRepository')
     private readonly communityRepo: ICommunityMessageRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
   ) { }
 

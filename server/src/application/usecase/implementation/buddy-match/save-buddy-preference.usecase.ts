@@ -14,7 +14,7 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
     @inject('IBuddyPreferenceRepository')
     private readonly buddyPreferenceRepo: IBuddyPreferenceRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
   ) {}
 

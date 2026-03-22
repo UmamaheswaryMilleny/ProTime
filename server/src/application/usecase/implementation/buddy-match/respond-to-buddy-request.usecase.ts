@@ -9,6 +9,7 @@ import {
   BuddyRequestAlreadyRespondedError,
   BuddyMatchLimitError,
 } from '../../../../domain/errors/buddy.errors';
+import type { IConversationRepository } from '../../../../domain/repositories/chat/conversation.repository.interface';
 
 import { BuddyConnectionStatus } from '../../../../domain/enums/buddy.enums';
 import { FREE_MONTHLY_BUDDY_MATCHES } from '../../../../shared/constants/constants';
@@ -19,14 +20,16 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
     @inject('IBuddyConnectionRepository')
     private readonly buddyConnectionRepo: IBuddyConnectionRepository,
 
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
-  ) {}
+    @inject('IConversationRepository')
+    private readonly conversationRepo: IConversationRepository,
+  ) { }
 
   async execute(
-    receiverId:   string,
+    receiverId: string,
     connectionId: string,
-    dto:          RespondToBuddyRequestDTO,
+    dto: RespondToBuddyRequestDTO,
   ): Promise<void> {
 
     // 1. Fetch connection
@@ -46,7 +49,17 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
       await this.buddyConnectionRepo.updateStatus(connectionId, BuddyConnectionStatus.DECLINED);
       return;
     }
-
+    // Auto-create conversation room when buddies connect
+    // user1Id is always lexicographically smaller — prevents duplicate rooms
+    const [user1Id, user2Id] = [connection.userId, receiverId].sort();
+    const existing = await this.conversationRepo.findByBuddyConnectionId(connection.id);
+    if (!existing) {
+      await this.conversationRepo.save({
+        buddyConnectionId: connection.id,
+        user1Id,
+        user2Id,
+      });
+    }
     // 5. Accept — quota check on BOTH sides (both gain a connection)
     const [requester, receiver] = await Promise.all([
       this.userRepo.findById(connection.userId),
@@ -54,7 +67,7 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
     ]);
 
     const requesterIsPremium = requester?.isPremium ?? false;
-    const receiverIsPremium  = receiver?.isPremium  ?? false;
+    const receiverIsPremium = receiver?.isPremium ?? false;
 
     const [requesterCount, receiverCount] = await Promise.all([
       requesterIsPremium
@@ -67,7 +80,7 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
 
     if (
       (!requesterIsPremium && requesterCount >= FREE_MONTHLY_BUDDY_MATCHES) ||
-      (!receiverIsPremium  && receiverCount  >= FREE_MONTHLY_BUDDY_MATCHES)
+      (!receiverIsPremium && receiverCount >= FREE_MONTHLY_BUDDY_MATCHES)
     ) {
       throw new BuddyMatchLimitError();
     }

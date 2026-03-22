@@ -14,7 +14,7 @@ import type { UserEntity } from "../../../../domain/entities/user.entity";
 @injectable()
 export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
   constructor(
-    @inject("UserRepository")
+    @inject("IUserRepository")
     private readonly userRepository: IUserRepository,
 
     @inject("SocialAuthPort")
@@ -26,7 +26,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
     @inject("IRefreshTokenStore")
     private readonly refreshTokenStore: IRefreshTokenStore,
 
-    @inject("ProfileRepository")
+    @inject("IProfileRepository")
     private readonly profileRepository: IProfileRepository,
 
     @inject("IInitializeGamificationUsecase")

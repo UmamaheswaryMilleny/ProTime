@@ -16,7 +16,7 @@ import type { IProfileRepository } from '../../../../domain/repositories/profile
 @injectable()
 export class LoginUsecase implements ILoginUsecase {
   constructor(
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userReposiroy: IUserRepository,
     @inject('ITokenService')
     private readonly tokenService: ITokenService,
@@ -24,7 +24,7 @@ export class LoginUsecase implements ILoginUsecase {
     private readonly passwordHasherService: IPasswordHasherService,
     @inject('IRefreshTokenStore')
     private readonly refreshTokenStore: IRefreshTokenStore,
-    @inject('ProfileRepository')
+    @inject('IProfileRepository')
     private readonly profileRepository: IProfileRepository,
   ) {}
 

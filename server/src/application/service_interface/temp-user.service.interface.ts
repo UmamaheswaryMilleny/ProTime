@@ -1,9 +1,9 @@
 import { UserRole } from "../../domain/enums/user.enums";
+
 export interface TempUser {
   fullName:string;
   passwordHash: string;
   role: UserRole;
-  // role: string;
 }
 
 export interface ITempUserService{

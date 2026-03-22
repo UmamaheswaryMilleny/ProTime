@@ -13,7 +13,7 @@ import { MAIL_CONTENT_PURPOSE } from '../../../../shared/constants/constants';
 @injectable()
 export class RegisterUsecase implements IRegisterUsecase {
   constructor(
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository,
     @inject('ITempUserService')
     private readonly tempUserService: ITempUserService,

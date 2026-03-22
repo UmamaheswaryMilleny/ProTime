@@ -13,7 +13,7 @@ export class GetPendingRequestsUsecase implements IGetPendingRequestsUsecase {
   constructor(
     @inject('IBuddyConnectionRepository')
     private readonly buddyConnectionRepo: IBuddyConnectionRepository,
-    @inject('ProfileRepository')
+    @inject('IProfileRepository')
     private readonly profileRepo: IProfileRepository,
     @inject('IBuddyPreferenceRepository')
     private readonly buddyPreferenceRepo: IBuddyPreferenceRepository,

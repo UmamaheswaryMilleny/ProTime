@@ -3,8 +3,8 @@ import type { ICompleteTodoUsecase } from "../../interface/todo/todo.complete.us
 import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
 import type { IGamificationRepository } from "../../../../domain/repositories/gamification/gamification.repository.interface";
 import type { IAwardXpUsecase } from "../../interface/gamification/award-xp.usecase.interface";
-import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
 import { TodoMapper } from "../../../mapper/todo.mapper";
+import type { CompleteTodoResponseDTO, TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
 import {
   TodoStatus,
   TodoPriority,
@@ -37,7 +37,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     userId: string,
     todoId: string,
     isPremium: boolean,
-  ): Promise<TodoResponseDTO> {
+  ): Promise<CompleteTodoResponseDTO> {
     // 1. Find the todo
     const todo = await this.todoRepository.findById(todoId);
     if (!todo) throw new TodoNotFoundError();
@@ -87,7 +87,7 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
         : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'
           : 'TODO_LOW';
 
-    await this.awardXpUsecase.execute({
+    const xpResult = await this.awardXpUsecase.execute({
       userId,
       xp: xpToAward,
       isPremium,
@@ -96,6 +96,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     });
 
 
-    return TodoMapper.toResponse(updated);
+    return {
+        todo: TodoMapper.toResponse(updated),
+        xpResult
+    };
   }
-}
+}

@@ -4,20 +4,20 @@ import type { ITempUserService } from "../../../service_interface/temp-user.serv
 import type { IVerifyOtpUsecase } from "../../interface/auth/verify-otp.usecase.interface";
 import { InvalidOtpError } from "../../../../domain/errors/user.error";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
-import { AuthProvider } from "../../../../domain/enums/user.enums";
+import { AuthProvider, UserRole } from "../../../../domain/enums/user.enums";
 import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
 import type { IInitializeGamificationUsecase } from "../../interface/gamification/initialize.usecase.interface";
 
 @injectable()
 export class VerifyOtpUseCase implements IVerifyOtpUsecase {
   constructor(
-    @inject("UserRepository")
+    @inject("IUserRepository")
     private readonly userRepository: IUserRepository,
     @inject("ITempUserService")
     private readonly tempUserService: ITempUserService,
     @inject("IOtpService")
     private readonly otpService: IOtpService,
-       @inject("ProfileRepository")
+       @inject("IProfileRepository")
     private readonly profileRepository: IProfileRepository,
     @inject('IInitializeGamificationUsecase')
 private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
@@ -30,7 +30,7 @@ private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
     let isValid = await this.otpService.verifyOtp({ email, otp });
     if (!isValid) throw new InvalidOtpError();
 
-    //2. Load Temp User
+    //2. Load Temo User
     const tempUser = await this.tempUserService.getUser(email);
     if (!tempUser) throw new InvalidOtpError();
 
