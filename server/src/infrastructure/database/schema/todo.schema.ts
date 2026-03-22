@@ -1,5 +1,5 @@
 import { Schema, Types } from "mongoose";
-import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
+import { PomodoroStatus, TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
 
 export const TodoSchema = new Schema(
   {
@@ -56,6 +56,15 @@ export const TodoSchema = new Schema(
     },
     smartBreaks: {
       type: Boolean,
+      default: null,
+    },
+    pomodoroStatus: {
+      type: String,
+      enum: Object.values(PomodoroStatus),
+      default: PomodoroStatus.IDLE,
+    },
+    lastPausedAt: {
+      type: Date,
       default: null,
     },
 

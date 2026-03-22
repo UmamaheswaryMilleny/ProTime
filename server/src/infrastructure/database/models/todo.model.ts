@@ -1,6 +1,6 @@
 import mongoose, { Document, Model, Types } from "mongoose";
 import { TodoSchema } from "../schema/todo.schema";
-import { TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
+import { PomodoroStatus, TodoPriority, TodoStatus } from "../../../domain/enums/todo.enums";
 
 export interface TodoDocument extends Document {
   userId: Types.ObjectId;
@@ -13,6 +13,8 @@ export interface TodoDocument extends Document {
   pomodoroEnabled: boolean;
   pomodoroCompleted: boolean;
   actualPomodoroTime?: number | null;
+  pomodoroStatus?: PomodoroStatus;
+  lastPausedAt?: Date | null;
   smartBreaks?: boolean;
 
   baseXp: number;

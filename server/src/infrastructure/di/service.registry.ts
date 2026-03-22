@@ -65,10 +65,19 @@ import { BlockedUserMiddleware } from '../../interface_adapter/middlewares/block
 import type { ICommunityMessageRepository } from '../../domain/repositories/community/community.repository.interface';
 import { CommunityMessageRepository } from '../repositories/community/community.repository';
 
+// chat
+import type { IConversationRepository } from '../../domain/repositories/chat/conversation.repository.interface';
+import type { IDirectMessageRepository } from '../../domain/repositories/chat/direct-message.repository.interface';
+import type { IChatSessionRepository } from '../../domain/repositories/chat/chat-session.repository.interface';
+import { ConversationRepository } from '../repositories/chat/conversation.repository';
+import { DirectMessageRepository } from '../repositories/chat/direct-message.repository';
+import { ChatSessionRepository } from '../repositories/chat/chat-session.repository';
+
+
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
-    container.register<IUserRepository>('UserRepository', {
+    container.register<IUserRepository>('IUserRepository', {
       useClass: MongoUserRepository,
     });
     container.register<ITodoRepository>('ITodoRepository', {
@@ -114,7 +123,7 @@ export class ServiceRegistry {
     container.register<ILoggerService>('ILoggerService', {
       useClass: WinstonLoggerAdapter,
     });
-    container.register<IProfileRepository>('ProfileRepository', {
+    container.register<IProfileRepository>('IProfileRepository', {
       useClass: MongoProfileRepository,
     });
 
@@ -166,5 +175,9 @@ export class ServiceRegistry {
         useClass: CommunityMessageRepository,
       },
     );
+
+    container.register<IConversationRepository>('IConversationRepository', { useClass: ConversationRepository });
+    container.register<IDirectMessageRepository>('IDirectMessageRepository', { useClass: DirectMessageRepository });
+    container.register<IChatSessionRepository>('IChatSessionRepository', { useClass: ChatSessionRepository });
   }
 }

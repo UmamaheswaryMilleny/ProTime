@@ -17,6 +17,8 @@ export class TodoMapper {
       pomodoroEnabled: doc.pomodoroEnabled,
       pomodoroCompleted: doc.pomodoroCompleted,
       actualPomodoroTime: doc.actualPomodoroTime ?? null,
+      pomodoroStatus: doc.pomodoroStatus,
+      lastPausedAt: doc.lastPausedAt ?? null,
       smartBreaks: doc.smartBreaks ?? null,
 expiryDate:doc.expiryDate??null,
       baseXp: doc.baseXp,
@@ -47,6 +49,8 @@ if (data.expiryDate !== undefined) result.expiryDate = data.expiryDate;
     if (data.pomodoroEnabled !== undefined) result.pomodoroEnabled = data.pomodoroEnabled;
     if (data.pomodoroCompleted !== undefined) result.pomodoroCompleted = data.pomodoroCompleted;
     if (data.actualPomodoroTime !== undefined) result.actualPomodoroTime = data.actualPomodoroTime;
+    if (data.pomodoroStatus !== undefined) result.pomodoroStatus = data.pomodoroStatus;
+    if (data.lastPausedAt !== undefined) result.lastPausedAt = data.lastPausedAt;
     if (data.smartBreaks !== undefined) result.smartBreaks = data.smartBreaks;
 
     if (data.baseXp !== undefined) result.baseXp = data.baseXp;

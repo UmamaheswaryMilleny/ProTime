@@ -28,6 +28,8 @@ import { UpdateTodoUsecase } from '../../application/usecase/implementation/todo
 import { DeleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.delete.usecase';
 import { CompleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.complete.usecase';
 import { CompletePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.complete.usecase';
+import { PausePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.pause.usecase';
+import { ResumePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.resume.usecase';
 
 //todo
 import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface';
@@ -36,6 +38,8 @@ import type { IUpdateTodoUsecase } from '../../application/usecase/interface/tod
 import type { IDeleteTodoUsecase } from '../../application/usecase/interface/todo/todo.delete.usecase.interface';
 import type { ICompleteTodoUsecase } from '../../application/usecase/interface/todo/todo.complete.usecase.interface';
 import type { ICompletePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-complete.usecase.interface';
+import type { IPausePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-pause.usecase.interface';
+import type { IResumePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-resume.usecase.interface';
 
 //profile-upload
 import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
@@ -95,10 +99,25 @@ import { IGetLocationUsecase } from '../../application/usecase/interface/utility
 import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
 
 // community
-import { GetMessagesUsecase } from '../../application/usecase/implementation/community-chat/get-messages.usecase';
+import { GetMessagesUsecase as CommunityGetMessagesUsecase } from '../../application/usecase/implementation/community-chat/get-messages.usecase';
 import { SendMessageUsecase } from '../../application/usecase/implementation/community-chat/send-message.usecase';
-import type { IGetMessagesUsecase } from '../../application/usecase/interface/community-chat/get-messages.usecase.interface';
+import type { IGetMessagesUsecase as ICommunityGetMessagesUsecase } from '../../application/usecase/interface/community-chat/get-messages.usecase.interface';
 import type { ISendMessageUsecase } from '../../application/usecase/interface/community-chat/send-message.usecase.interface'
+
+//chat
+import { GetConversationsUsecase } from '../../application/usecase/implementation/chat/get-conversations.usecase';
+import { GetMessagesUsecase as ChatGetMessagesUsecase } from '../../application/usecase/implementation/chat/get-messages.usecase';
+import { SendDirectMessageUsecase } from '../../application/usecase/implementation/chat/send-direct-message.usecase';
+import { MarkAsReadUsecase } from '../../application/usecase/implementation/chat/mark-as-read.usecase';
+import { StartChatSessionUsecase } from '../../application/usecase/implementation/chat/start-chat-session.usecase';
+import { EndChatSessionUsecase } from '../../application/usecase/implementation/chat/end-chat-session.usecase';
+import type { IGetConversationsUsecase } from '../../application/usecase/interface/chat/get-conversations.usecase.interface';
+import type { IGetMessagesUsecase as IChatGetMessagesUsecase } from '../../application/usecase/interface/chat/get-messages.usecase.interface';
+import type { ISendDirectMessageUsecase } from '../../application/usecase/interface/chat/send-direct-message.usecase.interface';
+import type { IMarkAsReadUsecase } from '../../application/usecase/interface/chat/mark-as-read.usecase.interface';
+import type { IStartChatSessionUsecase } from '../../application/usecase/interface/chat/start-chat-session.usecase.interface';
+import type { IEndChatSessionUsecase } from '../../application/usecase/interface/chat/end-chat-session.usecase.interface';
+
 
 
 
@@ -166,6 +185,12 @@ export class UsecaseRegistry {
 
     container.register<ICompletePomodoroUsecase>('ICompletePomodoroUsecase', {
       useClass: CompletePomodoroUsecase,
+    });
+    container.register<IPausePomodoroUsecase>('IPausePomodoroUsecase', {
+      useClass: PausePomodoroUsecase,
+    });
+    container.register<IResumePomodoroUsecase>('IResumePomodoroUsecase', {
+      useClass: ResumePomodoroUsecase,
     });
 
     container.register<IUploadProfileImageUsecase>(
@@ -243,7 +268,16 @@ export class UsecaseRegistry {
     container.register<IGetLocationUsecase>('IGetLocationUsecase', { useClass: GetLocationUsecase });
 
     // community
-    container.register<IGetMessagesUsecase>('IGetMessagesUsecase', { useClass: GetMessagesUsecase });
+    container.register<ICommunityGetMessagesUsecase>('ICommunityGetMessagesUsecase', { useClass: CommunityGetMessagesUsecase });
     container.register<ISendMessageUsecase>('ISendMessageUsecase', { useClass: SendMessageUsecase });
+    
+    // chat
+    container.register<IGetConversationsUsecase>('IGetConversationsUsecase', { useClass: GetConversationsUsecase });
+    container.register<IChatGetMessagesUsecase>('IChatGetMessagesUsecase', { useClass: ChatGetMessagesUsecase });
+    container.register<ISendDirectMessageUsecase>('ISendDirectMessageUsecase', { useClass: SendDirectMessageUsecase });
+    container.register<IMarkAsReadUsecase>('IMarkAsReadUsecase', { useClass: MarkAsReadUsecase });
+    container.register<IStartChatSessionUsecase>('IStartChatSessionUsecase', { useClass: StartChatSessionUsecase });
+    container.register<IEndChatSessionUsecase>('IEndChatSessionUsecase', { useClass: EndChatSessionUsecase });
+
   }
 }
