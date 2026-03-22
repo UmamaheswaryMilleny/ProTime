@@ -1,4 +1,4 @@
-import { TodoPriority, TodoStatus } from '../enums/todo.enums';
+import { PomodoroStatus, TodoPriority, TodoStatus } from '../enums/todo.enums';
 
 export interface TodoEntity {
   id: string;
@@ -12,6 +12,8 @@ export interface TodoEntity {
   pomodoroEnabled: boolean;
   pomodoroCompleted: boolean;
   actualPomodoroTime: number | null; //null if pomodoro hasn't started yet
+  pomodoroStatus?: PomodoroStatus;
+  lastPausedAt?: Date | null;
   // breakTime?: number;
   smartBreaks: boolean | null; // null if pomodoro enabled false
   completedAt: Date | null;

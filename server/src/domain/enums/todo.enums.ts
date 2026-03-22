@@ -37,6 +37,12 @@ export const POMODORO_MIN_FOR_BONUS:Record<TodoPriority,number>={
 
 export const DAILY_XP_CAP = 50
 export const POMODORO_MAX_PAUSE_MINUTES = 15; 
+
+export enum PomodoroStatus {
+    STARTED = 'STARTED',
+    PAUSED = 'PAUSED',
+    IDLE = 'IDLE',
+}
 // export const BREAK_TIME={
 //     MIN_MINUTES:5,
 //     MAX_MINUTES:15,

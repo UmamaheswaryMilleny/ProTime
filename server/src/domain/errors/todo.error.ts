@@ -42,6 +42,18 @@ export class MissingTodoTitleError extends DomainError {
     super('Task title is required');
   }
 }
+
+export class PomodoroPauseLimitExceededError extends DomainError {
+  constructor() {
+    super('Pomodoro pause limit exceeded. Timer has been restarted.');
+  }
+}
+
+export class PomodoroNotPausedError extends DomainError {
+  constructor() {
+    super('Pomodoro is not currently paused');
+  }
+}
 // export class LowPriorityBreakTimeError extends DomainError {
 //   constructor() {
 //     super(`Break time is not available for LOW priority tasks`);
