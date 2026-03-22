@@ -113,3 +113,16 @@ export class MongoUserRepository
     };
   }
 }
+
+
+// async findByNameStartingWith(letter: string): Promise<UserEntity[]> {
+//   const docs = await this.model
+//     .find({
+//       fullName:  { $regex: `^${letter}`, $options: 'i' },
+//       isDeleted: false,
+//       role:      UserRole.CLIENT,
+//     })
+//     .exec();
+
+//   return docs.map(doc => UserMapper.toDomain(doc));
+// }

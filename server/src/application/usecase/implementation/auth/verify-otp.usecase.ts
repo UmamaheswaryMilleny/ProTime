@@ -30,7 +30,7 @@ private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
     let isValid = await this.otpService.verifyOtp({ email, otp });
     if (!isValid) throw new InvalidOtpError();
 
-    //2. Load Temo User
+    //2. Load Temp User
     const tempUser = await this.tempUserService.getUser(email);
     if (!tempUser) throw new InvalidOtpError();
 
