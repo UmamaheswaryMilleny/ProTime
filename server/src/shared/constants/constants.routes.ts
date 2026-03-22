@@ -10,6 +10,7 @@ export const ROUTES = {
     BUDDY: '/api/v1/buddy',
     UTILITY: '/api/v1/utility',
     COMMUNITY_CHAT: '/api/v1/community-chat',
+    CHAT: '/api/v1/chat',
   },
 
   // Auth Routes
@@ -81,4 +82,14 @@ export const ROUTES = {
   COMMUNITY_CHAT: {
     ROOT: '/',
   },
+
+  CHAT: {
+    CONVERSATIONS: '/',
+    MESSAGES: '/:conversationId/messages',
+    SEND_MESSAGE: '/:conversationId/messages',
+    MARK_AS_READ: '/:conversationId/read',
+    START_SESSION: '/:conversationId/session/start',
+    END_SESSION: '/:conversationId/session/end',
+  },
+
 };

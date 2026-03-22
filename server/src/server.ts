@@ -22,22 +22,23 @@ import { CommunityChatRoutes } from "./interface_adapter/routes/community-chat/c
 import { SocketIOService } from "./infrastructure/service/socket-service";
 import { JwtTokenService } from './infrastructure/service/token-service';
 import { ROUTES } from "./shared/constants/constants.routes";
+import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 
 interface CustomSocket extends Socket {
   userId?: string;
 }
 
 export class App {
-  private readonly app:        Application;
+  private readonly app: Application;
   private readonly httpServer: http.Server;
-  private readonly io:         SocketIOServer;
+  private readonly io: SocketIOServer;
 
   constructor() {
-    this.app        = express();
+    this.app = express();
     this.httpServer = http.createServer(this.app);
-    this.io         = new SocketIOServer(this.httpServer, {
+    this.io = new SocketIOServer(this.httpServer, {
       cors: {
-        origin:      config.client.URI,
+        origin: config.client.URI,
         credentials: true,
       },
     });
@@ -74,17 +75,17 @@ export class App {
 
   private configureRoutes(): void {
     this.app.get('/', (_req, res) => res.send('Server is running'));
-    this.app.use(ROUTES.BASE.AUTH,           container.resolve(AuthRoutes).router);
-    this.app.use(ROUTES.BASE.ADMIN,          container.resolve(AdminRoutes).router);
-    this.app.use(ROUTES.BASE.USER,           container.resolve(UserRoutes).router);
-    this.app.use(ROUTES.BASE.TODO,           container.resolve(TodoRoutes).router);
-    this.app.use(ROUTES.BASE.SUBSCRIPTION,   container.resolve(SubscriptionRoutes).router);
-    this.app.use(ROUTES.BASE.GAMIFICATION,   container.resolve(GamificationRoutes).router);
-    this.app.use(ROUTES.BASE.BUDDY,          container.resolve(BuddyRoutes).router);
-    this.app.use(ROUTES.BASE.UTILITY,        container.resolve(UtilityRoutes).router);
+    this.app.use(ROUTES.BASE.AUTH, container.resolve(AuthRoutes).router);
+    this.app.use(ROUTES.BASE.ADMIN, container.resolve(AdminRoutes).router);
+    this.app.use(ROUTES.BASE.USER, container.resolve(UserRoutes).router);
+    this.app.use(ROUTES.BASE.TODO, container.resolve(TodoRoutes).router);
+    this.app.use(ROUTES.BASE.SUBSCRIPTION, container.resolve(SubscriptionRoutes).router);
+    this.app.use(ROUTES.BASE.GAMIFICATION, container.resolve(GamificationRoutes).router);
+    this.app.use(ROUTES.BASE.BUDDY, container.resolve(BuddyRoutes).router);
+    this.app.use(ROUTES.BASE.UTILITY, container.resolve(UtilityRoutes).router);
     this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
+    this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
   }
-
   private configureSocket(): void {
     const tokenService = new JwtTokenService();
 
@@ -96,26 +97,38 @@ export class App {
 
         if (!token) return next(new Error('Authentication required'));
 
-    const payload = tokenService.verifyAccess(token);
-if (!payload) return next(new Error('Invalid or expired token'));
+        const payload = tokenService.verifyAccess(token);
+        if (!payload) return next(new Error('Invalid or expired token'));
 
-(socket as CustomSocket).userId = payload.id;
-next();
+        (socket as any).userId = payload.id;
+        next();
       } catch {
         next(new Error('Invalid or expired token'));
       }
     });
 
+    const socketService = new SocketIOService(this.io);
+    container.register('ISocketService', { useValue: socketService });
+
     this.io.on('connection', (socket) => {
-      const userId = (socket as CustomSocket).userId;
+      const userId = (socket as any).userId as string;
       console.log(`[Socket] User connected: ${userId}`);
+
+      // Track online status
+      socketService.setUserOnline(userId, socket.id);
+      this.io.emit('user:online', { userId });
+
+      // Join conversation rooms — client sends list of conversationIds
+      socket.on('join:conversations', (conversationIds: string[]) => {
+        conversationIds.forEach(id => socket.join(`conversation:${id}`));
+      });
+
       socket.on('disconnect', () => {
+        socketService.setUserOffline(userId);
+        this.io.emit('user:offline', { userId });
         console.log(`[Socket] User disconnected: ${userId}`);
       });
     });
-
-    const socketService = new SocketIOService(this.io);
-    container.register('ISocketService', { useValue: socketService });
   }
 
   private configureErrorHandling(): void {
