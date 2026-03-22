@@ -30,6 +30,10 @@ const badges: Badge[] = [
 ];
 
 
+// ─── Module-level guard ─────────────────────────────────────────────────────
+// Persists across remounts so the IP lookup fires at most once per session
+let detectionAttempted = false;
+
 export const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { preferences, loading } = useAppSelector((state) => state.buddy);
@@ -41,7 +45,7 @@ export const ProfilePage: React.FC = () => {
 
   const [isEditingProfile, setIsEditingProfile] = React.useState(false);
   const [isSavingProfile, setIsSavingProfile] = React.useState(false);
-  const detectionAttempted = React.useRef(false);
+
 
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = React.useState(false);
   const [languageSearch, setLanguageSearch] = React.useState('');
@@ -75,10 +79,10 @@ export const ProfilePage: React.FC = () => {
       }));
       setAboutText(user.bio || '');
 
-      // Auto-detect location if they don't have one set yet
-      if (!user.country && !profileForm.country && !detectionAttempted.current) {
-        detectionAttempted.current = true;
-        
+      // Auto-detect location if they don't have one saved yet
+      if (!user.country && !detectionAttempted) {
+        detectionAttempted = true;
+
         import('../../../api/instance').then(({ ProTimeBackend }) => {
           ProTimeBackend.get(API_ROUTES.UTILITY_LOCATION)
             .then(res => {
@@ -88,7 +92,7 @@ export const ProfilePage: React.FC = () => {
               }
             })
             .catch(() => {
-              // Silently fail
+              // Silently fail — country field stays empty
             });
         });
       }

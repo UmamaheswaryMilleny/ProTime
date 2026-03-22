@@ -8,19 +8,32 @@ import { useNavigate } from 'react-router-dom';
 export const TodaysTasksPanel: React.FC = () => {
     const { todos, isLoading, dailyXp, toggleTodo } = useTodo();
     const navigate = useNavigate();
-    const [activeFilter, setActiveFilter] = React.useState<'TOTAL' | 'COMPLETED' | 'EXPIRED'>('TOTAL');
+    const [activeFilter, setActiveFilter] = React.useState<'PENDING' | 'COMPLETED' | 'EXPIRED'>('PENDING');
+
+    // Helper: check if a date string falls on today
+    const isToday = (dateStr: string | null | undefined): boolean => {
+        if (!dateStr) return false;
+        const d = new Date(dateStr);
+        const today = new Date();
+        return (
+            d.getFullYear() === today.getFullYear() &&
+            d.getMonth() === today.getMonth() &&
+            d.getDate() === today.getDate()
+        );
+    };
 
     // Filter logic
     const filteredTasks = React.useMemo(() => {
         let list = [...todos];
         if (activeFilter === 'COMPLETED') {
-            list = list.filter(t => t.status === 'COMPLETED');
+            // Only tasks completed today
+            list = list.filter(t => t.status === 'COMPLETED' && isToday(t.completedAt));
         } else if (activeFilter === 'EXPIRED') {
-            list = list.filter(t => t.status === 'EXPIRED');
+            // Only tasks that expired today
+            list = list.filter(t => t.status === 'EXPIRED' && isToday(t.expiryDate));
         } else {
-            // "Total" in this context usually means "Pending" or "All"
-            // The user requested: Total, Completed, Expired.
-            // I'll show All for Total.
+            // PENDING: only show tasks that are not completed or expired
+            list = list.filter(t => t.status === 'PENDING');
         }
         return list.slice(0, 10);
     }, [todos, activeFilter]);
@@ -48,7 +61,7 @@ export const TodaysTasksPanel: React.FC = () => {
 
                     {/* Filter Bar */}
                     <div className="flex bg-zinc-900/50 p-1 rounded-xl border border-white/5">
-                        {(['TOTAL', 'COMPLETED', 'EXPIRED'] as const).map((filter) => (
+                        {(['PENDING', 'COMPLETED', 'EXPIRED'] as const).map((filter) => (
                             <button
                                 key={filter}
                                 onClick={() => setActiveFilter(filter)}
@@ -115,12 +128,18 @@ export const TodaysTasksPanel: React.FC = () => {
                         ))
                     ) : (
                         <div className="text-center py-12 border border-dashed border-zinc-800 rounded-xl">
-                            <p className="text-zinc-500">No tasks found for this filter.</p>
+                            <p className="text-zinc-500">
+                                {activeFilter === 'COMPLETED'
+                                    ? '0 tasks completed today'
+                                    : activeFilter === 'EXPIRED'
+                                    ? 'No tasks expired today'
+                                    : 'No pending tasks — great job! 🎉'}
+                            </p>
                         </div>
                     )}
                 </div>
 
-                {capReached && activeFilter === 'TOTAL' && (
+                {capReached && activeFilter === 'PENDING' && (
                     <div className="bg-zinc-500/10 rounded-xl p-4 text-center mt-2 border border-zinc-700/50">
                         <p className="text-[#A1A1AA] text-sm">
                             Daily XP limit reached. Keep going to maintain your streak.

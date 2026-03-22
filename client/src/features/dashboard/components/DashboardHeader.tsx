@@ -5,6 +5,7 @@ import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { logoutUser } from '../../auth/store/authSlice';
 import { ProTimeBackend } from '../../../api/instance';
 import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
+import { socketService } from '../../../shared/services/socketService';
 
 import { useGamification } from '../../gamification/hooks/useGamification';
 
@@ -37,6 +38,7 @@ export const DashboardHeader: React.FC = () => {
       // Backend logout failed (token already expired, network error, etc.)
       // Still clear local state — user should always be able to log out
     } finally {
+      socketService.disconnect(); // Close socket cleanly on logout
       dispatch(logoutUser());
       navigate(ROUTES.LOGIN);
     }

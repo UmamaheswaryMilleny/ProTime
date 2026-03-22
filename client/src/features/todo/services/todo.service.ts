@@ -1,6 +1,6 @@
 import { ProTimeBackend as api } from '../../../api/instance';
 import { API_ROUTES } from '../../../shared/constants/constants.routes';
-import type { TodoItem, CreateTodoDTO, UpdateTodoDTO, TodoListResponse } from '../types/todo.types';
+import type { TodoItem, CreateTodoDTO, UpdateTodoDTO, TodoListResponse, CompleteTodoResponse } from '../types/todo.types';
 
 export const todoService = {
     getTodos: async (filter: 'all' | 'pending' | 'completed' = 'all'): Promise<TodoListResponse> => {
@@ -22,7 +22,7 @@ export const todoService = {
         await api.delete(API_ROUTES.TODO_BY_ID(id));
     },
 
-    completeTodo: async (id: string): Promise<TodoItem> => {
+    completeTodo: async (id: string): Promise<CompleteTodoResponse> => {
         const response = await api.patch(API_ROUTES.TODO_COMPLETE(id));
         return response.data.data;
     },

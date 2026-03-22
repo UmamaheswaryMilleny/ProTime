@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useGamification } from '../../gamification/hooks/useGamification';
 import { useTodo } from '../../todo/hooks/useTodo';
-import { useAppSelector } from '../../../store/hooks';
+
 
 export const HeroProgressCard: React.FC = () => {
     const { gamification, isLoading: isGamificationLoading } = useGamification();

@@ -14,6 +14,7 @@ import {
 } from '../types/buddy.types';
 import { ChevronDown, ShieldCheck, Search } from 'lucide-react';
 import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
+import toast from 'react-hot-toast';
 
 interface BuddyPreferenceFormProps {
   initialData: BuddyPreference | null;
@@ -44,7 +45,7 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
     focusLevel: FocusLevel.CASUAL,
     studyPreference: StudyPreference.FLEXIBLE,
     groupStudy: GroupStudy.MAYBE,
-    studyMode: StudyMode.ANY,
+    studyMode: StudyMode.TOGETHER,
   });
 
   const [searchStates, setSearchStates] = useState({
@@ -80,6 +81,12 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!formData.country) {
+      toast.error('Please select a country.');
+      return;
+    }
+
     // Prepare data - only send whitelisted DTO fields
     const submissionData: any = {};
     const whitelistedFields = [

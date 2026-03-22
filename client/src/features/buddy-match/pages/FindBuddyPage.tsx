@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { HelpCircle, User, ArrowRight, ShieldOff } from 'lucide-react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import {
   fetchPreferences,
@@ -24,11 +24,13 @@ import { BlockedUserCard } from '../components/BlockedUserCard';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import type { BuddyProfile, BuddyConnection } from '../types/buddy.types';
 import { buddyService } from '../services/buddy.service';
+import { chatApi } from '../../chat/api/chatApi';
 import { toast } from 'react-hot-toast';
 
 export const FindBuddyPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
+  const navigate = useNavigate();
   const {
     preferences,
     matches,
@@ -48,7 +50,7 @@ export const FindBuddyPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked'>(getTabFromPath(location.pathname));
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedBuddy, setSelectedBuddy] = useState<BuddyProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -415,10 +417,26 @@ export const FindBuddyPage: React.FC = () => {
                         key={conn.id}
                         buddy={conn.buddy!}
                         status="CONNECTED"
-                        onAction={(action) => {
+                        onAction={async (action) => {
                           if (action === 'view') setSelectedBuddy(conn.buddy!);
                           if (action === 'block' && conn.buddy?.userId)
                             handleBlock(conn.buddy.userId, conn.buddy.username || conn.buddy.fullName);
+                          if (action === 'chat') {
+                            try {
+                              const loadingId = toast.loading('Opening chat...');
+                              const result = await chatApi.getConversations();
+                              toast.dismiss(loadingId);
+                              const conv = result.data.find(c => c.buddyConnectionId === conn.id || c.otherUser.userId === conn.buddy?.userId);
+                              if (conv) {
+                                navigate(`/dashboard/chat/${conv.id}`);
+                              } else {
+                                toast.error('Check your messages; chat could not be found right now.', { icon: '🥲' });
+                                navigate('/dashboard/chat');
+                              }
+                            } catch (error) {
+                              toast.error('Failed to load chat');
+                            }
+                          }
                         }}
                       />
                     ))

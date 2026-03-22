@@ -28,3 +28,15 @@ export interface GamificationData {
     createdAt: string;
     updatedAt: string;
 }
+
+export interface AwardXpResponse {
+    xpAwarded: number;
+    totalXp: number;
+    currentLevel: number;
+    currentTitle: string;
+    leveledUp: boolean;
+    newBadges: UserBadge[];
+    streakUpdated: boolean;
+    streakBonus: number;
+    capReached: boolean;
+}

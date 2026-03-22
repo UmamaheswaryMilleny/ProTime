@@ -43,7 +43,7 @@ export const useAdminLogin = () => {
                 return;
             }
 
-            dispatch(loginUser({ id, email, fullName: 'Admin', role, accessToken }));
+            dispatch(loginUser({ id, email, fullName: 'Admin', role, accessToken, isPremium: false }));
             toast.success('Welcome, Admin!');
             navigate(ROUTES.ADMIN_DASHBOARD);
         } catch (error) {

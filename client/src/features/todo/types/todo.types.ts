@@ -48,4 +48,11 @@ export interface CreateTodoDTO {
     expiryDate?: string | null;
 }
 
+import type { AwardXpResponse } from "../../gamification/types/gamification.types";
+
 export type UpdateTodoDTO = Partial<CreateTodoDTO>;
+
+export interface CompleteTodoResponse {
+    todo: TodoItem;
+    xpResult: AwardXpResponse;
+}

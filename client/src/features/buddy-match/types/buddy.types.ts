@@ -142,9 +142,8 @@ export const GroupStudy = {
 export type GroupStudy = typeof GroupStudy[keyof typeof GroupStudy];
 
 export const StudyMode = {
-  ANY: 'ANY',
+  TOGETHER: 'TOGETHER',
   SOLO: 'SOLO',
-  GROUP: 'GROUP',
 } as const;
 export type StudyMode = typeof StudyMode[keyof typeof StudyMode];
 

@@ -2,8 +2,11 @@ import { useState, useCallback, useEffect } from 'react';
 import type { TodoItem, CreateTodoDTO } from '../types/todo.types';
 import { todoService } from '../services/todo.service';
 import toast from 'react-hot-toast';
+import { useAppDispatch } from '../../../store/hooks';
+import { addBadgeNotification, updateGamificationLocal } from '../../gamification/store/gamificationSlice';
 
 export const useTodo = () => {
+    const dispatch = useAppDispatch();
     const [todos, setTodos] = useState<TodoItem[]>([]);
     const [stats, setStats] = useState({ total: 0, completed: 0, expired: 0, shared: 0, progress: 0 });
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -62,23 +65,64 @@ export const useTodo = () => {
                 await todoService.completePomodoro(id, Math.max(0, actualPomodoroTime));
 
                 // 2. Automatically complete the task itself
-                updatedTodo = await todoService.completeTodo(id);
+                const completeResponse = await todoService.completeTodo(id);
+                updatedTodo = completeResponse.todo;
+                const { xpResult } = completeResponse;
 
-                // 3. Earned XP is base + bonus
-                earnedXp = updatedTodo.baseXp + updatedTodo.bonusXp;
+                // 3. Earned XP is total from this action
+                earnedXp = xpResult.xpAwarded;
 
                 toast.success(`Pomodoro & Task Complete! Earned ${earnedXp}XP`, {
                     icon: '🚀',
                     duration: 5000
                 });
+
+                // Show badge notifications
+                if (xpResult.newBadges?.length > 0) {
+                    xpResult.newBadges.forEach((badge: any) => {
+                        dispatch(addBadgeNotification(badge));
+                    });
+                }
+
+                // Update local XP state for immediate dashboard refresh
+                dispatch(updateGamificationLocal({
+                    totalXp: xpResult.totalXp,
+                    currentLevel: xpResult.currentLevel,
+                    currentTitle: xpResult.currentTitle
+                }));
             } else {
-                updatedTodo = await todoService.completeTodo(id);
-                // Use actual XP awarded by the server
-                earnedXp = updatedTodo.baseXp + updatedTodo.bonusXp;
+                const completeResponse = await todoService.completeTodo(id);
+                updatedTodo = completeResponse.todo;
+                const { xpResult } = completeResponse;
+
+                earnedXp = xpResult.xpAwarded;
+
                 toast.success(`Task Complete! Earned ${earnedXp}XP`, {
                     icon: '⭐',
                     duration: 4000
                 });
+
+                // Show badge notifications
+                if (xpResult.newBadges?.length > 0) {
+                    xpResult.newBadges.forEach((badge: any) => {
+                        dispatch(addBadgeNotification(badge));
+                    });
+                }
+
+                // Update local XP state
+                dispatch(updateGamificationLocal({
+                    totalXp: xpResult.totalXp,
+                    currentLevel: xpResult.currentLevel,
+                    currentTitle: xpResult.currentTitle
+                }));
+
+                // Show level up
+                if (xpResult.leveledUp) {
+                    toast.success(`🎉 Level Up! You are now Level ${xpResult.currentLevel}: ${xpResult.currentTitle}`, {
+                        duration: 7000,
+                        icon: '🎊'
+                    });
+                }
             }
 
             if (updatedTodo.status === 'COMPLETED') {

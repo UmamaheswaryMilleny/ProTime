@@ -31,24 +31,24 @@ export const BadgeProgress: React.FC = () => {
                     earnedBadges.map((badge) => (
                         <div 
                             key={badge.id} 
-                            className="bg-[#1F1F23] rounded-xl p-5 border border-zinc-800 flex items-center gap-5 group hover:border-zinc-700 transition-all"
+                            className="bg-[#1F1F23] rounded-xl p-5 border border-yellow-500/20 flex items-center gap-5 group hover:border-yellow-500/40 transition-all shadow-[0_4px_20px_rgba(212,175,55,0.05)]"
                         >
-                            <div className="p-4 rounded-2xl bg-zinc-800 text-[blueviolet] group-hover:scale-110 transition-transform">
+                            <div className="p-4 rounded-2xl bg-gradient-to-br from-[#FFD700] via-[#FDB931] to-[#D4AF37] text-zinc-900 group-hover:scale-110 transition-transform shadow-lg shadow-yellow-500/20">
                                 <Award size={32} />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between mb-1">
                                     <h3 className="font-bold text-white truncate">{badge.name}</h3>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#22C55E] bg-[#22C55E]/10 px-2 py-0.5 rounded-full">
+                                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#FDB931] bg-[#FDB931]/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
                                         Earned
                                     </span>
                                 </div>
                                 <p className="text-xs text-[#A1A1AA] line-clamp-2">{badge.description}</p>
                                 <div className="mt-3 flex items-center gap-2">
                                     <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[blueviolet] w-full" />
+                                        <div className="h-full bg-gradient-to-r from-[#FDB931] to-[#D4AF37] w-full" />
                                     </div>
-                                    <span className="text-[10px] font-bold text-zinc-500">100%</span>
+                                    <span className="text-[10px] font-bold text-yellow-500/50">100%</span>
                                 </div>
                             </div>
                         </div>
