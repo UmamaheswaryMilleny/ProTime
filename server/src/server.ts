@@ -23,6 +23,7 @@ import { SocketIOService } from "./infrastructure/service/socket-service";
 import { JwtTokenService } from './infrastructure/service/token-service';
 import { ROUTES } from "./shared/constants/constants.routes";
 import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
+import { ConversationModel } from "./infrastructure/database/models/conversation.model";
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -127,6 +128,75 @@ export class App {
         socketService.setUserOffline(userId);
         this.io.emit('user:offline', { userId });
         console.log(`[Socket] User disconnected: ${userId}`);
+      });
+
+      // ─── WebRTC Signaling ─────────────────────────────────────────────────
+
+      // 1. Caller sends offer → find callee and forward
+      socket.on('webrtc:offer', async (data: { conversationId: string; offer: RTCSessionDescriptionInit }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+
+          // Determine which participant is the callee (not the caller)
+          const calleeId = conversation.user1Id.toString() === userId
+            ? conversation.user2Id.toString()
+            : conversation.user1Id.toString();
+
+          socketService.emitToUser(calleeId, 'webrtc:offer', {
+            conversationId: data.conversationId,
+            offer: data.offer,
+            callerName: 'Buddy', // resolved on client via Redux conversations state
+          });
+        } catch (err) {
+          console.error('[Socket] webrtc:offer relay error:', err);
+        }
+      });
+
+      // 2. Callee sends answer → forward back to caller
+      socket.on('webrtc:answer', async (data: { conversationId: string; answer: RTCSessionDescriptionInit }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+
+          // Caller is the other participant
+          const callerId = conversation.user1Id.toString() === userId
+            ? conversation.user2Id.toString()
+            : conversation.user1Id.toString();
+
+          socketService.emitToUser(callerId, 'webrtc:answer', {
+            conversationId: data.conversationId,
+            answer: data.answer,
+          });
+        } catch (err) {
+          console.error('[Socket] webrtc:answer relay error:', err);
+        }
+      });
+
+      // 3. ICE candidates — relay to the other participant
+      socket.on('webrtc:ice-candidate', async (data: { conversationId: string; candidate: RTCIceCandidateInit }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+
+          const peerId = conversation.user1Id.toString() === userId
+            ? conversation.user2Id.toString()
+            : conversation.user1Id.toString();
+
+          socketService.emitToUser(peerId, 'webrtc:ice-candidate', {
+            conversationId: data.conversationId,
+            candidate: data.candidate,
+          });
+        } catch (err) {
+          console.error('[Socket] webrtc:ice-candidate relay error:', err);
+        }
+      });
+
+      // 4. Call ended — notify everyone in the conversation room
+      socket.on('webrtc:call-ended', (data: { conversationId: string }) => {
+        socketService.emitToConversation(data.conversationId, 'webrtc:call-ended', {
+          conversationId: data.conversationId,
+        });
       });
     });
   }

@@ -112,7 +112,7 @@ import { MarkAsReadUsecase } from '../../application/usecase/implementation/chat
 import { StartChatSessionUsecase } from '../../application/usecase/implementation/chat/start-chat-session.usecase';
 import { EndChatSessionUsecase } from '../../application/usecase/implementation/chat/end-chat-session.usecase';
 import type { IGetConversationsUsecase } from '../../application/usecase/interface/chat/get-conversations.usecase.interface';
-import type { IGetMessagesUsecase as IChatGetMessagesUsecase } from '../../application/usecase/interface/chat/get-messages.usecase.interface';
+import type { IGetMessagesUsecase} from '../../application/usecase/interface/chat/get-messages.usecase.interface';
 import type { ISendDirectMessageUsecase } from '../../application/usecase/interface/chat/send-direct-message.usecase.interface';
 import type { IMarkAsReadUsecase } from '../../application/usecase/interface/chat/mark-as-read.usecase.interface';
 import type { IStartChatSessionUsecase } from '../../application/usecase/interface/chat/start-chat-session.usecase.interface';
@@ -273,7 +273,7 @@ export class UsecaseRegistry {
     
     // chat
     container.register<IGetConversationsUsecase>('IGetConversationsUsecase', { useClass: GetConversationsUsecase });
-    container.register<IChatGetMessagesUsecase>('IChatGetMessagesUsecase', { useClass: ChatGetMessagesUsecase });
+    container.register<IGetMessagesUsecase>('IGetMessagesUsecase', { useClass: ChatGetMessagesUsecase });
     container.register<ISendDirectMessageUsecase>('ISendDirectMessageUsecase', { useClass: SendDirectMessageUsecase });
     container.register<IMarkAsReadUsecase>('IMarkAsReadUsecase', { useClass: MarkAsReadUsecase });
     container.register<IStartChatSessionUsecase>('IStartChatSessionUsecase', { useClass: StartChatSessionUsecase });

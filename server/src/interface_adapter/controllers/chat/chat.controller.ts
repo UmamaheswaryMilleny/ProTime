@@ -21,7 +21,7 @@ export class ChatController implements IChatController {
         @inject('IGetConversationsUsecase')
         private readonly getConversationsUsecase: IGetConversationsUsecase,
 
-        @inject('IChatGetMessagesUsecase')
+        @inject('IGetMessagesUsecase')
         private readonly getMessagesUsecase: IGetMessagesUsecase,
 
         @inject('ISendDirectMessageUsecase')
