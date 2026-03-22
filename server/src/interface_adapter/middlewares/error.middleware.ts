@@ -24,7 +24,7 @@ import {
   PomodoroNotEnabledError,
   PomodoroAlreadyCompletedError,
   InvalidEstimatedTimeError,
-  TodoExpiredError,
+  TodoExpiredError
 } from '../../domain/errors/todo.error';
 
 import { ProfileNotFoundError } from '../../domain/errors/profile.error';
@@ -67,6 +67,15 @@ import {
   UnauthorizedUnblockError,
 } from '../../domain/errors/buddy.errors';
 
+// ─── Chat errors ───────────────────────────────────────────────────────────
+import {
+  ConversationNotFoundError,
+  MessageNotFoundError,
+  NotABuddyError,
+  UnauthorizedMessageError,
+  SessionAlreadyActiveError,
+  SessionNotActiveError,
+} from '../../domain/errors/chat.errors';
 
 export class ErrorMiddleware {
   public handleError(
@@ -82,9 +91,10 @@ export class ErrorMiddleware {
       err instanceof TodoNotFoundError ||
       err instanceof ProfileNotFoundError ||
       err instanceof GamificationNotFoundError ||
-      err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError  ||
-  err instanceof BuddyNotFoundError       ||        // ← add
-  err instanceof BuddyPreferenceNotFoundError       // ← add
+      err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError ||
+      err instanceof BuddyNotFoundError ||        // ← add
+      err instanceof BuddyPreferenceNotFoundError || err instanceof ConversationNotFoundError ||
+      err instanceof MessageNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -105,8 +115,9 @@ export class ErrorMiddleware {
       err instanceof UserDeletedError ||
       err instanceof UnauthorizedTodoAccessError ||
       err instanceof PremiumBadgeRequiredError ||
-      err instanceof CommunityMessageLimitError ||   err instanceof BuddyMatchLimitError      ||       // ← add
-  err instanceof UnauthorizedBuddyActionError  
+      err instanceof CommunityMessageLimitError || err instanceof BuddyMatchLimitError ||       // ← add
+      err instanceof UnauthorizedBuddyActionError || err instanceof NotABuddyError ||
+      err instanceof UnauthorizedMessageError
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
       return;
@@ -132,13 +143,14 @@ export class ErrorMiddleware {
       err instanceof PomodoroNotEnabledError ||
       err instanceof PomodoroAlreadyCompletedError ||
       err instanceof InvalidEstimatedTimeError || err instanceof SubscriptionNotCancellableError ||
-  err instanceof BuddyAlreadyConnectedError       ||  // ← add
-  err instanceof BuddySelfMatchError              ||  // ← add
-  err instanceof BuddyRequestAlreadyRespondedError || // ← add
-  err instanceof InvalidSubjectDomainError        ||
-  err instanceof BuddyAlreadyBlockedError         ||
-  err instanceof UnauthorizedUnblockError         ||
-  err instanceof EmptyMessageContentError
+      err instanceof BuddyAlreadyConnectedError ||  // ← add
+      err instanceof BuddySelfMatchError ||  // ← add
+      err instanceof BuddyRequestAlreadyRespondedError || // ← add
+      err instanceof InvalidSubjectDomainError ||
+      err instanceof BuddyAlreadyBlockedError ||
+      err instanceof UnauthorizedUnblockError ||
+      err instanceof EmptyMessageContentError || err instanceof SessionAlreadyActiveError ||
+      err instanceof SessionNotActiveError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

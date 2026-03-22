@@ -9,7 +9,7 @@ import { HTTP_STATUS } from '../../../shared/constants/constants';
 @injectable()
 export class AdminController {
   constructor(
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository,
   ) {}
 

@@ -9,7 +9,7 @@ import type { CustomRequest } from './auth.middleware';
 @injectable()
 export class BlockedUserMiddleware {
   constructor(
-    @inject('UserRepository')
+    @inject('IUserRepository')
     private readonly userRepository: IUserRepository
   ) {}
 

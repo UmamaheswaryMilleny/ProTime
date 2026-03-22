@@ -8,4 +8,6 @@ export interface ITodoController {
   deleteTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   completeTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   completePomodoro(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  pausePomodoro(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  resumePomodoro(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

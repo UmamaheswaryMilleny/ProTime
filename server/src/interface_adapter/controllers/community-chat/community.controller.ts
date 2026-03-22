@@ -13,7 +13,7 @@ export class CommunityChatController implements ICommunityChatController {
   constructor(
     @inject('ISendMessageUsecase')
     private readonly sendMessageUsecase: ISendMessageUsecase,
-    @inject('IGetMessagesUsecase')
+    @inject('ICommunityGetMessagesUsecase')
     private readonly getMessagesUsecase: IGetMessagesUsecase,
   ) {}
 

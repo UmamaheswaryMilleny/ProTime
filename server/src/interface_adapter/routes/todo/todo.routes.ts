@@ -80,5 +80,17 @@ export class TodoRoutes extends BaseRoute {
       validationMiddleware(CompletePomodoroRequestDTO),
       asyncHandler(ctrl.completePomodoro.bind(ctrl)),
     );
+
+    // PATCH /api/v1/todos/:todoId/pomodoro/pause
+    this.router.patch(
+      ROUTES.TODO.BY_ID + '/pomodoro/pause',
+      asyncHandler(ctrl.pausePomodoro.bind(ctrl)),
+    );
+
+    // PATCH /api/v1/todos/:todoId/pomodoro/resume
+    this.router.patch(
+      ROUTES.TODO.BY_ID + '/pomodoro/resume',
+      asyncHandler(ctrl.resumePomodoro.bind(ctrl)),
+    );
   }
 }

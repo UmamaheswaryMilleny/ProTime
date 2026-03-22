@@ -8,6 +8,8 @@ import type { IUpdateTodoUsecase } from '../../../application/usecase/interface/
 import type { IDeleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.delete.usecase.interface';
 import type { ICompleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.complete.usecase.interface';
 import type { ICompletePomodoroUsecase } from '../../../application/usecase/interface/todo/pomodoro-complete.usecase.interface';
+import type { IPausePomodoroUsecase } from '../../../application/usecase/interface/todo/pomodoro-pause.usecase.interface';
+import type { IResumePomodoroUsecase } from '../../../application/usecase/interface/todo/pomodoro-resume.usecase.interface';
 
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import { ResponseHelper } from '../../helpers/response.helper';
@@ -33,6 +35,10 @@ export class TodoController implements ITodoController {
 
     @inject('ICompletePomodoroUsecase')
     private readonly completePomodoroUsecase: ICompletePomodoroUsecase,
+    @inject('IPausePomodoroUsecase')
+    private readonly pausePomodoroUsecase: IPausePomodoroUsecase,
+    @inject('IResumePomodoroUsecase')
+    private readonly resumePomodoroUsecase: IResumePomodoroUsecase,
   ) {}
 
   // ─── Create Todo ──────────────────────────────────────────────────────────
@@ -126,9 +132,9 @@ export class TodoController implements ITodoController {
       const todoId = req.params.todoId as string;
       const isPremium=req.user.isPremium
 
-      const todo = await this.completeTodoUsecase.execute(req.user.id, todoId,isPremium);
+      const result = await this.completeTodoUsecase.execute(req.user.id, todoId,isPremium);
 
-      ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.COMPLETED, todo);
+      ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.COMPLETED, result);
     } catch (error) {
       next(error);
     }
@@ -153,6 +159,38 @@ export class TodoController implements ITodoController {
       );
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.POMODORO_COMPLETED, todo);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async pausePomodoro(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        ResponseHelper.error(res, 'Unauthorized', HTTP_STATUS.UNAUTHORIZED);
+        return;
+      }
+
+      const todoId = req.params.todoId as string;
+      const todo = await this.pausePomodoroUsecase.execute(req.user.id, todoId);
+
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro paused successfully', todo);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async resumePomodoro(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        ResponseHelper.error(res, 'Unauthorized', HTTP_STATUS.UNAUTHORIZED);
+        return;
+      }
+
+      const todoId = req.params.todoId as string;
+      const todo = await this.resumePomodoroUsecase.execute(req.user.id, todoId);
+
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro resumed successfully', todo);
     } catch (error) {
       next(error);
     }

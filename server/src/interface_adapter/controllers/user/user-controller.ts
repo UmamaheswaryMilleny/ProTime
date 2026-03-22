@@ -13,10 +13,10 @@ import type { IUploadProfileImageUsecase } from "../../../application/usecase/in
 @injectable()
 export class UserController implements IUserController {
   constructor(
-    @inject("UserRepository")
+    @inject("IUserRepository")
     private readonly userRepository: IUserRepository,
 
-    @inject("ProfileRepository")
+    @inject("IProfileRepository")
     private readonly profileRepository: IProfileRepository,
     @inject('IUploadProfileImageUsecase')
 private readonly uploadProfileImageUsecase: IUploadProfileImageUsecase
