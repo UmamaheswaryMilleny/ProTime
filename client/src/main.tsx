@@ -8,12 +8,12 @@ import App from "./App";
 import "./index.css";
 
 createRoot(document.getElementById("root")!).render(
-  <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
-    <StrictMode>
+  <StrictMode>
+    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID}>
       <Provider store={store}>
         <App />
         <Toaster position="top-right" />
       </Provider>
-    </StrictMode>
-  </GoogleOAuthProvider>
+    </GoogleOAuthProvider>
+  </StrictMode>
 );

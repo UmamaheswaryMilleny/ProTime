@@ -42,6 +42,14 @@ class SocketService {
     emit(event: string, data: unknown) {
         this.socket?.emit(event, data);
     }
+
+    on(event: string, callback: (...args: any[]) => void) {
+        this.socket?.on(event, callback);
+    }
+
+    off(event: string, callback?: (...args: any[]) => void) {
+        this.socket?.off(event, callback);
+    }
 }
 
 export const socketService = new SocketService();

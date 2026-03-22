@@ -27,6 +27,7 @@ import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
 import { PlanDetailPage } from "./features/dashboard/pages/PlanDetailPage";
 import { PaymentPage } from "./features/dashboard/pages/PaymentPage";
 import { CommunityChatPage } from "./features/community-chat/pages/CommunityChatPage";
+import { ChatPage } from "./features/chat/pages/ChatPage";
 
 // Admin
 import { AdminLoginPage } from "./features/admin/pages/AdminLoginPage";
@@ -34,9 +35,12 @@ import { AdminLayout } from "./features/admin/layouts/AdminLayout";
 import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 
+import { BadgeEarnedModal } from "./features/gamification/components/BadgeEarnedModal";
+
 function App() {
   return (
     <BrowserRouter>
+      <BadgeEarnedModal />
       <Routes>
 
         {/* ─── Public Landing ───────────────────────────────────────────── */}
@@ -69,6 +73,8 @@ function App() {
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PLAN} element={<PlanDetailPage />} />
             <Route path={ROUTES.DASHBOARD_SUBSCRIPTION_PAYMENT} element={<PaymentPage />} />
             <Route path={ROUTES.DASHBOARD_COMMUNITY_CHAT} element={<CommunityChatPage />} />
+            <Route path={ROUTES.DASHBOARD_CHAT} element={<ChatPage />} />
+            <Route path={ROUTES.DASHBOARD_CHAT_CONVERSATION} element={<ChatPage />} />
           </Route>
         </Route>
 

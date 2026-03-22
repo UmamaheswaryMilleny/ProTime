@@ -20,6 +20,8 @@ export const ROUTES = {
   DASHBOARD_SUBSCRIPTION_PLAN: "/dashboard/subscription/plan",
   DASHBOARD_SUBSCRIPTION_PAYMENT: "/dashboard/subscription/payment",
   DASHBOARD_COMMUNITY_CHAT: "/dashboard/community-chat",
+  DASHBOARD_CHAT: "/dashboard/chat",
+  DASHBOARD_CHAT_CONVERSATION: "/dashboard/chat/:conversationId",
 
   // ─── Admin ────────────────────────────────────────────────────────────────
   ADMIN_LOGIN: "/admin/login",
@@ -74,6 +76,13 @@ export const API_ROUTES = {
 
   // ─── Community Chat ───────────────────────────────────────────────────────
   COMMUNITY_CHAT: "/community-chat",
+
+  // ─── Chat ─────────────────────────────────────────────────────────────────
+  CHAT_CONVERSATIONS: "/chat",
+  CHAT_MESSAGES:      (conversationId: string) => `/chat/${conversationId}/messages`,
+  CHAT_READ:          (conversationId: string) => `/chat/${conversationId}/read`,
+  CHAT_SESSION_START: (conversationId: string) => `/chat/${conversationId}/session/start`,
+  CHAT_SESSION_END:   (conversationId: string) => `/chat/${conversationId}/session/end`,
 
   // ─── Utility ──────────────────────────────────────────────────────────────
   UTILITY_LOCATION: "/utility/location",
