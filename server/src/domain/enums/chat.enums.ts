@@ -1,6 +1,7 @@
 export enum MessageType {
     TEXT = 'TEXT',
     SYSTEM = 'SYSTEM',
+    // AI = 'AI',
 }
 
 export enum MessageStatus {

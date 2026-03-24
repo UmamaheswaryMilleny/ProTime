@@ -18,6 +18,8 @@ export interface IConversationRepository
     updateLastMessage(
         conversationId: string,
         lastMessageAt: Date,
-        lastMessageBy: string,
+        lastMessageBy: string | null,
     ): Promise<ConversationEntity | null>;
+
+    // findAIConversation(userId: string): Promise<ConversationEntity | null>;
 }
