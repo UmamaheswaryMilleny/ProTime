@@ -1,5 +1,4 @@
-import { ReportStatus, ReportContext, ReportReason, ReportAction } from '../enums/report.enums';
-
+import type { ReportStatus, ReportContext, ReportReason, ReportAction } from '../enums/report.enums';
 
 // ─── ReportEntity ─────────────────────────────────────────────────────────────
 // Created when a user reports another user from Chat or Video Call.

@@ -11,7 +11,7 @@ console.log('ENV CHECK:', {
 
 process.on('uncaughtException', (err) => {
   console.error('🔥 UNCAUGHT EXCEPTION:', err.message);
-  console.error(err.stack);   // ← add stack trace
+  console.error(err.stack); // ← add stack trace
   process.exit(1);
 });
 
@@ -23,7 +23,7 @@ process.on('unhandledRejection', (reason) => {
 import { bootstrap } from './server';
 
 bootstrap().catch((err) => {
-  console.error('❌ Server startup failed:', err.message);  // ← add .message
-  console.error(err.stack);   // ← add stack trace
+  console.error('❌ Server startup failed:', err.message); // ← add .message
+  console.error(err.stack); // ← add stack trace
   process.exit(1);
 });

@@ -1,22 +1,22 @@
-import { injectable } from "tsyringe";
-import { container } from "tsyringe";
+import { injectable } from 'tsyringe';
+import { container } from 'tsyringe';
 
-import { BaseRoute } from "../base-route";
-import { asyncHandler } from "../../../shared/asyncHandler";
-import { validationMiddleware } from "../../middlewares/validation.middleware";
-import { verifyAuth } from "../../middlewares/auth.middleware";
-import { ROUTES } from "../../../shared/constants/constants.routes";
+import { BaseRoute } from '../base-route';
+import { asyncHandler } from '../../../shared/asyncHandler';
+import { validationMiddleware } from '../../middlewares/validation.middleware';
+import { verifyAuth } from '../../middlewares/auth.middleware';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
-import { AuthController } from "../../controllers/auth/auth-controller";
+import { AuthController } from '../../controllers/auth/auth-controller';
 
 // DTOs for validation
-import { RegisterRequestDTO } from "../../../application/dto/auth/request/register.request.dto";
-import { LoginRequestDTO } from "../../../application/dto/auth/request/login.request.dto";
-import { SendOtpRequestDTO } from "../../../application/dto/auth/request/sent-otp.request.dto";
-import { VerifyOtpRequestDTO } from "../../../application/dto/auth/request/verify-otp.request.dto";
-import { ForgotPasswordRequestDTO } from "../../../application/dto/auth/request/forgot-password.request.dto";
-import { ResetPasswordRequestDTO } from "../../../application/dto/auth/request/reset-password.request.dto";
-import { GoogleAuthRequestDTO } from "../../../application/dto/auth/request/google-auth.request.dto";
+import { RegisterRequestDTO } from '../../../application/dto/auth/request/register.request.dto';
+import { LoginRequestDTO } from '../../../application/dto/auth/request/login.request.dto';
+import { SendOtpRequestDTO } from '../../../application/dto/auth/request/sent-otp.request.dto';
+import { VerifyOtpRequestDTO } from '../../../application/dto/auth/request/verify-otp.request.dto';
+import { ForgotPasswordRequestDTO } from '../../../application/dto/auth/request/forgot-password.request.dto';
+import { ResetPasswordRequestDTO } from '../../../application/dto/auth/request/reset-password.request.dto';
+import { GoogleAuthRequestDTO } from '../../../application/dto/auth/request/google-auth.request.dto';
 
 @injectable()
 export class AuthRoutes extends BaseRoute {

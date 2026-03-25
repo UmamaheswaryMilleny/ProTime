@@ -5,13 +5,12 @@ import type { ReportStatus }    from '../../enums/report.enums';
 export interface IReportRepository
   extends IBaseRepository<ReportEntity> {
 
-  // Admin — paginated list, optionally filtered by status
-  findAll(params: {
-    status?: ReportStatus;
-    page:    number;
-    limit:   number;
-  }): Promise<{ reports: ReportEntity[]; total: number }>;
-
+findAll(params: {
+  status?:         ReportStatus;
+  reportedUserId?: string;       // ← added
+  page:            number;
+  limit:           number;
+}): Promise<{ reports: ReportEntity[]; total: number }>;
   // Admin — single report detail
   findById(id: string): Promise<ReportEntity | null>;
 

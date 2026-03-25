@@ -1,4 +1,4 @@
-import { IsOptional, IsEnum, IsInt, Min, Max } from 'class-validator';
+import { IsOptional, IsEnum, IsInt, Min, Max,IsString } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ReportStatus } from '../../../../domain/enums/report.enums';
 
@@ -6,6 +6,10 @@ export class GetReportsRequestDTO {
   @IsOptional()
   @IsEnum(ReportStatus)
   status?: ReportStatus;
+
+  @IsOptional()
+  @IsString()
+  reportedUserId?: string; 
 
   @IsOptional()
   @Type(() => Number)

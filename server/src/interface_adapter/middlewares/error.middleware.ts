@@ -77,6 +77,18 @@ import {
   SessionNotActiveError,
 } from '../../domain/errors/chat.errors';
 
+//report errors
+
+// ─── Report errors ─────────────────────────────────────────────────────────
+import {
+  ReportValidationError,
+  SelfReportError,
+  ReportNotFoundError,
+  DuplicateReportError,ReportAlreadyResolvedError,
+} from '../../domain/errors/report.errors';
+
+
+
 export class ErrorMiddleware {
   public handleError(
     err: Error,
@@ -94,7 +106,7 @@ export class ErrorMiddleware {
       err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError ||
       err instanceof BuddyNotFoundError ||        // ← add
       err instanceof BuddyPreferenceNotFoundError || err instanceof ConversationNotFoundError ||
-      err instanceof MessageNotFoundError
+      err instanceof MessageNotFoundError || err instanceof ReportNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -103,7 +115,7 @@ export class ErrorMiddleware {
     // ─── 409 Conflict ─────────────────────────────────────────────────
     if (
       err instanceof UserAlreadyExistsError ||
-      err instanceof BadgeAlreadyEarnedError || err instanceof AlreadyPremiumError
+      err instanceof BadgeAlreadyEarnedError || err instanceof AlreadyPremiumError || err instanceof DuplicateReportError
     ) {
       res.status(HTTP_STATUS.CONFLICT).json({ success: false, message: err.message });
       return;
@@ -150,7 +162,7 @@ export class ErrorMiddleware {
       err instanceof BuddyAlreadyBlockedError ||
       err instanceof UnauthorizedUnblockError ||
       err instanceof EmptyMessageContentError || err instanceof SessionAlreadyActiveError ||
-      err instanceof SessionNotActiveError
+      err instanceof SessionNotActiveError || err instanceof ReportValidationError || err instanceof SelfReportError || err instanceof ReportAlreadyResolvedError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

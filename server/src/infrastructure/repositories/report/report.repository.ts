@@ -16,30 +16,31 @@ export class ReportRepository
   }
 
   // Admin — paginated list optionally filtered by status
-  async findAll(params: {
-    status?: ReportStatus;
-    page:    number;
-    limit:   number;
-  }): Promise<{ reports: ReportEntity[]; total: number }> {
-    const query: Record<string, unknown> = {};
-    if (params.status) query.status = params.status;
+async findAll(params: {
+  status?:         ReportStatus;
+  reportedUserId?: string;
+  page:            number;
+  limit:           number;
+}): Promise<{ reports: ReportEntity[]; total: number }> {
+  const query: Record<string, unknown> = {};
+  if (params.status)         query.status         = params.status;
+  if (params.reportedUserId) query.reportedUserId = params.reportedUserId;
 
-    const [docs, total] = await Promise.all([
-      ReportModel
-        .find(query)
-        .sort({ createdAt: -1 })
-        .skip((params.page - 1) * params.limit)
-        .limit(params.limit)
-        .lean(),
-      ReportModel.countDocuments(query),
-    ]);
+  const [docs, total] = await Promise.all([
+    ReportModel
+      .find(query)
+      .sort({ createdAt: -1 })
+      .skip((params.page - 1) * params.limit)
+      .limit(params.limit)
+      .lean(),
+    ReportModel.countDocuments(query),
+  ]);
 
-    return {
-      reports: docs.map(d => ReportInfraMapper.toDomain(d as ReportDocument)),
-      total,
-    };
-  }
-
+  return {
+    reports: docs.map(d => ReportInfraMapper.toDomain(d as ReportDocument)),
+    total,
+  };
+}
   // Admin — single report detail
   async findById(id: string): Promise<ReportEntity | null> {
     const doc = await ReportModel.findById(id).lean();

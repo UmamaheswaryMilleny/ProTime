@@ -50,11 +50,11 @@ export const ERROR_MESSAGE = {
     INVALID_TOKEN: 'Invalid token',
   },
   USER: {
-    NOT_FOUND: "User not found",
-    NOT_FOUND_AFTER_UPDATE: "User not found after update",
-    ALREADY_EXISTS: "User already exists",
-    BLOCKED: "User blocked successfully",
-    UNBLOCKED: "User unblocked successfully",
+    NOT_FOUND: 'User not found',
+    NOT_FOUND_AFTER_UPDATE: 'User not found after update',
+    ALREADY_EXISTS: 'User already exists',
+    BLOCKED: 'User blocked successfully',
+    UNBLOCKED: 'User unblocked successfully',
   },
 };
 
@@ -72,17 +72,14 @@ export const SUCCESS_MESSAGE = {
   },
 
   TODO: {
-    CREATED:            'Todo created successfully',
-    FETCHED:            'Todos fetched successfully',
-    UPDATED:            'Todo updated successfully',
-    DELETED:            'Todo deleted successfully',
-    COMPLETED:          'Todo completed successfully',
+    CREATED: 'Todo created successfully',
+    FETCHED: 'Todos fetched successfully',
+    UPDATED: 'Todo updated successfully',
+    DELETED: 'Todo deleted successfully',
+    COMPLETED: 'Todo completed successfully',
     POMODORO_COMPLETED: 'Pomodoro session completed',
   },
-    
 };
-
-
 
 export const ROLES = {
   ADMIN: 'admin',
@@ -95,24 +92,21 @@ export const EVENT_EMMITER_TYPE = {
 
 export enum MAIL_CONTENT_PURPOSE {
   LOGIN = 'login',
-  RESET='reset',
+  RESET = 'reset',
   OTP = 'otp',
 }
 
 // ─── AI Tokens (resets daily) ─────────────────────────────────────────────────
-export const FREE_DAILY_AI_TOKENS    = 20;
+export const FREE_DAILY_AI_TOKENS = 20;
 export const PREMIUM_DAILY_AI_TOKENS = 100;
 
 // ─── Community Chat (resets daily) ────────────────────────────────────────────
 export const FREE_MONTHLY_COMMUNITY_MESSAGES = 50;
 
-
-
 // ─── Room Access (resets monthly) ─────────────────────────────────────────────
 export const FREE_MONTHLY_ROOM_JOINS = 3;
 // ─── Buddy Matching ───────────────────────────────────────────────────────────
-export const FREE_MONTHLY_BUDDY_MATCHES    = 5;   // already exists
-export const BUDDY_ROLLING_WINDOW_DAYS     = 30;
+export const FREE_MONTHLY_BUDDY_MATCHES = 5; // already exists
+export const BUDDY_ROLLING_WINDOW_DAYS = 30;
 export const MIN_SESSION_MINUTES_FOR_BADGE = 60;
-export const MIN_RATING_FOR_BADGE          = 4;
-
+export const MIN_RATING_FOR_BADGE = 4;

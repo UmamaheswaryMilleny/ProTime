@@ -9,6 +9,10 @@ import { ROUTES } from "../../../shared/constants/constants.routes";
 import { AdminController } from "../../controllers/admin/admin-controller";
 import { GetUsersRequestDTO } from "../../../application/dto/user/request/get-user.request.dto";
 import { UserRole } from "../../../domain/enums/user.enums";
+import { ReportController }        from '../../controllers/report/report.controller';
+import { ResolveReportRequestDTO } from '../../../application/dto/report/request/resolve-report.request.dto';
+import { GetReportsRequestDTO }    from '../../../application/dto/report/request/get-reports.request.dto';
+
 
 @injectable()
 export class AdminRoutes extends BaseRoute {
@@ -17,33 +21,47 @@ export class AdminRoutes extends BaseRoute {
   }
 
   protected initializeRoutes(): void {
-    const ctrl = container.resolve(AdminController);
+    const ctrl       = container.resolve(AdminController);
+    const reportCtrl = container.resolve(ReportController);
 
-    // All admin routes require authentication + ADMIN role
-    // verifyAuth   → validates JWT, attaches req.user
-    // authorizeRole → checks role === ADMIN, rejects CLIENT
     this.router.use(verifyAuth);
     this.router.use(authorizeRole([UserRole.ADMIN]));
 
     // ─── User Management ──────────────────────────────────────────────
-
-    // Get all users with search, filter, pagination, sort
     this.router.get(
       ROUTES.ADMIN.USERS,
       validationMiddleware(GetUsersRequestDTO),
       asyncHandler(ctrl.getUsers.bind(ctrl)),
     );
 
-    // Block a specific user
     this.router.patch(
       ROUTES.ADMIN.BLOCK_USER,
       asyncHandler(ctrl.blockUser.bind(ctrl)),
     );
 
-    // Unblock a specific user
     this.router.patch(
       ROUTES.ADMIN.UNBLOCK_USER,
       asyncHandler(ctrl.unblockUser.bind(ctrl)),
     );
+
+    // ─── Report Management ────────────────────────────────────────────
+
+    // GET /api/v1/admin/reports?status=PENDING&page=1&limit=20
+this.router.get(
+  ROUTES.ADMIN.REPORTS,
+  validationMiddleware(GetReportsRequestDTO),
+  asyncHandler(reportCtrl.getReports.bind(reportCtrl)),
+);
+
+this.router.get(
+  ROUTES.ADMIN.REPORT_BY_ID,
+  asyncHandler(reportCtrl.getReportById.bind(reportCtrl)),
+);
+
+this.router.patch(
+  ROUTES.ADMIN.RESOLVE_REPORT,
+  validationMiddleware(ResolveReportRequestDTO),
+  asyncHandler(reportCtrl.resolveReport.bind(reportCtrl)),
+);
   }
 }

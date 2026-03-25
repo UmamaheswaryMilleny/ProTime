@@ -24,6 +24,8 @@ import { JwtTokenService } from './infrastructure/service/token-service';
 import { ROUTES } from "./shared/constants/constants.routes";
 import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 import { ConversationModel } from "./infrastructure/database/models/conversation.model";
+import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
+
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -86,6 +88,7 @@ export class App {
     this.app.use(ROUTES.BASE.UTILITY, container.resolve(UtilityRoutes).router);
     this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
     this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
+  this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
   }
   private configureSocket(): void {
     const tokenService = new JwtTokenService();

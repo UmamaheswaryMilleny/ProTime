@@ -28,3 +28,11 @@ export class DuplicateReportError extends DomainError {
     super('You already have a pending report against this user');
   }
 }
+
+// ─── 400 ──────────────────────────────────────────────────────────────────────
+// Admin tries to resolve a report that is already resolved or dismissed
+export class ReportAlreadyResolvedError extends DomainError {
+  constructor() {
+    super('This report has already been resolved');
+  }
+}

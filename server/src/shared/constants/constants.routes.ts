@@ -11,6 +11,7 @@ export const ROUTES = {
     UTILITY: '/api/v1/utility',
     COMMUNITY_CHAT: '/api/v1/community-chat',
     CHAT: '/api/v1/chat',
+    REPORTS: '/api/v1/reports', 
   },
 
   // Auth Routes
@@ -28,11 +29,18 @@ export const ROUTES = {
     GOOGLE: '/google',
   },
 
+  // Report Routes — user side
+  REPORTS: {
+    ROOT: '/',                            // POST /api/v1/reports
+  },
   // Admin Routes
   ADMIN: {
     USERS: '/users',
     BLOCK_USER: '/users/:userId/block',
     UNBLOCK_USER: '/users/:userId/unblock',
+     REPORTS:        '/reports',                      // ← add
+    REPORT_BY_ID:   '/reports/:reportId',            // ← add
+    RESOLVE_REPORT: '/reports/:reportId/resolve',    // ← add
   },
 
   // User Routes

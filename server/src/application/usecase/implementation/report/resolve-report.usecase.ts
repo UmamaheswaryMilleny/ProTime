@@ -5,7 +5,7 @@ import type { IUserRepository }        from '../../../../domain/repositories/use
 import type { ResolveReportRequestDTO } from '../../../dto/report/request/resolve-report.request.dto';
 import type { ReportResponseDTO }      from '../../../dto/report/response/report.response.dto';
 import {
-  ReportNotFoundError,
+  ReportNotFoundError,ReportAlreadyResolvedError
 } from '../../../../domain/errors/report.errors';
 import { ReportStatus, ReportAction } from '../../../../domain/enums/report.enums';
 import { ReportMapper } from '../../../mapper/report.mapper';
@@ -28,7 +28,9 @@ export class ResolveReportUsecase implements IResolveReportUsecase {
 
     const report = await this.reportRepo.findById(reportId);
     if (!report) throw new ReportNotFoundError();
-
+if (report.status !== ReportStatus.PENDING) {
+  throw new ReportAlreadyResolvedError();
+}
     // If action is PERMANENT_BLOCK or TEMPORARY_BLOCK — block the reported user
     if (
       dto.actionTaken === ReportAction.PERMANENT_BLOCK ||
