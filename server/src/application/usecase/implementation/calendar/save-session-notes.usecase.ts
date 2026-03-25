@@ -28,12 +28,12 @@ export class SaveSessionNotesUsecase implements ISaveSessionNotesUsecase {
 
     const isParticipant = session.initiatorId === userId || session.participantId === userId;
     if (!isParticipant) throw new UnauthorizedSessionActionError();
+   // ─── Upsert — update if note already exists, create if not ───────────────
+    const existing = await this.noteRepo.findBySessionAndUser(sessionId, userId);
+    const note = existing
+      ? await this.noteRepo.updateContent(existing.id, dto.content) ?? existing
+      : await this.noteRepo.save({ sessionId, userId, content: dto.content });
 
-    const note = await this.noteRepo.save({
-      sessionId,
-      userId,
-      content:     dto.content,
-    });
 
     return CalendarMapper.noteToResponse(note);
   }

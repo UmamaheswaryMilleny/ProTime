@@ -47,11 +47,13 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
     const expiresAt   = new Date(Date.now() + 24 * 60 * 60 * 1000); // ← fixed
 
     const request = await this.scheduleRequestRepo.save({
-      sessionId:      dto.sessionId,
-      proposedBy:     userId,
-      proposedTo:     participantId,
+     sessionId:       dto.sessionId,
+      proposedBy:      userId,
+      proposedTo:      participantId,
       scheduledAt,
-      confirmStatus: ScheduleConfirmStatus.PENDING,
+      recurringDates:  [],    // ← single session — no recurring dates
+      durationMinutes: 0,     // ← not applicable for single session proposal
+      confirmStatus:   ScheduleConfirmStatus.PENDING,
       expiresAt,
     });
 

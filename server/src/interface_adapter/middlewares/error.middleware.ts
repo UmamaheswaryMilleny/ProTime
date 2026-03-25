@@ -87,6 +87,18 @@ import {
   DuplicateReportError,ReportAlreadyResolvedError,
 } from '../../domain/errors/report.errors';
 
+// ─── Calendar errors ───────────────────────────────────────────────────────
+import {
+  SessionNotFoundError,
+  CalendarEventNotFoundError,
+  ScheduleRequestNotFoundError,
+  UnauthorizedSessionActionError,
+  BuddySessionAlreadyActiveError,
+  BuddySessionNotActiveError,
+  NotInActiveSessionError,
+  ScheduleRequestAlreadyRespondedError,
+} from '../../domain/errors/calendar.error';
+
 
 
 export class ErrorMiddleware {
@@ -106,7 +118,9 @@ export class ErrorMiddleware {
       err instanceof BadgeDefinitionNotFoundError || err instanceof SubscriptionNotFoundError ||
       err instanceof BuddyNotFoundError ||        // ← add
       err instanceof BuddyPreferenceNotFoundError || err instanceof ConversationNotFoundError ||
-      err instanceof MessageNotFoundError || err instanceof ReportNotFoundError
+      err instanceof MessageNotFoundError || err instanceof ReportNotFoundError || err instanceof SessionNotFoundError      ||
+err instanceof CalendarEventNotFoundError ||
+err instanceof ScheduleRequestNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -129,7 +143,7 @@ export class ErrorMiddleware {
       err instanceof PremiumBadgeRequiredError ||
       err instanceof CommunityMessageLimitError || err instanceof BuddyMatchLimitError ||       // ← add
       err instanceof UnauthorizedBuddyActionError || err instanceof NotABuddyError ||
-      err instanceof UnauthorizedMessageError
+      err instanceof UnauthorizedMessageError || err instanceof UnauthorizedSessionActionError
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
       return;
@@ -162,7 +176,10 @@ export class ErrorMiddleware {
       err instanceof BuddyAlreadyBlockedError ||
       err instanceof UnauthorizedUnblockError ||
       err instanceof EmptyMessageContentError || err instanceof SessionAlreadyActiveError ||
-      err instanceof SessionNotActiveError || err instanceof ReportValidationError || err instanceof SelfReportError || err instanceof ReportAlreadyResolvedError
+      err instanceof SessionNotActiveError || err instanceof ReportValidationError || err instanceof SelfReportError || err instanceof ReportAlreadyResolvedError || err instanceof BuddySessionAlreadyActiveError    ||
+err instanceof BuddySessionNotActiveError        ||
+err instanceof NotInActiveSessionError           ||
+err instanceof ScheduleRequestAlreadyRespondedError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

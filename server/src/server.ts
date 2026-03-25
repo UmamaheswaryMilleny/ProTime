@@ -25,7 +25,9 @@ import { ROUTES } from "./shared/constants/constants.routes";
 import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 import { ConversationModel } from "./infrastructure/database/models/conversation.model";
 import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
-
+import { CalendarRoutes } from "./interface_adapter/routes/calendar/calendar.routes";
+import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
+import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -89,6 +91,7 @@ export class App {
     this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
     this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
   this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
+  this.app.use('/api/v1/calendar', container.resolve(CalendarRoutes).router);
   }
   private configureSocket(): void {
     const tokenService = new JwtTokenService();
@@ -226,5 +229,8 @@ export const bootstrap = async (): Promise<void> => {
   const appInstance = new App();            // 4. App last
   appInstance.getHttpServer().listen(config.server.port, () => {
     console.log(`🚀 Server running on port ${config.server.port}`);
+
   });
+  startMarkMissedSessionsCron();
+startExpireScheduleRequestsCron();
 };

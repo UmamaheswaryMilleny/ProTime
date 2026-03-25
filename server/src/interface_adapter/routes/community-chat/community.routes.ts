@@ -49,5 +49,10 @@ export class CommunityChatRoutes extends BaseRoute {
       validationMiddleware(SendMessageRequestDTO),
       asyncHandler(ctrl.sendMessage.bind(ctrl)),
     );
+
+
+    //Calender
+
+    
   }
 }

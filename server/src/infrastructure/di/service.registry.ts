@@ -88,6 +88,7 @@ import { CalendarEventRepository } from '../repositories/calendar/calendar-event
 import { SessionNoteRepository } from '../repositories/calendar/session-note.repository';
 import { SessionScheduleRequestRepository } from '../repositories/calendar/session-schedule-request.repository';
 import { ICalendarEventRepository } from '../../domain/repositories/calendar/calendar-event.repository.interface';
+import { ChatSessionController } from '../../interface_adapter/controllers/calendar/chat-session.controller'
 
 export class ServiceRegistry {
   static register(): void {
@@ -197,7 +198,7 @@ export class ServiceRegistry {
     container.register<IReportRepository>('IReportRepository', {
   useClass: ReportRepository,
 });
-
+container.register(ChatSessionController, { useClass: ChatSessionController });
    // ─── Calendar Repositories ───────────────────────────────────────────
     container.register<IBuddySessionRepository>('IBuddySessionRepository', { useClass: BuddySessionRepository });
     container.register<ICalendarEventRepository>('ICalendarEventRepository', { useClass: CalendarEventRepository });
