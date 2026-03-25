@@ -1,6 +1,6 @@
-import type { UserEntity } from "../../domain/entities/user.entity";
-import type { UserResponseDTO } from "../dto/user/response/user.response.dto";
-import { PaginatedUsersResponseDTO } from "../dto/user/response/paginated-users.response.dto";
+import type { UserEntity } from '../../domain/entities/user.entity';
+import type { UserResponseDTO } from '../dto/user/response/user.response.dto';
+import { PaginatedUsersResponseDTO } from '../dto/user/response/paginated-users.response.dto';
 
 //use cases like get users admin list users or any usecase returning user info needs it
 export class UserMapper {
@@ -18,7 +18,7 @@ export class UserMapper {
   static toPaginatedResponse(
     users: UserEntity[],
     //Meta = extra information about the list
-    meta: { total: number; page: number; limit: number }
+    meta: { total: number; page: number; limit: number },
   ): PaginatedUsersResponseDTO {
     const totalPages = Math.ceil(meta.total / meta.limit);
 
@@ -30,8 +30,4 @@ export class UserMapper {
       totalPages,
     };
   }
-
-
 }
-
-

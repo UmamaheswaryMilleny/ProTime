@@ -1,4 +1,7 @@
-import type { BuddyPreferenceEntity, BuddyConnectionEntity } from '../../domain/entities/buddy.entities';
+import type {
+  BuddyPreferenceEntity,
+  BuddyConnectionEntity,
+} from '../../domain/entities/buddy.entities';
 import type { ProfileEntity } from '../../domain/entities/profile.entity';
 
 import type { BuddyPreferenceResponseDTO } from '../dto/buddy-match/response/buddy-preference.response.dto';
@@ -6,7 +9,6 @@ import type { BuddyProfileResponseDTO } from '../dto/buddy-match/response/buddy-
 import type { BuddyConnectionResponseDTO } from '../dto/buddy-match/response/buddy-connection.response.dto';
 
 export class BuddyMapper {
-
   // when the user views or saves their own preferences:
   static preferenceToResponse(
     entity: BuddyPreferenceEntity,
@@ -31,7 +33,6 @@ export class BuddyMapper {
       updatedAt: entity.updatedAt,
     };
   }
-
 
   static preferenceToPublicProfile(
     entity: BuddyPreferenceEntity,
