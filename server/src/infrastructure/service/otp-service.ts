@@ -4,6 +4,8 @@ import { redisClient } from "../config/redis.config";
 import type { IOtpService } from "../../application/service_interface/otp.service.interface";
 import { randomInt } from "crypto";
 
+import { logger } from "../config/logger.config";
+
 @injectable()
 export class OtpService implements IOtpService {
   generateOtp(): string {
@@ -26,7 +28,7 @@ export class OtpService implements IOtpService {
     otp: string;
   }): Promise<boolean> {
     const storedOtp = await redisClient.get(`otp:${email}`);
-    console.log("Stored OTP in Redis:", storedOtp);
+    logger.debug("Stored OTP in Redis:", { email, storedOtp });
     return storedOtp === otp;
   }
   async getOtp(email: string): Promise<string | null> {

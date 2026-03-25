@@ -2,6 +2,7 @@ import nodemailer, { Transporter } from "nodemailer";
 import { injectable } from "tsyringe";
 import { IEmailService } from "../../application/service_interface/email.service.interface";
 import { config } from "../../shared/config";
+import { logger } from "../config/logger.config";
 
 @injectable()
 export class NodemailerEmailService implements IEmailService {
@@ -25,8 +26,9 @@ export class NodemailerEmailService implements IEmailService {
     };
     try {
       await this.transporter.sendMail(mailOptions);
-      console.log("Email sent successfully");
+      logger.info("Email sent successfully");
     } catch (error) {
+      logger.error("failed to send email", { error });
       throw new Error(`failed to send email: ${(error as Error).message}`);
     }
   }

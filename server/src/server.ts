@@ -9,6 +9,7 @@ import { config } from "./shared/config/index";
 import { DependencyContainer } from "./infrastructure/di/index";
 import { MongoConnect } from "./infrastructure/database/connection";
 import { connectRedis } from "./infrastructure/config/redis.config";
+import { logger } from "./infrastructure/config/logger.config";
 import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes";
 import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes";
 import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
@@ -28,6 +29,7 @@ import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
 import { CalendarRoutes } from "./interface_adapter/routes/calendar/calendar.routes";
 import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
 import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
+import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
 
 interface CustomSocket extends Socket {
   userId?: string;
@@ -119,7 +121,7 @@ export class App {
 
     this.io.on('connection', (socket) => {
       const userId = (socket as any).userId as string;
-      console.log(`[Socket] User connected: ${userId}`);
+      logger.info(`[Socket] User connected: ${userId}`);
 
       // Track online status
       socketService.setUserOnline(userId, socket.id);
@@ -133,7 +135,7 @@ export class App {
       socket.on('disconnect', () => {
         socketService.setUserOffline(userId);
         this.io.emit('user:offline', { userId });
-        console.log(`[Socket] User disconnected: ${userId}`);
+        logger.info(`[Socket] User disconnected: ${userId}`);
       });
 
       // ─── WebRTC Signaling ─────────────────────────────────────────────────
@@ -155,7 +157,7 @@ export class App {
             callerName: 'Buddy', // resolved on client via Redux conversations state
           });
         } catch (err) {
-          console.error('[Socket] webrtc:offer relay error:', err);
+          logger.error('[Socket] webrtc:offer relay error:', { error: err });
         }
       });
 
@@ -175,7 +177,7 @@ export class App {
             answer: data.answer,
           });
         } catch (err) {
-          console.error('[Socket] webrtc:answer relay error:', err);
+          logger.error('[Socket] webrtc:answer relay error:', { error: err });
         }
       });
 
@@ -194,7 +196,7 @@ export class App {
             candidate: data.candidate,
           });
         } catch (err) {
-          console.error('[Socket] webrtc:ice-candidate relay error:', err);
+          logger.error('[Socket] webrtc:ice-candidate relay error:', { error: err });
         }
       });
 
@@ -228,7 +230,7 @@ export const bootstrap = async (): Promise<void> => {
   await connectRedis();                     // 3. Redis third
   const appInstance = new App();            // 4. App last
   appInstance.getHttpServer().listen(config.server.port, () => {
-    console.log(`🚀 Server running on port ${config.server.port}`);
+    logger.info(`🚀 Server running on port ${config.server.port}`);
 
   });
   startMarkMissedSessionsCron();

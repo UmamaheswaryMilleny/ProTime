@@ -5,6 +5,7 @@ import type { ISocketService }              from '../../../service_interface/soc
 import { CalendarMapper }              from '../../../mapper/calendar.mapper';
 import type { BuddySessionResponseDTO }     from '../../../dto/calendar/response/buddy-session.response.dto';
 import { SessionStatus }                    from '../../../../domain/enums/calendar.enums';
+import { logger }                           from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class EndSessionUsecase implements IEndSessionUsecase {
@@ -45,7 +46,7 @@ export class EndSessionUsecase implements IEndSessionUsecase {
 
       return response;
     } catch (err) {
-      console.error('[EndSessionUsecase] Error:', err);
+      logger.error('[EndSessionUsecase] Error:', { error: err });
       throw err;
     }
   }

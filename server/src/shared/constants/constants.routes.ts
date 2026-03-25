@@ -98,6 +98,7 @@ export const ROUTES = {
     MARK_AS_READ: '/:conversationId/read',
     START_SESSION: '/:conversationId/session/start',
     END_SESSION: '/:conversationId/session/end',
+    DELETE_CHAT: '/:conversationId/messages',
   },
 
 };

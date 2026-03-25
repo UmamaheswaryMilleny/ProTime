@@ -82,4 +82,8 @@ export class DirectMessageRepository
             },
         );
     }
+
+    async deleteByConversationId(conversationId: string): Promise<void> {
+        await DirectMessageModel.deleteMany({ conversationId });
+    }
 }

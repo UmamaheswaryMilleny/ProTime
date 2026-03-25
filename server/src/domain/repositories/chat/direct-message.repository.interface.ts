@@ -33,4 +33,7 @@ export interface IDirectMessageRepository
         conversationId: string,
         receiverId: string,
     ): Promise<void>;
+
+    // Delete all messages in a conversation (for the "Delete Chat" feature)
+    deleteByConversationId(conversationId: string): Promise<void>;
 }

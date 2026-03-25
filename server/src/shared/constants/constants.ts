@@ -110,3 +110,10 @@ export const FREE_MONTHLY_BUDDY_MATCHES = 5; // already exists
 export const BUDDY_ROLLING_WINDOW_DAYS = 30;
 export const MIN_SESSION_MINUTES_FOR_BADGE = 60;
 export const MIN_RATING_FOR_BADGE = 4;
+
+export const LOGGER_CONSTANTS = {
+  LOG_DIR: 'logs',
+  ERROR_LOG: 'logs/error.log',
+  COMBINED_LOG: 'logs/combined.log',
+  EXCEPTIONS_LOG: 'logs/exceptions.log',
+};

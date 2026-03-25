@@ -13,6 +13,8 @@ import {
   FREE_MAX_LEVEL,
 } from '../../../../domain/enums/gamification.enums';
 import { XpSource } from '../../../../domain/enums/gamification.enums';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
 
 @injectable()
 export class AwardXpUsecase implements IAwardXpUsecase {
@@ -25,7 +27,10 @@ export class AwardXpUsecase implements IAwardXpUsecase {
 
     @inject('ICheckAndAwardBadgesUsecase')
     private readonly checkAndAwardBadgesUsecase: ICheckAndAwardBadgesUsecase,
-  ) {}
+
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
+  ) { }
 
   async execute(params: {
     userId: string;
@@ -111,9 +116,26 @@ export class AwardXpUsecase implements IAwardXpUsecase {
       }
     }
 
-    // 10. Fetch final state for response
     const finalState = await this.gamificationRepository.findByUserId(userId);
     if (!finalState) throw new GamificationNotFoundError();
+
+    // Notify user of progress
+    const xpAwardedTotal = xp + streakBonus + badgeBonusXp;
+    if (xpAwardedTotal > 0) {
+      this.notificationService.notifyUser(userId, {
+        type: NotificationType.XP_GAINED,
+        title: 'XP Gained!',
+        message: `You've earned ${xpAwardedTotal} XP! Keep up the great work.`,
+      });
+    }
+
+    if (finalState.currentLevel > prevLevel) {
+      this.notificationService.notifyUser(userId, {
+        type: NotificationType.LEVEL_UP,
+        title: 'Level Up!',
+        message: `Congratulations! You've reached Level ${finalState.currentLevel} and earned the title "${finalState.currentTitle}".`,
+      });
+    }
 
     return GamificationMapper.toAwardXpResponse({
       xpAwarded: xp + streakBonus + badgeBonusXp,

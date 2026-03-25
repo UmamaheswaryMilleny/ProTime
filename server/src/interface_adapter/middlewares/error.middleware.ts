@@ -1,6 +1,7 @@
 import type { NextFunction, Response, Request } from 'express';
 
 import { DomainError } from '../../domain/errors/base-domain.error';
+import { logger } from '../../infrastructure/config/logger.config';
 
 // ─── User errors ───────────────────────────────────────────────────────────
 import {
@@ -192,7 +193,7 @@ err instanceof ScheduleRequestAlreadyRespondedError
     }
 
     // ─── Unknown / unexpected errors ──────────────────────────────────
-    console.error('[Internal Server Error]:', err);
+    logger.error('[Internal Server Error]:', { error: err });
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Internal server error',

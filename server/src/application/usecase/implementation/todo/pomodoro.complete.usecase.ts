@@ -13,6 +13,8 @@ import {
 } from '../../../../domain/errors/todo.error';
 
 import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
 
 @injectable()
 export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
@@ -21,6 +23,8 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
     private readonly todoRepository: ITodoRepository,
     @inject('IGamificationRepository')
     private readonly gamificationRepository: IGamificationRepository,
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) { }
 
   async execute(
@@ -54,6 +58,15 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
 
     if (!updated) throw new TodoNotFoundError();
     await this.gamificationRepository.markPomodoroUsedToday(userId)
+
+    if (meetsMinimum) {
+      this.notificationService.notifyUser(userId, {
+        type: NotificationType.TASK_COMPLETED,
+        title: 'Pomodoro Completed!',
+        message: `Great job! You've successfully finished your pomodoro for "${todo.title}".`,
+      });
+    }
+
     return TodoMapper.toResponse(updated);
   }
 }

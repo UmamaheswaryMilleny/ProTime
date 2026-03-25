@@ -1,7 +1,10 @@
 import winston from "winston";
 import fs from "fs";
 
-const logDir = "logs";
+import { config } from "../../shared/config/index";
+import { LOGGER_CONSTANTS } from "../../shared/constants/constants";
+
+const logDir = LOGGER_CONSTANTS.LOG_DIR;
 
 // Create logs folder if not exists
 if (!fs.existsSync(logDir)) {
@@ -9,7 +12,7 @@ if (!fs.existsSync(logDir)) {
 }
 
 export const logger = winston.createLogger({
-  level: "info",
+  level: config.logger.level,
   format: winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
     winston.format.errors({ stack: true }),
@@ -19,12 +22,12 @@ export const logger = winston.createLogger({
   defaultMeta: { service: "ProTime" },
   transports: [
     // Error logs
-    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
+    new winston.transports.File({ filename: LOGGER_CONSTANTS.ERROR_LOG, level: "error" }),
     // All logs
-    new winston.transports.File({ filename: "logs/combined.log" }),
+    new winston.transports.File({ filename: LOGGER_CONSTANTS.COMBINED_LOG }),
   ],
   exceptionHandlers: [
-    new winston.transports.File({ filename: "logs/exceptions.log" }),
+    new winston.transports.File({ filename: LOGGER_CONSTANTS.EXCEPTIONS_LOG }),
   ],
 });
 

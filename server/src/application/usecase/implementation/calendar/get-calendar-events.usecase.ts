@@ -4,6 +4,7 @@ import type { ICalendarEventRepository }     from '../../../../domain/repositori
 import type { GetCalendarEventsRequestDTO }  from '../../../dto/calendar/request/get-calendar-events.request.dto';
 import type { GetCalendarEventsResponseDTO } from '../../../dto/calendar/response/get-calendar-events.response.dto';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class GetCalendarEventsUsecase implements IGetCalendarEventsUsecase {
@@ -20,7 +21,7 @@ export class GetCalendarEventsUsecase implements IGetCalendarEventsUsecase {
       
       return { events: mapped };
     } catch (err) {
-      console.error('[GetCalendarEventsUsecase] Error:', err);
+      logger.error('[GetCalendarEventsUsecase] Error:', { error: err });
       throw err;
     }
   }

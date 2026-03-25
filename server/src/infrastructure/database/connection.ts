@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import { config } from "../../shared/config/index";
+import { logger } from "../config/logger.config";
 
 export class MongoConnect {
   private _dburl: string;
@@ -9,15 +10,15 @@ export class MongoConnect {
   async connectDB() {
     try {
       await mongoose.connect(this._dburl);
-      console.log("db connected");
+      logger.info("db connected");
       mongoose.connection.on("error", (error) => {
-        console.log("db connection error", error);
+        logger.error("db connection error", { error });
       });
       mongoose.connection.on("disconnected", () => {
-        console.log("db disconnected");
+        logger.info("db disconnected");
       });
     } catch (error) {
-      console.log("failed to connect db", error);
+      logger.error("failed to connect db", { error });
     }
   }
 }

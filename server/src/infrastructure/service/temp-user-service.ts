@@ -3,10 +3,12 @@ import { injectable } from "tsyringe";
 import { ITempUserService } from "../../application/service_interface/temp-user.service.interface";
 import { TempUser } from "../../application/service_interface/temp-user.service.interface"; 
 
+import { logger } from "../config/logger.config";
+
 @injectable()
 export class TempUserService implements ITempUserService {
 async storeUser(email: string, data: TempUser,ttlSeconds:number):Promise<void> {
-  console.log("Redis store temp_user:", email);
+  logger.debug("Redis store temp_user:", { email });
   await redisClient.set(`temp_user:${email}`, JSON.stringify(data), { EX: ttlSeconds });
 }
 

@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IMarkMissedSessionsUsecase } from '../../interface/calendar/mark-missed-sessions.usecase.interface';
 import type { IBuddySessionRepository }     from '../../../../domain/repositories/calendar/buddy-session.repository.interface';
 import { SessionStatus } from '../../../../domain/enums/calendar.enums';
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class MarkMissedSessionsUsecase implements IMarkMissedSessionsUsecase {
@@ -17,13 +18,13 @@ export class MarkMissedSessionsUsecase implements IMarkMissedSessionsUsecase {
       const missed = await this.sessionRepo.findPlannedSessionsBefore(now);
 
       if (missed.length > 0) {
-        console.log(`[Cron] Marking ${missed.length} sessions as MISSED`);
+        logger.info(`[Cron] Marking ${missed.length} sessions as MISSED`);
         await Promise.all(
           missed.map(s => this.sessionRepo.updateStatus(s.id!, SessionStatus.MISSED))
         );
       }
     } catch (err) {
-      console.error('[MarkMissedSessionsUsecase] Error:', err);
+      logger.error('[MarkMissedSessionsUsecase] Error:', { error: err });
       throw err;
     }
   }

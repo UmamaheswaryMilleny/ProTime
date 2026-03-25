@@ -82,15 +82,18 @@ if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     });
   }
   // ─── Cron job — mark expired todos ───────────────────────────────────────
-async markExpiredTodos(): Promise<void> {
-  await this.model.updateMany(
-    {
+  async markExpiredTodos(): Promise<TodoEntity[]> {
+    const query = {
       status: TodoStatus.PENDING,
       expiryDate: { $lte: new Date() },
-    },
-    {
-      $set: { status: TodoStatus.EXPIRED },
-    },
-  );
-}
+    };
+    const expiredDocs = await this.model.find(query).lean();
+    if (expiredDocs.length > 0) {
+      await this.model.updateMany(
+        { _id: { $in: expiredDocs.map(d => d._id) } },
+        { $set: { status: TodoStatus.EXPIRED } }
+      );
+    }
+    return expiredDocs.map(TodoMapper.toDomain);
+  }
 }

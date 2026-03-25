@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { container } from 'tsyringe';
 import type { IExpireScheduleRequestsUsecase } from '../../application/usecase/interface/calendar/expire-schedule-requests.usecase.interface';
+import { logger } from '../config/logger.config';
 
 // Runs every hour
 export const startExpireScheduleRequestsCron = (): void => {
@@ -9,7 +10,7 @@ export const startExpireScheduleRequestsCron = (): void => {
       const usecase = container.resolve<IExpireScheduleRequestsUsecase>('IExpireScheduleRequestsUsecase');
       await usecase.execute();
     } catch (err) {
-      console.error('[Cron] ExpireScheduleRequests error:', err);
+      logger.error('[Cron] ExpireScheduleRequests error:', { error: err });
     }
   });
 };

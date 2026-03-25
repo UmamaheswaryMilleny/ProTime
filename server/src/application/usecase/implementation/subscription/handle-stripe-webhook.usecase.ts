@@ -9,6 +9,7 @@ import {
   SubscriptionPlan,
   SubscriptionStatus,
 } from '../../../../domain/enums/subscription.enums';
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
@@ -89,7 +90,7 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
     }
 
     if (!userId) {
-      console.error('[Stripe Webhook] checkout.session.completed: could not resolve userId', { stripeCustomerId });
+      logger.error('[Stripe Webhook] checkout.session.completed: could not resolve userId', { stripeCustomerId });
       return;
     }
 

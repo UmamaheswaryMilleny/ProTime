@@ -71,6 +71,12 @@ const sessionCtrl        = container.resolve(ChatSessionController);
             ROUTES.CHAT.END_SESSION,
             asyncHandler(ctrl.endSession.bind(ctrl)),
         );
+
+        // DELETE /api/v1/chat/:conversationId/messages
+        this.router.delete(
+            ROUTES.CHAT.DELETE_CHAT,
+            asyncHandler(ctrl.deleteChat.bind(ctrl)),
+        );
         // ─── BuddySession (calendar-tracked study sessions) ───────────────────────
 
     // POST /api/v1/chat/:conversationId/buddy-session/start

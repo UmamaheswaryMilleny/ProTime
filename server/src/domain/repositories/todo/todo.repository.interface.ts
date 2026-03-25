@@ -17,5 +17,5 @@ export interface ITodoRepository extends IBaseRepository<TodoEntity> {
   ): Promise<number>;
 
 
-  markExpiredTodos(): Promise<void>;
+  markExpiredTodos(): Promise<TodoEntity[]>;
 }

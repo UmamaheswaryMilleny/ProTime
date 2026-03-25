@@ -11,6 +11,7 @@ import type { IRefreshTokenStore } from '../../application/service_interface/ref
 import type { IResetTokenStore } from '../../application/service_interface/reset-token-store.service.interface';
 import type { IgoogleAuth } from '../../application/service_interface/google-auth.service.interface';
 import type { ILoggerService } from '../../application/service_interface/logger.service.interface';
+import type { INotificationService } from '../../application/service_interface/notification-service.interface';
 
 // Infrastructure implementations
 import { MongoUserRepository } from '../repositories/user/user.repository';
@@ -25,6 +26,7 @@ import { GoogleAuthService } from '../service/auth-service';
 import { WinstonLoggerAdapter } from '../service/logger-service';
 import type { IProfileRepository } from '../../domain/repositories/profile/profile.repository.interface';
 import { MongoProfileRepository } from '../repositories/user/profile.repository';
+import { NotificationService } from '../service/notification.service';
 
 //Todo
 import type { ITodoRepository } from '../../domain/repositories/todo/todo.repository.interface';
@@ -145,6 +147,10 @@ export class ServiceRegistry {
 
     container.register<ICloudinaryService>('ICloudinaryService', {
       useClass: CloudinaryService,
+    });
+
+    container.register<INotificationService>('INotificationService', {
+      useClass: NotificationService,
     });
 
     //gamification

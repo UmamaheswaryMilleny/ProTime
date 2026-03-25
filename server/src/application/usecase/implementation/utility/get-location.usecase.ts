@@ -1,5 +1,6 @@
 import { injectable } from "tsyringe";
 import { IGetLocationUsecase } from "../../interface/utility/get-location.usecase.interface";
+import { logger } from "../../../../infrastructure/config/logger.config";
 
 @injectable()
 export class GetLocationUsecase implements IGetLocationUsecase {
@@ -15,7 +16,7 @@ export class GetLocationUsecase implements IGetLocationUsecase {
       //lookup succeeded but no country found:
       return { country: "" };
     } catch (error) {
-      console.error("Failed to detect location on backend:", error);
+      logger.error("Failed to detect location on backend:", { error });
       return { country: "" };
     }
   }

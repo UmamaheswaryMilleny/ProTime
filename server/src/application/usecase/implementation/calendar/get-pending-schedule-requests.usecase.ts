@@ -4,6 +4,7 @@ import type { ISessionScheduleRequestRepository } from '../../../../domain/repos
 import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { SessionScheduleRequestResponseDTO } from '../../../dto/calendar/response/session-schedule-request.response.dto';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class GetPendingScheduleRequestsUsecase implements IGetPendingScheduleRequestsUsecase {
@@ -28,7 +29,7 @@ export class GetPendingScheduleRequestsUsecase implements IGetPendingScheduleReq
 
       return mapped;
     } catch (err) {
-      console.error('[GetPendingScheduleRequestsUsecase] Error:', err);
+      logger.error('[GetPendingScheduleRequestsUsecase] Error:', { error: err });
       throw err;
     }
   }

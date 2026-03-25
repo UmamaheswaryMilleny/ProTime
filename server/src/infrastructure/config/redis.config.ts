@@ -5,12 +5,14 @@ export const redisClient = createClient({
   url: config.redis.url
 });
 
+import { logger } from "./logger.config";
+
 redisClient.on("connect", () => {
-  console.log("✅ Redis connected");
+  logger.info("✅ Redis connected");
 });
 
 redisClient.on("error", (err) => {
-  console.error("❌ Redis error", err);
+  logger.error("❌ Redis error", { error: err });
 });
 
 // Make sure Redis is connected. If it already is, do nothing.”

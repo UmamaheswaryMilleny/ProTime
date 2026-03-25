@@ -30,6 +30,7 @@ import { CompleteTodoUsecase } from '../../application/usecase/implementation/to
 import { CompletePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.complete.usecase';
 import { PausePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.pause.usecase';
 import { ResumePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.resume.usecase';
+import { ExpireTodosUsecase } from '../../application/usecase/implementation/todo/expire-todos.usecase';
 
 //todo
 import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface';
@@ -40,6 +41,7 @@ import type { ICompleteTodoUsecase } from '../../application/usecase/interface/t
 import type { ICompletePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-complete.usecase.interface';
 import type { IPausePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-pause.usecase.interface';
 import type { IResumePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-resume.usecase.interface';
+import type { IExpireTodosUsecase } from '../../application/usecase/interface/todo/expire-todos.usecase.interface';
 
 //profile-upload
 import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
@@ -111,12 +113,14 @@ import { SendDirectMessageUsecase } from '../../application/usecase/implementati
 import { MarkAsReadUsecase } from '../../application/usecase/implementation/chat/mark-as-read.usecase';
 import { StartChatSessionUsecase } from '../../application/usecase/implementation/chat/start-chat-session.usecase';
 import { EndChatSessionUsecase } from '../../application/usecase/implementation/chat/end-chat-session.usecase';
+import { DeleteChatUsecase } from '../../application/usecase/implementation/chat/delete-chat.usecase';
 import type { IGetConversationsUsecase } from '../../application/usecase/interface/chat/get-conversations.usecase.interface';
 import type { IGetMessagesUsecase} from '../../application/usecase/interface/chat/get-messages.usecase.interface';
 import type { ISendDirectMessageUsecase } from '../../application/usecase/interface/chat/send-direct-message.usecase.interface';
 import type { IMarkAsReadUsecase } from '../../application/usecase/interface/chat/mark-as-read.usecase.interface';
 import type { IStartChatSessionUsecase } from '../../application/usecase/interface/chat/start-chat-session.usecase.interface';
 import type { IEndChatSessionUsecase } from '../../application/usecase/interface/chat/end-chat-session.usecase.interface';
+import type { IDeleteChatUsecase } from '../../application/usecase/implementation/chat/delete-chat.usecase';
 
 
 //report
@@ -223,6 +227,9 @@ export class UsecaseRegistry {
     container.register<IResumePomodoroUsecase>('IResumePomodoroUsecase', {
       useClass: ResumePomodoroUsecase,
     });
+    container.register<IExpireTodosUsecase>('IExpireTodosUsecase', {
+      useClass: ExpireTodosUsecase,
+    });
 
     container.register<IUploadProfileImageUsecase>(
       'IUploadProfileImageUsecase',
@@ -309,6 +316,7 @@ export class UsecaseRegistry {
     container.register<IMarkAsReadUsecase>('IMarkAsReadUsecase', { useClass: MarkAsReadUsecase });
     container.register<IStartChatSessionUsecase>('IStartChatSessionUsecase', { useClass: StartChatSessionUsecase });
     container.register<IEndChatSessionUsecase>('IEndChatSessionUsecase', { useClass: EndChatSessionUsecase });
+    container.register<IDeleteChatUsecase>('IDeleteChatUsecase', { useClass: DeleteChatUsecase });
 
 
     //report

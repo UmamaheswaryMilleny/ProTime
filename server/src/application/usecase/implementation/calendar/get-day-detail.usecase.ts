@@ -6,6 +6,7 @@ import type { ISessionNoteRepository } from '../../../../domain/repositories/cal
 import type { GetDayDetailResponseDTO }  from '../../../dto/calendar/response/get-day-detail.response.dto';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
 import { CalendarEventType } from '../../../../domain/enums/calendar.enums';
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class GetDayDetailUsecase implements IGetDayDetailUsecase {
@@ -53,7 +54,7 @@ export class GetDayDetailUsecase implements IGetDayDetailUsecase {
         events: mappedEvents,
       };
     } catch (err) {
-      console.error('[GetDayDetailUsecase] Error:', err);
+      logger.error('[GetDayDetailUsecase] Error:', { error: err });
       throw err;
     }
   }

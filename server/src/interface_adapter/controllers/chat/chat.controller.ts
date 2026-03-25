@@ -8,6 +8,7 @@ import type { ISendDirectMessageUsecase } from '../../../application/usecase/int
 import type { IMarkAsReadUsecase } from '../../../application/usecase/interface/chat/mark-as-read.usecase.interface';
 import type { IStartChatSessionUsecase } from '../../../application/usecase/interface/chat/start-chat-session.usecase.interface';
 import type { IEndChatSessionUsecase } from '../../../application/usecase/interface/chat/end-chat-session.usecase.interface';
+import type { IDeleteChatUsecase } from '../../../application/usecase/implementation/chat/delete-chat.usecase';
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import type { GetChatMessagesRequestDTO } from '../../../application/dto/chat/request/get-chat-messages.request.dto';
 import type { SendDirectMessageRequestDTO } from '../../../application/dto/chat/request/send-direct-message.request.dto';
@@ -36,6 +37,9 @@ export class ChatController implements IChatController {
 
         @inject('IEndChatSessionUsecase')
         private readonly endChatSessionUsecase: IEndChatSessionUsecase,
+
+        @inject('IDeleteChatUsecase')
+        private readonly deleteChatUsecase: IDeleteChatUsecase,
     ) { }
 
     // ─── GET /api/v1/chat ─────────────────────────────────────────────────────
@@ -131,6 +135,22 @@ export class ChatController implements IChatController {
             const conversationId = req.params.conversationId as string;
             const result = await this.endChatSessionUsecase.execute(userId, conversationId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro session ended', result);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // ─── DELETE /api/v1/chat/:conversationId/messages ────────────────────────
+    async deleteChat(
+        req: CustomRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
+        try {
+            const userId = req.user!.id;
+            const conversationId = req.params.conversationId as string;
+            await this.deleteChatUsecase.execute(userId, conversationId);
+            ResponseHelper.success(res, HTTP_STATUS.OK, 'Chat deleted successfully', null);
         } catch (error) {
             next(error);
         }

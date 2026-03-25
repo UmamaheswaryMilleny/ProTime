@@ -13,6 +13,10 @@ import type { IConversationRepository } from '../../../../domain/repositories/ch
 
 import { BuddyConnectionStatus } from '../../../../domain/enums/buddy.enums';
 import { FREE_MONTHLY_BUDDY_MATCHES } from '../../../../shared/constants/constants';
+import type { IProfileRepository } from '../../../../domain/repositories/profile/profile.repository.interface';
+
+import { NotificationType } from '../../../service_interface/notification-service.interface';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
 
 @injectable()
 export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUsecase {
@@ -24,6 +28,10 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
     private readonly userRepo: IUserRepository,
     @inject('IConversationRepository')
     private readonly conversationRepo: IConversationRepository,
+    @inject('IProfileRepository')
+    private readonly profileRepo: IProfileRepository,
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) { }
 
   async execute(
@@ -87,5 +95,20 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
 
     // 6. Set CONNECTED + addedAt — quota consumed here
     await this.buddyConnectionRepo.updateStatus(connectionId, BuddyConnectionStatus.CONNECTED);
+
+    // Notify requester
+    try {
+      const receiverProfile = await this.profileRepo.findByUserId(receiverId);
+      const receiverName = receiverProfile?.username || receiverProfile?.fullName || 'Someone';
+
+      this.notificationService.notifyUser(connection.userId, {
+        type: NotificationType.BUDDY_ACCEPTED,
+        title: 'Study Buddy Found!',
+        message: `@${receiverName} accepted your study buddy request. Go say hi!`,
+        metadata: { connectionId, buddyId: receiverId }
+      });
+    } catch (error) {
+       // Ignore
+    }
   }
 }
