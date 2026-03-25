@@ -129,8 +129,30 @@ import type { IResolveReportUsecase }   from '../../application/usecase/interfac
 import type { IGetReportsUsecase }      from '../../application/usecase/interface/report/get-reports.usecase.interface';
 import type { IGetReportByIdUsecase }   from '../../application/usecase/interface/report/get-report-by-id.usecase.interface';
 
+//calender
 
-
+import type { IStartSessionUsecase }                from '../../application/usecase/interface/calendar/start-session.usecase.interface';
+import type { IEndSessionUsecase }                  from '../../application/usecase/interface/calendar/end-session.usecase.interface';
+import type { ISaveSessionNotesUsecase }            from '../../application/usecase/interface/calendar/save-session-notes.usecase.interface';
+import type { IProposeNextSessionUsecase }          from '../../application/usecase/interface/calendar/propose-next-session.usecase.interface';
+import type { IProposeRecurringSessionUsecase }     from '../../application/usecase/interface/calendar/propose-recurring-session.usecase.interface';
+import type { IRespondToScheduleRequestUsecase }    from '../../application/usecase/interface/calendar/respond-to-schedule-request.usecase.interface';
+import type { IGetCalendarEventsUsecase }           from '../../application/usecase/interface/calendar/get-calendar-events.usecase.interface';
+import type { IGetDayDetailUsecase }               from '../../application/usecase/interface/calendar/get-day-detail.usecase.interface';
+import type { IMarkMissedSessionsUsecase }         from '../../application/usecase/interface/calendar/mark-missed-sessions.usecase.interface';
+import type { IExpireScheduleRequestsUsecase }     from '../../application/usecase/interface/calendar/expire-schedule-requests.usecase.interface';
+import type { IGetPendingScheduleRequestsUsecase } from '../../application/usecase/interface/calendar/get-pending-schedule-requests.usecase.interface';
+import { StartSessionUsecase } from '../../application/usecase/implementation/calendar/start-session.usecase';
+import { EndSessionUsecase } from '../../application/usecase/implementation/calendar/end-session.usecase';
+import { SaveSessionNotesUsecase } from '../../application/usecase/implementation/calendar/save-session-notes.usecase';
+import { ProposeNextSessionUsecase } from '../../application/usecase/implementation/calendar/propose-next-session.usecase';
+import { RespondToScheduleRequestUsecase } from '../../application/usecase/implementation/calendar/respond-to-schedule-request.usecase';
+import { GetCalendarEventsUsecase } from '../../application/usecase/implementation/calendar/get-calendar-events.usecase';
+import { GetDayDetailUsecase } from '../../application/usecase/implementation/calendar/get-day-detail.usecase';
+import { MarkMissedSessionsUsecase } from '../../application/usecase/implementation/calendar/mark-missed-sessions.usecase';
+import { ExpireScheduleRequestsUsecase } from '../../application/usecase/implementation/calendar/expire-schedule-requests.usecase';
+import { GetPendingScheduleRequestsUsecase } from '../../application/usecase/implementation/calendar/get-pending-schedule-requests.usecase';
+import { ProposeRecurringSessionUsecase } from '../../application/usecase/implementation/calendar/propose-recurring-session.usecase';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -294,5 +316,19 @@ export class UsecaseRegistry {
 container.register<IResolveReportUsecase> ('IResolveReportUsecase',  { useClass: ResolveReportUsecase });
 container.register<IGetReportsUsecase>    ('IGetReportsUsecase',     { useClass: GetReportsUsecase });
 container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass: GetReportByIdUsecase });
+
+
+    // calendar
+    container.register<IStartSessionUsecase>               ('IStartSessionUsecase',               { useClass: StartSessionUsecase });
+    container.register<IEndSessionUsecase>                 ('IEndSessionUsecase',                 { useClass: EndSessionUsecase });
+    container.register<ISaveSessionNotesUsecase>           ('ISaveSessionNotesUsecase',           { useClass: SaveSessionNotesUsecase });
+    container.register<IProposeNextSessionUsecase>         ('IProposeNextSessionUsecase',         { useClass: ProposeNextSessionUsecase });
+    container.register<IProposeRecurringSessionUsecase>    ('IProposeRecurringSessionUsecase',    { useClass: ProposeRecurringSessionUsecase });
+    container.register<IRespondToScheduleRequestUsecase>   ('IRespondToScheduleRequestUsecase',   { useClass: RespondToScheduleRequestUsecase });
+    container.register<IGetCalendarEventsUsecase>          ('IGetCalendarEventsUsecase',          { useClass: GetCalendarEventsUsecase });
+    container.register<IGetDayDetailUsecase>              ('IGetDayDetailUsecase',              { useClass: GetDayDetailUsecase });
+    container.register<IMarkMissedSessionsUsecase>        ('IMarkMissedSessionsUsecase',        { useClass: MarkMissedSessionsUsecase });
+    container.register<IExpireScheduleRequestsUsecase>    ('IExpireScheduleRequestsUsecase',    { useClass: ExpireScheduleRequestsUsecase });
+    container.register<IGetPendingScheduleRequestsUsecase>('IGetPendingScheduleRequestsUsecase',{ useClass: GetPendingScheduleRequestsUsecase });
   }
 }

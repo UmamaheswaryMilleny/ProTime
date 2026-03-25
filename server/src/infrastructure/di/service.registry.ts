@@ -78,6 +78,16 @@ import type { IReportRepository } from '../../domain/repositories/report/report.
 import { ReportRepository }       from '../repositories/report/report.repository';
 
 
+// calendar usecases
+
+import { IBuddySessionRepository } from '../../domain/repositories/calendar/buddy-session.repository.interface';
+import { ISessionNoteRepository } from '../../domain/repositories/calendar/session-not.repository.interface';
+import { ISessionScheduleRequestRepository } from '../../domain/repositories/calendar/session-schedule-request.repository.interface';
+import { BuddySessionRepository } from '../repositories/calendar/buddy-session.repository';
+import { CalendarEventRepository } from '../repositories/calendar/calendar-event.repository';
+import { SessionNoteRepository } from '../repositories/calendar/session-note.repository';
+import { SessionScheduleRequestRepository } from '../repositories/calendar/session-schedule-request.repository';
+import { ICalendarEventRepository } from '../../domain/repositories/calendar/calendar-event.repository.interface';
 
 export class ServiceRegistry {
   static register(): void {
@@ -187,5 +197,11 @@ export class ServiceRegistry {
     container.register<IReportRepository>('IReportRepository', {
   useClass: ReportRepository,
 });
+
+   // ─── Calendar Repositories ───────────────────────────────────────────
+    container.register<IBuddySessionRepository>('IBuddySessionRepository', { useClass: BuddySessionRepository });
+    container.register<ICalendarEventRepository>('ICalendarEventRepository', { useClass: CalendarEventRepository });
+    container.register<ISessionNoteRepository>('ISessionNoteRepository', { useClass: SessionNoteRepository });
+    container.register<ISessionScheduleRequestRepository>('ISessionScheduleRequestRepository', { useClass: SessionScheduleRequestRepository });
   }
 }
