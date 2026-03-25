@@ -1,3 +1,5 @@
+// src/application/usecase/implementation/report/get-reports.usecase.ts
+
 import { inject, injectable } from 'tsyringe';
 import type { IGetReportsUsecase }    from '../../interface/report/get-reports.usecase.interface';
 import type { IReportRepository }     from '../../../../domain/repositories/report/report.repository.interface';
@@ -14,9 +16,10 @@ export class GetReportsUsecase implements IGetReportsUsecase {
 
   async execute(dto: GetReportsRequestDTO): Promise<GetReportsResponseDTO> {
     const { reports, total } = await this.reportRepo.findAll({
-      status: dto.status,
-      page:   dto.page,
-      limit:  dto.limit,
+      status:         dto.status,
+      reportedUserId: dto.reportedUserId, // ← this line was missing
+      page:           dto.page,
+      limit:          dto.limit,
     });
 
     return {
