@@ -73,6 +73,11 @@ import { ConversationRepository } from '../repositories/chat/conversation.reposi
 import { DirectMessageRepository } from '../repositories/chat/direct-message.repository';
 import { ChatSessionRepository } from '../repositories/chat/chat-session.repository';
 
+//report
+import type { IReportRepository } from '../../domain/repositories/report/report.repository.interface';
+import { ReportRepository }       from '../repositories/report/report.repository';
+
+
 
 export class ServiceRegistry {
   static register(): void {
@@ -179,5 +184,8 @@ export class ServiceRegistry {
     container.register<IConversationRepository>('IConversationRepository', { useClass: ConversationRepository });
     container.register<IDirectMessageRepository>('IDirectMessageRepository', { useClass: DirectMessageRepository });
     container.register<IChatSessionRepository>('IChatSessionRepository', { useClass: ChatSessionRepository });
+    container.register<IReportRepository>('IReportRepository', {
+  useClass: ReportRepository,
+});
   }
 }

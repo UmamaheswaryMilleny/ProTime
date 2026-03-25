@@ -119,6 +119,15 @@ import type { IStartChatSessionUsecase } from '../../application/usecase/interfa
 import type { IEndChatSessionUsecase } from '../../application/usecase/interface/chat/end-chat-session.usecase.interface';
 
 
+//report
+import { SubmitReportUsecase }    from '../../application/usecase/implementation/report/submit-report.usecase';
+import { ResolveReportUsecase }   from '../../application/usecase/implementation/report/resolve-report.usecase';
+import { GetReportsUsecase }      from '../../application/usecase/implementation/report/get-reports.usecase';
+import { GetReportByIdUsecase }   from '../../application/usecase/implementation/report/get-report-by-id.usecase';
+import type { ISubmitReportUsecase }    from '../../application/usecase/interface/report/submit-report.usecase.interface';
+import type { IResolveReportUsecase }   from '../../application/usecase/interface/report/resolve-report.usecase.interface';
+import type { IGetReportsUsecase }      from '../../application/usecase/interface/report/get-reports.usecase.interface';
+import type { IGetReportByIdUsecase }   from '../../application/usecase/interface/report/get-report-by-id.usecase.interface';
 
 
 
@@ -279,5 +288,11 @@ export class UsecaseRegistry {
     container.register<IStartChatSessionUsecase>('IStartChatSessionUsecase', { useClass: StartChatSessionUsecase });
     container.register<IEndChatSessionUsecase>('IEndChatSessionUsecase', { useClass: EndChatSessionUsecase });
 
+
+    //report
+    container.register<ISubmitReportUsecase>  ('ISubmitReportUsecase',   { useClass: SubmitReportUsecase });
+container.register<IResolveReportUsecase> ('IResolveReportUsecase',  { useClass: ResolveReportUsecase });
+container.register<IGetReportsUsecase>    ('IGetReportsUsecase',     { useClass: GetReportsUsecase });
+container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass: GetReportByIdUsecase });
   }
 }
