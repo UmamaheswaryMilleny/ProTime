@@ -22,11 +22,14 @@ export const ROUTES = {
   DASHBOARD_COMMUNITY_CHAT: "/dashboard/community-chat",
   DASHBOARD_CHAT: "/dashboard/chat",
   DASHBOARD_CHAT_CONVERSATION: "/dashboard/chat/:conversationId",
+  DASHBOARD_PROBUDDY: "/dashboard/probuddy",
+  DASHBOARD_CALENDAR: "/dashboard/calendar",
 
   // ─── Admin ────────────────────────────────────────────────────────────────
   ADMIN_LOGIN: "/admin/login",
   ADMIN_DASHBOARD: "/admin/dashboard",
   ADMIN_USERS: "/admin/users",
+  ADMIN_REPORTS: "/admin/reports",
 } as const;
 
 export const API_ROUTES = {
@@ -55,6 +58,9 @@ export const API_ROUTES = {
   // ─── Gamification ─────────────────────────────────────────────────────────
   GAMIFICATION: "/gamification",
 
+  // ─── Reporting ────────────────────────────────────────────────────────────
+  REPORT_SUBMIT: "/reports",
+
   // ─── Subscription ─────────────────────────────────────────────────────────
   SUBSCRIPTION:          "/subscription/me",
   SUBSCRIPTION_CHECKOUT: "/subscription/checkout",
@@ -64,6 +70,8 @@ export const API_ROUTES = {
   ADMIN_USERS:        "/admin/users",
   ADMIN_BLOCK_USER:   (id: string) => `/admin/users/${id}/block`,
   ADMIN_UNBLOCK_USER: (id: string) => `/admin/users/${id}/unblock`,
+  ADMIN_REPORTS:        "/admin/reports",
+  ADMIN_RESOLVE_REPORT: (id: string) => `/admin/reports/${id}/resolve`,
 
   // ─── Buddy ────────────────────────────────────────────────────────────────
   BUDDY_PREFERENCE:       "/buddy/preference",
@@ -83,6 +91,22 @@ export const API_ROUTES = {
   CHAT_READ:          (conversationId: string) => `/chat/${conversationId}/read`,
   CHAT_SESSION_START: (conversationId: string) => `/chat/${conversationId}/session/start`,
   CHAT_SESSION_END:   (conversationId: string) => `/chat/${conversationId}/session/end`,
+  CHAT_DELETE:        (conversationId: string) => `/chat/${conversationId}/messages`,
+  
+  CHAT_BUDDY_SESSION_START: (conversationId: string) => `/chat/${conversationId}/buddy-session/start`,
+  CHAT_BUDDY_SESSION_END:   (conversationId: string) => `/chat/${conversationId}/buddy-session/end`,
+  CHAT_BUDDY_SESSION_PROPOSE: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose`,
+  CHAT_BUDDY_SESSION_PROPOSE_RECURRING: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose-recurring`,
+
+  CHAT_PROBUDDY:        (conversationId: string) => `/chat/${conversationId}/probuddy`,
+  CHAT_PROBUDDY_INIT:   "/chat/probuddy",
+
+  // ─── Calendar ─────────────────────────────────────────────────────────────
+  CALENDAR_EVENTS: "/calendar/events",
+  CALENDAR_DAY:    (date: string) => `/calendar/day/${date}`,
+  CALENDAR_REQUESTS: "/calendar/schedule-requests",
+  CALENDAR_RESPOND_REQUEST: (requestId: string) => `/chat/schedule-requests/${requestId}/respond`,
+  CALENDAR_SESSION_NOTES: (sessionId: string) => `/chat/sessions/${sessionId}/notes`,
 
   // ─── Utility ──────────────────────────────────────────────────────────────
   UTILITY_LOCATION: "/utility/location",

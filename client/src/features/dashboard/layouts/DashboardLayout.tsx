@@ -3,12 +3,19 @@ import { Outlet } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { useChatSocket } from '../../chat/hooks/useChatSocket';
 import { VideoCallOverlay } from '../../chat/components/VideoCallManager';
-import { useSelector } from 'react-redux';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import type { RootState } from '../../../store/store';
 import { socketService } from '../../../shared/services/socketService';
+import { useSessionReminder } from '../../calendar/hooks/useSessionReminder';
+import { tick, completeActivePomodoro } from '../../todo/store/pomodoroSlice';
 
 export const DashboardLayout: React.FC = () => {
-    const user = useSelector((state: RootState) => state.auth.user);
+    const dispatch = useAppDispatch();
+    const user = useAppSelector((state: RootState) => state.auth.user);
+    const { 
+        activeTask, isRunning, timeRemaining, phase, ownConversationId,
+        buddyActiveTask, buddyIsRunning 
+    } = useAppSelector((state: RootState) => state.pomodoro);
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(() => {
         const saved = localStorage.getItem('protime_sidebarCollapsed');
@@ -20,11 +27,47 @@ export const DashboardLayout: React.FC = () => {
         if (user?.accessToken) {
             socketService.connect(user.accessToken);
         }
-        // No disconnect here — removing socket mid-session causes reconnect loops during calls.
-        // The socket closes naturally when the tab is closed or the user logs out.
     }, [user?.accessToken]);
 
     useChatSocket();
+    useSessionReminder();
+
+    // Global Pomodoro Timer Ticker
+    React.useEffect(() => {
+        let interval: number;
+        
+        // Tick if either our timer or buddy's timer is running
+        const shouldTick = (activeTask && isRunning) || (buddyActiveTask && buddyIsRunning);
+        
+        if (shouldTick) {
+            interval = window.setInterval(() => {
+                dispatch(tick());
+                
+                // Emit tick to sync with buddy every 5 seconds if WE are the one running the timer
+                if (activeTask && isRunning && timeRemaining % 5 === 0 && ownConversationId) {
+                    socketService.emit('pomodoro:tick', { 
+                        conversationId: ownConversationId, 
+                        timeRemaining 
+                    });
+                }
+            }, 1000);
+        } else if (activeTask && !isRunning) {
+            // Even when paused, we tick to track paused seconds
+            interval = window.setInterval(() => {
+                dispatch(tick());
+            }, 1000);
+        }
+        return () => {
+            if (interval) window.clearInterval(interval);
+        };
+    }, [activeTask, isRunning, timeRemaining, buddyActiveTask, buddyIsRunning, dispatch, ownConversationId]);
+
+    // Global Completion Logic
+    React.useEffect(() => {
+        if (activeTask && timeRemaining === 0 && phase === 'FOCUS' && isRunning) {
+            dispatch(completeActivePomodoro() as any);
+        }
+    }, [activeTask, timeRemaining, phase, isRunning, dispatch]);
 
     React.useEffect(() => {
         localStorage.setItem('protime_sidebarCollapsed', JSON.stringify(isSidebarCollapsed));

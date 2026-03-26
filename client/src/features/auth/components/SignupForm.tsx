@@ -61,7 +61,7 @@ export const SignupForm = () => {
               className={`w-full bg-transparent border ${
                 errors.email ? 'border-red-500' : 'border-white/20 focus:border-[blueviolet]'
               } rounded-lg p-3 text-white outline-none transition-colors`}
-              placeholder="john@example.com"
+              placeholder="john@example.com" autoComplete="username"
             />
             {errors.email && (
               <p className="text-red-500 text-xs">{errors.email.message}</p>

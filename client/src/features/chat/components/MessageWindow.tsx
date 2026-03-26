@@ -6,14 +6,34 @@ import { socketService } from '../../../shared/services/socketService';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { SharedPomodoroPanel } from './SharedPomodoroPanel';
-import { clearUnreadCount, setActiveCall } from '../store/chatSlice';
+import { clearUnreadCount, setActiveCall, setAILoading } from '../store/chatSlice';
+import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo } from 'lucide-react';
+import { ReportModal } from './ReportModal';
+import { ShareTodoModal } from './ShareTodoModal';
+import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
+import { buddyService } from '../../buddy-match/services/buddy.service';
+import type { TodoItem } from '../../todo/types/todo.types';
+import { usePomodoro } from '../../todo/hooks/usePomodoro';
+import { useGamification } from '../../gamification/hooks/useGamification';
+import { PomodoroModal } from '../../todo/components/PomodoroModal';
+import { PomodoroMinimized } from '../../todo/components/PomodoroMinimized';
+import { PomodoroCompletedModal } from '../../todo/components/PomodoroCompletedModal';
+import { fetchPendingRequests, respondToScheduleRequest } from '../../calendar/store/calendarSlice';
+import { Check, X as CloseIcon } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { setMinimized, dismissCompletedModal } from '../../todo/store/pomodoroSlice';
+import { useAppSelector } from '../../../store/hooks';
 
 interface MessageWindowProps {
   conversationId: string;
+  isStandaloneAI?: boolean;
 }
 
-export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) => {
+export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, isStandaloneAI = false }) => {
   const dispatch = useDispatch();
+  const { conversations, onlineUsers, isAILoading } = useSelector((state: RootState) => state.chat);
+  const pendingRequests = useSelector((state: RootState) => state.calendar?.pendingRequests || []);
+  
   const authUserSession = localStorage.getItem('authSession');
   const userId = authUserSession ? JSON.parse(authUserSession).id : '';
 
@@ -21,14 +41,117 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isShareTodoOpen, setIsShareTodoOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
+
+  // Todo Pomodoro UI State (Timer logic is global via usePomodoro)
+  const [isTodoPomodoroModalOpen, setIsTodoPomodoroModalOpen] = useState(false);
+  
+  const { 
+    lastCompletedTask, 
+    earnedXp: globalEarnedXp, 
+    showCompletedModal,
+    buddyActiveTask,
+    buddyTimeRemaining,
+    buddyIsRunning,
+    buddyConversationId
+  } = useAppSelector((state: RootState) => state.pomodoro);
+
+  const { refreshGamification } = useGamification();
+
+  const {
+      activeTask,
+      timeRemaining,
+      timeRemainingFormatted,
+      isRunning: isTodoRunning,
+      phase,
+      initialTime,
+      isSmartBreaksEnabled,
+      totalPausedSeconds,
+      start: startTodoTimer,
+      pause: pauseTodoTimer,
+      resume: resumeTodoTimer,
+      stop: stopTodoTimer,
+      skipBreak,
+      reset: resetTodoTimer
+  } = usePomodoro();
+
+  // Sync completion modal with Redux state changes if needed
+  // Completion is handled globally in DashboardLayout.
+
+  const handleStartTodoPomodoro = (todo: TodoItem) => {
+    if (activeTask?.id && isTodoRunning && activeTask.id !== todo.id) {
+      toast.error('A Pomodoro is already running. Finish it first.');
+      return;
+    }
+    startTodoTimer(todo, 25 * 60, conversationId);
+    setIsTodoPomodoroModalOpen(true);
+  };
+
+  const handleStopTodoPomodoro = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="text-sm font-medium text-zinc-900 text-center">Stop the Pomodoro timer?</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-xs font-semibold text-zinc-600 hover:text-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              stopTodoTimer(conversationId);
+              setIsTodoPomodoroModalOpen(false);
+            }}
+            className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+          >
+            Stop
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000, position: 'top-center' });
+  };
+
+  const handleMinimizeTodoPomodoro = () => {
+      setIsTodoPomodoroModalOpen(false);
+      dispatch(setMinimized(true));
+  };
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
-  const { conversations, onlineUsers } = useSelector((state: RootState) => state.chat);
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
   const conversation = conversations.find(c => c.id === conversationId);
   const otherUser = conversation?.otherUser;
   const isOnline = otherUser ? onlineUsers[otherUser.userId] : false;
+
+  const relevantRequest = pendingRequests.find(req => req.proposedBy === otherUser?.userId);
+
+  const handleRespondSchedule = async (requestId: string, status: 'CONFIRMED' | 'REJECTED') => {
+    try {
+      await dispatch(respondToScheduleRequest({ requestId, status }) as any).unwrap();
+      toast.success(`Schedule request ${status.toLowerCase()}`);
+    } catch (err) {
+      toast.error('Failed to respond to schedule request');
+    }
+  };
 
   const scrollToBottom = (behavior: 'auto' | 'smooth' = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -40,18 +163,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       const oldestMessage = !isInitial && messages.length > 0 ? messages[0] : undefined;
       const res = await chatApi.getMessages(conversationId, 50, oldestMessage?.createdAt);
       if (res.success) {
-        const fetchedMessages = res.data.messages.reverse(); // Newest first from API -> Oldest first for UI
+        const fetchedMessages = [...res.data.messages].reverse(); 
         
         if (isInitial) {
           setMessages(fetchedMessages);
           setTimeout(() => scrollToBottom('auto'), 100);
           
-          // Emit join:conversations for this explicitly and mark as read
           socketService.emit('join:conversations', [conversationId]);
           chatApi.markAsRead(conversationId);
           dispatch(clearUnreadCount(conversationId));
         } else {
-          // Maintain scroll position
           const container = scrollContainerRef.current;
           const previousScrollHeight = container?.scrollHeight || 0;
           
@@ -75,6 +196,9 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
 
   useEffect(() => {
     loadMessages(true);
+    if (!isStandaloneAI) {
+      dispatch(fetchPendingRequests() as any);
+    }
   }, [conversationId]);
 
   useEffect(() => {
@@ -82,7 +206,6 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       if (msg.conversationId === conversationId) {
         setMessages(prev => [...prev, msg]);
         setTimeout(() => scrollToBottom('smooth'), 50);
-        // Automatically mark as read
         chatApi.markAsRead(conversationId);
         dispatch(clearUnreadCount(conversationId));
       }
@@ -108,9 +231,36 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   }, [conversationId, userId, dispatch]);
 
   const handleSend = async (content: string) => {
-    // Optimistic update
+    if (isStandaloneAI) {
+      dispatch(setAILoading(true));
+      
+      const optimisticUserMsg: DirectMessageResponseDTO = {
+        id: `temp-u-${Date.now()}`,
+        conversationId,
+        senderId: userId,
+        fullName: null,
+        content,
+        messageType: 'TEXT',
+        status: 'SENT',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setMessages(prev => [...prev, optimisticUserMsg]);
+      setTimeout(() => scrollToBottom('smooth'), 50);
+
+      try {
+        await chatApi.discussWithProBuddy(conversationId, content);
+      } catch (error) {
+        console.error('ProBuddy failed:', error);
+        setMessages(prev => prev.filter(m => m.id !== optimisticUserMsg.id));
+      } finally {
+        dispatch(setAILoading(false));
+      }
+      return;
+    }
+
     const optimisticMessage: DirectMessageResponseDTO = {
-      id: Date.now().toString(), // temporary
+      id: Date.now().toString(),
       conversationId,
       senderId: userId,
       fullName: null,
@@ -127,63 +277,229 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     try {
       const res = await chatApi.sendMessage(conversationId, content);
       if (res.success) {
-        // Replace temp message with actual
         setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? res.data : m));
       }
     } catch (error) {
       console.error('Failed to send message:', error);
-      // Remove or mark as failed
       setMessages(prev => prev.filter(m => m.id !== optimisticMessage.id));
     }
   };
 
-  if (!otherUser) return null;
+  const handleUnblock = async () => {
+    if (!conversation) return;
+    try {
+      await buddyService.unblockUser(conversation.buddyConnectionId);
+      setIsBlocked(false);
+      toast.success('User unblocked successfully');
+    } catch (error) {
+      toast.error('Failed to unblock user');
+      console.error(error);
+    }
+  };
+
+  const handleShareTodos = (todos: TodoItem[]) => {
+    const payload = JSON.stringify(todos);
+    const message = `[TODO_SHARE_DATA]${payload}[/TODO_SHARE_DATA]`;
+    handleSend(message);
+    setIsShareTodoOpen(false);
+  };
+
+  if (!isStandaloneAI && !otherUser) return null;
 
   return (
     <div className="flex flex-col h-full bg-transparent overflow-hidden relative">
-      {/* Header */}
-      <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[blueviolet]/10 text-[blueviolet] font-bold text-lg mr-3">
-            {otherUser.fullName.charAt(0).toUpperCase()}
+      {!isStandaloneAI && (
+        <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[blueviolet]/10 text-[blueviolet] font-bold text-lg mr-3">
+              {otherUser?.fullName.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h2 className="text-lg font-bold text-zinc-100 leading-tight">
+                {otherUser?.fullName}
+              </h2>
+              <span className={`text-xs ${isOnline ? 'text-green-500' : 'text-zinc-500'}`}>
+                {isOnline ? 'Online' : 'Offline'}
+              </span>
+            </div>
           </div>
-          <div>
-            <h2 className="text-lg font-bold text-zinc-100 leading-tight">
-              {otherUser.fullName}
-            </h2>
-            <span className={`text-xs ${isOnline ? 'text-green-500' : 'text-zinc-500'}`}>
-              {isOnline ? 'Online' : 'Offline'}
-            </span>
-          </div>
-        </div>
-        
-        <div className="flex items-center space-x-4">
-          <button 
-            title="Start Pomodoro" 
-            onClick={() => setIsPomodoroOpen(prev => !prev)}
-            className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </button>
-          <button 
-            title="Start Video Call" 
-            onClick={() => dispatch(setActiveCall({ conversationId, isCaller: true }))}
-            className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          </button>
-        </div>
-      </div>
+          
+          <div className="flex items-center space-x-4">
+            {activeTask ? (
+              <PomodoroMinimized
+                isVisible={true}
+                timeRemainingFormatted={timeRemainingFormatted}
+                isRunning={isTodoRunning}
+                onStart={() => resumeTodoTimer(conversationId)}
+                onPause={() => pauseTodoTimer(conversationId)}
+                onStop={handleStopTodoPomodoro}
+                onMaximize={() => setIsTodoPomodoroModalOpen(true)}
+              />
+            ) : buddyActiveTask && buddyConversationId === conversationId ? (
+              <PomodoroMinimized
+                isVisible={true}
+                timeRemainingFormatted={(() => {
+                    const mins = Math.floor(buddyTimeRemaining / 60);
+                    const secs = buddyTimeRemaining % 60;
+                    return `${mins}:${secs.toString().padStart(2, '0')}`;
+                })()}
+                isRunning={buddyIsRunning}
+                onStart={() => {}}
+                onPause={() => {}}
+                onStop={() => {}}
+                onMaximize={() => {}}
+                readOnly={true}
+              />
+            ) : (
+              <button 
+                title="Start Pomodoro" 
+                onClick={() => setIsPomodoroOpen(prev => !prev)}
+                className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </button>
+            )}
+            <button 
+              title="Start Video Call"   
+              onClick={() => dispatch(setActiveCall({ conversationId, isCaller: true }))}
+              className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </button>
+            <button 
+              onClick={() => setIsShareTodoOpen(true)}
+              className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
+              title="Share To-Do List"
+            >
+              <ListTodo className="w-6 h-6" />
+            </button>
+            <div className="relative" ref={settingsRef}>
+              <button
+                onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+                className="p-2 text-gray-500 hover:text-indigo-600 transition-colors rounded-full"
+                title="Settings"
+              >
+                <MoreVertical className="w-6 h-6" />
+              </button>
 
-      {/* Messages */}
+              {isSettingsOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-zinc-800 border border-white/5 rounded-xl shadow-xl overflow-hidden z-50">
+                  <div className="py-1">
+                    <button
+                      onClick={() => {
+                        setIsSettingsOpen(false);
+                        setIsScheduleModalOpen(true);
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
+                    >
+                      <Calendar className="w-4 h-4" />
+                      <span>Schedule</span>
+                    </button>
+                    <button
+                      onClick={() => setIsSettingsOpen(false)}
+                      className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
+                    >
+                      <PhoneOff className="w-4 h-4" />
+                      <span>End Call</span>
+                    </button>
+                    <div className="h-px bg-white/10 my-1" />
+                    <button
+                      onClick={() => {
+                        setIsSettingsOpen(false);
+                        setIsReportModalOpen(true);
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors gap-3 font-medium"
+                    >
+                      <Flag className="w-4 h-4" />
+                      <span>Report</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        toast((t) => (
+                          <div className="flex flex-col gap-3 p-1">
+                            <p className="text-sm font-medium text-zinc-900">Are you sure you want to delete all messages?</p>
+                            <div className="flex gap-2 justify-end">
+                              <button
+                                onClick={() => toast.dismiss(t.id)}
+                                className="px-3 py-1 text-xs font-semibold text-zinc-600 hover:text-zinc-800 transition-colors"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                onClick={async () => {
+                                  toast.dismiss(t.id);
+                                  try {
+                                    const res = await chatApi.deleteChat(conversationId);
+                                    if (res.success) {
+                                      setMessages([]);
+                                      setIsSettingsOpen(false);
+                                      toast.success("Chat history deleted", { id: 'delete-success' });
+                                    }
+                                  } catch (err: any) {
+                                    const backendMessage = err?.response?.data?.message;
+                                    toast.error(backendMessage || "Failed to delete chat history");
+                                  }
+                                }}
+                                className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        ), { duration: 5000, position: 'top-center' });
+                      }}
+                      className="w-full flex items-center px-4 py-2 text-sm text-red-500 hover:bg-red-500/10 transition-colors gap-3 font-medium"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      <span>Delete Chat</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div 
-        className="flex-1 overflow-y-auto p-4 sm:p-6" 
+        className="flex-1 overflow-y-auto p-4 sm:p-6 relative" 
         ref={scrollContainerRef}
       >
+        {relevantRequest && (
+          <div className="mb-4 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h4 className="text-sm font-bold text-indigo-400 mb-1 flex items-center gap-2">
+                <Calendar className="w-4 h-4" />
+                Schedule Request
+              </h4>
+              <p className="text-sm text-zinc-300">
+                {relevantRequest.proposerName} wants to schedule session(s) starting <span className="font-semibold text-white">{new Date(relevantRequest.scheduledAt).toLocaleString()}</span>
+                {relevantRequest.recurringDates && relevantRequest.recurringDates.length > 1 && ` for ${relevantRequest.recurringDates.length} days.`}
+              </p>
+            </div>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => handleRespondSchedule(relevantRequest.id, 'CONFIRMED')}
+                className="flex-1 sm:flex-none px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" /> Accept
+              </button>
+              <button
+                onClick={() => handleRespondSchedule(relevantRequest.id, 'REJECTED')}
+                className="flex-1 sm:flex-none px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+              >
+                <CloseIcon className="w-4 h-4" /> Decline
+              </button>
+            </div>
+          </div>
+        )}
+
         {hasMore && (
           <div className="flex justify-center mb-4">
             <button 
@@ -199,7 +515,6 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
         <div className="space-y-4">
           {messages.map((msg, index) => {
             const isOwn = msg.senderId === userId;
-            // Group logic: show sender info if previous msg is not from same sender
             const prevMsg = index > 0 ? messages[index - 1] : null;
             const showSenderInfo = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.messageType === 'SYSTEM';
 
@@ -209,20 +524,111 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                 message={msg} 
                 isOwn={isOwn} 
                 showSenderInfo={showSenderInfo}
+                onStartTodoPomodoro={handleStartTodoPomodoro}
+                activeTaskId={activeTask?.id}
+                isTimerRunning={isTodoRunning}
               />
             );
           })}
+          
+          {isAILoading && (
+            <div className="flex flex-col items-start mb-4">
+              <div className="flex items-center mb-1 ml-1 text-[blueviolet] font-bold text-[10px] uppercase tracking-tighter animate-pulse">
+                ProBuddy is thinking...
+              </div>
+              <div className="px-4 py-3 rounded-2xl bg-zinc-800 border border-white/5 text-zinc-400 rounded-tl-none">
+                <div className="flex space-x-1">
+                  <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <div className="w-1.5 h-1.5 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {/* Input & Panels */}
-      <SharedPomodoroPanel 
-        conversationId={conversationId} 
-        isOpen={isPomodoroOpen} 
-        onClose={() => setIsPomodoroOpen(false)} 
+      {!isStandaloneAI && (
+        <SharedPomodoroPanel 
+          conversationId={conversationId} 
+          isOpen={isPomodoroOpen} 
+          onClose={() => setIsPomodoroOpen(false)} 
+        />
+      )}
+      
+      {isReportModalOpen && otherUser && (
+        <ReportModal 
+          reportedId={otherUser.userId}
+          onClose={() => setIsReportModalOpen(false)}
+          onSuccess={async () => {
+            try {
+              await buddyService.blockUser(otherUser.userId);
+              toast.error('User reported & auto-blocked');
+              setIsBlocked(true);
+            } catch (err) {
+              toast.error('Reported, but failed to block user automatically.');
+            }
+            setIsReportModalOpen(false);
+          }}
+        />
+      )}
+
+      <ShareTodoModal
+        isOpen={isShareTodoOpen}
+        onClose={() => setIsShareTodoOpen(false)}
+        onShare={handleShareTodos}
       />
-      <MessageInput onSend={handleSend} />
+
+      {isScheduleModalOpen && (
+        <ScheduleRecurringSessionModal
+          conversationId={conversationId}
+          onClose={() => setIsScheduleModalOpen(false)}
+        />
+      )}
+
+      {isBlocked ? (
+        <div className="p-4 bg-zinc-900 border-t border-red-500/20 flex flex-col items-center justify-center">
+          <p className="text-red-400 text-sm font-medium mb-3">You have blocked this user.</p>
+          <button 
+            onClick={handleUnblock}
+            className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-red-500/20"
+          >
+            Unblock User
+          </button>
+        </div>
+      ) : (
+        <MessageInput onSend={handleSend} disabled={isAILoading} />
+      )}
+
+      {/* Todo Pomodoro Modals */}
+      <PomodoroModal
+        isOpen={isTodoPomodoroModalOpen}
+        task={activeTask}
+        timeRemainingFormatted={timeRemainingFormatted}
+        isRunning={isTodoRunning}
+        onStart={resumeTodoTimer}
+        onPause={pauseTodoTimer}
+        onReset={resetTodoTimer}
+        onMinimize={handleMinimizeTodoPomodoro}
+        onClose={handleStopTodoPomodoro}
+        progressPercentage={initialTime > 0 ? (timeRemaining / initialTime) * 100 : 100}
+        phase={phase}
+        onSkipBreak={skipBreak}
+        isSmartBreaksEnabled={isSmartBreaksEnabled}
+        totalPausedSeconds={totalPausedSeconds}
+      />
+
+      <PomodoroCompletedModal
+        isOpen={showCompletedModal}
+        task={lastCompletedTask}
+        earnedXp={globalEarnedXp}
+        onClose={() => {
+            dispatch(dismissCompletedModal());
+            refreshGamification();
+        }}
+      />
     </div>
   );
 };

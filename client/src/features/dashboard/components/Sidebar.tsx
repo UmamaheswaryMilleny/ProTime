@@ -10,12 +10,13 @@ import {
     ChevronLeft,
     ChevronRight,
     Trophy as TrophyIcon,
-    Search
+    Search,
 } from 'lucide-react';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 
 import { NotificationBell } from './NotificationBell';
+
 
 interface SidebarProps {
     isCollapsed: boolean;
@@ -27,6 +28,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
     const { user } = useAppSelector((state) => state.auth);
     const { pendingRequests } = useAppSelector((state) => state.buddy);
     const dispatch = useAppDispatch();
+    
+    
 
     React.useEffect(() => {
         if (!user) return;
@@ -44,6 +47,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
 
     const navItems = [
         { icon: LayoutDashboard, label: 'Dashboard', path: ROUTES.DASHBOARD, end: true },
+        // { icon: Sparkles, label: 'ProBuddy AI', path: ROUTES.DASHBOARD_PROBUDDY, end: false },
         { 
             icon: Search, 
             label: 'Find Buddy', 
@@ -53,7 +57,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
         },
         { icon: CheckSquare, label: 'To-Do List', path: ROUTES.DASHBOARD_TODO_LIST, end: false },
         { icon: Video, label: 'Study Rooms', path: '#', end: false },
-        { icon: Calendar, label: 'Calender', path: '#', end: false },
+        { icon: Calendar, label: 'Calendar', path: ROUTES.DASHBOARD_CALENDAR, end: false },
         { icon: MessageSquare, label: 'Community', path: ROUTES.DASHBOARD_COMMUNITY_CHAT, end: false },
         { icon: BarChart2, label: 'Reports', path: '#', end: false },
         { icon: TrophyIcon, label: 'Leaderboard', path: '#', end: false },

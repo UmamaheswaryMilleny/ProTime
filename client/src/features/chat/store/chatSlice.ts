@@ -7,6 +7,9 @@ interface ChatState {
   activeSessions: Record<string, ChatSessionResponseDTO>; // conversationId -> session
   incomingCall: { conversationId: string; offer: RTCSessionDescriptionInit; callerName: string } | null;
   activeCall: { conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit } | null;
+  
+  // ProBuddy State
+  isAILoading: boolean;
 }
 
 const initialState: ChatState = {
@@ -15,6 +18,7 @@ const initialState: ChatState = {
   activeSessions: {},
   incomingCall: null,
   activeCall: null,
+  isAILoading: false,
 };
 
 const chatSlice = createSlice({
@@ -24,10 +28,10 @@ const chatSlice = createSlice({
     setConversations: (state, action: PayloadAction<ConversationResponseDTO[]>) => {
       state.conversations = action.payload;
     },
-    updateConversationPreview: (state, action: PayloadAction<{ conversationId: string; lastMessageBy: string; lastMessageByName?: string; lastMessageAt: string; incrementUnread?: boolean }>) => {
+    updateConversationPreview: (state, action: PayloadAction<{ conversationId: string; lastMessageBy: string | null; lastMessageByName?: string; lastMessageAt: string; incrementUnread?: boolean }>) => {
       const convIndex = state.conversations.findIndex(c => c.id === action.payload.conversationId);
       if (convIndex !== -1) {
-        state.conversations[convIndex].lastMessageBy = action.payload.lastMessageBy;
+        state.conversations[convIndex].lastMessageBy = action.payload.lastMessageBy || '';
         state.conversations[convIndex].lastMessageByName = action.payload.lastMessageByName;
         state.conversations[convIndex].lastMessageAt = action.payload.lastMessageAt;
         if (action.payload.incrementUnread) {
@@ -59,6 +63,10 @@ const chatSlice = createSlice({
     setActiveCall: (state, action: PayloadAction<{ conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit } | null>) => {
       state.activeCall = action.payload;
     },
+    
+    setAILoading: (state, action: PayloadAction<boolean>) => {
+      state.isAILoading = action.payload;
+    }
   },
 });
 
@@ -70,6 +78,7 @@ export const {
   setActiveSession,
   removeActiveSession,
   setIncomingCall,
-  setActiveCall
+  setActiveCall,
+  setAILoading
 } = chatSlice.actions;
 export default chatSlice.reducer;

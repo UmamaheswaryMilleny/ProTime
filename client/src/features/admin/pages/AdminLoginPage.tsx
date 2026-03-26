@@ -56,7 +56,7 @@ export const AdminLoginPage: React.FC = () => {
                                     className={`w-full bg-[#1F1F23] border rounded-xl px-4 py-3 pr-11 text-white outline-none transition-all placeholder:text-zinc-600 ${errors.password
                                             ? 'border-red-500'
                                             : 'border-[#27272A] focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/30'
-                                        }`}
+                                        }`} autoComplete="current-password"
                                 />
                                 <button
                                     type="button"

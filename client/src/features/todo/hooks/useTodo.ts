@@ -1,9 +1,10 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import type { TodoItem, CreateTodoDTO } from '../types/todo.types';
 import { todoService } from '../services/todo.service';
 import toast from 'react-hot-toast';
 import { useAppDispatch } from '../../../store/hooks';
 import { addBadgeNotification, updateGamificationLocal } from '../../gamification/store/gamificationSlice';
+import { addNotification } from '../../notifications/store/notificationSlice';
 
 export const useTodo = () => {
     const dispatch = useAppDispatch();
@@ -12,6 +13,11 @@ export const useTodo = () => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
     const [dailyXp, setDailyXp] = useState<{ current: number, cap: number }>({ current: 0, cap: 50 });
+
+    // Track expired task IDs we've already notified about (persisted across re-renders)
+    const notifiedExpiredRef = useRef<Set<string>>(new Set(
+        JSON.parse(localStorage.getItem('protime_notified_expired') || '[]') as string[]
+    ));
 
     const fetchTodos = useCallback(async (filter: 'all' | 'pending' | 'completed' = 'all') => {
         try {
@@ -27,6 +33,21 @@ export const useTodo = () => {
                 shared: data.shared,
                 progress: data.progress
             });
+
+            // Dispatch task_expired notifications for newly-detected expired tasks
+            const expiredTodos = data.todos.filter((t: TodoItem) => t.status === 'EXPIRED');
+            expiredTodos.forEach((t: TodoItem) => {
+                if (!notifiedExpiredRef.current.has(t.id)) {
+                    notifiedExpiredRef.current.add(t.id);
+                    dispatch(addNotification({
+                        type: 'task_expired',
+                        title: '⏰ Task Expired',
+                        message: `"${t.title}" has expired without being completed.`,
+                        metadata: { taskId: t.id },
+                    }));
+                }
+            });
+            localStorage.setItem('protime_notified_expired', JSON.stringify([...notifiedExpiredRef.current]));
         } catch (err) {
             const message = err instanceof Error ? err.message : 'Failed to fetch todos';
             setError(message);
@@ -34,7 +55,7 @@ export const useTodo = () => {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [dispatch]);
 
     const addTodo = async (dto: CreateTodoDTO) => {
         try {
@@ -90,6 +111,24 @@ export const useTodo = () => {
                     currentLevel: xpResult.currentLevel,
                     currentTitle: xpResult.currentTitle
                 }));
+
+                // Notification: task completed
+                dispatch(addNotification({
+                    type: 'task_completed',
+                    title: '🏆 Task Completed',
+                    message: `"${todo.title}" completed with Pomodoro! +${earnedXp} XP`,
+                    metadata: { taskId: id, xpAwarded: earnedXp },
+                }));
+
+                // Notification: XP gained
+                if (earnedXp > 0) {
+                    dispatch(addNotification({
+                        type: 'xp_gained',
+                        title: '⭐ XP Earned',
+                        message: `+${earnedXp} XP from Pomodoro session. Total: ${xpResult.totalXp} XP`,
+                        metadata: { xpAwarded: earnedXp, totalXp: xpResult.totalXp },
+                    }));
+                }
             } else {
                 const completeResponse = await todoService.completeTodo(id);
                 updatedTodo = completeResponse.todo;
@@ -116,12 +155,36 @@ export const useTodo = () => {
                     currentTitle: xpResult.currentTitle
                 }));
 
-                // Show level up
+                // Notification: task completed
+                dispatch(addNotification({
+                    type: 'task_completed',
+                    title: '🏆 Task Completed',
+                    message: `"${todo.title}" completed! +${earnedXp} XP`,
+                    metadata: { taskId: id, xpAwarded: earnedXp },
+                }));
+
+                // Notification: XP gained
+                if (earnedXp > 0) {
+                    dispatch(addNotification({
+                        type: 'xp_gained',
+                        title: '⭐ XP Earned',
+                        message: `+${earnedXp} XP earned. Total: ${xpResult.totalXp} XP`,
+                        metadata: { xpAwarded: earnedXp, totalXp: xpResult.totalXp },
+                    }));
+                }
+
+                // Notification: level up
                 if (xpResult.leveledUp) {
                     toast.success(`🎉 Level Up! You are now Level ${xpResult.currentLevel}: ${xpResult.currentTitle}`, {
                         duration: 7000,
                         icon: '🎊'
                     });
+                    dispatch(addNotification({
+                        type: 'level_up',
+                        title: '🎉 Level Up!',
+                        message: `You reached Level ${xpResult.currentLevel}: ${xpResult.currentTitle}`,
+                        metadata: { newLevel: xpResult.currentLevel, newTitle: xpResult.currentTitle },
+                    }));
                 }
             }
 

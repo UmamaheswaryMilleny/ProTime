@@ -43,7 +43,7 @@ export const SigninForm = () => {
             className={`w-full bg-transparent border ${
               errors.email ? 'border-red-500' : 'border-white/20 focus:border-[blueviolet]'
             } rounded-lg p-3 text-white outline-none transition-colors`}
-            placeholder="john@example.com" autoComplete="current-password"
+            placeholder="john@example.com" autoComplete="username"
           />
           {errors.email && (
             <p className="text-red-500 text-xs">{errors.email.message}</p>
@@ -60,7 +60,7 @@ export const SigninForm = () => {
               className={`w-full bg-transparent border ${
                 errors.password ? 'border-red-500' : 'border-white/20 focus:border-[blueviolet]'
               } rounded-lg p-3 text-white outline-none transition-colors pr-10`}
-              placeholder="••••••••"
+              placeholder="••••••••" autoComplete="current-password"
             />
             <button
               type="button"

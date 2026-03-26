@@ -205,16 +205,6 @@ export const FindBuddyPage: React.FC = () => {
     } catch (err) { }
   };
 
-  const handleLoadMore = () => {
-    const nextPage = currentPage + 1;
-    setCurrentPage(nextPage);
-    dispatch(fetchMatches({
-      page: nextPage,
-      limit: itemsPerPage,
-      search: searchQuery,
-      global: isGlobal
-    }));
-  };
 
   const getBuddyStatus = (buddyId: string) => {
     if (buddyList.some(conn => conn.buddy?.userId === buddyId)) return 'CONNECTED';
@@ -260,6 +250,7 @@ export const FindBuddyPage: React.FC = () => {
               <BuddyNavbar
                 activeTab={activeTab}
                 onTabChange={(tab) => setActiveTab(tab)}
+                requestCount={pendingRequests.length}
               />
               {/* Blocked tab */}
               <button
@@ -333,6 +324,17 @@ export const FindBuddyPage: React.FC = () => {
             {/* Content Area */}
             <div className="flex-1">
               {activeTab === 'find' && (
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-[blueviolet] animate-pulse" />
+                    <span className="text-xs font-bold text-zinc-500 uppercase tracking-widest">
+                      {totalMatches} {totalMatches === 1 ? 'Potential Buddy' : 'Potential Buddies'} Found
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'find' && (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                   {loading.matches && matches.length === 0 ? (
                     <p className="text-zinc-500 col-span-full py-10 text-center">Finding matches...</p>
@@ -364,15 +366,84 @@ export const FindBuddyPage: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'find' && matches.length < totalMatches && (
-                <div className="mt-12 flex justify-center">
-                  <button
-                    onClick={handleLoadMore}
-                    disabled={loading.matches}
-                    className="px-8 py-3 bg-zinc-900 hover:bg-zinc-800 text-white rounded-2xl font-semibold transition-all border border-white/5 disabled:opacity-50"
-                  >
-                    {loading.matches ? 'Loading...' : 'Load More Buddies'}
-                  </button>
+              {activeTab === 'find' && totalMatches > itemsPerPage && (
+                <div className="mt-12 flex flex-col items-center gap-6">
+                  {/* Pagination Buttons */}
+                  <div className="flex items-center gap-2 p-1.5 bg-[#18181B] border border-white/5 rounded-2xl">
+                    <button
+                      onClick={() => {
+                        const prev = Math.max(1, currentPage - 1);
+                        setCurrentPage(prev);
+                        dispatch(fetchMatches({ page: prev, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === 1 || loading.matches}
+                      className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
+                    >
+                      <ArrowRight size={18} className="rotate-180" />
+                    </button>
+
+                    {Array.from({ length: Math.min(5, Math.ceil(totalMatches / itemsPerPage)) }, (_, i) => {
+                      // Simple pagination window: logic to show current +/- 2 pages could be added here
+                      const pageNum = i + 1;
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => {
+                            setCurrentPage(pageNum);
+                            dispatch(fetchMatches({ page: pageNum, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                            window.scrollTo({ top: 0, behavior: 'smooth' });
+                          }}
+                          disabled={loading.matches}
+                          className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
+                            currentPage === pageNum 
+                              ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20' 
+                              : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                          }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+
+                    {Math.ceil(totalMatches / itemsPerPage) > 5 && <span className="text-zinc-600 px-2 font-bold">...</span>}
+                    
+                    {Math.ceil(totalMatches / itemsPerPage) > 5 && (
+                       <button
+                       onClick={() => {
+                         const last = Math.ceil(totalMatches / itemsPerPage);
+                         setCurrentPage(last);
+                         dispatch(fetchMatches({ page: last, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                         window.scrollTo({ top: 0, behavior: 'smooth' });
+                       }}
+                       disabled={loading.matches}
+                       className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
+                         currentPage === Math.ceil(totalMatches / itemsPerPage)
+                           ? 'bg-[blueviolet] text-white' 
+                           : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                       }`}
+                     >
+                       {Math.ceil(totalMatches / itemsPerPage)}
+                     </button>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        const next = Math.min(Math.ceil(totalMatches / itemsPerPage), currentPage + 1);
+                        setCurrentPage(next);
+                        dispatch(fetchMatches({ page: next, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === Math.ceil(totalMatches / itemsPerPage) || loading.matches}
+                      className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
+                    >
+                      <ArrowRight size={18} />
+                    </button>
+                  </div>
+                  
+                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                    Page {currentPage} of {Math.ceil(totalMatches / itemsPerPage)}
+                  </p>
                 </div>
               )}
 
