@@ -10,6 +10,7 @@ import { StudyRoomController } from '../../controllers/study-room/study-room.con
 import { UserRole } from '../../../domain/enums/user.enums';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import { CreateRoomRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from '../../../application/dtos/study-room.dto';
+import { chatUploadMiddleware } from '../../middlewares/upload.middleware';
 
 @injectable()
 export class StudyRoomRoutes extends BaseRoute {
@@ -83,6 +84,11 @@ export class StudyRoomRoutes extends BaseRoute {
       ROUTES.ROOMS.END,
       asyncHandler(ctrl.endRoom.bind(ctrl))
     );
+    
+    this.router.post(
+      ROUTES.ROOMS.START,
+      asyncHandler(ctrl.startRoom.bind(ctrl))
+    );
 
     this.router.get(
       ROUTES.ROOMS.MESSAGES,
@@ -91,6 +97,7 @@ export class StudyRoomRoutes extends BaseRoute {
 
     this.router.post(
       ROUTES.ROOMS.SEND_MESSAGE,
+      chatUploadMiddleware.single('file'),
       validationMiddleware(SendStudyRoomMessageDTO),
       asyncHandler(ctrl.sendMessage.bind(ctrl))
     );

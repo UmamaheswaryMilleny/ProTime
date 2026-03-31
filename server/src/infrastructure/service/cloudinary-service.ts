@@ -43,4 +43,28 @@ export class CloudinaryService implements ICloudinaryService {
   async deleteImage(publicId: string): Promise<void> {
     await cloudinary.uploader.destroy(publicId);
   }
+
+  async uploadFile(
+    fileBuffer: Buffer,
+    folder: string,
+    filename: string
+  ): Promise<{ url: string; publicId: string }> {
+    return new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          folder,
+          public_id: filename,
+          resource_type: 'auto', // Automatically detect file type (image, video, raw)
+        },
+        (error, result) => {
+          if (error || !result) {
+            reject(error ?? new Error('Cloudinary file upload failed'));
+            return;
+          }
+          resolve({ url: result.secure_url, publicId: result.public_id });
+        }
+      );
+      uploadStream.end(fileBuffer);
+    });
+  }
 }

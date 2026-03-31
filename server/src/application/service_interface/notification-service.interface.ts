@@ -12,6 +12,7 @@ export enum NotificationType {
   SESSION_REMINDER = 'session_reminder',
   CHAT_MESSAGE = 'chat_message',
   STUDY_ROOM_INVITE = 'study_room_invite',
+  STUDY_ROOM_START = 'study_room_start',
 }
 
 export interface InAppNotification {

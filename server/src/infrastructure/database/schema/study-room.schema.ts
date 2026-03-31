@@ -13,6 +13,7 @@ export const StudyRoomSchema = new Schema(
     levelRequired: { type: String, enum: Object.values(LevelRequired), default: LevelRequired.ANY },
     features: { type: [String], enum: Object.values(RoomFeature), default: [] },
     startTime: { type: String, default: 'IMMEDIATE' },
+    endTime: { type: String },
     participantIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
   },
   { timestamps: true }

@@ -1,11 +1,12 @@
 import { inject, injectable } from "tsyringe";
 import type { IJoinRoomUsecase } from "../../interface/study-room/join-room.usecase.interface";
 import { StudyRoomResponseDTO } from "../../../dtos/study-room.dto";
-import { RoomStatus } from "../../../../domain/enums/study-room.enums";
+import { RoomStatus, JoinRequestStatus } from "../../../../domain/enums/study-room.enums";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
 import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
-import { RoomNotFoundError, RoomNotLiveError, RoomAlreadyJoinedError, RoomFullError } from "../../../../domain/errors/study-room.errors";
+import { RoomNotFoundError, RoomNotLiveError, RoomAlreadyJoinedError, RoomFullError, UnauthorizedRoomActionError } from "../../../../domain/errors/study-room.errors";
+import type { IRoomJoinRequestRepository } from "../../../../domain/repositories/study-room/room-join-request.repository.interface";
 import type { ISocketService } from "../../../../application/service_interface/socket-service.interface";
 
 @injectable()
@@ -14,6 +15,7 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
     @inject('IStudyRoomRepository') private studyRoomRepo: IStudyRoomRepository,
     @inject('IUserRepository') private userRepo: IUserRepository,
     @inject('IProfileRepository') private profileRepo: IProfileRepository,
+    @inject('IRoomJoinRequestRepository') private joinRequestRepo: IRoomJoinRequestRepository,
     @inject('ISocketService') private socketService: ISocketService,
   ) {}
 
@@ -24,6 +26,29 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
     if (room.status === RoomStatus.ENDED) throw new RoomNotLiveError();
     if (room.participantIds.includes(userId)) throw new RoomAlreadyJoinedError();
     if (room.participantIds.length >= room.maxParticipants) throw new RoomFullError();
+
+    // For PRIVATE rooms, verify invitation or approved join request
+    if (room.type === 'PRIVATE' && room.hostId !== userId) {
+      const userRequest = await this.joinRequestRepo.findExistingRequest(roomId, userId);
+
+      if (!userRequest) {
+        throw new UnauthorizedRoomActionError();
+      }
+
+      const allowedStatuses: JoinRequestStatus[] = [
+        JoinRequestStatus.INVITED,
+        JoinRequestStatus.ACCEPTED
+      ];
+
+      if (!allowedStatuses.includes(userRequest.status)) {
+        throw new UnauthorizedRoomActionError();
+      }
+
+      // If they were invited, mark as accepted now that they've joined
+      if (userRequest.status === JoinRequestStatus.INVITED) {
+        await this.joinRequestRepo.updateStatus(userRequest.id!, JoinRequestStatus.ACCEPTED, new Date());
+      }
+    }
 
     const updatedRoom = await this.studyRoomRepo.addParticipant(roomId, userId);
     if (!updatedRoom) throw new RoomNotFoundError();

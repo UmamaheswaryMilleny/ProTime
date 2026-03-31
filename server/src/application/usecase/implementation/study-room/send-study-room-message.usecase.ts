@@ -35,7 +35,9 @@ export class SendStudyRoomMessageUsecase implements ISendStudyRoomMessageUsecase
     const messageEntity = await this.studyRoomMessageRepository.save({
       roomId: room.id!,
       senderId: userId,
-      content: dto.content,
+      content: dto.content || '',
+      fileUrl: dto.fileUrl,
+      fileType: dto.fileType,
     } as any);
 
     const messageDTO: StudyRoomMessageResponseDTO = {
@@ -44,7 +46,9 @@ export class SendStudyRoomMessageUsecase implements ISendStudyRoomMessageUsecase
       senderId: messageEntity.senderId,
       senderName: user.fullName,
       senderAvatar: profile ? profile.profileImage : undefined,
-      content: messageEntity.content,
+      content: messageEntity.content || '',
+      fileUrl: messageEntity.fileUrl,
+      fileType: messageEntity.fileType,
       createdAt: messageEntity.createdAt.toISOString(),
       updatedAt: messageEntity.updatedAt.toISOString(),
     };

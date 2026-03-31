@@ -15,6 +15,7 @@ export class StudyRoomMapper {
       levelRequired: doc.levelRequired,
       features: doc.features,
       startTime: doc.startTime,
+      endTime: doc.endTime,
       participantIds: doc.participantIds.map(id => id.toString()),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

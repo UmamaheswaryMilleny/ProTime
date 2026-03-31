@@ -174,6 +174,7 @@ import type { IGetPendingJoinRequestsUsecase } from '../../application/usecase/i
 import type { ISendStudyRoomMessageUsecase } from '../../application/usecase/interface/study-room/send-study-room-message.usecase.interface';
 import type { IGetStudyRoomMessagesUsecase } from '../../application/usecase/interface/study-room/get-study-room-messages.usecase.interface';
 import type { IGetAllRoomRequestsUsecase } from '../../application/usecase/interface/study-room/get-all-requests.usecase.interface';
+import type { IStartRoomUsecase } from '../../application/usecase/interface/study-room/start-room.usecase.interface';
 
 import { CreateRoomUsecase } from '../../application/usecase/implementation/study-room/create-room.usecase';
 import { JoinRoomUsecase } from '../../application/usecase/implementation/study-room/join-room.usecase';
@@ -188,6 +189,7 @@ import { GetPendingJoinRequestsUsecase } from '../../application/usecase/impleme
 import { SendStudyRoomMessageUsecase } from '../../application/usecase/implementation/study-room/send-study-room-message.usecase';
 import { GetStudyRoomMessagesUsecase } from '../../application/usecase/implementation/study-room/get-study-room-messages.usecase';
 import { GetAllRoomRequestsUsecase } from '../../application/usecase/implementation/study-room/get-all-requests.usecase';
+import { StartRoomUsecase } from '../../application/usecase/implementation/study-room/start-room.usecase';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -385,5 +387,6 @@ container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass:
     container.register<ISendStudyRoomMessageUsecase>('ISendStudyRoomMessageUsecase', { useClass: SendStudyRoomMessageUsecase });
     container.register<IGetStudyRoomMessagesUsecase>('IGetStudyRoomMessagesUsecase', { useClass: GetStudyRoomMessagesUsecase });
     container.register<IGetAllRoomRequestsUsecase>('IGetAllRoomRequestsUsecase', { useClass: GetAllRoomRequestsUsecase });
+    container.register<IStartRoomUsecase>('IStartRoomUsecase', { useClass: StartRoomUsecase });
   }
 }

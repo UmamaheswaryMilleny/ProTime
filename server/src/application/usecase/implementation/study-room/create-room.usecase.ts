@@ -31,6 +31,7 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
       levelRequired: dto.levelRequired || LevelRequired.ANY,
       features: dto.features || [],
       startTime: dto.startTime || 'IMMEDIATE',
+      endTime: dto.endTime,
       participantIds: [hostId] // Host is automatically joined
     };
 
@@ -76,6 +77,7 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
       levelRequired: savedRoom.levelRequired,
       features: savedRoom.features,
       startTime: savedRoom.startTime || 'IMMEDIATE',
+      endTime: savedRoom.endTime,
       isLive: savedRoom.status === RoomStatus.LIVE,
       participantIds: savedRoom.participantIds,
       createdAt: savedRoom.createdAt?.toISOString() || new Date().toISOString(),

@@ -4,7 +4,9 @@ import { StudyRoomMessageSchema } from '../schema/study-room-message.schema';
 export interface StudyRoomMessageDocument extends Document {
   roomId: Types.ObjectId;
   senderId: Types.ObjectId;
-  content: string;
+  content?: string;
+  fileUrl?: string;
+  fileType?: string;
   createdAt: Date;
   updatedAt: Date;
 }

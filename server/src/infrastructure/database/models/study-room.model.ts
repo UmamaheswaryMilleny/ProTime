@@ -13,6 +13,7 @@ export interface StudyRoomDocument extends Document {
   levelRequired: LevelRequired;
   features: RoomFeature[];
   startTime: string;
+  endTime?: string;
   participantIds: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;

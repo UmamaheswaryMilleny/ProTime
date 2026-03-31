@@ -40,6 +40,7 @@ export class GetAllRoomRequestsUsecase implements IGetAllRoomRequestsUsecase {
         userId: req.userId,
         userName: user?.fullName || 'Unknown User',
         status: req.status,
+        isAlreadyParticipant: room?.participantIds.includes(req.userId) || room?.hostId === req.userId || false,
         createdAt: req.createdAt?.toISOString() || new Date().toISOString(),
         updatedAt: req.updatedAt?.toISOString() || new Date().toISOString()
       };

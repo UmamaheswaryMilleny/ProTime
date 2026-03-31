@@ -13,6 +13,7 @@ export interface StudyRoomEntity {
   levelRequired: LevelRequired;
   features: RoomFeature[];
   startTime?: string;
+  endTime?: string;
   participantIds: string[];
   createdAt?: Date;
   updatedAt?: Date;

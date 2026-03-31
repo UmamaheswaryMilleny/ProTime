@@ -30,10 +30,10 @@ export class RespondToJoinRequestUsecase implements IRespondToJoinRequestUsecase
       throw new JoinRequestAlreadyRespondedError();
     }
 
-    const newStatus = dto.action === 'APPROVE' ? JoinRequestStatus.APPROVED : JoinRequestStatus.REJECTED;
+    const newStatus = dto.action === 'ACCEPTED' ? JoinRequestStatus.ACCEPTED : JoinRequestStatus.REJECTED;
     const respondedAt = new Date();
 
-    if (newStatus === JoinRequestStatus.APPROVED) {
+    if (newStatus === JoinRequestStatus.ACCEPTED) {
       if (room.participantIds.length >= room.maxParticipants) throw new RoomFullError();
       await this.studyRoomRepo.addParticipant(request.roomId, request.userId);
       this.socketService.emitToUser(request.userId, 'room:request-approved', { roomId: request.roomId });
@@ -54,6 +54,7 @@ export class RespondToJoinRequestUsecase implements IRespondToJoinRequestUsecase
       userId: updatedRequest!.userId,
       userName: user?.fullName || 'Unknown',
       status: updatedRequest!.status,
+      isAlreadyParticipant: true,
       respondedAt: updatedRequest!.respondedAt?.toISOString(),
       createdAt: updatedRequest!.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: updatedRequest!.updatedAt?.toISOString() || new Date().toISOString()

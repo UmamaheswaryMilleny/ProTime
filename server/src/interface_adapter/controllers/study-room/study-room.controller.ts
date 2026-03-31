@@ -13,6 +13,8 @@ import type { IGetPendingJoinRequestsUsecase } from "../../../application/usecas
 import type { ISendStudyRoomMessageUsecase } from "../../../application/usecase/interface/study-room/send-study-room-message.usecase.interface";
 import type { IGetStudyRoomMessagesUsecase } from "../../../application/usecase/interface/study-room/get-study-room-messages.usecase.interface";
 import type { IGetAllRoomRequestsUsecase } from "../../../application/usecase/interface/study-room/get-all-requests.usecase.interface";
+import type { IStartRoomUsecase } from "../../../application/usecase/interface/study-room/start-room.usecase.interface";
+import type { ICloudinaryService } from "../../../application/service_interface/cloudinary.service.interface";
 import { CreateRoomRequestDTO, GetRoomsRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from "../../../application/dtos/study-room.dto";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
 
@@ -32,6 +34,8 @@ export class StudyRoomController {
     @inject('ISendStudyRoomMessageUsecase') private sendStudyRoomMessageUsecase: ISendStudyRoomMessageUsecase,
     @inject('IGetStudyRoomMessagesUsecase') private getStudyRoomMessagesUsecase: IGetStudyRoomMessagesUsecase,
     @inject('IGetAllRoomRequestsUsecase') private getAllRoomRequestsUsecase: IGetAllRoomRequestsUsecase,
+    @inject('IStartRoomUsecase') private startRoomUsecase: IStartRoomUsecase,
+    @inject('ICloudinaryService') private cloudinaryService: ICloudinaryService,
   ) {}
 
   async createRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -128,6 +132,15 @@ export class StudyRoomController {
     } catch (error) { next(error); }
   }
 
+  async startRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const hostId = (req as any).user.id;
+      const roomId = req.params.roomId as string;
+      const room = await this.startRoomUsecase.execute(hostId, roomId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room started successfully', data: room });
+    } catch (error) { next(error); }
+  }
+
   async getMessages(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = (req as any).user.id;
@@ -144,6 +157,19 @@ export class StudyRoomController {
       const userId = (req as any).user.id;
       const roomId = req.params.roomId as string;
       const dto = req.body as SendStudyRoomMessageDTO;
+
+      if (req.file) {
+        const folder = `study-rooms/${roomId}/chat`;
+        const filename = `${userId}_${Date.now()}`;
+        const uploadResult = await this.cloudinaryService.uploadFile(
+          req.file.buffer,
+          folder,
+          filename
+        );
+        dto.fileUrl = uploadResult.url;
+        dto.fileType = req.file.mimetype;
+      }
+
       const data = await this.sendStudyRoomMessageUsecase.execute(userId, roomId, dto);
       res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Message sent', data });
     } catch (error) { next(error); }

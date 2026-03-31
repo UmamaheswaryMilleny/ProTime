@@ -37,6 +37,10 @@ export class CreateRoomRequestDTO {
   @IsOptional()
   @IsString()
   startTime?: string;
+
+  @IsOptional()
+  @IsString()
+  endTime?: string;
 }
 
 export class GetRoomsRequestDTO {
@@ -48,8 +52,8 @@ export class GetRoomsRequestDTO {
 }
 
 export class RespondToJoinRequestDTO {
-  @IsIn(['APPROVE', 'REJECT'])
-  action!: 'APPROVE' | 'REJECT';
+  @IsIn(['ACCEPTED', 'REJECTED'])
+  action!: 'ACCEPTED' | 'REJECTED';
 }
 
 export interface StudyRoomResponseDTO {
@@ -67,6 +71,7 @@ export interface StudyRoomResponseDTO {
   levelRequired: LevelRequired;
   features: RoomFeature[];
   startTime: string;
+  endTime?: string;
   isLive: boolean;
   participantIds: string[];
   participants?: { id: string; name: string; avatar?: string }[];
@@ -81,6 +86,7 @@ export interface RoomJoinRequestResponseDTO {
   userId: string;
   userName?: string;
   status: JoinRequestStatus;
+  isAlreadyParticipant: boolean;
   respondedAt?: string;
   createdAt: string;
   updatedAt: string;
@@ -94,9 +100,18 @@ export interface GetRoomsResponseDTO {
 }
 
 export class SendStudyRoomMessageDTO {
+  @IsOptional()
   @IsString()
   @MaxLength(1000)
-  content!: string;
+  content?: string;
+
+  @IsOptional()
+  @IsString()
+  fileUrl?: string;
+
+  @IsOptional()
+  @IsString()
+  fileType?: string;
 }
 
 export interface StudyRoomMessageResponseDTO {
@@ -106,6 +121,8 @@ export interface StudyRoomMessageResponseDTO {
   senderName?: string;
   senderAvatar?: string;
   content: string;
+  fileUrl?: string;
+  fileType?: string;
   createdAt: string;
   updatedAt: string;
 }

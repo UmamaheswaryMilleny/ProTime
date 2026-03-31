@@ -10,4 +10,10 @@ export interface ICloudinaryService {
 
 
   deleteImage(publicId: string): Promise<void>;
+
+  uploadFile(
+    fileBuffer: Buffer,
+    folder: string,
+    filename: string
+  ): Promise<{ url: string; publicId: string }>;
 }

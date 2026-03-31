@@ -31,6 +31,7 @@ export class GetPendingJoinRequestsUsecase implements IGetPendingJoinRequestsUse
           userId: req.userId,
           userName: user?.fullName || 'Unknown',
           status: req.status,
+          isAlreadyParticipant: room.participantIds.includes(req.userId) || room.hostId === req.userId,
           createdAt: req.createdAt?.toISOString() || new Date().toISOString(),
           updatedAt: req.updatedAt?.toISOString() || new Date().toISOString()
         };

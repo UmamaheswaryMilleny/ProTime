@@ -39,7 +39,9 @@ export class GetStudyRoomMessagesUsecase implements IGetStudyRoomMessagesUsecase
         senderId: msg.senderId,
         senderName: u ? u.fullName : 'Unknown',
         senderAvatar: p ? p.profileImage : undefined,
-        content: msg.content,
+        content: msg.content || '',
+        fileUrl: msg.fileUrl,
+        fileType: msg.fileType,
         createdAt: msg.createdAt.toISOString(),
         updatedAt: msg.updatedAt.toISOString(),
       };
