@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchCalendarEvents } from '../store/calendarSlice';
 import { addNotification } from '../../notifications/store/notificationSlice';
+import { getTodayLocalDate } from '../../../shared/utils/dateUtils';
 import type { CalendarEvent } from '../types/calendar.types';
 
 const REMINDER_MINUTES = 5;
@@ -15,11 +16,11 @@ export const useSessionReminder = () => {
 
   // 1. Fetch today's events on mount or when returning to app
   useEffect(() => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getTodayLocalDate();
     dispatch(fetchCalendarEvents({ from: today, to: today }));
 
     const focusHandler = () => {
-      const currentToday = new Date().toISOString().split('T')[0];
+      const currentToday = getTodayLocalDate();
       dispatch(fetchCalendarEvents({ from: currentToday, to: currentToday }));
     };
     

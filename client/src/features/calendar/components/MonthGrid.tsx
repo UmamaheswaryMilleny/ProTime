@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '../types/calendar.types';
+import { formatLocalDate, getTodayLocalDate } from '../../../shared/utils/dateUtils';
 
 interface MonthGridProps {
   events: CalendarEvent[];
@@ -38,8 +39,8 @@ export const MonthGrid: React.FC<MonthGridProps> = ({
     const endDate = new Date(lastDayOfMonth);
     endDate.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
 
-    const from = startDate.toISOString().split('T')[0];
-    const to = endDate.toISOString().split('T')[0];
+    const from = formatLocalDate(startDate);
+    const to = formatLocalDate(endDate);
 
     onMonthChange(from, to);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -126,9 +127,9 @@ export const MonthGrid: React.FC<MonthGridProps> = ({
           className="grid grid-cols-7 gap-2"
         >
           {days.map((dayInfo, idx) => {
-            const dateStr = dayInfo.date.toISOString().split('T')[0];
+            const dateStr = formatLocalDate(dayInfo.date);
             const isSelected = selectedDate === dateStr;
-            const isToday = new Date().toISOString().split('T')[0] === dateStr;
+            const isToday = getTodayLocalDate() === dateStr;
             const dayEvents = getDayEvents(dateStr);
 
             return (

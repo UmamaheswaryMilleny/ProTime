@@ -56,7 +56,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
             badge: true 
         },
         { icon: CheckSquare, label: 'To-Do List', path: ROUTES.DASHBOARD_TODO_LIST, end: false },
-        { icon: Video, label: 'Study Rooms', path: '#', end: false },
+        { icon: Video, label: 'Study Rooms', path: ROUTES.DASHBOARD_STUDY_ROOMS, end: false },
         { icon: Calendar, label: 'Calendar', path: ROUTES.DASHBOARD_CALENDAR, end: false },
         { icon: MessageSquare, label: 'Community', path: ROUTES.DASHBOARD_COMMUNITY_CHAT, end: false },
         { icon: BarChart2, label: 'Reports', path: '#', end: false },

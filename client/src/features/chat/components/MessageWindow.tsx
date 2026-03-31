@@ -5,7 +5,6 @@ import { chatApi, type DirectMessageResponseDTO } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
-import { SharedPomodoroPanel } from './SharedPomodoroPanel';
 import { clearUnreadCount, setActiveCall, setAILoading } from '../store/chatSlice';
 import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo } from 'lucide-react';
 import { ReportModal } from './ReportModal';
@@ -32,27 +31,26 @@ interface MessageWindowProps {
 export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, isStandaloneAI = false }) => {
   const dispatch = useDispatch();
   const { conversations, onlineUsers, isAILoading } = useSelector((state: RootState) => state.chat);
+
+  // ─── Fix 1: simple selector — no JWT decoding, always reliable ───────────
+  const userId = useSelector((state: RootState) => state.auth.user?.id ?? '');
+
   const pendingRequests = useSelector((state: RootState) => state.calendar?.pendingRequests || []);
-  
-  const authUserSession = localStorage.getItem('authSession');
-  const userId = authUserSession ? JSON.parse(authUserSession).id : '';
 
   const [messages, setMessages] = useState<DirectMessageResponseDTO[]>([]);
   const [hasMore, setHasMore] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isShareTodoOpen, setIsShareTodoOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
 
-  // Todo Pomodoro UI State (Timer logic is global via usePomodoro)
   const [isTodoPomodoroModalOpen, setIsTodoPomodoroModalOpen] = useState(false);
-  
-  const { 
-    lastCompletedTask, 
-    earnedXp: globalEarnedXp, 
+
+  const {
+    lastCompletedTask,
+    earnedXp: globalEarnedXp,
     showCompletedModal,
     buddyActiveTask,
     buddyTimeRemaining,
@@ -63,24 +61,21 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
   const { refreshGamification } = useGamification();
 
   const {
-      activeTask,
-      timeRemaining,
-      timeRemainingFormatted,
-      isRunning: isTodoRunning,
-      phase,
-      initialTime,
-      isSmartBreaksEnabled,
-      totalPausedSeconds,
-      start: startTodoTimer,
-      pause: pauseTodoTimer,
-      resume: resumeTodoTimer,
-      stop: stopTodoTimer,
-      skipBreak,
-      reset: resetTodoTimer
+    activeTask,
+    timeRemaining,
+    timeRemainingFormatted,
+    isRunning: isTodoRunning,
+    phase,
+    initialTime,
+    isSmartBreaksEnabled,
+    totalPausedSeconds,
+    start: startTodoTimer,
+    pause: pauseTodoTimer,
+    resume: resumeTodoTimer,
+    stop: stopTodoTimer,
+    skipBreak,
+    reset: resetTodoTimer
   } = usePomodoro();
-
-  // Sync completion modal with Redux state changes if needed
-  // Completion is handled globally in DashboardLayout.
 
   const handleStartTodoPomodoro = (todo: TodoItem) => {
     if (activeTask?.id && isTodoRunning && activeTask.id !== todo.id) {
@@ -118,10 +113,10 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
   };
 
   const handleMinimizeTodoPomodoro = () => {
-      setIsTodoPomodoroModalOpen(false);
-      dispatch(setMinimized(true));
+    setIsTodoPomodoroModalOpen(false);
+    dispatch(setMinimized(true));
   };
-  
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
@@ -163,28 +158,28 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
       const oldestMessage = !isInitial && messages.length > 0 ? messages[0] : undefined;
       const res = await chatApi.getMessages(conversationId, 50, oldestMessage?.createdAt);
       if (res.success) {
-        const fetchedMessages = [...res.data.messages].reverse(); 
-        
+        const fetchedMessages = [...res.data.messages].reverse();
+
         if (isInitial) {
           setMessages(fetchedMessages);
           setTimeout(() => scrollToBottom('auto'), 100);
-          
+
           socketService.emit('join:conversations', [conversationId]);
           chatApi.markAsRead(conversationId);
           dispatch(clearUnreadCount(conversationId));
         } else {
           const container = scrollContainerRef.current;
           const previousScrollHeight = container?.scrollHeight || 0;
-          
+
           setMessages(prev => [...fetchedMessages, ...prev]);
-          
+
           setTimeout(() => {
             if (container) {
               container.scrollTop = container.scrollHeight - previousScrollHeight;
             }
           }, 0);
         }
-        
+
         setHasMore(res.data.hasMore);
       }
     } catch (error) {
@@ -199,6 +194,11 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
     if (!isStandaloneAI) {
       dispatch(fetchPendingRequests() as any);
     }
+
+    socketService.emit('chat:enter', conversationId);
+    return () => {
+      socketService.emit('chat:leave', conversationId);
+    };
   }, [conversationId]);
 
   useEffect(() => {
@@ -213,9 +213,9 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
 
     const handleMessageRead = (data: { conversationId: string, readBy: string }) => {
       if (data.conversationId === conversationId && data.readBy !== userId) {
-        setMessages(prev => prev.map(m => 
-          m.senderId === userId && m.status !== 'READ' 
-            ? { ...m, status: 'READ' } 
+        setMessages(prev => prev.map(m =>
+          m.senderId === userId && m.status !== 'READ'
+            ? { ...m, status: 'READ' }
             : m
         ));
       }
@@ -231,9 +231,15 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
   }, [conversationId, userId, dispatch]);
 
   const handleSend = async (content: string) => {
+    // ─── Fix 3: guard before sending — userId must be available ─────────────
+    if (!userId) {
+      toast.error('Unable to send message — please refresh the page');
+      return;
+    }
+
     if (isStandaloneAI) {
       dispatch(setAILoading(true));
-      
+
       const optimisticUserMsg: DirectMessageResponseDTO = {
         id: `temp-u-${Date.now()}`,
         conversationId,
@@ -262,7 +268,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
     const optimisticMessage: DirectMessageResponseDTO = {
       id: Date.now().toString(),
       conversationId,
-      senderId: userId,
+      senderId: userId,   // ← guaranteed non-empty due to guard above
       fullName: null,
       content,
       messageType: 'TEXT',
@@ -270,7 +276,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
-    
+
     setMessages(prev => [...prev, optimisticMessage]);
     setTimeout(() => scrollToBottom('smooth'), 50);
 
@@ -323,9 +329,24 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
               </span>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
-            {activeTask ? (
+            {buddyActiveTask && buddyConversationId === conversationId ? (
+              <PomodoroMinimized
+                isVisible={true}
+                timeRemainingFormatted={(() => {
+                  const mins = Math.floor(buddyTimeRemaining / 60);
+                  const secs = buddyTimeRemaining % 60;
+                  return `${mins}:${secs.toString().padStart(2, '0')}`;
+                })()}
+                isRunning={buddyIsRunning}
+                onStart={() => { }}
+                onPause={() => { }}
+                onStop={() => { }}
+                onMaximize={() => { }}
+                readOnly={true}
+              />
+            ) : activeTask ? (
               <PomodoroMinimized
                 isVisible={true}
                 timeRemainingFormatted={timeRemainingFormatted}
@@ -335,34 +356,9 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
                 onStop={handleStopTodoPomodoro}
                 onMaximize={() => setIsTodoPomodoroModalOpen(true)}
               />
-            ) : buddyActiveTask && buddyConversationId === conversationId ? (
-              <PomodoroMinimized
-                isVisible={true}
-                timeRemainingFormatted={(() => {
-                    const mins = Math.floor(buddyTimeRemaining / 60);
-                    const secs = buddyTimeRemaining % 60;
-                    return `${mins}:${secs.toString().padStart(2, '0')}`;
-                })()}
-                isRunning={buddyIsRunning}
-                onStart={() => {}}
-                onPause={() => {}}
-                onStop={() => {}}
-                onMaximize={() => {}}
-                readOnly={true}
-              />
-            ) : (
-              <button 
-                title="Start Pomodoro" 
-                onClick={() => setIsPomodoroOpen(prev => !prev)}
-                className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </button>
-            )}
-            <button 
-              title="Start Video Call"   
+            ) : null}
+            <button
+              title="Start Video Call"
               onClick={() => dispatch(setActiveCall({ conversationId, isCaller: true }))}
               className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
             >
@@ -370,7 +366,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
               </svg>
             </button>
-            <button 
+            <button
               onClick={() => setIsShareTodoOpen(true)}
               className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
               title="Share To-Do List"
@@ -467,8 +463,8 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
         </div>
       )}
 
-      <div 
-        className="flex-1 overflow-y-auto p-4 sm:p-6 relative" 
+      <div
+        className="flex-1 overflow-y-auto p-4 sm:p-6 relative"
         ref={scrollContainerRef}
       >
         {relevantRequest && (
@@ -502,8 +498,8 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
 
         {hasMore && (
           <div className="flex justify-center mb-4">
-            <button 
-              onClick={() => loadMessages(false)} 
+            <button
+              onClick={() => loadMessages(false)}
               disabled={loading}
               className="text-sm text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-4 py-1.5 rounded-full hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors"
             >
@@ -514,15 +510,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
 
         <div className="space-y-4">
           {messages.map((msg, index) => {
-            const isOwn = msg.senderId === userId;
+            // ─── Fix 2: simple direct comparison — no String() cast ──────────
+            const isOwn = userId !== '' && msg.senderId === userId;
             const prevMsg = index > 0 ? messages[index - 1] : null;
             const showSenderInfo = !prevMsg || prevMsg.senderId !== msg.senderId || prevMsg.messageType === 'SYSTEM';
 
             return (
-              <MessageBubble 
-                key={msg.id} 
-                message={msg} 
-                isOwn={isOwn} 
+              <MessageBubble
+                key={msg.id}
+                message={msg}
+                isOwn={isOwn}
                 showSenderInfo={showSenderInfo}
                 onStartTodoPomodoro={handleStartTodoPomodoro}
                 activeTaskId={activeTask?.id}
@@ -530,7 +527,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
               />
             );
           })}
-          
+
           {isAILoading && (
             <div className="flex flex-col items-start mb-4">
               <div className="flex items-center mb-1 ml-1 text-[blueviolet] font-bold text-[10px] uppercase tracking-tighter animate-pulse">
@@ -545,31 +542,19 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
               </div>
             </div>
           )}
-          
+
           <div ref={messagesEndRef} />
         </div>
       </div>
 
-      {!isStandaloneAI && (
-        <SharedPomodoroPanel 
-          conversationId={conversationId} 
-          isOpen={isPomodoroOpen} 
-          onClose={() => setIsPomodoroOpen(false)} 
-        />
-      )}
-      
+
       {isReportModalOpen && otherUser && (
-        <ReportModal 
+        <ReportModal
           reportedId={otherUser.userId}
           onClose={() => setIsReportModalOpen(false)}
-          onSuccess={async () => {
-            try {
-              await buddyService.blockUser(otherUser.userId);
-              toast.error('User reported & auto-blocked');
-              setIsBlocked(true);
-            } catch (err) {
-              toast.error('Reported, but failed to block user automatically.');
-            }
+          // ─── Fix 4: no auto-block — just show success toast and close ────
+          onSuccess={() => {
+            toast.success('Report submitted. Our team will review it.');
             setIsReportModalOpen(false);
           }}
         />
@@ -591,7 +576,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
       {isBlocked ? (
         <div className="p-4 bg-zinc-900 border-t border-red-500/20 flex flex-col items-center justify-center">
           <p className="text-red-400 text-sm font-medium mb-3">You have blocked this user.</p>
-          <button 
+          <button
             onClick={handleUnblock}
             className="px-6 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-all shadow-lg shadow-red-500/20"
           >
@@ -602,7 +587,6 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
         <MessageInput onSend={handleSend} disabled={isAILoading} />
       )}
 
-      {/* Todo Pomodoro Modals */}
       <PomodoroModal
         isOpen={isTodoPomodoroModalOpen}
         task={activeTask}
@@ -625,8 +609,8 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId, is
         task={lastCompletedTask}
         earnedXp={globalEarnedXp}
         onClose={() => {
-            dispatch(dismissCompletedModal());
-            refreshGamification();
+          dispatch(dismissCompletedModal());
+          refreshGamification();
         }}
       />
     </div>

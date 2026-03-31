@@ -165,7 +165,7 @@ export const chatApi = {
     );
     return response.data;
   },
-  proposeRecurringSession: async (conversationId: string, payload: { days: string[]; startTime: string; endTime: string; noOfSessions: number }) => {
+  proposeRecurringSession: async (conversationId: string, payload: { days: string[]; startTime: string; endTime: string; noOfSessions: number; dates?: string[] }) => {
     const response = await ProTimeBackend.post<{ success: boolean; data: any }>(
       API_ROUTES.CHAT_BUDDY_SESSION_PROPOSE_RECURRING(conversationId),
       payload

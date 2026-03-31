@@ -20,7 +20,7 @@ export const ConfirmDeleteModal: React.FC<ConfirmDeleteModalProps> = ({ isOpen, 
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
             <div className="bg-zinc-900 rounded-3xl w-full max-w-sm border border-white/10 overflow-hidden shadow-2xl">
                 <div className="p-6 text-center space-y-4">
                     <div className="w-12 h-12 rounded-full bg-red-500/10 text-red-500 flex items-center justify-center mx-auto mb-2">

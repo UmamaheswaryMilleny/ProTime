@@ -1,5 +1,4 @@
-import React from 'react';
-import { X, Clock, Video, CheckSquare, FileText } from 'lucide-react';
+import { X, Clock, Video, CheckSquare, FileText, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { DayDetail } from '../types/calendar.types';
 
@@ -88,20 +87,31 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
                             const session = event.session!;
                             return (
                               <div key={session.id} className="p-4 bg-white/5 border border-white/10 rounded-xl hover:bg-white/10 transition-colors">
-                                <div className="flex justify-between items-start mb-2">
-                                  <span className={`text-xs px-2 py-1 rounded-md font-medium
+                                <div className="flex justify-between items-start mb-3">
+                                  <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider
                                     ${session.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' :
                                       session.status === 'COMPLETED' ? 'bg-[blueviolet]/20 text-[blueviolet]' :
-                                      'bg-zinc-800 text-zinc-300'}
+                                      'bg-zinc-800 text-zinc-400'}
                                   `}>
                                     {session.status}
                                   </span>
-                                  <div className="flex items-center gap-1 text-xs text-zinc-400">
-                                    <Clock size={12} />
+                                  <div className="flex items-center gap-1 text-xs text-zinc-400 font-medium">
+                                    <Clock size={12} className="text-zinc-500" />
                                     {event.startTime}
                                   </div>
                                 </div>
-                                <p className="text-sm text-zinc-300">Buddy Session</p>
+                                
+                                <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-full bg-[blueviolet]/10 border border-[blueviolet]/20 flex items-center justify-center text-[blueviolet] shrink-0">
+                                    <User size={20} />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-white">
+                                      {event.buddy?.fullName || 'Buddy Session'}
+                                    </p>
+                                    <p className="text-xs text-zinc-500">Study Partner</p>
+                                  </div>
+                                </div>
                               </div>
                             );
                         })}

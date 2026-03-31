@@ -6,18 +6,28 @@ interface ChatState {
   onlineUsers: Record<string, boolean>; // userId -> true/false
   activeSessions: Record<string, ChatSessionResponseDTO>; // conversationId -> session
   incomingCall: { conversationId: string; offer: RTCSessionDescriptionInit; callerName: string } | null;
-  activeCall: { conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit } | null;
+  activeCall: { conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit; isReconnecting?: boolean } | null;
   
   // ProBuddy State
   isAILoading: boolean;
 }
+
+const getInitialActiveCall = () => {
+  try {
+    const stored = sessionStorage.getItem('activeVideoCall');
+    if (stored) return JSON.parse(stored);
+  } catch (e) {
+    console.error('Failed to parse activeVideoCall from sessionStorage', e);
+  }
+  return null;
+};
 
 const initialState: ChatState = {
   conversations: [],
   onlineUsers: {},
   activeSessions: {},
   incomingCall: null,
-  activeCall: null,
+  activeCall: getInitialActiveCall(),
   isAILoading: false,
 };
 
@@ -60,8 +70,13 @@ const chatSlice = createSlice({
     setIncomingCall: (state, action: PayloadAction<{ conversationId: string; offer: RTCSessionDescriptionInit; callerName: string } | null>) => {
       state.incomingCall = action.payload;
     },
-    setActiveCall: (state, action: PayloadAction<{ conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit } | null>) => {
+    setActiveCall: (state, action: PayloadAction<{ conversationId: string; isCaller: boolean; offer?: RTCSessionDescriptionInit; isReconnecting?: boolean } | null>) => {
       state.activeCall = action.payload;
+      if (action.payload) {
+         sessionStorage.setItem('activeVideoCall', JSON.stringify({ ...action.payload, isReconnecting: true }));
+      } else {
+         sessionStorage.removeItem('activeVideoCall');
+      }
     },
     
     setAILoading: (state, action: PayloadAction<boolean>) => {

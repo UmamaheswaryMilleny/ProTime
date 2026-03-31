@@ -11,7 +11,12 @@ export type NotificationType =
     | 'task_completed'
     | 'premium_purchased'
     | 'schedule_accepted'
-    | 'session_reminder';
+    | 'schedule_requested'
+    | 'session_reminder'
+    | 'chat_message'
+    | 'missed_call'
+    | 'study_room_invite'
+    | 'study_room_request';
 
 export interface Notification {
     id: string;
@@ -20,6 +25,7 @@ export interface Notification {
     message: string;
     timestamp: string; // ISO string
     isRead: boolean;
+    readAt?: string | null; // ISO string when marked as read
     metadata?: Record<string, unknown>;
 }
 
@@ -65,6 +71,7 @@ const notificationSlice = createSlice({
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 timestamp: new Date().toISOString(),
                 isRead: false,
+                readAt: null,
             };
             state.notifications.unshift(notification);
             // Keep only MAX_STORED
@@ -76,12 +83,21 @@ const notificationSlice = createSlice({
 
         markAsRead: (state, action: PayloadAction<string>) => {
             const n = state.notifications.find(n => n.id === action.payload);
-            if (n) n.isRead = true;
+            if (n && !n.isRead) {
+                n.isRead = true;
+                n.readAt = new Date().toISOString();
+            }
             save(state.notifications);
         },
 
         markAllAsRead: (state) => {
-            state.notifications.forEach(n => { n.isRead = true; });
+            const now = new Date().toISOString();
+            state.notifications.forEach(n => { 
+                if (!n.isRead) {
+                    n.isRead = true;
+                    n.readAt = now;
+                }
+            });
             save(state.notifications);
         },
 
@@ -94,6 +110,22 @@ const notificationSlice = createSlice({
             state.notifications = [];
             save(state.notifications);
         },
+
+        purgeOldNotifications: (state) => {
+            const TEN_MINUTES = 10 * 60 * 1000;
+            const now = Date.now();
+            const originalLength = state.notifications.length;
+            
+            state.notifications = state.notifications.filter(n => {
+                if (!n.isRead || !n.readAt) return true;
+                const readAtTime = new Date(n.readAt).getTime();
+                return now - readAtTime < TEN_MINUTES;
+            });
+
+            if (state.notifications.length !== originalLength) {
+                save(state.notifications);
+            }
+        },
     },
 });
 
@@ -103,6 +135,7 @@ export const {
     markAllAsRead,
     removeNotification,
     clearAll,
+    purgeOldNotifications,
 } = notificationSlice.actions;
 
 export default notificationSlice.reducer;

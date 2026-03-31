@@ -139,7 +139,7 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
     };
 
     return (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[70] p-4">
             <div className="bg-zinc-900 rounded-3xl w-full max-w-lg border border-white/10 overflow-hidden shadow-2xl">
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <h2 className="text-xl font-bold text-white">{initialTodo ? 'Edit Task' : 'Add New Task'}</h2>
