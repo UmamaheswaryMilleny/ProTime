@@ -5,6 +5,7 @@ import type { ICalendarController }          from '../../interfaces/calendar/cal
 import type { IGetCalendarEventsUsecase }     from '../../../application/usecase/interface/calendar/get-calendar-events.usecase.interface';
 import type { IGetDayDetailUsecase }          from '../../../application/usecase/interface/calendar/get-day-detail.usecase.interface';
 import type { IGetPendingScheduleRequestsUsecase } from '../../../application/usecase/interface/calendar/get-pending-schedule-requests.usecase.interface';
+import type { ICreateSoloEventUsecase } from '../../../application/usecase/interface/calendar/create-solo-event.usecase.interface';
 import type { CustomRequest }                from '../../middlewares/auth.middleware';
 import type { GetCalendarEventsRequestDTO }  from '../../../application/dto/calendar/request/get-calendar-events.request.dto';
 import { ResponseHelper } from '../../helpers/response.helper';
@@ -21,6 +22,9 @@ export class CalendarController implements ICalendarController {
 
     @inject('IGetPendingScheduleRequestsUsecase')
     private readonly getPendingScheduleRequestsUsecase: IGetPendingScheduleRequestsUsecase,
+
+    @inject('ICreateSoloEventUsecase')
+    private readonly createSoloEventUsecase: ICreateSoloEventUsecase,
   ) {}
 
   // ─── GET /api/v1/calendar/events?from=&to= ────────────────────────────────
@@ -68,6 +72,22 @@ export class CalendarController implements ICalendarController {
       const userId = req.user!.id;
       const result = await this.getPendingScheduleRequestsUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pending schedule requests fetched successfully', result);
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ─── POST /api/v1/calendar/events/solo ──────────────────────────────────
+  async createSoloEvent(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const userId = req.user!.id;
+      const { title, date, startTime } = req.body;
+      const result = await this.createSoloEventUsecase.execute(userId, title, date, startTime);
+      ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Solo session scheduled successfully', result);
     } catch (error) {
       next(error);
     }

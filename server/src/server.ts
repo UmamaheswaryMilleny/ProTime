@@ -1,7 +1,7 @@
 import express from "express";
 import type { Application } from "express";
 import http from 'http';
-import { Server as SocketIOServer, Socket } from 'socket.io';
+import { Server as SocketIOServer } from 'socket.io';
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import { container } from "tsyringe";
@@ -27,13 +27,12 @@ import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 import { ConversationModel } from "./infrastructure/database/models/conversation.model";
 import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
 import { CalendarRoutes } from "./interface_adapter/routes/calendar/calendar.routes";
+import { StudyRoomRoutes } from "./interface_adapter/routes/study-room/study-room.routes";
 import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
 import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
 import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
 
-interface CustomSocket extends Socket {
-  userId?: string;
-}
+
 
 export class App {
   private readonly app: Application;
@@ -45,7 +44,14 @@ export class App {
     this.httpServer = http.createServer(this.app);
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
-        origin: config.client.URI,
+        origin: (origin, callback) => {
+          const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174'];
+          if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
+            callback(null, true);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        },
         credentials: true,
       },
     });
@@ -58,17 +64,28 @@ export class App {
   }
 
   private configureCors(): void {
-    this.app.use(cors({ origin: config.client.URI, credentials: true }));
+    this.app.use(cors({ 
+      origin: (origin, callback) => {
+        const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174'];
+        if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
+          callback(null, true);
+        } else {
+          callback(new Error('Not allowed by CORS'));
+        }
+      }, 
+      credentials: true 
+    }));
   }
 
   private configureMiddleware(): void {
     this.app.use((_req, res, next) => {
-      res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+      // res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+      res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
       next();
     });
     this.app.use(
       express.json({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+         
         verify: (req: any, _res, buf) => {
           if (req.originalUrl.includes('/webhook')) {
             req.rawBody = buf;
@@ -94,6 +111,7 @@ export class App {
     this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
   this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
   this.app.use('/api/v1/calendar', container.resolve(CalendarRoutes).router);
+  this.app.use(ROUTES.BASE.ROOMS, container.resolve(StudyRoomRoutes).router);
   }
   private configureSocket(): void {
     const tokenService = new JwtTokenService();
@@ -127,9 +145,25 @@ export class App {
       socketService.setUserOnline(userId, socket.id);
       this.io.emit('user:online', { userId });
 
-      // Join conversation rooms — client sends list of conversationIds
       socket.on('join:conversations', (conversationIds: string[]) => {
         conversationIds.forEach(id => socket.join(`conversation:${id}`));
+      });
+
+      socket.on('chat:enter', (conversationId: string) => {
+        socketService.setActiveRoom(userId, conversationId);
+      });
+
+      socket.on('chat:leave', () => {
+        socketService.clearActiveRoom(userId);
+      });
+
+      // Study Rooms
+      socket.on('join:room', (roomId: string) => {
+        socket.join(`room:${roomId}`);
+      });
+
+      socket.on('leave:room', (roomId: string) => {
+        socket.leave(`room:${roomId}`);
       });
 
       socket.on('disconnect', () => {
@@ -141,7 +175,7 @@ export class App {
       // ─── WebRTC Signaling ─────────────────────────────────────────────────
 
       // 1. Caller sends offer → find callee and forward
-      socket.on('webrtc:offer', async (data: { conversationId: string; offer: RTCSessionDescriptionInit }) => {
+      socket.on('webrtc:offer', async (data: { conversationId: string; offer: RTCSessionDescriptionInit; callerName?: string }) => {
         try {
           const conversation = await ConversationModel.findById(data.conversationId).lean();
           if (!conversation) return;
@@ -154,7 +188,7 @@ export class App {
           socketService.emitToUser(calleeId, 'webrtc:offer', {
             conversationId: data.conversationId,
             offer: data.offer,
-            callerName: 'Buddy', // resolved on client via Redux conversations state
+            callerName: data.callerName || 'Buddy',
           });
         } catch (err) {
           logger.error('[Socket] webrtc:offer relay error:', { error: err });
@@ -206,6 +240,113 @@ export class App {
           conversationId: data.conversationId,
         });
       });
+
+      // 5. Missed call — notify the callee
+      socket.on('webrtc:missed-call', async (data: { conversationId: string; callerName: string }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+
+          const calleeId = conversation.user1Id.toString() === userId
+            ? conversation.user2Id.toString()
+            : conversation.user1Id.toString();
+
+          socketService.emitToUser(calleeId, 'notification:new', {
+            type: 'missed_call',
+            title: 'Missed Video Call 📹',
+            message: `You missed a video call from ${data.callerName}.`,
+          });
+        } catch (err) {
+          logger.error('[Socket] webrtc:missed-call relay error:', { error: err });
+        }
+      });
+
+      // ─── Group Video WebRTC Signaling ──────────────────────────────────────
+
+      socket.on('room:webrtc:offer', (data: { targetUserId: string; roomId: string; offer: RTCSessionDescriptionInit }) => {
+        socketService.emitToUser(data.targetUserId, 'room:webrtc:offer', {
+          senderId: userId,
+          roomId: data.roomId,
+          offer: data.offer,
+        });
+      });
+
+      socket.on('room:webrtc:answer', (data: { targetUserId: string; roomId: string; answer: RTCSessionDescriptionInit }) => {
+        socketService.emitToUser(data.targetUserId, 'room:webrtc:answer', {
+          senderId: userId,
+          roomId: data.roomId,
+          answer: data.answer,
+        });
+      });
+
+      socket.on('room:webrtc:ice-candidate', (data: { targetUserId: string; roomId: string; candidate: RTCIceCandidateInit }) => {
+        socketService.emitToUser(data.targetUserId, 'room:webrtc:ice-candidate', {
+          senderId: userId,
+          roomId: data.roomId,
+          candidate: data.candidate,
+        });
+      });
+
+      socket.on('room:webrtc:camera-toggle', (data: { roomId: string; isVideoOn: boolean }) => {
+        socketService.emitToRoom(data.roomId, 'room:webrtc:camera-toggle', {
+          userId,
+          isVideoOn: data.isVideoOn
+        });
+      });
+
+      socket.on('room:webrtc:mic-toggle', (data: { roomId: string; isAudioOn: boolean }) => {
+        socketService.emitToRoom(data.roomId, 'room:webrtc:mic-toggle', {
+          userId,
+          isAudioOn: data.isAudioOn
+        });
+      });
+
+      // ─── Pomodoro Signaling Relay ──────────────────────────────────────────
+      
+      socket.on('pomodoro:start', async (data: { conversationId: string, task: any, duration: number }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          socketService.emitToUser(peerId, 'pomodoro:start', { ...data, startedBy: userId });
+        } catch (err) { logger.error('[Socket] pomodoro:start relay error:', err); }
+      });
+
+      socket.on('pomodoro:pause', async (data: { conversationId: string }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          socketService.emitToUser(peerId, 'pomodoro:pause', data);
+        } catch (err) { logger.error('[Socket] pomodoro:pause relay error:', err); }
+      });
+
+      socket.on('pomodoro:resume', async (data: { conversationId: string }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          socketService.emitToUser(peerId, 'pomodoro:resume', data);
+        } catch (err) { logger.error('[Socket] pomodoro:resume relay error:', err); }
+      });
+
+      socket.on('pomodoro:stop', async (data: { conversationId: string }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          socketService.emitToUser(peerId, 'pomodoro:stop', data);
+        } catch (err) { logger.error('[Socket] pomodoro:stop relay error:', err); }
+      });
+
+      socket.on('pomodoro:tick', async (data: { conversationId: string, timeRemaining: number }) => {
+        try {
+          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          if (!conversation) return;
+          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          socketService.emitToUser(peerId, 'pomodoro:sync', { ...data, type: 'TICK' });
+        } catch (_err) { /* Silent for high-frequency events */ }
+      });
     });
   }
 
@@ -234,5 +375,6 @@ export const bootstrap = async (): Promise<void> => {
 
   });
   startMarkMissedSessionsCron();
-startExpireScheduleRequestsCron();
+  startExpireScheduleRequestsCron();
+  startExpireTodosCron();
 };

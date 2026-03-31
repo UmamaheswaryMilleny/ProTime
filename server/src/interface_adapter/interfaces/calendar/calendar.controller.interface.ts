@@ -5,4 +5,5 @@ export interface ICalendarController {
   getCalendarEvents(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   getDayDetail(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   getPendingScheduleRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  createSoloEvent(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

@@ -42,5 +42,11 @@ export class CalendarRoutes extends BaseRoute {
       '/schedule-requests',
       asyncHandler(ctrl.getPendingScheduleRequests.bind(ctrl)),
     );
+
+    // POST /api/v1/calendar/events/solo
+    this.router.post(
+      '/events/solo',
+      asyncHandler(ctrl.createSoloEvent.bind(ctrl)),
+    );
   }
 }

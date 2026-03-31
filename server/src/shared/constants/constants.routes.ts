@@ -12,6 +12,7 @@ export const ROUTES = {
     COMMUNITY_CHAT: '/api/v1/community-chat',
     CHAT: '/api/v1/chat',
     REPORTS: '/api/v1/reports', 
+    ROOMS: '/api/v1/rooms',
   },
 
   // Auth Routes
@@ -89,6 +90,21 @@ export const ROUTES = {
   // Community Chat Routes
   COMMUNITY_CHAT: {
     ROOT: '/',
+  },
+
+  ROOMS: {
+    ROOT: '/',
+    MY: '/my',
+    BY_ID: '/:roomId',
+    JOIN: '/:roomId/join',
+    REQUEST: '/:roomId/request',
+    REQUESTS: '/:roomId/requests',
+    ALL_REQUESTS: '/requests/all',
+    RESPOND_REQUEST: '/join-requests/:requestId/respond',
+    LEAVE: '/:roomId/leave',
+    END: '/:roomId/end',
+    MESSAGES: '/:roomId/messages',
+    SEND_MESSAGE: '/:roomId/messages',
   },
 
   CHAT: {

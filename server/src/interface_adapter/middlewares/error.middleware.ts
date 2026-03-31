@@ -100,7 +100,17 @@ import {
   ScheduleRequestAlreadyRespondedError,
 } from '../../domain/errors/calendar.error';
 
-
+// ─── Study Room errors ─────────────────────────────────────────────────────
+import {
+  RoomNotFoundError,
+  RoomFullError,
+  RoomAlreadyJoinedError,
+  RoomNotLiveError,
+  UnauthorizedRoomActionError,
+  JoinRequestNotFoundError,
+  JoinRequestAlreadyRespondedError,
+  AlreadyRequestedError,
+} from '../../domain/errors/study-room.errors';
 
 export class ErrorMiddleware {
   public handleError(
@@ -121,7 +131,9 @@ export class ErrorMiddleware {
       err instanceof BuddyPreferenceNotFoundError || err instanceof ConversationNotFoundError ||
       err instanceof MessageNotFoundError || err instanceof ReportNotFoundError || err instanceof SessionNotFoundError      ||
 err instanceof CalendarEventNotFoundError ||
-err instanceof ScheduleRequestNotFoundError
+err instanceof ScheduleRequestNotFoundError ||
+err instanceof RoomNotFoundError ||
+err instanceof JoinRequestNotFoundError
     ) {
       res.status(HTTP_STATUS.NOT_FOUND).json({ success: false, message: err.message });
       return;
@@ -130,7 +142,8 @@ err instanceof ScheduleRequestNotFoundError
     // ─── 409 Conflict ─────────────────────────────────────────────────
     if (
       err instanceof UserAlreadyExistsError ||
-      err instanceof BadgeAlreadyEarnedError || err instanceof AlreadyPremiumError || err instanceof DuplicateReportError
+      err instanceof BadgeAlreadyEarnedError || err instanceof AlreadyPremiumError || err instanceof DuplicateReportError ||
+      err instanceof AlreadyRequestedError
     ) {
       res.status(HTTP_STATUS.CONFLICT).json({ success: false, message: err.message });
       return;
@@ -144,7 +157,8 @@ err instanceof ScheduleRequestNotFoundError
       err instanceof PremiumBadgeRequiredError ||
       err instanceof CommunityMessageLimitError || err instanceof BuddyMatchLimitError ||       // ← add
       err instanceof UnauthorizedBuddyActionError || err instanceof NotABuddyError ||
-      err instanceof UnauthorizedMessageError || err instanceof UnauthorizedSessionActionError
+      err instanceof UnauthorizedMessageError || err instanceof UnauthorizedSessionActionError ||
+      err instanceof UnauthorizedRoomActionError
     ) {
       res.status(HTTP_STATUS.FORBIDDEN).json({ success: false, message: err.message });
       return;
@@ -180,7 +194,11 @@ err instanceof ScheduleRequestNotFoundError
       err instanceof SessionNotActiveError || err instanceof ReportValidationError || err instanceof SelfReportError || err instanceof ReportAlreadyResolvedError || err instanceof BuddySessionAlreadyActiveError    ||
 err instanceof BuddySessionNotActiveError        ||
 err instanceof NotInActiveSessionError           ||
-err instanceof ScheduleRequestAlreadyRespondedError
+err instanceof ScheduleRequestAlreadyRespondedError ||
+err instanceof RoomFullError ||
+err instanceof RoomAlreadyJoinedError ||
+err instanceof RoomNotLiveError ||
+err instanceof JoinRequestAlreadyRespondedError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;
