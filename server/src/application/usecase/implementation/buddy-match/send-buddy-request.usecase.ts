@@ -47,7 +47,7 @@ export class SendBuddyRequestUsecase implements ISendBuddyRequestUsecase {
         message: `@${requesterName} wants to be your study buddy.`,
         metadata: { requesterId }
       });
-    } catch (error) {
+    } catch (_error) {
       // Don't fail the request if notification fails
     }
   }

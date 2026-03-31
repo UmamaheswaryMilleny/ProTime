@@ -63,6 +63,7 @@ export class CalendarMapper {
     entity:  CalendarEventEntity,
     session?: BuddySessionResponseDTO,
     note?:    SessionNoteResponseDTO,
+    buddy?:   { userId: string; fullName: string },
   ): CalendarEventResponseDTO {
     return {
       id:         entity.id,
@@ -72,6 +73,7 @@ export class CalendarMapper {
       title:      entity.title,
       startTime:  entity.startTime,
       session,
+      buddy,
       note,
       createdAt:  entity.createdAt,
       updatedAt:  entity.updatedAt,

@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsArray, IsNumber, Min } from 'class-validator';
+import { IsString, IsNotEmpty, IsArray, IsNumber, Min, IsOptional } from 'class-validator';
 
 export class ProposeRecurringSessionRequestDTO {
   @IsArray()
@@ -17,4 +17,10 @@ export class ProposeRecurringSessionRequestDTO {
   @IsNumber()
   @Min(1)
   noOfSessions!: number;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsNotEmpty({ each: true })
+  @IsOptional()
+  dates?: string[]; // Optional: explicitly provided YYYY-MM-DD dates from client
 }

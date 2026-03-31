@@ -1,16 +1,18 @@
 import { inject, injectable } from "tsyringe";
 import type { ICompleteTodoUsecase } from "../../interface/todo/todo.complete.usecase.interface";
 import type { ITodoRepository } from "../../../../domain/repositories/todo/todo.repository.interface";
+import type { ICalendarEventRepository } from "../../../../domain/repositories/calendar/calendar-event.repository.interface";
 import type { IGamificationRepository } from "../../../../domain/repositories/gamification/gamification.repository.interface";
 import type { IAwardXpUsecase } from "../../interface/gamification/award-xp.usecase.interface";
 import { TodoMapper } from "../../../mapper/todo.mapper";
-import type { CompleteTodoResponseDTO, TodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
+import type { CompleteTodoResponseDTO } from "../../../dto/todo/response/todo.response.dto";
 import {
   TodoStatus,
   TodoPriority,
   POMODORO_BONUS_XP,
   DAILY_XP_CAP,
 } from "../../../../domain/enums/todo.enums";
+import { CalendarEventType } from "../../../../domain/enums/calendar.enums";
 
 import { XpSource } from "../../../../domain/enums/gamification.enums";
 import {
@@ -25,6 +27,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
   constructor(
     @inject("ITodoRepository")
     private readonly todoRepository: ITodoRepository,
+
+    @inject("ICalendarEventRepository")
+    private readonly calendarRepository: ICalendarEventRepository,
 
     @inject("IGamificationRepository")
     private readonly gamificationRepository: IGamificationRepository,
@@ -77,11 +82,20 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     });
     if (!updated) throw new TodoNotFoundError();
 
-    // 7. Award XP to gamification — runs even if cap hit (xp=0)
-    //    streak + badge checks always run regardless of cap
+    // Award XP to gamification — runs even if cap hit (xp=0)
+    // streak + badge checks always run regardless of cap
 
-
-
+    // 8. Log the completed task to the Calendar
+    const now = new Date();
+    await this.calendarRepository.save({
+      userId,
+      type: CalendarEventType.TASK,
+      date: now.toISOString().split('T')[0],
+      startTime: now.toTimeString().slice(0, 5),
+      title: updated.title,
+      todoId: updated.id,
+    });
+    
     const source: XpSource =
       todo.priority === TodoPriority.HIGH ? 'TODO_HIGH'
         : todo.priority === TodoPriority.MEDIUM ? 'TODO_MEDIUM'

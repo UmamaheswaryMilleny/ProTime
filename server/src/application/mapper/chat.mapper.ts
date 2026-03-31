@@ -13,7 +13,7 @@ export class ChatMapper {
         return {
             id: entity.id,
             conversationId: entity.conversationId,
-            senderId: entity.senderId,
+            senderId: entity.senderId?.toString() ?? null,
             fullName: user?.fullName ?? null,
             content: entity.content,
             messageType: entity.messageType,

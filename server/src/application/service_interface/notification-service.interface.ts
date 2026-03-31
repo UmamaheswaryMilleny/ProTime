@@ -8,7 +8,10 @@ export enum NotificationType {
   TASK_COMPLETED = 'task_completed',
   PREMIUM_PURCHASED = 'premium_purchased',
   SCHEDULE_ACCEPTED = 'schedule_accepted',
+  SCHEDULE_REQUESTED = 'schedule_requested',
   SESSION_REMINDER = 'session_reminder',
+  CHAT_MESSAGE = 'chat_message',
+  STUDY_ROOM_INVITE = 'study_room_invite',
 }
 
 export interface InAppNotification {

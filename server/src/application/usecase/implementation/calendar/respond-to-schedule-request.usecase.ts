@@ -7,13 +7,13 @@ import type { ICalendarEventRepository } from '../../../../domain/repositories/c
 import type { IConversationRepository } from '../../../../domain/repositories/chat/conversation.repository.interface';
 import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { ISocketService } from '../../../service_interface/socket-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
 import type { SessionScheduleRequestResponseDTO } from '../../../dto/calendar/response/session-schedule-request.response.dto';
 import type { RespondToScheduleRequestDTO } from '../../../dto/calendar/request/respond-to-schedule-request.request.dto';
 import {
   SessionNotFoundError,
   ScheduleRequestNotFoundError,
-  UnauthorizedSessionActionError,
-  ScheduleRequestAlreadyRespondedError,
 } from '../../../../domain/errors/calendar.error';
 import { ConversationNotFoundError } from '../../../../domain/errors/chat.errors';
 import { SessionStatus, CalendarEventType, ScheduleConfirmStatus } from '../../../../domain/enums/calendar.enums';
@@ -39,6 +39,9 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
 
     @inject('ISocketService')
     private readonly socketService: ISocketService,
+
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) {}
 
   async execute(
@@ -50,6 +53,11 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
     const request = await this.scheduleRequestRepo.findById(requestId);
     if (!request) throw new ScheduleRequestNotFoundError();
 
+    const [proposerUser, proposedToUser] = await Promise.all([
+      this.userRepo.findById(request.proposedBy),
+      this.userRepo.findById(request.proposedTo),
+    ]);
+
     const respondedAt = new Date();
 
     if (status === ScheduleConfirmStatus.REJECTED) {
@@ -59,13 +67,21 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
         respondedAt,
       );
 
-      const proposer = await this.userRepo.findById(request.proposedBy);
       const response = CalendarMapper.scheduleRequestToResponse(
         updated ?? request,
-        proposer?.fullName ?? 'Unknown',
+        proposerUser?.fullName ?? 'Unknown',
       );
 
       this.socketService.emitToUser(request.proposedBy, 'schedule:rejected', response);
+
+      // Send in-app notification for rejection
+      this.notificationService.notifyUser(request.proposedBy, {
+        type: NotificationType.SCHEDULE_ACCEPTED, 
+        title: '❌ Schedule Request Declined',
+        message: `${proposedToUser?.fullName ?? 'Your buddy'} declined your study schedule request.`,
+        metadata: { requestId: request.id }
+      });
+
       return response;
     }
 
@@ -92,15 +108,16 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
       buddyConnectionId = conv.buddyConnectionId as string;
     }
 
-    // Fetch user names for calendar event titles
-    const [proposerUser, proposedToUser] = await Promise.all([
-      this.userRepo.findById(request.proposedBy),
-      this.userRepo.findById(request.proposedTo),
-    ]);
-
     const datesToSchedule = request.recurringDates && request.recurringDates.length > 0
       ? request.recurringDates
       : [request.scheduledAt];
+
+    const formatLocalDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
 
     for (const d of datesToSchedule) {
       const newSession = await this.sessionRepo.save({
@@ -113,7 +130,7 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
         roomId:            randomUUID(),
       });
 
-      const dateStr      = d.toISOString().split('T')[0];
+      const dateStr      = formatLocalDate(d);
       const startTimeStr = d.toTimeString().slice(0, 5);
 
       await Promise.all([
@@ -143,10 +160,12 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
 
     this.socketService.emitToUser(request.proposedBy, 'schedule:confirmed', response);
     
-    // Dispatch the notification for schedule acceptance
-    this.socketService.emitToUser(request.proposedBy, 'notification:schedule_accepted', {
-      type: 'schedule_accepted',
-      message: `${proposedToUser?.fullName ?? 'Your buddy'} accepted your session schedule request!`
+    // Dispatch the notification for schedule acceptance via NotificationService
+    this.notificationService.notifyUser(request.proposedBy, {
+      type: NotificationType.SCHEDULE_ACCEPTED,
+      title: '📅 Schedule Accepted',
+      message: `${proposedToUser?.fullName ?? 'Your buddy'} accepted your study schedule request!`,
+      metadata: { requestId: request.id, conversationId }
     });
 
     return response;

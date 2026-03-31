@@ -107,7 +107,7 @@ export class RespondToBuddyRequestUsecase implements IRespondToBuddyRequestUseca
         message: `@${receiverName} accepted your study buddy request. Go say hi!`,
         metadata: { connectionId, buddyId: receiverId }
       });
-    } catch (error) {
+    } catch (_error) {
        // Ignore
     }
   }
