@@ -1,17 +1,8 @@
 import { injectable } from 'tsyringe';
 import mongoose from 'mongoose';
-import * as fs from 'fs';
 import { BaseRepository } from '../base.repository';
 
-const logFile = 'C:\\Users\\umama\\AppData\\Local\\Temp\\buddy_debug.log';
-const log = (msg: string) => {
-  const timestamp = new Date().toISOString();
-  try {
-    fs.appendFileSync(logFile, `[${timestamp}] ${msg}\n`);
-  } catch {
-    // ignore
-  }
-};
+
 import { BuddyPreferenceModel, BuddyPreferenceDocument } from '../../database/models/buddy-preference.model';
 import { BuddyPreferenceMapper } from '../../database/mappers/buddy-preference.mapper';
 import type { IBuddyPreferenceRepository } from '../../../domain/repositories/buddy/buddy.preference.repository.interface';
@@ -52,7 +43,7 @@ export class BuddyPreferenceRepository
       | 'studyPreference'
     >>,
   ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+     
     const query: any = {
       userId:    { $nin: [new mongoose.Types.ObjectId(excludeUserId), ...excludeUserIds.map(id => new mongoose.Types.ObjectId(id))] },
       isVisible: true,
@@ -99,8 +90,8 @@ export class BuddyPreferenceRepository
       BuddyPreferenceModel.countDocuments(query),
     ]);
 
-    log(`[BuddyPrefRepo] unified query: ${JSON.stringify(query)}`);
-    log(`[BuddyPrefRepo] total: ${total} | docs: ${docs.length}`);
+    console.log(`[BuddyPrefRepo] unified query: ${JSON.stringify(query)}`);
+    console.log(`[BuddyPrefRepo] total: ${total} | docs: ${docs.length}`);
 
     return {
       profiles: docs.map(d => BuddyPreferenceMapper.toDomain(d as BuddyPreferenceDocument)),

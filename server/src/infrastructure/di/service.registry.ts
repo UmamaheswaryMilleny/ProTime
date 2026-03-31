@@ -92,6 +92,14 @@ import { SessionScheduleRequestRepository } from '../repositories/calendar/sessi
 import { ICalendarEventRepository } from '../../domain/repositories/calendar/calendar-event.repository.interface';
 import { ChatSessionController } from '../../interface_adapter/controllers/calendar/chat-session.controller'
 
+// study rooms
+import type { IStudyRoomRepository } from '../../domain/repositories/study-room/study-room.repository.interface';
+import type { IRoomJoinRequestRepository } from '../../domain/repositories/study-room/room-join-request.repository.interface';
+import type { IStudyRoomMessageRepository } from '../../domain/repositories/study-room/study-room-message.repository.interface';
+import { StudyRoomRepository } from '../repositories/study-room/study-room.repository';
+import { RoomJoinRequestRepository } from '../repositories/study-room/room-join-request.repository';
+import { StudyRoomMessageRepository } from '../repositories/study-room/study-room-message.repository';
+
 export class ServiceRegistry {
   static register(): void {
     // ─── Repositories ────────────────────────────────────────────────
@@ -210,5 +218,10 @@ container.register(ChatSessionController, { useClass: ChatSessionController });
     container.register<ICalendarEventRepository>('ICalendarEventRepository', { useClass: CalendarEventRepository });
     container.register<ISessionNoteRepository>('ISessionNoteRepository', { useClass: SessionNoteRepository });
     container.register<ISessionScheduleRequestRepository>('ISessionScheduleRequestRepository', { useClass: SessionScheduleRequestRepository });
+
+    // ─── Study Room Repositories ──────────────────────────────────────────
+    container.register<IStudyRoomRepository>('IStudyRoomRepository', { useClass: StudyRoomRepository });
+    container.register<IRoomJoinRequestRepository>('IRoomJoinRequestRepository', { useClass: RoomJoinRequestRepository });
+    container.register<IStudyRoomMessageRepository>('IStudyRoomMessageRepository', { useClass: StudyRoomMessageRepository });
   }
 }

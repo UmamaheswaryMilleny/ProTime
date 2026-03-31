@@ -1,4 +1,4 @@
-import type { Server, Socket } from 'socket.io';
+import type { Server } from 'socket.io';
 import type { ISocketService } from '../../application/service_interface/socket-service.interface';
 import type { CommunityChatResponseDTO } from '../../application/dto/community-chat/response/community-chat.response.dto';
 
@@ -6,10 +6,12 @@ import type { CommunityChatResponseDTO } from '../../application/dto/community-c
 export class SocketIOService implements ISocketService {
   private readonly io: Server;
   private readonly onlineUsers: Map<string, string>; // userId → socketId
+  private readonly activeRooms: Map<string, string>; // userId → conversationId
 
   constructor(io: Server) {
     this.io = io;
     this.onlineUsers = new Map();
+    this.activeRooms = new Map();
   }
 
   // Called from server.ts on connect
@@ -20,6 +22,7 @@ export class SocketIOService implements ISocketService {
   // Called from server.ts on disconnect
   setUserOffline(userId: string): void {
     this.onlineUsers.delete(userId);
+    this.activeRooms.delete(userId);
   }
 
   isUserOnline(userId: string): boolean {
@@ -42,5 +45,22 @@ export class SocketIOService implements ISocketService {
   // Session events — emit to all users in a conversation room
   emitToConversation(conversationId: string, event: string, data: unknown): void {
     this.io.to(`conversation:${conversationId}`).emit(event, data);
+  }
+
+  // Room events — emit to all users in a study room
+  emitToRoom(roomId: string, event: string, data: unknown): void {
+    this.io.to(`room:${roomId}`).emit(event, data);
+  }
+
+  setActiveRoom(userId: string, conversationId: string): void {
+    this.activeRooms.set(userId, conversationId);
+  }
+
+  clearActiveRoom(userId: string): void {
+    this.activeRooms.delete(userId);
+  }
+
+  getActiveRoom(userId: string): string | undefined {
+    return this.activeRooms.get(userId);
   }
 }

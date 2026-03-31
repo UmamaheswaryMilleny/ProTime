@@ -146,6 +146,7 @@ import type { IGetDayDetailUsecase }               from '../../application/useca
 import type { IMarkMissedSessionsUsecase }         from '../../application/usecase/interface/calendar/mark-missed-sessions.usecase.interface';
 import type { IExpireScheduleRequestsUsecase }     from '../../application/usecase/interface/calendar/expire-schedule-requests.usecase.interface';
 import type { IGetPendingScheduleRequestsUsecase } from '../../application/usecase/interface/calendar/get-pending-schedule-requests.usecase.interface';
+import type { ICreateSoloEventUsecase }            from '../../application/usecase/interface/calendar/create-solo-event.usecase.interface';
 import { StartSessionUsecase } from '../../application/usecase/implementation/calendar/start-session.usecase';
 import { EndSessionUsecase } from '../../application/usecase/implementation/calendar/end-session.usecase';
 import { SaveSessionNotesUsecase } from '../../application/usecase/implementation/calendar/save-session-notes.usecase';
@@ -157,6 +158,36 @@ import { MarkMissedSessionsUsecase } from '../../application/usecase/implementat
 import { ExpireScheduleRequestsUsecase } from '../../application/usecase/implementation/calendar/expire-schedule-requests.usecase';
 import { GetPendingScheduleRequestsUsecase } from '../../application/usecase/implementation/calendar/get-pending-schedule-requests.usecase';
 import { ProposeRecurringSessionUsecase } from '../../application/usecase/implementation/calendar/propose-recurring-session.usecase';
+import { CreateSoloEventUsecase }         from '../../application/usecase/implementation/calendar/create-solo-event.usecase';
+
+// study-rooms
+import type { ICreateRoomUsecase } from '../../application/usecase/interface/study-room/create-room.usecase.interface';
+import type { IJoinRoomUsecase } from '../../application/usecase/interface/study-room/join-room.usecase.interface';
+import type { IRequestToJoinUsecase } from '../../application/usecase/interface/study-room/request-to-join.usecase.interface';
+import type { IRespondToJoinRequestUsecase } from '../../application/usecase/interface/study-room/respond-to-join-request.usecase.interface';
+import type { ILeaveRoomUsecase } from '../../application/usecase/interface/study-room/leave-room.usecase.interface';
+import type { IEndRoomUsecase } from '../../application/usecase/interface/study-room/end-room.usecase.interface';
+import type { IGetRoomsUsecase } from '../../application/usecase/interface/study-room/get-rooms.usecase.interface';
+import type { IGetMyRoomsUsecase } from '../../application/usecase/interface/study-room/get-my-rooms.usecase.interface';
+import type { IGetRoomByIdUsecase } from '../../application/usecase/interface/study-room/get-room-by-id.usecase.interface';
+import type { IGetPendingJoinRequestsUsecase } from '../../application/usecase/interface/study-room/get-pending-join-requests.usecase.interface';
+import type { ISendStudyRoomMessageUsecase } from '../../application/usecase/interface/study-room/send-study-room-message.usecase.interface';
+import type { IGetStudyRoomMessagesUsecase } from '../../application/usecase/interface/study-room/get-study-room-messages.usecase.interface';
+import type { IGetAllRoomRequestsUsecase } from '../../application/usecase/interface/study-room/get-all-requests.usecase.interface';
+
+import { CreateRoomUsecase } from '../../application/usecase/implementation/study-room/create-room.usecase';
+import { JoinRoomUsecase } from '../../application/usecase/implementation/study-room/join-room.usecase';
+import { RequestToJoinUsecase } from '../../application/usecase/implementation/study-room/request-to-join.usecase';
+import { RespondToJoinRequestUsecase } from '../../application/usecase/implementation/study-room/respond-to-join-request.usecase';
+import { LeaveRoomUsecase } from '../../application/usecase/implementation/study-room/leave-room.usecase';
+import { EndRoomUsecase } from '../../application/usecase/implementation/study-room/end-room.usecase';
+import { GetRoomsUsecase } from '../../application/usecase/implementation/study-room/get-rooms.usecase';
+import { GetMyRoomsUsecase } from '../../application/usecase/implementation/study-room/get-my-rooms.usecase';
+import { GetRoomByIdUsecase } from '../../application/usecase/implementation/study-room/get-room-by-id.usecase';
+import { GetPendingJoinRequestsUsecase } from '../../application/usecase/implementation/study-room/get-pending-join-requests.usecase';
+import { SendStudyRoomMessageUsecase } from '../../application/usecase/implementation/study-room/send-study-room-message.usecase';
+import { GetStudyRoomMessagesUsecase } from '../../application/usecase/implementation/study-room/get-study-room-messages.usecase';
+import { GetAllRoomRequestsUsecase } from '../../application/usecase/implementation/study-room/get-all-requests.usecase';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -338,5 +369,21 @@ container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass:
     container.register<IMarkMissedSessionsUsecase>        ('IMarkMissedSessionsUsecase',        { useClass: MarkMissedSessionsUsecase });
     container.register<IExpireScheduleRequestsUsecase>    ('IExpireScheduleRequestsUsecase',    { useClass: ExpireScheduleRequestsUsecase });
     container.register<IGetPendingScheduleRequestsUsecase>('IGetPendingScheduleRequestsUsecase',{ useClass: GetPendingScheduleRequestsUsecase });
+    container.register<ICreateSoloEventUsecase>           ('ICreateSoloEventUsecase',           { useClass: CreateSoloEventUsecase });
+
+    // study-rooms
+    container.register<ICreateRoomUsecase>('ICreateRoomUsecase', { useClass: CreateRoomUsecase });
+    container.register<IJoinRoomUsecase>('IJoinRoomUsecase', { useClass: JoinRoomUsecase });
+    container.register<IRequestToJoinUsecase>('IRequestToJoinUsecase', { useClass: RequestToJoinUsecase });
+    container.register<IRespondToJoinRequestUsecase>('IRespondToJoinRequestUsecase', { useClass: RespondToJoinRequestUsecase });
+    container.register<ILeaveRoomUsecase>('ILeaveRoomUsecase', { useClass: LeaveRoomUsecase });
+    container.register<IEndRoomUsecase>('IEndRoomUsecase', { useClass: EndRoomUsecase });
+    container.register<IGetRoomsUsecase>('IGetRoomsUsecase', { useClass: GetRoomsUsecase });
+    container.register<IGetMyRoomsUsecase>('IGetMyRoomsUsecase', { useClass: GetMyRoomsUsecase });
+    container.register<IGetRoomByIdUsecase>('IGetRoomByIdUsecase', { useClass: GetRoomByIdUsecase });
+    container.register<IGetPendingJoinRequestsUsecase>('IGetPendingJoinRequestsUsecase', { useClass: GetPendingJoinRequestsUsecase });
+    container.register<ISendStudyRoomMessageUsecase>('ISendStudyRoomMessageUsecase', { useClass: SendStudyRoomMessageUsecase });
+    container.register<IGetStudyRoomMessagesUsecase>('IGetStudyRoomMessagesUsecase', { useClass: GetStudyRoomMessagesUsecase });
+    container.register<IGetAllRoomRequestsUsecase>('IGetAllRoomRequestsUsecase', { useClass: GetAllRoomRequestsUsecase });
   }
 }
