@@ -7,6 +7,7 @@ import chatReducer from "../features/chat/store/chatSlice";
 import calendarReducer from "../features/calendar/store/calendarSlice";
 import notificationReducer from "../features/notifications/store/notificationSlice";
 import pomodoroReducer from "../features/todo/store/pomodoroSlice";
+import studyRoomReducer from "../features/study-rooms/store/studyRoomSlice";
 import { notificationMiddleware } from "../features/notifications/store/notificationMiddleware";
 
 export const store = configureStore({
@@ -19,6 +20,7 @@ export const store = configureStore({
     calendar: calendarReducer,
     notifications: notificationReducer,
     pomodoro: pomodoroReducer,
+    studyRoom: studyRoomReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware().concat(notificationMiddleware),

@@ -30,6 +30,8 @@ import { CommunityChatPage } from "./features/community-chat/pages/CommunityChat
 import { ChatPage } from "./features/chat/pages/ChatPage";
 import { ProBuddyPage } from "./features/chat/pages/ProBuddyPage";
 import { CalendarPage } from "./features/calendar/pages/CalendarPage";
+import { StudyRoomsPage } from "./features/study-rooms/pages/StudyRoomsPage";
+import { StudyRoomPage } from "./features/study-rooms/pages/StudyRoomPage";
 
 // Admin
 import { AdminLoginPage } from "./features/admin/pages/AdminLoginPage";
@@ -80,6 +82,8 @@ function App() {
             <Route path={ROUTES.DASHBOARD_CHAT} element={<ChatPage />} />
             <Route path={ROUTES.DASHBOARD_CHAT_CONVERSATION} element={<ChatPage />} />
             <Route path={ROUTES.DASHBOARD_CALENDAR} element={<CalendarPage />} />
+            <Route path={ROUTES.DASHBOARD_STUDY_ROOMS} element={<StudyRoomsPage />} />
+            <Route path={ROUTES.DASHBOARD_STUDY_ROOM} element={<StudyRoomPage />} />
           </Route>
         </Route>
 

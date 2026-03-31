@@ -24,6 +24,8 @@ export const ROUTES = {
   DASHBOARD_CHAT_CONVERSATION: "/dashboard/chat/:conversationId",
   DASHBOARD_PROBUDDY: "/dashboard/probuddy",
   DASHBOARD_CALENDAR: "/dashboard/calendar",
+  DASHBOARD_STUDY_ROOMS: "/dashboard/study-rooms",
+  DASHBOARD_STUDY_ROOM: "/dashboard/study-rooms/:roomId",
 
   // ─── Admin ────────────────────────────────────────────────────────────────
   ADMIN_LOGIN: "/admin/login",
@@ -105,8 +107,23 @@ export const API_ROUTES = {
   CALENDAR_EVENTS: "/calendar/events",
   CALENDAR_DAY:    (date: string) => `/calendar/day/${date}`,
   CALENDAR_REQUESTS: "/calendar/schedule-requests",
+  CALENDAR_SOLO_EVENT: "/calendar/events/solo",
   CALENDAR_RESPOND_REQUEST: (requestId: string) => `/chat/schedule-requests/${requestId}/respond`,
   CALENDAR_SESSION_NOTES: (sessionId: string) => `/chat/sessions/${sessionId}/notes`,
+
+  // ─── Study Rooms ───────────────────────────────────────────────────────────
+  ROOMS:                   "/rooms",
+  ROOMS_MY:                "/rooms/my",
+  ROOMS_ALL_REQUESTS:      "/rooms/requests/all",
+  ROOMS_BY_ID:             (roomId: string) => `/rooms/${roomId}`,
+  ROOMS_JOIN:              (roomId: string) => `/rooms/${roomId}/join`,
+  ROOMS_REQUEST:           (roomId: string) => `/rooms/${roomId}/request`,
+  ROOMS_PENDING_REQUESTS:  (roomId: string) => `/rooms/${roomId}/join-requests/pending`,
+  ROOMS_RESPOND_REQUEST:   (requestId: string) => `/rooms/join-requests/${requestId}/respond`,
+  ROOMS_LEAVE:             (roomId: string) => `/rooms/${roomId}/leave`,
+  ROOMS_END:               (roomId: string) => `/rooms/${roomId}/end`,
+  ROOMS_START:             (roomId: string) => `/rooms/${roomId}/start`,
+  ROOMS_MESSAGES:          (roomId: string) => `/rooms/${roomId}/messages`,
 
   // ─── Utility ──────────────────────────────────────────────────────────────
   UTILITY_LOCATION: "/utility/location",
