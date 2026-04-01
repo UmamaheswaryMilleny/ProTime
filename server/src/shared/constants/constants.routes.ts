@@ -13,6 +13,7 @@ export const ROUTES = {
     CHAT: '/api/v1/chat',
     REPORTS: '/api/v1/reports', 
     ROOMS: '/api/v1/rooms',
+    PROBUDDY: '/api/v1/probuddy',
   },
 
   // Auth Routes

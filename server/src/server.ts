@@ -31,6 +31,7 @@ import { StudyRoomRoutes } from "./interface_adapter/routes/study-room/study-roo
 import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
 import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
 import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
+import { ProBuddyRoutes } from "./interface_adapter/routes/probuddy/probuddy.routes";
 
 
 
@@ -109,9 +110,10 @@ export class App {
     this.app.use(ROUTES.BASE.UTILITY, container.resolve(UtilityRoutes).router);
     this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
     this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
-  this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
-  this.app.use('/api/v1/calendar', container.resolve(CalendarRoutes).router);
-  this.app.use(ROUTES.BASE.ROOMS, container.resolve(StudyRoomRoutes).router);
+    this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
+    this.app.use('/api/v1/calendar', container.resolve(CalendarRoutes).router);
+    this.app.use(ROUTES.BASE.ROOMS, container.resolve(StudyRoomRoutes).router);
+    this.app.use(ROUTES.BASE.PROBUDDY, container.resolve<ProBuddyRoutes>(ProBuddyRoutes).router);
   }
   private configureSocket(): void {
     const tokenService = new JwtTokenService();
