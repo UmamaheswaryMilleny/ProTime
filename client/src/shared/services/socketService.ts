@@ -2,12 +2,20 @@ import { io, Socket } from 'socket.io-client';
 import { store } from '../../store/store';
 import { addMessage, type CommunityMessage } from '../../features/community-chat/store/communitySlice';
 import { addNotification } from '../../features/notifications/store/notificationSlice';
+import toast from 'react-hot-toast';
 
 class SocketService {
     private socket: Socket | null = null;
+    private deferredListeners: { event: string; callback: (...args: any[]) => void }[] = [];
 
     connect(token: string) {
-        if (this.socket?.connected) return;
+        if (this.socket) {
+            this.socket.auth = { token };
+            if (!this.socket.connected) {
+                this.socket.connect();
+            }
+            return;
+        }
 
         const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '');
         
@@ -19,6 +27,12 @@ class SocketService {
         this.socket.on('connect', () => {
             console.log('[Socket] Connected to server');
         });
+
+        // Re-attach any listeners that were requested before the socket was created
+        this.deferredListeners.forEach(({ event, callback }) => {
+            this.socket?.on(event, callback);
+        });
+        this.deferredListeners = [];
 
         this.socket.on('new_community_message', (message: CommunityMessage) => {
             store.dispatch(addMessage(message));
@@ -54,6 +68,13 @@ class SocketService {
 
         this.socket.on('notification:new', (notification: any) => {
             store.dispatch(addNotification(notification));
+            
+            // Show toast for immediate feedback (plain string to avoid JSX in .ts file)
+            const { title, message } = notification;
+            toast(`${title}: ${message}`, {
+                duration: 5000,
+                position: 'top-right',
+            });
         });
 
         // ──────────────────────────────────────────────────────────────────────
@@ -79,11 +100,23 @@ class SocketService {
     }
 
     on(event: string, callback: (...args: any[]) => void) {
-        this.socket?.on(event, callback);
+        if (this.socket) {
+            this.socket.on(event, callback);
+        } else {
+            this.deferredListeners.push({ event, callback });
+        }
     }
 
     off(event: string, callback?: (...args: any[]) => void) {
-        this.socket?.off(event, callback);
+        if (this.socket) {
+            this.socket.off(event, callback);
+        } else {
+            if (callback) {
+                this.deferredListeners = this.deferredListeners.filter(l => !(l.event === event && l.callback === callback));
+            } else {
+                this.deferredListeners = this.deferredListeners.filter(l => l.event !== event);
+            }
+        }
     }
 }
 
