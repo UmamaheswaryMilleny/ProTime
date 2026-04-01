@@ -57,6 +57,18 @@ export const SubscriptionSchema = new Schema(
       type: Date,
       default: null,
     },
+
+    aiUsageCount: {
+      type: Number,
+      required: true,
+      default: 0,
+    },
+
+    lastAiUsageReset: {
+      type: Date,
+      required: true,
+      default: () => new Date(),
+    },
   },
   {
     timestamps: true,

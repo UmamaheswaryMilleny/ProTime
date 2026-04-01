@@ -11,6 +11,8 @@ export interface SubscriptionDocument extends Document {
   currentPeriodStart: Date;
   currentPeriodEnd: Date;
   cancelledAt: Date | null;
+  aiUsageCount: number;
+  lastAiUsageReset: Date;
   createdAt: Date;
   updatedAt: Date;
 }

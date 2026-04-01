@@ -34,6 +34,16 @@ import { MongoTodoRepository } from '../repositories/todo/todo.repository';
 import type { ICloudinaryService } from '../../application/service_interface/cloudinary.service.interface';
 import { CloudinaryService } from '../service/cloudinary-service';
 
+//subscription
+import type { ISubscriptionRepository } from '../../domain/repositories/subscription/subscription.repository.interface';
+import { SubscriptionRepository } from '../repositories/subscription/subscription.repository';
+import type { IStripeService } from '../../application/service_interface/stripe.service.interface';
+import { StripeService } from '../service/stripe-service';
+
+// AI Service
+import type { IAIService } from '../../application/service_interface/ai-service.interface';
+import { OpenRouterAIService } from '../service/open-router-ai.service';
+
 //gamification
 import { IGamificationRepository } from '../../domain/repositories/gamification/gamification.repository.interface';
 import { IBadgeDefinitionRepository } from '../../domain/repositories/gamification/gamification.repository.interface';
@@ -42,23 +52,12 @@ import { MongoGamificationRepository } from '../repositories/gamification/gamifi
 import { MongoBadgeDefinitionRepository } from '../repositories/gamification/badge.repository';
 import { MongoUserBadgeRepository } from '../repositories/gamification/badge.repository';
 
-//subscription
-
-// ─── Subscription ─────────────────────────────────────────────────────────────
-import type { ISubscriptionRepository } from '../../domain/repositories/subscription/subscription.repository.interface';
-import type { IStripeService } from '../../application/service_interface/stripe.service.interface';
-import { SubscriptionRepository } from '../repositories/subscription/subscription.repository';
-import { StripeService } from '../service/stripe-service';
-//upload service
-
 //buddy-match
 import type { IBuddyPreferenceRepository } from '../../domain/repositories/buddy/buddy.preference.repository.interface';
 import type { IBuddyConnectionRepository } from '../../domain/repositories/buddy/buddy.connection.repository.interface';
 
 import { BuddyConnectionRepository } from '../repositories/buddy-match/buddy-connection.repository';
 import { BuddyPreferenceRepository } from '../repositories/buddy-match/buddy-preference.repository';
-
-// usecases
 
 //middlewares
 import { BlockedUserMiddleware } from '../../interface_adapter/middlewares/blocked-user.middleware';
@@ -79,9 +78,7 @@ import { ChatSessionRepository } from '../repositories/chat/chat-session.reposit
 import type { IReportRepository } from '../../domain/repositories/report/report.repository.interface';
 import { ReportRepository }       from '../repositories/report/report.repository';
 
-
-// calendar usecases
-
+// calendar repositories
 import { IBuddySessionRepository } from '../../domain/repositories/calendar/buddy-session.repository.interface';
 import { ISessionNoteRepository } from '../../domain/repositories/calendar/session-not.repository.interface';
 import { ISessionScheduleRequestRepository } from '../../domain/repositories/calendar/session-schedule-request.repository.interface';
@@ -90,7 +87,6 @@ import { CalendarEventRepository } from '../repositories/calendar/calendar-event
 import { SessionNoteRepository } from '../repositories/calendar/session-note.repository';
 import { SessionScheduleRequestRepository } from '../repositories/calendar/session-schedule-request.repository';
 import { ICalendarEventRepository } from '../../domain/repositories/calendar/calendar-event.repository.interface';
-import { ChatSessionController } from '../../interface_adapter/controllers/calendar/chat-session.controller'
 
 // study rooms
 import type { IStudyRoomRepository } from '../../domain/repositories/study-room/study-room.repository.interface';
@@ -176,13 +172,17 @@ export class ServiceRegistry {
     });
 
     //subscription
-    // ─── Subscription ─────────────────────────────────────────────────────────────
     container.register<ISubscriptionRepository>('ISubscriptionRepository', {
       useClass: SubscriptionRepository,
     });
 
     container.register<IStripeService>('IStripeService', {
       useClass: StripeService,
+    });
+
+    // AI Service
+    container.register<IAIService>('IAIService', {
+      useClass: OpenRouterAIService,
     });
 
     //buddy match
@@ -210,10 +210,10 @@ export class ServiceRegistry {
     container.register<IDirectMessageRepository>('IDirectMessageRepository', { useClass: DirectMessageRepository });
     container.register<IChatSessionRepository>('IChatSessionRepository', { useClass: ChatSessionRepository });
     container.register<IReportRepository>('IReportRepository', {
-  useClass: ReportRepository,
-});
-container.register(ChatSessionController, { useClass: ChatSessionController });
-   // ─── Calendar Repositories ───────────────────────────────────────────
+      useClass: ReportRepository,
+    });
+
+    // ─── Calendar Repositories ───────────────────────────────────────────
     container.register<IBuddySessionRepository>('IBuddySessionRepository', { useClass: BuddySessionRepository });
     container.register<ICalendarEventRepository>('ICalendarEventRepository', { useClass: CalendarEventRepository });
     container.register<ISessionNoteRepository>('ISessionNoteRepository', { useClass: SessionNoteRepository });

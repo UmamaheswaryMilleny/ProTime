@@ -20,7 +20,8 @@ export class SubscriptionInfraMapper {
 
 
       cancelledAt: doc.cancelledAt ?? undefined,
-
+      aiUsageCount: doc.aiUsageCount ?? 0,
+      lastAiUsageReset: doc.lastAiUsageReset ?? new Date(),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -50,6 +51,11 @@ export class SubscriptionInfraMapper {
     // ─── Cancellation ────────────────────────────────────────────────────────
     if (entity.cancelledAt !== undefined)
       data['cancelledAt'] = entity.cancelledAt ?? null;
+
+    if (entity.aiUsageCount !== undefined)
+      data['aiUsageCount'] = entity.aiUsageCount;
+    if (entity.lastAiUsageReset !== undefined)
+      data['lastAiUsageReset'] = entity.lastAiUsageReset;
 
     return data;
   }

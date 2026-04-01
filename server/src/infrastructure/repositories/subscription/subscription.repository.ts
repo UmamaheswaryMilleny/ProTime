@@ -52,6 +52,8 @@ export class SubscriptionRepository
       | 'currentPeriodStart'
       | 'currentPeriodEnd'
       | 'cancelledAt'
+      | 'aiUsageCount'
+      | 'lastAiUsageReset'
     >>,
   ): Promise<SubscriptionEntity | null> {
     const update = SubscriptionInfraMapper.toPersistence(data);

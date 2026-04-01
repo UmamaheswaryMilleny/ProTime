@@ -60,8 +60,6 @@ import { InitializeGamificationUsecase } from '../../application/usecase/impleme
 import { GetGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.get.usecase';
 
 //subscription
-
-// ─── Subscription ─────────────────────────────────────────────────────────────
 import { GetSubscriptionUsecase } from '../../application/usecase/implementation/subscription/get-subscription.usecase';
 import { CreateCheckoutSessionUsecase } from '../../application/usecase/implementation/subscription/create-checkout-session.usecase';
 import { CancelSubscriptionUsecase } from '../../application/usecase/implementation/subscription/cancel-subscription.usecase';
@@ -71,8 +69,11 @@ import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/in
 import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
 
-//buddy match
+// ProBuddy AI
+import { ChatWithAiUsecase } from '../../application/usecase/implementation/probuddy/chat-with-ai.usecase';
+import type { IChatWithAiUsecase } from '../../application/usecase/interface/probuddy/chat-with-ai.usecase.interface';
 
+//buddy match
 import { SaveBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/save-buddy-preference.usecase';
 import { GetBuddyPreferenceUsecase } from '../../application/usecase/implementation/buddy-match/get-buddy-preference.usecase';
 import { FindBuddyMatchesUsecase } from '../../application/usecase/implementation/buddy-match/find-buddy-matches.usecase';
@@ -321,6 +322,11 @@ export class UsecaseRegistry {
         useClass: HandleStripeWebhookUsecase,
       },
     );
+
+    // AI
+    container.register<IChatWithAiUsecase>('IChatWithAiUsecase', {
+      useClass: ChatWithAiUsecase,
+    });
 
     //buddy match
     container.register<ISaveBuddyPreferenceUsecase>('ISaveBuddyPreferenceUsecase', { useClass: SaveBuddyPreferenceUsecase });
