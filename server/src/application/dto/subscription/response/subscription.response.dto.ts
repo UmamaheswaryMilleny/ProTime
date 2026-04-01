@@ -27,4 +27,7 @@ export interface SubscriptionResponseDTO {
 
   createdAt: string;
   updatedAt: string;
+
+  aiUsageCount: number;
+  lastAiUsageReset: string | null;
 }

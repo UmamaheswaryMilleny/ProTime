@@ -31,6 +31,8 @@ export class GetSubscriptionUsecase implements IGetSubscriptionUsecase {
         daysRemaining: 0,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        aiUsageCount: 0,
+        lastAiUsageReset: new Date().toISOString(),
       };
     }
 

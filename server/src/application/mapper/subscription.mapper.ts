@@ -44,6 +44,10 @@ export class SubscriptionMapper {
 
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
+      aiUsageCount: entity.aiUsageCount,
+      lastAiUsageReset: entity.lastAiUsageReset
+        ? entity.lastAiUsageReset.toISOString()
+        : null,
     };
   }
 }

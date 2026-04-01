@@ -49,6 +49,7 @@ export class RequestToJoinUsecase implements IRequestToJoinUsecase {
       userId: savedRequest.userId,
       userName: user?.fullName || 'Unknown',
       status: savedRequest.status,
+      isAlreadyParticipant: false,
       createdAt: savedRequest.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: savedRequest.updatedAt?.toISOString() || new Date().toISOString()
     };
