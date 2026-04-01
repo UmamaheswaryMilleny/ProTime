@@ -24,6 +24,8 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
       | 'currentPeriodStart'
       | 'currentPeriodEnd'
       | 'cancelledAt'
+      | 'aiUsageCount'
+      | 'lastAiUsageReset'
     >>
   ): Promise<SubscriptionEntity | null>;
 

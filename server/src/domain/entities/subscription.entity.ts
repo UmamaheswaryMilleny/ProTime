@@ -10,6 +10,8 @@ export interface SubscriptionEntity {
   currentPeriodStart: Date | null; //Null for FREE users who have never paid
   currentPeriodEnd: Date | null; 
   cancelledAt?: Date;
+  aiUsageCount: number;
+  lastAiUsageReset: Date;
   createdAt: Date;
   updatedAt: Date;
 }
