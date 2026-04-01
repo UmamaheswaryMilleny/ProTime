@@ -1,15 +1,23 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { ConversationSidebar } from "../components/ConversationSidebar";
 import { MessageWindow } from "../components/MessageWindow";
 
 export const ChatPage: React.FC = () => {
   const { conversationId } = useParams<{ conversationId?: string }>();
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => localStorage.getItem('chat_sidebar_minimized') === 'true');
+
+  useEffect(() => {
+    localStorage.setItem('chat_sidebar_minimized', isSidebarMinimized.toString());
+  }, [isSidebarMinimized]);
 
   return (
     <div className="flex h-[calc(100vh-32px)] sm:h-[calc(100vh-48px)] lg:h-[calc(100vh-64px)] w-full bg-zinc-900/50 rounded-2xl border border-white/5 overflow-hidden">
-      <div className={`w-full md:w-1/3 border-r border-white/5 ${conversationId ? 'hidden md:block' : 'block'}`}>
-        <ConversationSidebar />
+      <div className={`transition-all duration-300 border-r border-white/5 ${conversationId ? 'hidden md:block' : 'block'} w-full flex-shrink-0 ${isSidebarMinimized ? 'md:w-24' : 'md:w-1/3 max-w-sm'}`}>
+        <ConversationSidebar 
+          isMinimized={isSidebarMinimized} 
+          onToggle={() => setIsSidebarMinimized(!isSidebarMinimized)} 
+        />
       </div>
 
       {/* Message window */}

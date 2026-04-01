@@ -23,6 +23,10 @@ export interface CalendarEvent {
   title: string;
   isCompleted?: boolean;
   session?: BaseSession;
+  buddy?: {
+    userId: string;
+    fullName: string;
+  };
   note?: SessionNote;
 }
 

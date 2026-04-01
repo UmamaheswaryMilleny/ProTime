@@ -12,6 +12,7 @@ interface CalendarState {
   isLoadingDayDetail: boolean;
   isLoadingRequests: boolean;
   isResponding: boolean;
+  isCreatingSoloEvent: boolean;
 
   // Error states
   error: string | null;
@@ -26,6 +27,7 @@ const initialState: CalendarState = {
   isLoadingDayDetail: false,
   isLoadingRequests: false,
   isResponding: false,
+  isCreatingSoloEvent: false,
 
   error: null,
 };
@@ -72,6 +74,17 @@ export const respondToScheduleRequest = createAsyncThunk(
       return await calendarService.respondToRequest(payload);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to respond to request');
+    }
+  }
+);
+
+export const createSoloEvent = createAsyncThunk(
+  'calendar/createSoloEvent',
+  async (payload: { title: string; date: string; startTime: string }, { rejectWithValue }) => {
+    try {
+      return await calendarService.createSoloEvent(payload);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to create solo event');
     }
   }
 );
@@ -140,12 +153,24 @@ const calendarSlice = createSlice({
       })
       .addCase(respondToScheduleRequest.fulfilled, (state, action: PayloadAction<PendingScheduleRequest>) => {
         state.isResponding = false;
-        // The API returns the updated request (now Confirmed/Rejected). 
-        // Remove it from pendingRequests as it's no longer pending.
         state.pendingRequests = state.pendingRequests.filter(req => req.id !== action.payload.id);
       })
       .addCase(respondToScheduleRequest.rejected, (state, action) => {
         state.isResponding = false;
+        state.error = action.payload as string;
+      })
+      
+      // Create Solo Event
+      .addCase(createSoloEvent.pending, (state) => {
+        state.isCreatingSoloEvent = true;
+        state.error = null;
+      })
+      .addCase(createSoloEvent.fulfilled, (state, action: PayloadAction<CalendarEvent>) => {
+        state.isCreatingSoloEvent = false;
+        state.events.push(action.payload); // dynamically hydrate grid
+      })
+      .addCase(createSoloEvent.rejected, (state, action) => {
+        state.isCreatingSoloEvent = false;
         state.error = action.payload as string;
       });
   },

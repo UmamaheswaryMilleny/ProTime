@@ -3,17 +3,70 @@ import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../../store/store';
 import { setIncomingCall, setActiveCall } from '../store/chatSlice';
 import { socketService } from '../../../shared/services/socketService';
-import { Settings, Edit3, Clock, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo } from 'lucide-react';
-import { SharedPomodoroPanel } from './SharedPomodoroPanel';
+import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, PhoneOff, MoreVertical, Loader } from 'lucide-react';
+import { ReportModal } from './ReportModal';
+import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
+import toast from 'react-hot-toast';
+import { useTodo } from '../../todo/hooks/useTodo';
+import { usePomodoro } from '../../todo/hooks/usePomodoro';
+import { PomodoroMinimized } from '../../todo/components/PomodoroMinimized';
+import { PomodoroModal } from '../../todo/components/PomodoroModal';
 
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
   const { incomingCall, activeCall, conversations } = useSelector((state: RootState) => state.chat);
+  const currentUserId = useSelector((state: RootState) => state.auth.user?.id ?? '');
+  const currentUserFullName = useSelector((state: RootState) => state.auth.user?.fullName ?? 'Someone');
+
+  const { todos, isLoading: isTodosLoading, deleteTodo } = useTodo();
+  const {
+    activeTask,
+    timeRemainingFormatted,
+    isRunning: isTodoRunning,
+    initialTime,
+    timeRemaining,
+    resume,
+    pause,
+    reset,
+    stop,
+    start,
+    phase,
+    skipBreak,
+    isSmartBreaksEnabled,
+    totalPausedSeconds
+  } = usePomodoro();
+
+  const [isPomodoroModalOpen, setIsPomodoroModalOpen] = useState(false);
+
+  // Local wrapper functions to handle Pomodoro actions in the video call context
+  const handleStartTodoPomodoro = (taskId: string) => {
+    const task = todos.find(t => t.id === taskId);
+    if (!task) return;
+    if (task.pomodoroEnabled && task.estimatedTime) {
+      start(task, task.estimatedTime * 60, activeCall?.conversationId);
+      setIsPomodoroModalOpen(true);
+    }
+  };
+  const resumeTodoTimer = (conversationId?: string) => resume(conversationId);
+  const pauseTodoTimer = (conversationId?: string) => pause(conversationId);
+  const resetTodoTimer = () => reset();
+  const handleStopTodoPomodoro = () => {
+    stop(activeCall?.conversationId);
+    setIsPomodoroModalOpen(false);
+  };
+
+  const {
+    buddyActiveTask,
+    buddyTimeRemaining,
+    buddyIsRunning,
+    buddyConversationId
+  } = useSelector((state: RootState) => state.pomodoro);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const remoteVideoRef = useRef<HTMLVideoElement>(null);
   const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
+  const settingsRef = useRef<HTMLDivElement>(null);
 
   const [callStatus, setCallStatus] = useState<string>('');
   const [isMicMuted, setIsMicMuted] = useState(false);
@@ -21,12 +74,46 @@ export const VideoCallOverlay: React.FC = () => {
 
   // New UI feature toggles
   const [callDuration, setCallDuration] = useState(0);
-  const [isNotepadOpen, setIsNotepadOpen] = useState(false);
-  const [notepadText, setNotepadText] = useState('');
+  // const [isNotepadOpen, setIsNotepadOpen] = useState(false);
+  // const [notepadText, setNotepadText] = useState('');
   const [isTodoListOpen, setIsTodoListOpen] = useState(false);
-  const [isPomodoroOpen, setIsPomodoroOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
+  const [ringTimeout, setRingTimeout] = useState(60);
 
   const isCaller = activeCall?.isCaller || false;
+
+  // Auto-renegotiate if we receive an offer while already in a call (e.g. peer refreshed)
+  useEffect(() => {
+    if (activeCall && incomingCall && incomingCall.conversationId === activeCall.conversationId) {
+      const renegotiate = async () => {
+        try {
+          if (peerConnectionRef.current) {
+            await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(incomingCall.offer));
+            const answer = await peerConnectionRef.current.createAnswer();
+            await peerConnectionRef.current.setLocalDescription(answer);
+            socketService.emit('webrtc:answer', { conversationId: activeCall.conversationId, answer });
+          }
+          dispatch(setIncomingCall(null)); // clear the incoming call trigger
+        } catch (error) {
+          console.error("Renegotiation failed:", error);
+        }
+      };
+      renegotiate();
+    }
+  }, [activeCall, incomingCall, dispatch]);
+
+  // Close settings dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (settingsRef.current && !settingsRef.current.contains(event.target as Node)) {
+        setIsSettingsOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const cleanup = () => {
     if (peerConnectionRef.current) {
@@ -42,6 +129,12 @@ export const VideoCallOverlay: React.FC = () => {
 
   const handleEndCall = () => {
     if (activeCall) {
+      if (isCaller && callStatus.startsWith('Calling')) {
+        socketService.emit('webrtc:missed-call', { 
+          conversationId: activeCall.conversationId, 
+          callerName: currentUserFullName
+        });
+      }
       socketService.emit('webrtc:call-ended', { conversationId: activeCall.conversationId });
     }
     setCallStatus(''); // safe here — called from event handlers, not effect body
@@ -72,13 +165,45 @@ export const VideoCallOverlay: React.FC = () => {
     return `${m}:${s}`;
   };
 
+  // Ring timeout (60 seconds)
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (activeCall && isCaller && callStatus.startsWith('Calling')) {
+      if (ringTimeout <= 0) {
+        handleEndCall();
+        toast.error('No answer. Call ended.');
+        return;
+      }
+      interval = setInterval(() => {
+        setRingTimeout(prev => prev - 1);
+      }, 1000);
+    } else if (!callStatus.startsWith('Calling')) {
+      setRingTimeout(60);
+    }
+    return () => clearInterval(interval);
+  }, [activeCall, isCaller, callStatus, ringTimeout, currentUserFullName]);
+
+  // Disconnect on refresh
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // If we are just ringing someone, cancel the ring.
+      // But if we are in an ACTIVE call, do NOT end the call! Let the peer wait for our reconnect.
+      if (!activeCall && incomingCall) {
+        socketService.emit('webrtc:call-ended', { conversationId: incomingCall.conversationId });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [activeCall, incomingCall]);
+
+  // WebRTC Setup
   useEffect(() => {
     if (!activeCall) {
       cleanup();
       return;
     }
 
-    const { conversationId, isCaller, offer } = activeCall;
+    const { conversationId, isCaller, offer, isReconnecting } = activeCall;
     
     // Finds partner name
     const conv = conversations.find(c => c.id === conversationId);
@@ -116,11 +241,19 @@ export const VideoCallOverlay: React.FC = () => {
           }
         };
 
-        if (isCaller) {
+        if (isCaller || isReconnecting) {
           const offerParams = await pc.createOffer();
           await pc.setLocalDescription(offerParams);
-          socketService.emit('webrtc:offer', { conversationId, offer: offerParams });
-          setCallStatus(`Calling ${partnerName}...`);
+          socketService.emit('webrtc:offer', { 
+            conversationId, 
+            offer: offerParams, 
+            callerName: currentUserFullName 
+          });
+          if (isReconnecting) {
+             dispatch(setActiveCall({ ...activeCall, isReconnecting: false }));
+          } else {
+            setCallStatus(`Calling ${partnerName}...`);
+          }
         } else if (offer) {
           await pc.setRemoteDescription(new RTCSessionDescription(offer));
           const answer = await pc.createAnswer();
@@ -224,6 +357,7 @@ export const VideoCallOverlay: React.FC = () => {
   // Get the other user's name for display in the active call header
   const activeConv = conversations.find(c => c.id === activeCall.conversationId);
   const partnerName = activeConv?.otherUser?.fullName || 'Buddy';
+  const otherUserId = activeConv?.otherUser?.userId ?? '';
 
   return (
     <div className="fixed inset-0 bg-black z-[100] p-4 sm:p-6 flex flex-col font-sans">
@@ -232,22 +366,96 @@ export const VideoCallOverlay: React.FC = () => {
         <div className="flex items-center gap-4">
           {/* Timer pill */}
           <div className="flex items-center gap-2 bg-[#7c3aed] text-white px-4 py-2 rounded-lg font-medium text-sm shadow-lg">
-            <span>{callStatus ? callStatus : formatTime(callDuration)}</span>
+             <span>{callStatus ? (callStatus.startsWith('Calling') ? `${callStatus} (${ringTimeout}s)` : callStatus) : formatTime(callDuration)}</span>
             {!callStatus && <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse ml-1" /> }
           </div>
+
+          {/* Pomodoro Timer integration */}
+          {(buddyActiveTask && buddyConversationId === activeCall.conversationId) ? (
+            <PomodoroMinimized
+              isVisible={true}
+              timeRemainingFormatted={(() => {
+                const mins = Math.floor(buddyTimeRemaining / 60);
+                const secs = buddyTimeRemaining % 60;
+                return `${mins}:${secs.toString().padStart(2, '0')}`;
+              })()}
+              isRunning={buddyIsRunning}
+              onStart={() => { }}
+              onPause={() => { }}
+              onStop={() => { }}
+              onMaximize={() => { }}
+              readOnly={true}
+            />
+          ) : activeTask ? (
+            <PomodoroMinimized
+              isVisible={true}
+              timeRemainingFormatted={timeRemainingFormatted}
+              isRunning={isTodoRunning}
+              onStart={() => resumeTodoTimer(activeCall.conversationId)}
+              onPause={() => pauseTodoTimer(activeCall.conversationId)}
+              onStop={handleStopTodoPomodoro}
+              onMaximize={() => setIsPomodoroModalOpen(true)}
+            />
+          ) : null}
           
-          {/* Notepad Toggle */}
+          {/* Notepad Toggle — COMMENTED OUT */}
+          {/*
           <button 
             onClick={() => { setIsNotepadOpen(!isNotepadOpen); setIsTodoListOpen(false); }}
             className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors shadow-lg ${isNotepadOpen ? 'bg-zinc-700 text-white' : 'bg-[#1c1c1e] text-zinc-400 hover:bg-zinc-800 hover:text-white'}`}
           >
             <Edit3 size={16} /> NotePad
           </button>
-          
-          {/* Settings Icon (Placeholder) */}
-          <button className="text-[#7c3aed] hover:text-[#9353d3] p-2 transition-colors">
-            <Settings size={28} />
-          </button>
+          */}
+
+          {/* Settings Dropdown */}
+          <div className="relative" ref={settingsRef}>
+            <button
+              onClick={() => setIsSettingsOpen(!isSettingsOpen)}
+              className={`text-[#7c3aed] hover:text-[#9353d3] p-2 transition-colors rounded-lg ${isSettingsOpen ? 'bg-zinc-800' : ''}`}
+              title="Settings"
+            >
+              <Settings size={28} />
+            </button>
+
+            {isSettingsOpen && (
+              <div className="absolute left-0 mt-2 w-48 bg-zinc-800 border border-white/5 rounded-xl shadow-xl overflow-hidden z-50">
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      setIsScheduleModalOpen(true);
+                    }}
+                    className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    <span>Schedule Session</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      handleEndCall();
+                    }}
+                    className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
+                  >
+                    <PhoneOff className="w-4 h-4" />
+                    <span>End Call</span>
+                  </button>
+                  <div className="h-px bg-white/10 my-1" />
+                  <button
+                    onClick={() => {
+                      setIsSettingsOpen(false);
+                      setIsReportModalOpen(true);
+                    }}
+                    className="w-full flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors gap-3 font-medium"
+                  >
+                    <Flag className="w-4 h-4" />
+                    <span>Report User</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* End Call Button */}
@@ -297,6 +505,9 @@ export const VideoCallOverlay: React.FC = () => {
       </div>
 
       {/* ── Overlay Panels (Notepad, Todo) ─────────────────────── */}
+
+      {/* Notepad Panel — COMMENTED OUT */}
+      {/*
       {isNotepadOpen && (
         <div className="absolute top-24 left-10 w-80 bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-700 p-4 z-20 flex flex-col h-96 animate-in slide-in-from-top-4 fade-in duration-200">
           <div className="flex justify-between items-center mb-4">
@@ -313,28 +524,85 @@ export const VideoCallOverlay: React.FC = () => {
           />
         </div>
       )}
+      */}
 
       {isTodoListOpen && (
-        <div className="absolute top-24 left-10 w-80 bg-zinc-900 rounded-2xl shadow-2xl border border-zinc-700 p-4 z-20 flex flex-col h-96 animate-in slide-in-from-top-4 fade-in duration-200">
-           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-white font-medium flex items-center gap-2"><ListTodo size={18} className="text-[#7c3aed]" /> Tasks</h3>
-            <button onClick={() => setIsTodoListOpen(false)} className="text-zinc-400 hover:text-white transition-colors bg-zinc-800 rounded-lg p-1">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        <div className="absolute top-24 left-10 w-96 bg-zinc-900 rounded-3xl shadow-2xl border border-white/10 p-0 z-20 flex flex-col max-h-[80vh] h-[550px] animate-in slide-in-from-top-4 fade-in duration-200">
+          {/* Header */}
+          <div className="flex items-center justify-between p-6 border-b border-white/10 shrink-0 bg-zinc-900/50">
+            <h2 className="text-xl font-bold text-white flex items-center gap-2"><ListTodo size={20} className="text-[#8A2BE2]" /> Tasks</h2>
+            <button onClick={() => setIsTodoListOpen(false)} className="p-2 hover:bg-white/10 rounded-full transition-colors text-zinc-400 hover:text-white">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
           </div>
-          <div className="flex-1 flex flex-col items-center justify-center text-zinc-500 text-sm gap-3">
-             <ListTodo size={40} className="text-zinc-700" />
-             <p className="font-medium text-center px-4">Todo list integration coming soon. Work with your team on tasks here!</p>
+          
+          {/* Body */}
+          <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-[200px] custom-scrollbar">
+            {isTodosLoading ? (
+              <div className="flex items-center justify-center h-full">
+                <Loader className="animate-spin text-[#8A2BE2]" size={32} />
+              </div>
+            ) : todos.length === 0 ? (
+              <div className="text-center text-zinc-400 py-10">
+                <p>No tasks found.</p>
+                <p className="text-sm mt-2 opacity-70">Tasks created in your dashboard will appear here.</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {todos.map((todo) => {
+                  const priorityColor = todo.priority === 'HIGH' ? 'text-red-500 bg-red-500/10 border-red-500/20' : todo.priority === 'MEDIUM' ? 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' : 'text-green-500 bg-green-500/10 border-green-500/20';
+                  return (
+                    <div key={todo.id} className="bg-zinc-800/40 border border-white/5 p-4 rounded-2xl flex flex-col gap-3 shadow-lg hover:bg-zinc-800 transition-colors w-full text-left">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="flex-1 min-w-0">
+                          <h4 className={`text-sm font-bold truncate ${todo.status === 'COMPLETED' ? 'text-zinc-500 line-through' : 'text-white'}`}>{todo.title}</h4>
+                          {todo.description && <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{todo.description}</p>}
+                        </div>
+                        <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border whitespace-nowrap ${priorityColor}`}>{todo.priority}</span>
+                      </div>
+                      
+                      <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-medium pt-1">
+                        <span>{todo.estimatedTime} Min</span>
+                        <span>{todo.pomodoroEnabled ? 'Pomodoro' : 'Standard'}</span>
+                        <span className="bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20">
+                            {todo.priority === 'HIGH' ? '5XP' : todo.priority === 'MEDIUM' ? '3XP' : '2XP'}
+                        </span>
+                      </div>
+
+                      {todo.pomodoroEnabled && todo.status !== 'COMPLETED' && (
+                        <div className="border-t border-white/5 pt-3 flex justify-end">
+                          <button 
+                            onClick={() => {
+                              if (activeTask && activeTask.id !== todo.id) {
+                                toast.error('A Pomodoro timer is already running for another task.');
+                                return;
+                              }
+                              if (activeTask?.id === todo.id) return; // Prevent double trigger
+                              handleStartTodoPomodoro(todo.id);
+                            }} 
+                            className={`${
+                              activeTask?.id === todo.id
+                                ? (isTodoRunning 
+                                    ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[#22c55e]/20' 
+                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20')
+                                : 'bg-[#7c3aed] hover:bg-[#6d28d9] text-white shadow-[#7c3aed]/20'
+                            } text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg`}
+                          >
+                            {activeTask?.id === todo.id 
+                              ? (isTodoRunning ? 'Started' : 'Paused') 
+                              : 'Start Timer'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       )}
 
-      {/* Shared Pomodoro Panel */}
-      <SharedPomodoroPanel 
-        conversationId={activeCall.conversationId} 
-        isOpen={isPomodoroOpen} 
-        onClose={() => setIsPomodoroOpen(false)} 
-      />
 
       {/* ── Bottom Controls & Time ────────────────────────────── */}
       <div className="relative w-full h-20 mt-4 flex items-center justify-between px-2">
@@ -364,34 +632,54 @@ export const VideoCallOverlay: React.FC = () => {
             {isCamOff ? <VideoOff size={22} /> : <VideoIcon size={22} />}
           </button>
 
-          {/* Pomodoro */}
-          <button 
-            onClick={() => { setIsPomodoroOpen(true); setIsTodoListOpen(false); setIsNotepadOpen(false); }}
-            title="Pomodoro Timer"
-            className="p-3.5 rounded-full transition-colors flex items-center justify-center bg-[#7c3aed] text-white shadow-lg shadow-[#7c3aed]/20 ml-2"
-          >
-            <Clock size={22} />
-          </button>
 
            {/* TodoList */}
            <button 
-            onClick={() => { setIsTodoListOpen(!isTodoListOpen); setIsNotepadOpen(false); }}
+            onClick={() => { setIsTodoListOpen(!isTodoListOpen); }}
             title="Todo List"
             className={`p-3.5 rounded-full transition-colors flex items-center justify-center ${isTodoListOpen ? 'bg-zinc-700 text-white' : 'bg-transparent text-zinc-400 hover:text-white hover:bg-zinc-800'}`}
           >
             <ListTodo size={22} />
           </button>
 
-          {/* Report User */}
-          <button 
-            onClick={() => alert('Report user functionality triggered')}
-            title="Report User"
-            className="p-3.5 rounded-full transition-colors flex items-center justify-center bg-transparent text-zinc-500 hover:text-red-400 hover:bg-zinc-800 ml-2"
-          >
-            <Flag size={20} />
-          </button>
         </div>
       </div>
+
+      {/* ── Modals ────────────────────────────────────────────── */}
+      {isReportModalOpen && otherUserId && (
+        <ReportModal
+          reportedId={otherUserId}
+          onClose={() => setIsReportModalOpen(false)}
+          onSuccess={() => {
+            toast.success('Report submitted. Our team will review it.');
+            setIsReportModalOpen(false);
+          }}
+        />
+      )}
+
+      {isScheduleModalOpen && (
+        <ScheduleRecurringSessionModal
+          conversationId={activeCall.conversationId}
+          onClose={() => setIsScheduleModalOpen(false)}
+        />
+      )}
+
+      <PomodoroModal
+        isOpen={isPomodoroModalOpen}
+        task={activeTask}
+        timeRemainingFormatted={timeRemainingFormatted}
+        isRunning={isTodoRunning}
+        onStart={() => resumeTodoTimer(activeCall.conversationId)}
+        onPause={() => pauseTodoTimer(activeCall.conversationId)}
+        onReset={resetTodoTimer}
+        onMinimize={() => setIsPomodoroModalOpen(false)}
+        onClose={handleStopTodoPomodoro}
+        progressPercentage={initialTime > 0 ? (timeRemaining / initialTime) * 100 : 100}
+        phase={phase}
+        onSkipBreak={skipBreak}
+        isSmartBreaksEnabled={isSmartBreaksEnabled}
+        totalPausedSeconds={totalPausedSeconds}
+      />
     </div>
   );
 };

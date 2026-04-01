@@ -45,4 +45,13 @@ export const calendarService = {
     );
     return response.data.data;
   },
+
+  // ─── Create Solo Event ───────────────────────────────────────────────────
+  createSoloEvent: async (payload: { title: string; date: string; startTime: string }): Promise<CalendarEvent> => {
+    const response = await api.post(
+      API_ROUTES.CALENDAR_SOLO_EVENT,
+      payload
+    );
+    return response.data.data;
+  },
 };

@@ -152,20 +152,7 @@ export const chatApi = {
     );
     return response.data;
   },
-  discussWithProBuddy: async (conversationId: string, prompt: string) => {
-    const response = await ProTimeBackend.post<{ success: boolean; data: { reply: string } }>(
-      API_ROUTES.CHAT_PROBUDDY(conversationId),
-      { prompt }
-    );
-    return response.data;
-  },
-  initProBuddyChat: async () => {
-    const response = await ProTimeBackend.get<{ success: boolean; data: any }>(
-      API_ROUTES.CHAT_PROBUDDY_INIT
-    );
-    return response.data;
-  },
-  proposeRecurringSession: async (conversationId: string, payload: { days: string[]; startTime: string; endTime: string; noOfSessions: number }) => {
+  proposeRecurringSession: async (conversationId: string, payload: { days: string[]; startTime: string; endTime: string; noOfSessions: number; dates?: string[] }) => {
     const response = await ProTimeBackend.post<{ success: boolean; data: any }>(
       API_ROUTES.CHAT_BUDDY_SESSION_PROPOSE_RECURRING(conversationId),
       payload

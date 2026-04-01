@@ -8,6 +8,8 @@ export interface SubscriptionResponse {
     daysRemaining: number;
     isPremium: boolean;
     currentPeriodEnd: string | null;
+    aiUsageCount: number;
+    lastAiUsageReset: string | null;
 }
 
 export const subscriptionService = {

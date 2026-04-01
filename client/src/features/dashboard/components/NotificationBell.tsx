@@ -1,11 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Bell, X, CheckCheck, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import {
     markAllAsRead,
     removeNotification,
     markAsRead,
     clearAll,
+    purgeOldNotifications,
     type Notification,
     type NotificationType,
 } from '../../notifications/store/notificationSlice';
@@ -21,7 +24,12 @@ const TYPE_CONFIG: Record<NotificationType, { emoji: string; color: string; bg: 
     task_completed:   { emoji: '🏆', color: 'text-teal-400',   bg: 'bg-teal-500/10',   border: 'border-teal-500/20' },
     premium_purchased:{ emoji: '💎', color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
     schedule_accepted:{ emoji: '📅', color: 'text-indigo-400', bg: 'bg-indigo-500/10', border: 'border-indigo-500/20' },
+    schedule_requested:{ emoji: '📩', color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20' },
     session_reminder: { emoji: '⏳', color: 'text-orange-400', bg: 'bg-orange-500/10', border: 'border-orange-500/20' },
+    chat_message:     { emoji: '💬', color: 'text-blue-400',   bg: 'bg-blue-500/10',   border: 'border-blue-500/20' },
+    missed_call:      { emoji: '📹', color: 'text-rose-400',   bg: 'bg-rose-500/10',   border: 'border-rose-500/20' },
+    study_room_invite:{ emoji: '📚', color: 'text-[blueviolet]', bg: 'bg-[blueviolet]/10', border: 'border-[blueviolet]/20' },
+    study_room_request:{ emoji: '🙋', color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
 };
 
 function timeAgo(iso: string): string {
@@ -40,6 +48,9 @@ export const NotificationBell: React.FC = () => {
     const dispatch = useAppDispatch();
     const notifications = useAppSelector((state) => state.notifications.notifications);
     const [isOpen, setIsOpen] = useState(false);
+    
+    // Type-safe purge (dispatch expects specific thunk/action type)
+    const typeCastPurge = purgeOldNotifications as any;
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const unreadCount = notifications.filter(n => !n.isRead).length;
@@ -55,6 +66,14 @@ export const NotificationBell: React.FC = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    // Periodic cleanup of old notifications (deleted 10 mins after being read)
+    useEffect(() => {
+        const interval = setInterval(() => {
+            dispatch(typeCastPurge());
+        }, 30000); // Check every 30 seconds
+        return () => clearInterval(interval);
+    }, [dispatch]);
+
     const handleOpen = () => {
         setIsOpen(prev => !prev);
     };
@@ -68,8 +87,19 @@ export const NotificationBell: React.FC = () => {
         dispatch(removeNotification(id));
     };
 
+    const navigate = useNavigate();
+
     const handleClickNotification = (n: Notification) => {
         if (!n.isRead) dispatch(markAsRead(n.id));
+
+        // Navigation logic based on type
+        if (n.type === 'study_room_invite' || n.type === 'study_room_request') {
+            navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+            setIsOpen(false);
+        } else if (n.type === 'buddy_request' || n.type === 'buddy_accepted') {
+            navigate(ROUTES.DASHBOARD_FIND_BUDDY);
+            setIsOpen(false);
+        }
     };
 
     return (

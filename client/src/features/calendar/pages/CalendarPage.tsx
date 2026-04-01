@@ -15,7 +15,9 @@ import {
 import { MonthGrid } from '../components/MonthGrid';
 import { DayDetailPanel } from '../components/DayDetailPanel';
 import { ScheduleRequestsView } from '../components/ScheduleRequestsView';
+import { AddSoloSessionModal } from '../components/AddSoloSessionModal';
 import type { RespondRequestPayload } from '../types/calendar.types';
+import { Plus } from 'lucide-react';
 
 export const CalendarPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -31,6 +33,8 @@ export const CalendarPage: React.FC = () => {
   } = useAppSelector((state) => state.calendar);
 
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isSoloModalOpen, setIsSoloModalOpen] = useState(false);
+  const [currentBounds, setCurrentBounds] = useState<{ from: string; to: string } | null>(null);
 
   // Initialize: Fetch requests on mount
   useEffect(() => {
@@ -46,6 +50,7 @@ export const CalendarPage: React.FC = () => {
   }, [error, dispatch]);
 
   const handleMonthChange = useCallback((from: string, to: string) => {
+    setCurrentBounds({ from, to });
     dispatch(fetchCalendarEvents({ from, to }));
   }, [dispatch]);
 
@@ -64,11 +69,10 @@ export const CalendarPage: React.FC = () => {
     if (respondToScheduleRequest.fulfilled.match(result)) {
       toast.success(`Schedule request ${payload.status.toLowerCase()} successfully.`);
       
-      // If we confirmed a request and it's visible in our current date range, 
-      // we might want to refetch events to show the new session.
-      // Easiest is to just refetch the events for the current month if needed, 
-      // but without the 'from'/'to' bounds, it's safer to let the user navigate 
-      // or we can dispatch fetch events if we track bounds in state.
+      // Refetch calendar events so newly created sessions appear immediately
+      if (payload.status === 'CONFIRMED' && currentBounds) {
+        dispatch(fetchCalendarEvents(currentBounds));
+      }
     }
   };
 
@@ -86,6 +90,14 @@ export const CalendarPage: React.FC = () => {
           </h1>
           <p className="text-zinc-400 mt-2 font-medium">Keep track of your schedule, tasks, and study sessions.</p>
         </div>
+        
+        <button
+          onClick={() => setIsSoloModalOpen(true)}
+          className="mt-4 md:mt-0 flex items-center justify-center gap-2 bg-[blueviolet] hover:bg-opacity-90 text-white px-6 py-3 rounded-xl font-bold transition-all shadow-[0_0_15px_rgba(138,43,226,0.4)]"
+        >
+          <Plus size={18} />
+          Schedule Solo Session
+        </button>
       </div>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
@@ -126,6 +138,13 @@ export const CalendarPage: React.FC = () => {
         onClose={closePanel}
         dayDetail={selectedDateDetails}
         isLoading={isLoadingDayDetail}
+      />
+
+      {/* Add Solo Session Modal */}
+      <AddSoloSessionModal 
+        isOpen={isSoloModalOpen} 
+        onClose={() => setIsSoloModalOpen(false)} 
+        defaultDate={selectedDate}
       />
     </motion.div>
   );

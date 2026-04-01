@@ -11,10 +11,10 @@ export const useGamification = () => {
     }, [dispatch]);
 
     useEffect(() => {
-        if (!gamification && !isLoading) {
+        if (!gamification && !isLoading && !error) {
             dispatch(fetchGamificationData());
         }
-    }, [dispatch, gamification, isLoading]);
+    }, [dispatch, gamification, isLoading, error]);
 
     return {
         gamification,
