@@ -39,6 +39,7 @@ import { AdminLayout } from "./features/admin/layouts/AdminLayout";
 import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 import { AdminReportsPage } from "./features/admin/pages/AdminReportsPage";
+import { AdminSubscriptionsPage } from "./features/admin/pages/AdminSubscriptionsPage";
 
 import { BadgeEarnedModal } from "./features/gamification/components/BadgeEarnedModal";
 
@@ -93,6 +94,7 @@ function App() {
             <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
             <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
             <Route path={ROUTES.ADMIN_REPORTS} element={<AdminReportsPage />} />
+            <Route path={ROUTES.ADMIN_SUBSCRIPTIONS} element={<AdminSubscriptionsPage />} />
           </Route>
         </Route>
 

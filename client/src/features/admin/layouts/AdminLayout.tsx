@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, LogOut, Shield, ChevronLeft, ChevronRight, CalendarDays, Layers, CreditCard, BarChart2, Gamepad2, Flag } from 'lucide-react';
+import { LayoutDashboard, Users, LogOut, Shield, ChevronLeft, ChevronRight, CalendarDays, Layers, CreditCard, Gamepad2, Flag } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { logoutUser } from '../../auth/store/authSlice';
 import { ProTimeBackend } from '../../../api/instance';
@@ -9,14 +9,13 @@ import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 const realRoutes = [
     { to: ROUTES.ADMIN_DASHBOARD, icon: LayoutDashboard, label: 'Dashboard' },
     { to: ROUTES.ADMIN_USERS, icon: Users, label: 'User Management' },
+    { to: ROUTES.ADMIN_SUBSCRIPTIONS, icon: CreditCard, label: 'Subscriptions' },
     { to: ROUTES.ADMIN_REPORTS, icon: Flag, label: 'User Reports' },
 ];
 
 const placeholderItems = [
     { icon: CalendarDays, label: 'Meeting Management' },
     { icon: Layers, label: 'Skills Management' },
-    { icon: CreditCard, label: 'Subscription Plans' },
-    { icon: BarChart2, label: 'Revenue Dashboard' },
     { icon: Gamepad2, label: 'Gamification Mana...' },
 ];
 
