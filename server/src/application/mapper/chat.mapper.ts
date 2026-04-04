@@ -30,6 +30,7 @@ export class ChatMapper {
         currentUserId: string,
         otherUser: Pick<UserEntity, 'id' | 'fullName'>,
         lastMessageByName: string | undefined,
+        lastMessageContent: string | undefined,
         unreadCount: number,
     ): ConversationResponseDTO {
         return {
@@ -42,6 +43,7 @@ export class ChatMapper {
             lastMessageAt: entity.lastMessageAt,
             lastMessageBy: entity.lastMessageBy,
             lastMessageByName,
+            lastMessageContent,
             unreadCount,
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,

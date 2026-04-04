@@ -10,6 +10,7 @@ import { DependencyContainer } from "./infrastructure/di/index";
 import { MongoConnect } from "./infrastructure/database/connection";
 import { connectRedis } from "./infrastructure/config/redis.config";
 import { logger } from "./infrastructure/config/logger.config";
+import { MessageType } from "./domain/enums/chat.enums";
 import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes";
 import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes";
 import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
@@ -258,6 +259,20 @@ export class App {
             title: 'Missed Video Call 📹',
             message: `You missed a video call from ${data.callerName}.`,
           });
+
+          // Insert a system message into the chat room
+          const sendDirectMessageUsecase = container.resolve<any>('ISendDirectMessageUsecase');
+          const response = await sendDirectMessageUsecase.execute(
+            userId,
+            data.conversationId,
+            {
+              content: `📹 Missed video call`,
+              messageType: MessageType.SYSTEM,
+            }
+          );
+          
+          // Emit the message back to the caller so it updates their local chat UI as well
+          socketService.emitToUser(userId, 'chat:message', response);
         } catch (err) {
           logger.error('[Socket] webrtc:missed-call relay error:', { error: err });
         }

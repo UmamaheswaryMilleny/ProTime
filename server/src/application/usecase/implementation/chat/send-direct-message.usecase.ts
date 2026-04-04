@@ -56,7 +56,7 @@ export class SendDirectMessageUsecase implements ISendDirectMessageUsecase {
             conversationId,
             senderId,
             content: dto.content.trim(),
-            messageType: MessageType.TEXT,
+            messageType: dto.messageType || MessageType.TEXT,
             status: MessageStatus.SENT,
         });
 

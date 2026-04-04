@@ -18,6 +18,7 @@ import {
   InvalidEstimatedTimeError,
   TodoExpiredError,
   MissingTodoTitleError,
+  DuplicateTodoTitleError,
 } from "../../../../domain/errors/todo.error";
 
 
@@ -67,6 +68,18 @@ export class UpdateTodoUsecase implements IUpdateTodoUsecase {
       if (data.title.trim() === '') {
         throw new MissingTodoTitleError();
       }
+      
+      // Duplicate title check (exclude current task and expired tasks)
+      const existingTodos = await this.todoRepository.findByUserId(userId, 'all');
+      const isDuplicate = existingTodos.some(
+          t => t.id !== todoId && 
+               t.title.trim().toLowerCase() === data.title!.trim().toLowerCase() && 
+               t.status !== TodoStatus.EXPIRED
+      );
+      if (isDuplicate) {
+          throw new DuplicateTodoTitleError(data.title.trim());
+      }
+      
       updateData.title = data.title;
     }
     if (data.description !== undefined) updateData.description = data.description;

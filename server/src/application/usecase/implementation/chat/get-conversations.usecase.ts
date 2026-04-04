@@ -28,21 +28,25 @@ export class GetConversationsUsecase implements IGetConversationsUsecase {
                 // Other user is whichever of user1/user2 is not me
                 const otherUserId = conv.user1Id === userId ? conv.user2Id : conv.user1Id;
 
-                const [otherUser, unreadCount, lastMessageByUser] = await Promise.all([
+                const [otherUser, unreadCount, lastMessageByUser, latestMessages] = await Promise.all([
                     this.userRepo.findById(otherUserId),
                     this.messageRepo.countUnread(conv.id, userId),
                     conv.lastMessageBy
                         ? this.userRepo.findById(conv.lastMessageBy)
                         : Promise.resolve(null),
+                    this.messageRepo.findByConversationId({ conversationId: conv.id, limit: 1 }),
                 ]);
 
                 if (!otherUser) return null;
+                const messagesList = latestMessages as any;
+                const lastMessageContent = messagesList && messagesList.length > 0 ? messagesList[0].content : undefined;
 
                 return ChatMapper.conversationToResponse(
                     conv,
                     userId,
                     otherUser,
                     lastMessageByUser?.fullName,
+                    lastMessageContent,
                     unreadCount,
                 );
             }),

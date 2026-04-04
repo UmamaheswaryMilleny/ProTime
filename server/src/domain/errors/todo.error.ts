@@ -43,6 +43,13 @@ export class MissingTodoTitleError extends DomainError {
   }
 }
 
+export class DuplicateTodoTitleError extends DomainError {
+  constructor(title: string) {
+    super(`A task named "${title}" already exists. Please choose a unique title.`);
+  }
+}
+
+
 export class PomodoroPauseLimitExceededError extends DomainError {
   constructor() {
     super('Pomodoro pause limit exceeded. Timer has been restarted.');

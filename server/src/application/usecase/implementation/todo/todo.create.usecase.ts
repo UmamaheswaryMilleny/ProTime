@@ -6,7 +6,7 @@ import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.d
 import { TodoMapper } from "../../../mapper/todo.mapper";
 
 import { ESTIMATED_TIME_OPTIONS, TodoStatus, BASE_XP, } from "../../../../domain/enums/todo.enums";
-import { InvalidEstimatedTimeError, MissingTodoTitleError } from "../../../../domain/errors/todo.error";
+import { InvalidEstimatedTimeError, MissingTodoTitleError, DuplicateTodoTitleError } from "../../../../domain/errors/todo.error";
 
 @injectable()
 export class CreateTodoUsecase implements ICreateTodoUsecase {
@@ -21,6 +21,15 @@ export class CreateTodoUsecase implements ICreateTodoUsecase {
     // 0. Validate title
     if (!title || title.trim() === '') {
       throw new MissingTodoTitleError();
+    }
+
+    // 1a. Check for duplicate title (case-insensitive) for this user
+    const existingTodos = await this.todoRepository.findByUserId(userId, 'all');
+    const isDuplicate = existingTodos.some(
+      t => t.title.trim().toLowerCase() === title.trim().toLowerCase() && t.status !== TodoStatus.EXPIRED
+    );
+    if (isDuplicate) {
+      throw new DuplicateTodoTitleError(title.trim());
     }
 
     // 1. Validate estimatedTime is allowed for the given priority
