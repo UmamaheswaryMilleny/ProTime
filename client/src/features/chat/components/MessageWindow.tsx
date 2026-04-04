@@ -5,7 +5,7 @@ import { chatApi, type DirectMessageResponseDTO } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
-import { clearUnreadCount, setActiveCall, setAILoading } from '../store/chatSlice';
+import { clearUnreadCount, setActiveCall, updateConversationPreview } from '../store/chatSlice';
 import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo } from 'lucide-react';
 import { ReportModal } from './ReportModal';
 import { ShareTodoModal } from './ShareTodoModal';
@@ -279,6 +279,14 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       const res = await chatApi.sendMessage(conversationId, content);
       if (res.success) {
         setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? res.data : m));
+        dispatch(updateConversationPreview({
+          conversationId,
+          lastMessageBy: userId,
+          lastMessageByName: 'You',
+          lastMessageContent: res.data.content,
+          lastMessageAt: res.data.createdAt,
+          incrementUnread: false
+        }));
       }
     } catch (error) {
       console.error('Failed to send message:', error);

@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { socketService } from '../../../shared/services/socketService';
 import { updateConversationPreview, setUserOnlineStatus, setIncomingCall, setActiveCall } from '../store/chatSlice';
-import { setBuddyPomodoro, clearBuddyPomodoro } from '../../todo/store/pomodoroSlice';
+import { setBuddyPomodoro } from '../../todo/store/pomodoroSlice';
 import toast from 'react-hot-toast';
 
 export const useChatSocket = () => {
@@ -17,6 +17,7 @@ export const useChatSocket = () => {
         conversationId: message.conversationId,
         lastMessageBy: message.senderId,
         lastMessageByName: message.fullName || (message.messageType === 'AI' ? 'ProBuddy' : 'System'),
+        lastMessageContent: message.content,
         lastMessageAt: message.createdAt,
         incrementUnread: !isViewingThisChat
       }));

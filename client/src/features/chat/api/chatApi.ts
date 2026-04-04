@@ -8,6 +8,7 @@ export interface ConversationResponseDTO {
   lastMessageAt?: string;
   lastMessageBy?: string;
   lastMessageByName?: string;
+  lastMessageContent?: string;
   unreadCount: number;
   createdAt: string;
   updatedAt: string;

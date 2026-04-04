@@ -75,8 +75,11 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isMini
               const initials = otherUser.fullName.charAt(0).toUpperCase();
 
               let previewText = '';
-              if (conv.lastMessageBy) {
-                previewText = conv.lastMessageBy === otherUser.userId
+              if (conv.lastMessageContent) {
+                 const prefix = conv.lastMessageBy === otherUser.userId ? `${otherUser.fullName.split(' ')[0]}: ` : 'You: ';
+                 previewText = `${prefix}${conv.lastMessageContent}`;
+              } else if (conv.lastMessageBy) {
+                 previewText = conv.lastMessageBy === otherUser.userId
                   ? `${otherUser.fullName.split(' ')[0]}: sent a message`
                   : 'You: sent a message';
               }

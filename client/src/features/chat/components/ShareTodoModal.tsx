@@ -163,6 +163,7 @@ export const ShareTodoModal: React.FC<ShareTodoModalProps> = ({ isOpen, onClose,
         isOpen={isAddModalOpen}
         onClose={() => setIsAddModalOpen(false)}
         onAdd={handleAddTodo}
+        existingTitles={todos.filter(t => t.status !== 'EXPIRED').map(t => t.title)}
       />
     </>
   );

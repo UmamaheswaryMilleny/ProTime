@@ -1,4 +1,6 @@
-import React, { useState, type KeyboardEvent, useRef } from 'react';
+import React, { useState, type KeyboardEvent, useRef, useEffect } from 'react';
+import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
+import { Smile } from 'lucide-react';
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -7,7 +9,23 @@ interface MessageInputProps {
 
 export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) => {
   const [content, setContent] = useState('');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setContent((prev) => prev + emojiData.emoji);
+  };
 
   const handleSend = () => {
     if (content.trim()) {
@@ -45,6 +63,27 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
           className="flex-1 max-h-32 min-h-[40px] bg-transparent border-none focus:ring-0 resize-none text-sm text-gray-900 dark:text-white placeholder-gray-500 py-2 px-3 disabled:opacity-50"
           rows={1}
         />
+        
+        <div className="relative" ref={emojiPickerRef}>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            disabled={disabled}
+            className="p-2 mb-0.5 rounded-full text-zinc-500 hover:text-zinc-300 hover:bg-zinc-100 dark:hover:bg-zinc-700 disabled:opacity-50 transition-colors"
+          >
+            <Smile size={20} />
+          </button>
+          
+          {showEmojiPicker && (
+            <div className="absolute bottom-12 right-0 z-50">
+              <EmojiPicker
+                onEmojiClick={handleEmojiClick}
+                theme={Theme.DARK}
+                lazyLoadEmojis={true}
+              />
+            </div>
+          )}
+        </div>
         <button
           onClick={handleSend}
           disabled={!content.trim() || disabled}

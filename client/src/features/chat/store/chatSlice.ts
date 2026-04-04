@@ -38,11 +38,12 @@ const chatSlice = createSlice({
     setConversations: (state, action: PayloadAction<ConversationResponseDTO[]>) => {
       state.conversations = action.payload;
     },
-    updateConversationPreview: (state, action: PayloadAction<{ conversationId: string; lastMessageBy: string | null; lastMessageByName?: string; lastMessageAt: string; incrementUnread?: boolean }>) => {
+    updateConversationPreview: (state, action: PayloadAction<{ conversationId: string; lastMessageBy: string | null; lastMessageByName?: string; lastMessageContent?: string; lastMessageAt: string; incrementUnread?: boolean }>) => {
       const convIndex = state.conversations.findIndex(c => c.id === action.payload.conversationId);
       if (convIndex !== -1) {
         state.conversations[convIndex].lastMessageBy = action.payload.lastMessageBy || '';
         state.conversations[convIndex].lastMessageByName = action.payload.lastMessageByName;
+        state.conversations[convIndex].lastMessageContent = action.payload.lastMessageContent;
         state.conversations[convIndex].lastMessageAt = action.payload.lastMessageAt;
         if (action.payload.incrementUnread) {
           state.conversations[convIndex].unreadCount += 1;
