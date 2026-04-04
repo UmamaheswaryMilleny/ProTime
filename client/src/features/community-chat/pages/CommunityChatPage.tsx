@@ -2,7 +2,8 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { fetchMessages, sendMessage } from '../store/communitySlice';
 import { socketService } from '../../../shared/services/socketService';
-import { Send, AlertCircle, Loader2, MessageSquare } from 'lucide-react';
+import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
+import { Send, AlertCircle, Loader2, MessageSquare, Smile } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export const CommunityChatPage: React.FC = () => {
@@ -11,8 +12,24 @@ export const CommunityChatPage: React.FC = () => {
     const { user } = useAppSelector(state => state.auth);
     
     const [content, setContent] = useState('');
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const chatContainerRef = useRef<HTMLDivElement>(null);
+    const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+                setShowEmojiPicker(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleEmojiClick = (emojiData: EmojiClickData) => {
+        setContent((prev) => prev + emojiData.emoji);
+    };
 
     // Initial fetch and Socket connection
     useEffect(() => {
@@ -136,6 +153,30 @@ export const CommunityChatPage: React.FC = () => {
                         className="w-full bg-zinc-900 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-zinc-200 text-sm focus:outline-none focus:border-[blueviolet]/50 transition-colors"
                         disabled={sending}
                     />
+                    
+                    <div className="absolute right-[52px] top-1/2 -translate-y-1/2" ref={emojiPickerRef}>
+                        <button
+                            type="button"
+                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                            disabled={sending}
+                            className={`p-2 rounded-lg transition-colors ${
+                                showEmojiPicker ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300'
+                            } disabled:opacity-50`}
+                        >
+                            <Smile size={18} />
+                        </button>
+                        
+                        {showEmojiPicker && (
+                            <div className="absolute bottom-12 right-0 z-50">
+                                <EmojiPicker
+                                    onEmojiClick={handleEmojiClick}
+                                    theme={Theme.DARK}
+                                    lazyLoadEmojis={true}
+                                />
+                            </div>
+                        )}
+                    </div>
+
                     <button 
                         type="submit"
                         disabled={!content.trim() || sending}
