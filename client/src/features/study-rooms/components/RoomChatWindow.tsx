@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Share2, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
+import { Smile, Send, Share2, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endRoom, leaveRoom, startRoom } from '../store/studyRoomSlice';
 import { pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
@@ -31,7 +32,23 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const [reportingUserId, setReportingUserId] = useState<string | null>(null);
   const [showRequestsPanel, setShowRequestsPanel] = useState(false);
   const [showParticipants, setShowParticipants] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setContent((prev) => prev + emojiData.emoji);
+  };
 
   const isHost = activeRoom?.hostId === user?.id;
   const participantCount = activeRoom ? activeRoom.participantIds.length : 0;
@@ -157,10 +174,14 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-lg bg-zinc-700 flex items-center justify-center border border-white/10 overflow-hidden">
                       {activeRoom?.hostAvatar ? (
-                        <img src={activeRoom.hostAvatar} alt="Host" className="w-full h-full object-cover" />
-                      ) : (
-                        <User size={14} className="text-zinc-500" />
-                      )}
+                        <img
+                          src={activeRoom.hostAvatar}
+                          alt="Host"
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                        />
+                      ) : null}
+                      <User size={14} className={`text-zinc-500 ${activeRoom?.hostAvatar ? 'hidden' : ''}`} />
                     </div>
                     <div>
                       <p className="text-xs font-semibold text-zinc-100">{activeRoom?.hostName}</p>
@@ -176,10 +197,14 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                     <div className="flex items-center gap-3" title={p.id === user?.id ? "You" : ""}>
                       <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/5 overflow-hidden">
                         {p.avatar ? (
-                          <img src={p.avatar} alt={p.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <User size={14} className="text-zinc-500" />
-                        )}
+                          <img
+                            src={p.avatar}
+                            alt={p.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                          />
+                        ) : null}
+                        <User size={14} className={`text-zinc-500 ${p.avatar ? 'hidden' : ''}`} />
                       </div>
                       <p className={`text-xs font-medium ${p.id === user?.id ? 'text-[blueviolet]' : 'text-zinc-300'}`}>
                         {p.name} {p.id === user?.id && <span className="opacity-60">(You)</span>}
@@ -315,10 +340,14 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                           >
                              <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/5 overflow-hidden">
                                 {participant.avatar ? (
-                                  <img src={participant.avatar} className="w-full h-full object-cover" />
-                                ) : (
-                                  <User size={14} className="text-zinc-500" />
-                                )}
+                                  <img
+                                    src={participant.avatar}
+                                    className="w-full h-full object-cover"
+                                    alt={participant.name}
+                                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                                  />
+                                ) : null}
+                                <User size={14} className={`text-zinc-500 ${participant.avatar ? 'hidden' : ''}`} />
                              </div>
                              <span className="text-sm text-zinc-300 truncate">{participant.name}</span>
                           </button>
@@ -467,6 +496,29 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               placeholder={file ? "Add a caption..." : "Type any message and send..."}
               className="w-full bg-zinc-800 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-colors"
             />
+            
+            <div className="absolute right-12 top-1/2 -translate-y-1/2" ref={emojiPickerRef}>
+              <button
+                type="button"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                className={`p-2 rounded-lg transition-colors ${
+                  showEmojiPicker ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                }`}
+                title="Add Emoji"
+              >
+                <Smile size={18} />
+              </button>
+              {showEmojiPicker && (
+                <div className="absolute bottom-12 right-0 z-50">
+                  <EmojiPicker
+                    onEmojiClick={handleEmojiClick}
+                    theme={Theme.DARK}
+                    lazyLoadEmojis={true}
+                  />
+                </div>
+              )}
+            </div>
+
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
