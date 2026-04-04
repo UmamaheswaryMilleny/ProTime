@@ -4,25 +4,40 @@ import { chatApi, ReportContext, ReportReason } from '../api/chatApi';
 
 interface ReportModalProps {
   reportedId: string; // This is the userId of the person being reported
+  initialContext?: ReportContext;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (blockUser?: boolean) => void;
 }
 
 const reasons = [
-  { label: 'Harassment / Abusive Language', value: ReportReason.HARASSMENT },
-  { label: 'Inappropriate Content',        value: ReportReason.INAPPROPRIATE_CONTENT },
-  { label: 'Spam Or Irrelevant Content',   value: ReportReason.SPAM },
-  { label: 'Fake Profile',                 value: ReportReason.FAKE_PROFILE },
-  { label: 'Other',                        value: ReportReason.OTHER }
+  { label: 'Harassment or Bullying', value: ReportReason.HARASSMENT },
+  { label: 'Inappropriate Content', value: ReportReason.INAPPROPRIATE_CONTENT },
+  { label: 'Spam or Scam', value: ReportReason.SPAM },
+  { label: 'Hate Speech', value: ReportReason.HATE_SPEECH },
+  { label: 'Violence or Threats', value: ReportReason.VIOLENCE },
+  { label: 'Nudity or Sexual Content', value: ReportReason.NUDITY },
+  { label: 'False Information', value: ReportReason.FALSE_INFORMATION },
+  { label: 'Other', value: ReportReason.OTHER }
 ];
 
-export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, onClose, onSuccess }) => {
-  const [context, setContext] = useState<ReportContext>(ReportContext.CHAT);
+export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialContext, onClose, onSuccess }) => {
+  const [context, setContext] = useState<ReportContext>(initialContext || ReportContext.CHAT);
   const [reason, setReason] = useState<ReportReason | ''>('');
   const [additionalDetails, setAdditionalDetails] = useState('');
+  const [screenshots, setScreenshots] = useState<File[]>([]);
+  const [blockUser, setBlockUser] = useState(true);
+  const [receiveUpdates, setReceiveUpdates] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const toBase64 = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
 
   const handleSubmit = async () => {
     if (!reason) {
@@ -33,14 +48,31 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, onClose, o
     try {
       setIsSubmitting(true);
       setError(null);
-      const res = await chatApi.submitReport({ 
-        reportedUserId: reportedId, 
-        context, 
-        reason: reason as ReportReason, 
-        additionalDetails 
+
+      // Convert File objects→base64 data URLs so they can be stored & displayed
+      // Guard: reject any single file > 2MB to stay well within MongoDB's 16MB doc limit
+      const MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      const oversized = screenshots.find(f => f.size > MAX_SIZE);
+      if (oversized) {
+        setError(`"${oversized.name}" is too large. Each screenshot must be under 2MB.`);
+        setIsSubmitting(false);
+        return;
+      }
+      const screenshotUrls = screenshots.length > 0
+        ? await Promise.all(screenshots.map(toBase64))
+        : [];
+
+      const res = await chatApi.submitReport({
+        reportedUserId: reportedId,
+        context,
+        reason: reason as ReportReason,
+        additionalDetails,
+        screenshots: screenshotUrls,
+        blockUser,
+        receiveUpdates,
       });
       if (res.success) {
-        onSuccess();
+        onSuccess(blockUser);
         onClose();
       } else {
         setError(res.message || 'Failed to submit report');
@@ -55,9 +87,9 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, onClose, o
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg rounded-2xl bg-zinc-900 border border-white/10 shadow-2xl p-6 sm:p-8 flex flex-col">
+      <div className="relative w-full max-w-lg max-h-[90vh] overflow-y-auto custom-scrollbar rounded-2xl bg-zinc-900 border border-white/10 shadow-2xl p-6 sm:p-8 flex flex-col">
         {/* Close Button */}
-        <button 
+        <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white transition-colors rounded-full hover:bg-white/10"
         >
@@ -79,23 +111,30 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, onClose, o
             <div className="flex flex-wrap gap-3">
               <button
                 onClick={() => setContext(ReportContext.CHAT)}
-                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 ${
-                  context === ReportContext.CHAT 
-                    ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20' 
+                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 ${context === ReportContext.CHAT
+                    ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
                     : 'bg-transparent text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 Chat
               </button>
               <button
                 onClick={() => setContext(ReportContext.VIDEO_CALL)}
-                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 ${
-                  context === ReportContext.VIDEO_CALL
-                    ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20' 
+                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 ${context === ReportContext.VIDEO_CALL
+                    ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
                     : 'bg-transparent text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-zinc-200'
-                }`}
+                  }`}
               >
                 Video Call
+              </button>
+              <button
+                onClick={() => setContext(ReportContext.GROUP_ROOM)}
+                className={`px-6 py-2.5 rounded-xl font-medium text-sm transition-all focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 ${context === ReportContext.GROUP_ROOM
+                    ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
+                    : 'bg-transparent text-zinc-400 border border-zinc-700 hover:border-zinc-500 hover:text-zinc-200'
+                  }`}
+              >
+                Group Room
               </button>
             </div>
           </div>
@@ -142,6 +181,58 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, onClose, o
               placeholder="Provide more context (optional)"
               className="w-full px-4 py-3 bg-zinc-800/50 border border-zinc-700 rounded-xl text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none focus:border-[blueviolet] focus:ring-1 focus:ring-[blueviolet] transition-colors min-h-[100px] resize-none"
             />
+          </div>
+
+          {/* Upload Screenshots */}
+          <div className="space-y-3">
+            <label className="text-sm font-medium text-zinc-300">Upload screenshots (optional)</label>
+            <input
+              type="file"
+              multiple
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files) {
+                  setScreenshots(Array.from(e.target.files));
+                }
+              }}
+              className="w-full text-sm text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-[blueviolet]/10 file:text-[blueviolet] hover:file:bg-[blueviolet]/20 transition-all cursor-pointer"
+            />
+            {screenshots.length > 0 && (
+              <p className="text-xs text-zinc-500 mt-1">{screenshots.length} file(s) selected.</p>
+            )}
+          </div>
+
+          {/* Additional Options */}
+          <div className="space-y-4 pt-2">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <input
+                  type="checkbox"
+                  checked={blockUser}
+                  onChange={(e) => setBlockUser(e.target.checked)}
+                  className="peer appearance-none w-5 h-5 border-2 border-zinc-600 rounded bg-transparent checked:bg-[blueviolet] checked:border-[blueviolet] transition-all cursor-pointer"
+                />
+                <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Block this user</span>
+            </label>
+
+            {/* <label className="flex items-center gap-3 cursor-pointer group">
+              <div className="relative flex items-center justify-center w-5 h-5">
+                <input
+                  type="checkbox"
+                  checked={receiveUpdates}
+                  onChange={(e) => setReceiveUpdates(e.target.checked)}
+                  className="peer appearance-none w-5 h-5 border-2 border-zinc-600 rounded bg-transparent checked:bg-[blueviolet] checked:border-[blueviolet] transition-all cursor-pointer"
+                />
+                <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">I want to receive updates about this report</span>
+            </label> */}
           </div>
         </div>
 

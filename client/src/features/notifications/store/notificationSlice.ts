@@ -16,7 +16,8 @@ export type NotificationType =
     | 'chat_message'
     | 'missed_call'
     | 'study_room_invite'
-    | 'study_room_request';
+    | 'study_room_request'
+    | 'admin_warning';
 
 export interface Notification {
     id: string;

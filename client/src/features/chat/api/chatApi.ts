@@ -55,18 +55,23 @@ export const ReportStatus = {
   DISMISSED: 'DISMISSED',
 } as const;
 
-export type ReportContext = 'CHAT' | 'VIDEO_CALL';
+export type ReportContext = 'CHAT' | 'VIDEO_CALL' | 'GROUP_ROOM';
 export const ReportContext = {
   CHAT:       'CHAT',
   VIDEO_CALL: 'VIDEO_CALL',
+  GROUP_ROOM: 'GROUP_ROOM',
 } as const;
 
-export type ReportReason = 'SPAM' | 'HARASSMENT' | 'INAPPROPRIATE_CONTENT' | 'FAKE_PROFILE' | 'OTHER';
+export type ReportReason = 'SPAM' | 'HARASSMENT' | 'INAPPROPRIATE_CONTENT' | 'FAKE_PROFILE' | 'HATE_SPEECH' | 'VIOLENCE' | 'NUDITY' | 'FALSE_INFORMATION' | 'OTHER';
 export const ReportReason = {
   SPAM:                  'SPAM',
   HARASSMENT:            'HARASSMENT',
   INAPPROPRIATE_CONTENT: 'INAPPROPRIATE_CONTENT',
   FAKE_PROFILE:          'FAKE_PROFILE',
+  HATE_SPEECH:           'HATE_SPEECH',
+  VIOLENCE:              'VIOLENCE',
+  NUDITY:                'NUDITY',
+  FALSE_INFORMATION:     'FALSE_INFORMATION',
   OTHER:                 'OTHER',
 } as const;
 
@@ -83,10 +88,14 @@ export interface SubmitReportRequestDTO {
   context: ReportContext;
   reason: ReportReason;
   additionalDetails?: string;
+  screenshots?: string[];
+  blockUser?: boolean;
+  receiveUpdates?: boolean;
 }
 
 export interface ResolveReportRequestDTO {
-  action: ReportAction;
+  status: ReportStatus;
+  actionTaken?: ReportAction;
   adminNote?: string;
 }
 
@@ -168,7 +177,7 @@ export const chatApi = {
     return response.data;
   },
   // Admin methods
-  getReports: async (params?: { status?: ReportStatus; page?: number; limit?: number }) => {
+  getReports: async (params?: { status?: ReportStatus; search?: string; page?: number; limit?: number }) => {
     const response = await ProTimeBackend.get<{ success: boolean; data: { reports: any[]; total: number } }>(
       API_ROUTES.ADMIN_REPORTS,
       { params }

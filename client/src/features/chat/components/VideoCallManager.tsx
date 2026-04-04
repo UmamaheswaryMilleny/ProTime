@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../../store/store';
 import { setIncomingCall, setActiveCall } from '../store/chatSlice';
+import { ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
 import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, PhoneOff, MoreVertical, Loader } from 'lucide-react';
 import { ReportModal } from './ReportModal';
@@ -649,6 +650,7 @@ export const VideoCallOverlay: React.FC = () => {
       {isReportModalOpen && otherUserId && (
         <ReportModal
           reportedId={otherUserId}
+          initialContext={ReportContext.VIDEO_CALL}
           onClose={() => setIsReportModalOpen(false)}
           onSuccess={() => {
             toast.success('Report submitted. Our team will review it.');

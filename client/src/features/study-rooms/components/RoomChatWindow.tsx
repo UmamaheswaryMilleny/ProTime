@@ -5,6 +5,7 @@ import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endRoom, leaveRoom, startRoom } from '../store/studyRoomSlice';
 import { pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
 import { ReportModal } from '../../chat/components/ReportModal';
+import { ReportContext } from '../../chat/api/chatApi';
 import type { RoomMessageDTO } from '../api/studyRoomApi';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../shared/constants/constants.routes';
@@ -567,6 +568,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       {reportingUserId && (
         <ReportModal
           reportedId={reportingUserId}
+          initialContext={ReportContext.GROUP_ROOM}
           onClose={() => setReportingUserId(null)}
           onSuccess={() => {
             toast.success('Report submitted successfully. Thank you for making the community safer.');

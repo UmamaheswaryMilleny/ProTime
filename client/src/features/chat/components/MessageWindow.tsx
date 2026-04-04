@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import type { RootState } from '../../../store/store';
-import { chatApi, type DirectMessageResponseDTO } from '../api/chatApi';
+import { chatApi, type DirectMessageResponseDTO, ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { clearUnreadCount, setActiveCall, updateConversationPreview } from '../store/chatSlice';
-import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo } from 'lucide-react';
+import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo, ShieldOff, ShieldX } from 'lucide-react';
 import { ReportModal } from './ReportModal';
 import { ShareTodoModal } from './ShareTodoModal';
 import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
@@ -306,6 +306,19 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     }
   };
 
+  const handleBlock = async () => {
+    if (!otherUser) return;
+    try {
+      await buddyService.blockUser(otherUser.userId);
+      setIsBlocked(true);
+      setIsSettingsOpen(false);
+      toast.success('User blocked. You can unblock them anytime.');
+    } catch (error) {
+      toast.error('Failed to block user');
+      console.error(error);
+    }
+  };
+
   const handleShareTodos = (todos: TodoItem[]) => {
     const payload = JSON.stringify(todos);
     const message = `[TODO_SHARE_DATA]${payload}[/TODO_SHARE_DATA]`;
@@ -427,6 +440,23 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                       <Flag className="w-4 h-4" />
                       <span>Report</span>
                     </button>
+                    {isBlocked ? (
+                      <button
+                        onClick={handleUnblock}
+                        className="w-full flex items-center px-4 py-2 text-sm text-emerald-400 hover:bg-emerald-500/10 transition-colors gap-3 font-medium"
+                      >
+                        <ShieldOff className="w-4 h-4" />
+                        <span>Unblock User</span>
+                      </button>
+                    ) : (
+                      <button
+                        onClick={handleBlock}
+                        className="w-full flex items-center px-4 py-2 text-sm text-orange-400 hover:bg-orange-500/10 transition-colors gap-3 font-medium"
+                      >
+                        <ShieldX className="w-4 h-4" />
+                        <span>Block User</span>
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         toast((t) => (
@@ -564,10 +594,18 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       {isReportModalOpen && otherUser && (
         <ReportModal
           reportedId={otherUser.userId}
+          initialContext={ReportContext.CHAT}
           onClose={() => setIsReportModalOpen(false)}
-          // ─── Fix 4: no auto-block — just show success toast and close ────
-          onSuccess={() => {
+          onSuccess={async (blockedUser?: boolean) => {
             toast.success('Report submitted. Our team will review it.');
+            if (blockedUser && otherUser) {
+              try {
+                await buddyService.blockUser(otherUser.userId);
+                setIsBlocked(true);
+              } catch {
+                // silent — block failed but report went through
+              }
+            }
             setIsReportModalOpen(false);
           }}
         />
