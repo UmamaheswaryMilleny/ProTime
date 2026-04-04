@@ -28,12 +28,16 @@ export const BuddyCard: React.FC<BuddyCardProps> = ({
                 src={buddy.profileImage || buddy.avatar} 
                 alt={buddy.fullName || 'User'} 
                 className="w-14 h-14 rounded-full object-cover ring-2 ring-[blueviolet]/20"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  img.nextElementSibling?.classList.remove('hidden');
+                }}
               />
-            ) : (
-              <div className="w-14 h-14 rounded-full bg-zinc-800 border-2 border-[blueviolet]/20 flex items-center justify-center text-zinc-500">
-                <User size={28} />
-              </div>
-            )}
+            ) : null}
+            <div className={`w-14 h-14 rounded-full bg-zinc-800 border-2 border-[blueviolet]/20 flex items-center justify-center text-zinc-500 ${(buddy.profileImage || buddy.avatar) ? 'hidden' : ''}`}>
+              <User size={28} />
+            </div>
             <div className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 border-2 border-[#18181B] rounded-full" />
           </div>
           <div className="min-w-0 pt-1">

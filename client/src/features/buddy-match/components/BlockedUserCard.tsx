@@ -27,12 +27,16 @@ export const BlockedUserCard: React.FC<BlockedUserCardProps> = ({
             src={avatar}
             alt={displayName}
             className="w-12 h-12 rounded-full object-cover border border-white/10"
+            onError={(e) => {
+              const img = e.target as HTMLImageElement;
+              img.style.display = 'none';
+              img.nextElementSibling?.classList.remove('hidden');
+            }}
           />
-        ) : (
-          <div className="w-12 h-12 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center">
-            <User size={22} className="text-zinc-500" />
-          </div>
-        )}
+        ) : null}
+        <div className={`w-12 h-12 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center ${avatar ? 'hidden' : ''}`}>
+          <User size={22} className="text-zinc-500" />
+        </div>
         {/* Blocked badge */}
         <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-red-500/90 border border-zinc-900 flex items-center justify-center">
           <ShieldOff size={10} className="text-white" />
