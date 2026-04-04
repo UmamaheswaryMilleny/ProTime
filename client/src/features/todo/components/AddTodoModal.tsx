@@ -8,9 +8,10 @@ interface AddTodoModalProps {
     onAdd?: (todo: CreateTodoDTO) => Promise<boolean>;
     onEdit?: (id: string, updates: Partial<CreateTodoDTO>) => Promise<boolean>;
     initialTodo?: TodoItem | null;
+    existingTitles?: string[];
 }
 
-export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onAdd, onEdit, initialTodo }) => {
+export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onAdd, onEdit, initialTodo, existingTitles = [] }) => {
     const defaultState: CreateTodoDTO = {
         title: '',
         description: '',
@@ -43,6 +44,7 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showTitleError, setShowTitleError] = useState(false);
+    const [showDuplicateError, setShowDuplicateError] = useState(false);
 
     if (!isOpen) return null;
 
@@ -86,6 +88,7 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
 
             if (name === 'title' && value.trim()) {
                 setShowTitleError(false);
+                setShowDuplicateError(false);
             }
 
             return nextData;
@@ -114,6 +117,16 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
         e.preventDefault();
         if (!formData.title.trim()) {
             setShowTitleError(true);
+            return;
+        }
+
+        // Client-side duplicate check (ignore the task's own original title when editing)
+        const isDuplicate = existingTitles.some(
+            t => t.trim().toLowerCase() === formData.title.trim().toLowerCase() &&
+                 (!initialTodo || t.trim().toLowerCase() !== initialTodo.title.trim().toLowerCase())
+        );
+        if (isDuplicate) {
+            setShowDuplicateError(true);
             return;
         }
 
@@ -157,10 +170,11 @@ export const AddTodoModal: React.FC<AddTodoModalProps> = ({ isOpen, onClose, onA
                             onChange={handleChange}
                             placeholder="Study JavaScript"
                             className={`w-full bg-zinc-800/50 border rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none transition-colors ${
-                                showTitleError ? 'border-red-500 ring-1 ring-red-500' : 'border-white/10'
+                                showTitleError || showDuplicateError ? 'border-red-500 ring-1 ring-red-500' : 'border-white/10'
                             }`}
                         />
                         {showTitleError && <p className="text-[10px] text-red-500 font-medium mt-1">Please enter a task title</p>}
+                        {showDuplicateError && <p className="text-[10px] text-red-500 font-medium mt-1">A task with this title already exists. Please use a unique title.</p>}
                     </div>
 
                     <div className="space-y-1.5">

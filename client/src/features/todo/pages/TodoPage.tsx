@@ -282,6 +282,7 @@ export const TodoPage: React.FC = () => {
                 onAdd={addTodo}
                 onEdit={updateTodo}
                 initialTodo={editingTodo}
+                existingTitles={todos.filter(t => t.status !== 'EXPIRED').map(t => t.title)}
             />
 
             {/* Delete Confirmation Modal */}
