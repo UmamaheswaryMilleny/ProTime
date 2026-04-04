@@ -7,6 +7,7 @@ export enum ReportStatus {
 export enum ReportContext {
   CHAT       = 'CHAT',       // ← consistent with rest of codebase
   VIDEO_CALL = 'VIDEO_CALL', // ← no spaces
+  GROUP_ROOM = 'GROUP_ROOM',
 }
 
 export enum ReportReason {
@@ -14,6 +15,10 @@ export enum ReportReason {
   HARASSMENT            = 'HARASSMENT',
   INAPPROPRIATE_CONTENT = 'INAPPROPRIATE_CONTENT',
   FAKE_PROFILE          = 'FAKE_PROFILE',
+  HATE_SPEECH           = 'HATE_SPEECH',
+  VIOLENCE              = 'VIOLENCE',
+  NUDITY                = 'NUDITY',
+  FALSE_INFORMATION     = 'FALSE_INFORMATION',
   OTHER                 = 'OTHER',
 }
 

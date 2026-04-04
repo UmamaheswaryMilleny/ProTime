@@ -56,6 +56,7 @@ async getReports(
     const dto: GetReportsRequestDTO = {
       status:         req.query.status         as ReportStatus | undefined,
       reportedUserId: req.query.reportedUserId as string       | undefined,
+      search:         req.query.search         as string       | undefined,
       page:           Number(req.query.page)   || 1,
       limit:          Number(req.query.limit)  || 20,
     };

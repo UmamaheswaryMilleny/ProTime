@@ -7,7 +7,8 @@ export interface IReportRepository
 
 findAll(params: {
   status?:         ReportStatus;
-  reportedUserId?: string;       // ← added
+  reportedUserId?: string;
+  search?:         string;
   page:            number;
   limit:           number;
 }): Promise<{ reports: ReportEntity[]; total: number }>;

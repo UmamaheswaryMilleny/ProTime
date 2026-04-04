@@ -37,6 +37,21 @@ export const ReportSchema = new Schema(
       default: null,
     },
 
+    screenshots: {
+      type:    [String],
+      default: [],
+    },
+
+    blockUser: {
+      type:    Boolean,
+      default: false,
+    },
+
+    receiveUpdates: {
+      type:    Boolean,
+      default: false,
+    },
+
     status: {
       type:     String,
       enum:     Object.values(ReportStatus),

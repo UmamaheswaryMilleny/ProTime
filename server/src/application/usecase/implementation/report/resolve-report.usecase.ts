@@ -4,6 +4,7 @@ import type { IReportRepository }      from '../../../../domain/repositories/rep
 import type { IUserRepository }        from '../../../../domain/repositories/user/user.repository.interface';
 import type { ResolveReportRequestDTO } from '../../../dto/report/request/resolve-report.request.dto';
 import type { ReportResponseDTO }      from '../../../dto/report/response/report.response.dto';
+import type { ISocketService }        from '../../../service_interface/socket-service.interface';
 import {
   ReportNotFoundError,ReportAlreadyResolvedError
 } from '../../../../domain/errors/report.errors';
@@ -18,6 +19,9 @@ export class ResolveReportUsecase implements IResolveReportUsecase {
 
     @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
+
+    @inject('ISocketService')
+    private readonly socketService: ISocketService,
   ) {}
 
   async execute(
@@ -48,6 +52,15 @@ if (report.status !== ReportStatus.PENDING) {
       adminNote:   dto.adminNote,
       actionTaken: dto.actionTaken,
     });
+
+    // If action is WARNING — notify the reported user via socket
+    if (dto.actionTaken === ReportAction.WARNING) {
+      this.socketService.emitToUser(report.reportedUserId, 'notification:new', {
+        type:    'admin_warning',
+        title:   '⚠️ Official Warning',
+        message: dto.adminNote || 'You have received an official warning regarding your recent behavior on ProTime.',
+      });
+    }
 
     return ReportMapper.toResponse(resolved ?? report);
   }

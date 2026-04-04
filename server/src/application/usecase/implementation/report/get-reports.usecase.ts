@@ -17,7 +17,8 @@ export class GetReportsUsecase implements IGetReportsUsecase {
   async execute(dto: GetReportsRequestDTO): Promise<GetReportsResponseDTO> {
     const { reports, total } = await this.reportRepo.findAll({
       status:         dto.status,
-      reportedUserId: dto.reportedUserId, // ← this line was missing
+      reportedUserId: dto.reportedUserId,
+      search:         dto.search,
       page:           dto.page,
       limit:          dto.limit,
     });

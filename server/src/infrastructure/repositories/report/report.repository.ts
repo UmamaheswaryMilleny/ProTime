@@ -1,6 +1,7 @@
 import { injectable } from 'tsyringe';
 import { BaseRepository } from '../base.repository';
 import { ReportModel, ReportDocument } from '../../database/models/report.model';
+import { UserModel } from '../../database/models/user.model';
 import { ReportInfraMapper } from '../../database/mappers/report.infra.mapper';
 import type { IReportRepository } from '../../../domain/repositories/report/report.repository.interface';
 import type { ReportEntity }      from '../../../domain/entities/report.entity';
@@ -19,6 +20,7 @@ export class ReportRepository
 async findAll(params: {
   status?:         ReportStatus;
   reportedUserId?: string;
+  search?:         string;
   page:            number;
   limit:           number;
 }): Promise<{ reports: ReportEntity[]; total: number }> {
@@ -26,12 +28,32 @@ async findAll(params: {
   if (params.status)         query.status         = params.status;
   if (params.reportedUserId) query.reportedUserId = params.reportedUserId;
 
+  if (params.search?.trim()) {
+    const regex = new RegExp(params.search.trim(), 'i');
+    const users = await UserModel.find({
+      $or: [{ fullName: regex }, { email: regex }]
+    }).select('_id').lean();
+    
+    if (users.length > 0) {
+      const userIds = users.map((u: any) => u._id);
+      query.$or = [
+        { reportedUserId: { $in: userIds } },
+        { reporterId: { $in: userIds } }
+      ];
+    } else {
+      // If no users found, essentially return no results for this search
+      query._id = null; 
+    }
+  }
+
   const [docs, total] = await Promise.all([
     ReportModel
       .find(query)
       .sort({ createdAt: -1 })
       .skip((params.page - 1) * params.limit)
       .limit(params.limit)
+      .populate('reporterId', 'fullName email')
+      .populate('reportedUserId', 'fullName email')
       .lean(),
     ReportModel.countDocuments(query),
   ]);

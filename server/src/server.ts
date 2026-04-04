@@ -87,7 +87,7 @@ export class App {
     });
     this.app.use(
       express.json({
-         
+        limit: '20mb',
         verify: (req: any, _res, buf) => {
           if (req.originalUrl.includes('/webhook')) {
             req.rawBody = buf;
@@ -95,7 +95,7 @@ export class App {
         },
       }),
     );
-    this.app.use(express.urlencoded({ extended: true }));
+    this.app.use(express.urlencoded({ extended: true, limit: '20mb' }));
     this.app.use(cookieParser());
   }
 

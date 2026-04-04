@@ -47,6 +47,9 @@ export class SubmitReportUsecase implements ISubmitReportUsecase {
       context:           dto.context,
       reason:            dto.reason,
       additionalDetails: dto.additionalDetails,
+      screenshots:       dto.screenshots,
+      blockUser:         dto.blockUser,
+      receiveUpdates:    dto.receiveUpdates,
       status:            ReportStatus.PENDING,
     });
 

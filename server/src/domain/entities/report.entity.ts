@@ -8,10 +8,15 @@ import type { ReportStatus, ReportContext, ReportReason, ReportAction } from '..
 export interface ReportEntity {
   id:                  string;
   reporterId:          string;         // userId who submitted the report
+  reporter?:           { id: string; fullName: string; email: string; avatar?: string };
   reportedUserId:      string;         // userId who was reported — renamed for clarity
+  reportedUser?:       { id: string; fullName: string; email: string; avatar?: string };
   context:             ReportContext;
   reason:              ReportReason;
   additionalDetails?:  string;         // optional extra detail from reporter
+  screenshots?:        string[];       // optional URLs to screenshots
+  blockUser?:          boolean;        // did the user request to block?
+  receiveUpdates?:     boolean;        // does the user want updates?
   status:              ReportStatus;
   // ─── Admin review fields ──────────────────────────────────────────────────
   reviewedBy?:         string;         // adminId who reviewed

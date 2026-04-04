@@ -7,10 +7,13 @@ export class ReportMapper {
     return {
       id:                 entity.id,
       reporterId:         entity.reporterId,
+      reporter:           entity.reporter,
       reportedUserId:     entity.reportedUserId,
+      reportedUser:       entity.reportedUser,
       context:            entity.context,
       reason:             entity.reason,
       additionalDetails:  entity.additionalDetails,
+      screenshots:        entity.screenshots,
       status:             entity.status,
       reviewedBy:         entity.reviewedBy,
       reviewedAt:         entity.reviewedAt,
