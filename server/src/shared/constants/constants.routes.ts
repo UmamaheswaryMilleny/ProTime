@@ -43,6 +43,8 @@ export const ROUTES = {
      REPORTS:        '/reports',                      // ← add
     REPORT_BY_ID:   '/reports/:reportId',            // ← add
     RESOLVE_REPORT: '/reports/:reportId/resolve',    // ← add
+    SUBSCRIPTIONS:  '/subscriptions',
+    SUBSCRIPTION_STATS: '/subscriptions/stats',
   },
 
   // User Routes

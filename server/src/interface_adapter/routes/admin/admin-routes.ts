@@ -12,6 +12,7 @@ import { UserRole } from "../../../domain/enums/user.enums";
 import { ReportController }        from '../../controllers/report/report.controller';
 import { ResolveReportRequestDTO } from '../../../application/dto/report/request/resolve-report.request.dto';
 import { GetReportsRequestDTO }    from '../../../application/dto/report/request/get-reports.request.dto';
+import { AdminSubscriptionController } from "../../controllers/admin/admin-subscription.controller";
 
 
 @injectable()
@@ -21,8 +22,9 @@ export class AdminRoutes extends BaseRoute {
   }
 
   protected initializeRoutes(): void {
-    const ctrl       = container.resolve(AdminController);
-    const reportCtrl = container.resolve(ReportController);
+    const ctrl           = container.resolve(AdminController);
+    const reportCtrl     = container.resolve(ReportController);
+    const subCtrl        = container.resolve(AdminSubscriptionController);
 
     this.router.use(verifyAuth);
     this.router.use(authorizeRole([UserRole.ADMIN]));
@@ -62,6 +64,17 @@ this.router.patch(
   ROUTES.ADMIN.RESOLVE_REPORT,
   validationMiddleware(ResolveReportRequestDTO),
   asyncHandler(reportCtrl.resolveReport.bind(reportCtrl)),
+);
+
+// ─── Subscription Management ──────────────────────────────────────
+this.router.get(
+  ROUTES.ADMIN.SUBSCRIPTION_STATS,
+  asyncHandler(subCtrl.getStats.bind(subCtrl)),
+);
+
+this.router.get(
+  ROUTES.ADMIN.SUBSCRIPTIONS,
+  asyncHandler(subCtrl.getSubscriptions.bind(subCtrl)),
 );
   }
 }

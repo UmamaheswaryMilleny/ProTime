@@ -68,6 +68,10 @@ import type { IGetSubscriptionUsecase } from '../../application/usecase/interfac
 import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/interface/subscription/create-checkout-session.usecase.interface';
 import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
+import { GetSubscriptionStatsUsecase } from '../../application/usecase/implementation/subscription/get-subscription-stats.usecase';
+import { GetSubscriptionsAdminUsecase } from '../../application/usecase/implementation/subscription/get-subscriptions-admin.usecase';
+import type { IGetSubscriptionStatsUsecase } from '../../application/usecase/interface/subscription/get-subscription-stats.usecase.interface';
+import type { IGetSubscriptionsAdminUsecase } from '../../application/usecase/interface/subscription/get-subscriptions-admin.usecase.interface';
 
 // ProBuddy AI
 import { ChatWithAiUsecase } from '../../application/usecase/implementation/probuddy/chat-with-ai.usecase';
@@ -320,6 +324,20 @@ export class UsecaseRegistry {
       'IHandleStripeWebhookUsecase',
       {
         useClass: HandleStripeWebhookUsecase,
+      },
+    );
+
+    container.register<IGetSubscriptionStatsUsecase>(
+      'IGetSubscriptionStatsUsecase',
+      {
+        useClass: GetSubscriptionStatsUsecase,
+      },
+    );
+
+    container.register<IGetSubscriptionsAdminUsecase>(
+      'IGetSubscriptionsAdminUsecase',
+      {
+        useClass: GetSubscriptionsAdminUsecase,
       },
     );
 

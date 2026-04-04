@@ -112,4 +112,8 @@ export class MongoUserRepository
       total,
     };
   }
+  
+  async countDocuments(filter: any): Promise<number> {
+    return this.model.countDocuments(filter).exec();
+  }
 }

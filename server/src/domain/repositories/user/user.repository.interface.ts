@@ -15,7 +15,8 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
     sort?: string,
     order?: "asc" | "desc"
   ): Promise<{ users: UserEntity[]; total: number }>;
-
+  
+  countDocuments(filter: any): Promise<number>;
 }
 
 

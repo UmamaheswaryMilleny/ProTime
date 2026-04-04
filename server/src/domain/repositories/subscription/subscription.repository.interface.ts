@@ -32,4 +32,21 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
   // Returns all PREMIUM/CANCELLED subscriptions where currentPeriodEnd < now
   // Used by cron job to batch-downgrade to FREE
   findExpiredSubscriptions(): Promise<SubscriptionEntity[]>;
+
+  // ─── Admin logic ──────────────────────────────────────────────────────────
+
+  // Returns total counts satisfying filter (for stats)
+  countDocuments(filter: any): Promise<number>;
+
+  // Returns paginated list of subscriptions joined with user data
+  findAllWithUser(params: {
+    plan?:   string;
+    status?: string;
+    search?: string;
+    page:    number;
+    limit:   number;
+  }): Promise<{
+    subscriptions: any[];
+    total:         number;
+  }>;
 }
