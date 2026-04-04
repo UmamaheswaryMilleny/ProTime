@@ -65,12 +65,12 @@ export const DashboardHeader: React.FC = () => {
                 src={user.profileImage}
                 alt="Profile"
                 className="w-10 h-10 rounded-full border-2 border-zinc-700 hover:border-[blueviolet] transition-colors object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
               />
-            ) : (
-              <div className="w-10 h-10 rounded-full border-2 border-zinc-700 bg-zinc-800 hover:border-[blueviolet] hover:bg-zinc-700 transition-colors flex items-center justify-center text-zinc-500 hover:text-zinc-300">
-                <UserIcon size={20} />
-              </div>
-            )}
+            ) : null}
+            <div className={`w-10 h-10 rounded-full border-2 border-zinc-700 bg-zinc-800 hover:border-[blueviolet] hover:bg-zinc-700 transition-colors flex items-center justify-center text-zinc-500 hover:text-zinc-300 ${user?.profileImage ? 'hidden' : ''}`}>
+              <UserIcon size={20} />
+            </div>
           </button>
 
           {/* Profile Dropdown */}

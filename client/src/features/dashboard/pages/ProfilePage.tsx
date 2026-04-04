@@ -229,10 +229,14 @@ export const ProfilePage: React.FC = () => {
         <div className="flex flex-col items-center">
           <div className="relative w-16 h-16 rounded-full border-2 border-zinc-700 flex items-center justify-center bg-zinc-800 overflow-hidden">
             {user?.profileImage ? (
-              <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-            ) : (
-              <User size={32} className="text-zinc-500" />
-            )}
+              <img
+                src={user.profileImage}
+                alt="Profile"
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+              />
+            ) : null}
+            <User size={32} className={`text-zinc-500 ${user?.profileImage ? 'hidden' : ''}`} />
           </div>
           <span className="text-green-500 text-xs font-bold mt-1">{currentTitle}</span>
         </div>
@@ -277,10 +281,14 @@ export const ProfilePage: React.FC = () => {
               <div className="relative flex-shrink-0 w-24 h-24">
                 <div className="w-full h-full rounded-full border-2 border-zinc-700 flex items-center justify-center bg-zinc-800 overflow-hidden">
                   {user?.profileImage ? (
-                    <img src={user.profileImage} alt="Profile" className="w-full h-full object-cover" />
-                  ) : (
-                    <User size={48} className="text-zinc-500" />
-                  )}
+                    <img
+                      src={user.profileImage}
+                      alt="Profile"
+                      className="w-full h-full object-cover"
+                      onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                    />
+                  ) : null}
+                  <User size={48} className={`text-zinc-500 ${user?.profileImage ? 'hidden' : ''}`} />
                 </div>
                 {user?.profileImage && (
                   <button
