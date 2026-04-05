@@ -34,6 +34,7 @@ export const ROUTES = {
   ADMIN_REPORTS: "/admin/reports",
   ADMIN_SUBSCRIPTIONS: "/admin/subscriptions",
   ADMIN_MEETINGS: "/admin/meetings",
+  ADMIN_GAMIFICATION: "/admin/gamification",
 } as const;
 
 export const API_ROUTES = {
@@ -80,6 +81,12 @@ export const API_ROUTES = {
   ADMIN_SUBSCRIPTION_STATS: "/admin/subscriptions/stats",
   ADMIN_MEETINGS:           "/admin/meetings",
   ADMIN_MEETING_FORCE_CLOSE: (id: string) => `/admin/meetings/${id}/force-close`,
+  ADMIN_GAMIFICATION_OVERVIEW: "/admin/gamification/overview",
+  ADMIN_GAMIFICATION_USERS: "/admin/gamification/users",
+  ADMIN_GAMIFICATION_USER_DETAIL: (userId: string) => `/admin/gamification/users/${userId}`,
+  ADMIN_GAMIFICATION_LEADERBOARD: "/admin/gamification/leaderboard",
+  ADMIN_GAMIFICATION_BADGES: "/admin/gamification/badges",
+  ADMIN_GAMIFICATION_BADGE_TOGGLE: (badgeId: string) => `/admin/gamification/badges/${badgeId}/toggle`,
 
   // ─── Buddy ────────────────────────────────────────────────────────────────
   BUDDY_PREFERENCE:       "/buddy/preference",
@@ -105,6 +112,7 @@ export const API_ROUTES = {
   CHAT_BUDDY_SESSION_END:   (conversationId: string) => `/chat/${conversationId}/buddy-session/end`,
   CHAT_BUDDY_SESSION_PROPOSE: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose`,
   CHAT_BUDDY_SESSION_PROPOSE_RECURRING: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose-recurring`,
+  CHAT_UPLOAD:        "/chat/upload",
 
 
   // ─── Calendar ─────────────────────────────────────────────────────────────
