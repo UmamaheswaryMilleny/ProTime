@@ -14,6 +14,7 @@ import { ResolveReportRequestDTO } from '../../../application/dto/report/request
 import { GetReportsRequestDTO }    from '../../../application/dto/report/request/get-reports.request.dto';
 import { AdminSubscriptionController } from "../../controllers/admin/admin-subscription.controller";
 import { AdminDashboardController } from "../../controllers/admin/admin-dashboard.controller";
+import { AdminMeetingController }  from '../../controllers/admin/admin-meeting.controller';
 
 @injectable()
 export class AdminRoutes extends BaseRoute {
@@ -26,6 +27,7 @@ export class AdminRoutes extends BaseRoute {
     const reportCtrl     = container.resolve(ReportController);
     const subCtrl        = container.resolve(AdminSubscriptionController);
     const dashboardCtrl  = container.resolve(AdminDashboardController);
+    const meetingCtrl    = new AdminMeetingController();
 
     this.router.use(verifyAuth);
     this.router.use(authorizeRole([UserRole.ADMIN]));
@@ -82,6 +84,17 @@ export class AdminRoutes extends BaseRoute {
     this.router.get(
       ROUTES.ADMIN.SUBSCRIPTIONS,
       asyncHandler(subCtrl.getSubscriptions.bind(subCtrl)),
+    );
+
+    // ─── Meeting Management ───────────────────────────────────────────────
+    this.router.get(
+      ROUTES.ADMIN.MEETINGS,
+      asyncHandler(meetingCtrl.getMeetings.bind(meetingCtrl)),
+    );
+
+    this.router.patch(
+      ROUTES.ADMIN.MEETING_FORCE_CLOSE,
+      asyncHandler(meetingCtrl.forceClose.bind(meetingCtrl)),
     );
   }
 }

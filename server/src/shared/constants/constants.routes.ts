@@ -46,6 +46,8 @@ export const ROUTES = {
     SUBSCRIPTIONS:  '/subscriptions',
     SUBSCRIPTION_STATS: '/subscriptions/stats',
     DASHBOARD_STATS: '/dashboard/stats',
+    MEETINGS:         '/meetings',
+    MEETING_FORCE_CLOSE: '/meetings/:meetingId/force-close',
   },
 
   // User Routes
