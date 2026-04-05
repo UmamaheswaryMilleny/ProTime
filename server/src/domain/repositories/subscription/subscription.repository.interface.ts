@@ -26,12 +26,17 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
       | 'cancelledAt'
       | 'aiUsageCount'
       | 'lastAiUsageReset'
+      | 'lastExpiryNotificationSentAt'
     >>
   ): Promise<SubscriptionEntity | null>;
 
   // Returns all PREMIUM/CANCELLED subscriptions where currentPeriodEnd < now
   // Used by cron job to batch-downgrade to FREE
   findExpiredSubscriptions(): Promise<SubscriptionEntity[]>;
+
+  // Returns ACTIVE PREMIUM subscriptions expiring within the given number of days
+  // Used by cron job to send expiry warning notifications
+  findExpiringSubscriptions(withinDays: number): Promise<SubscriptionEntity[]>;
 
   // ─── Admin logic ──────────────────────────────────────────────────────────
 

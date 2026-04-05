@@ -12,6 +12,7 @@ export interface SubscriptionEntity {
   cancelledAt?: Date;
   aiUsageCount: number;
   lastAiUsageReset: Date;
+  lastExpiryNotificationSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

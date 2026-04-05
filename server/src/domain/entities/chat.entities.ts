@@ -29,6 +29,10 @@ export interface DirectMessageEntity {
     status: MessageStatus;
     readAt?: Date;           // set when receiver reads the message
     sessionId?: string;         // tags message to a shared pomodoro session
+    fileUrl?: string;             // Cloudinary URL for images/files
+    fileName?: string;            // Original filename
+    fileSize?: number;            // Size in bytes
+    fileType?: string;            // Mimetype (e.g. image/png, application/pdf)
     createdAt: Date;
     updatedAt: Date;
 }
