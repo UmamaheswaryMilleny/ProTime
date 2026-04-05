@@ -17,6 +17,10 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
   ): Promise<{ users: UserEntity[]; total: number }>;
   
   countDocuments(filter: any): Promise<number>;
+
+  // Admin Dashboard 
+  getUserGrowth(days: number): Promise<{ date: string; count: number }[]>;
+  getRecentSignups(limit: number): Promise<UserEntity[]>;
 }
 
 

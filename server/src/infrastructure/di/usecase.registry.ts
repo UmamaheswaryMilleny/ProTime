@@ -11,6 +11,10 @@ import { ForgotPasswordUsecase } from '../../application/usecase/implementation/
 import { ResetPasswordUsecase } from '../../application/usecase/implementation/auth/reset-password.usecase';
 import GoogleAuthUsecase from '../../application/usecase/implementation/auth/google-auth.usecase';
 
+// admin
+import { GetAdminDashboardStatsUsecase } from '../../application/usecase/implementation/admin/get-admin-dashboard-stats.usecase';
+import type { IGetAdminDashboardStatsUsecase } from '../../application/usecase/interface/admin/get-admin-dashboard-stats.usecase.interface';
+
 // Use case interfaces
 import type { IRegisterUsecase } from '../../application/usecase/interface/auth/register.usecase.interface';
 import type { ILogoutUseCase } from '../../application/usecase/interface/auth/logout.usecase.interface';
@@ -233,6 +237,10 @@ export class UsecaseRegistry {
 
     container.register<IGoogleAuthUsecase>('IGoogleAuthUsecase', {
       useClass: GoogleAuthUsecase,
+    });
+
+    container.register<IGetAdminDashboardStatsUsecase>('IGetAdminDashboardStatsUsecase', {
+      useClass: GetAdminDashboardStatsUsecase,
     });
 
     // todo

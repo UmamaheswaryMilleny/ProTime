@@ -189,4 +189,40 @@ export class SubscriptionRepository
 
     return { subscriptions: data, total };
   }
+
+  // ─── Admin Dashboard ────────────────────────────────────────────────────────
+  async getRevenueTrend(months: number): Promise<{ month: string; revenue: number }[]> {
+    const startDate = new Date();
+    startDate.setMonth(startDate.getMonth() - months);
+    startDate.setDate(1); // Start of the month
+    startDate.setHours(0, 0, 0, 0);
+
+    const result = await SubscriptionModel.aggregate([
+      {
+        $match: {
+          plan: 'PREMIUM',
+          createdAt: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: '$createdAt' },
+            month: { $month: '$createdAt' }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { '_id.year': 1, '_id.month': 1 }
+      }
+    ]).exec();
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    return result.map(item => ({
+      month: monthNames[item._id.month - 1] || 'Unknown', // Format as 'Jan', 'Feb', etc.
+      revenue: item.count * 499 // Assumed price of premium subscription
+    }));
+  }
 }

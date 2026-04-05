@@ -49,4 +49,7 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
     subscriptions: any[];
     total:         number;
   }>;
+
+  // Admin Dashboard
+  getRevenueTrend(months: number): Promise<{ month: string; revenue: number }[]>;
 }

@@ -116,4 +116,46 @@ export class MongoUserRepository
   async countDocuments(filter: any): Promise<number> {
     return this.model.countDocuments(filter).exec();
   }
+
+  // ─── Admin Dashboard ────────────────────────────────────────────────────────
+  async getUserGrowth(days: number): Promise<{ date: string; count: number }[]> {
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const result = await this.model.aggregate([
+      {
+        $match: {
+          role: UserRole.CLIENT,
+          isDeleted: false,
+          createdAt: { $gte: startDate }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      {
+        $sort: { _id: 1 }
+      }
+    ]).exec();
+
+    return result.map(item => ({
+      date: item._id,
+      count: item.count
+    }));
+  }
+
+  async getRecentSignups(limit: number): Promise<UserEntity[]> {
+    const docs = await this.model
+      .find({ role: UserRole.CLIENT, isDeleted: false })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .exec();
+    
+    return docs.map((doc) => UserMapper.toDomain(doc));
+  }
 }

@@ -40,11 +40,12 @@ export const ROUTES = {
     USERS: '/users',
     BLOCK_USER: '/users/:userId/block',
     UNBLOCK_USER: '/users/:userId/unblock',
-     REPORTS:        '/reports',                      // ← add
+    REPORTS:        '/reports',                      // ← add
     REPORT_BY_ID:   '/reports/:reportId',            // ← add
     RESOLVE_REPORT: '/reports/:reportId/resolve',    // ← add
     SUBSCRIPTIONS:  '/subscriptions',
     SUBSCRIPTION_STATS: '/subscriptions/stats',
+    DASHBOARD_STATS: '/dashboard/stats',
   },
 
   // User Routes
