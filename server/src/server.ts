@@ -32,6 +32,7 @@ import { StudyRoomRoutes } from "./interface_adapter/routes/study-room/study-roo
 import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
 import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
 import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
+import { startSubscriptionNotificationsCron } from "./infrastructure/cron/subscription-notifications.cron";
 import { ProBuddyRoutes } from "./interface_adapter/routes/probuddy/probuddy.routes";
 
 
@@ -394,4 +395,5 @@ export const bootstrap = async (): Promise<void> => {
   startMarkMissedSessionsCron();
   startExpireScheduleRequestsCron();
   startExpireTodosCron();
+  startSubscriptionNotificationsCron();
 };

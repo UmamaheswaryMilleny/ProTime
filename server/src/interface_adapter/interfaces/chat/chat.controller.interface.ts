@@ -8,4 +8,6 @@ export interface IChatController {
     markAsRead(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
     startSession(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
     endSession(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+    uploadAttachment(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+    deleteChat(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

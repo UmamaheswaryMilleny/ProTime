@@ -30,7 +30,14 @@ export class ProBuddyController {
       res.status(HTTP_STATUS.OK).json({ success: true, response });
     } catch (error: any) {
       console.error('ProBuddy Controller Error:', error.message);
-      res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({ message: error.message });
+      
+      const isLimitError = error.message.toLowerCase().includes('limit reached');
+      const statusCode = isLimitError ? HTTP_STATUS.FORBIDDEN : HTTP_STATUS.INTERNAL_SERVER_ERROR;
+      const message = isLimitError 
+        ? error.message 
+        : "ProBuddy is temporarily overwhelmed by your brilliance. Please try again in a few moments!";
+
+      res.status(statusCode).json({ success: false, message });
     }
   }
 }

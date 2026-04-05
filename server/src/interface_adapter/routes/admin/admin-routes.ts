@@ -15,6 +15,7 @@ import { GetReportsRequestDTO }    from '../../../application/dto/report/request
 import { AdminSubscriptionController } from "../../controllers/admin/admin-subscription.controller";
 import { AdminDashboardController } from "../../controllers/admin/admin-dashboard.controller";
 import { AdminMeetingController }  from '../../controllers/admin/admin-meeting.controller';
+import { AdminGamificationController } from '../../controllers/admin/admin-gamification.controller';
 
 @injectable()
 export class AdminRoutes extends BaseRoute {
@@ -28,6 +29,7 @@ export class AdminRoutes extends BaseRoute {
     const subCtrl        = container.resolve(AdminSubscriptionController);
     const dashboardCtrl  = container.resolve(AdminDashboardController);
     const meetingCtrl    = new AdminMeetingController();
+    const gamificationCtrl = container.resolve(AdminGamificationController);
 
     this.router.use(verifyAuth);
     this.router.use(authorizeRole([UserRole.ADMIN]));
@@ -95,6 +97,32 @@ export class AdminRoutes extends BaseRoute {
     this.router.patch(
       ROUTES.ADMIN.MEETING_FORCE_CLOSE,
       asyncHandler(meetingCtrl.forceClose.bind(meetingCtrl)),
+    );
+
+    // ─── Gamification Management ──────────────────────────────────────────────
+    this.router.get(
+      ROUTES.ADMIN.GAMIFICATION_OVERVIEW,
+      asyncHandler(gamificationCtrl.getOverview.bind(gamificationCtrl)),
+    );
+    this.router.get(
+      ROUTES.ADMIN.GAMIFICATION_USERS,
+      asyncHandler(gamificationCtrl.getUsers.bind(gamificationCtrl)),
+    );
+    this.router.get(
+      ROUTES.ADMIN.GAMIFICATION_USER_DETAIL,
+      asyncHandler(gamificationCtrl.getUserDetail.bind(gamificationCtrl)),
+    );
+    this.router.get(
+      ROUTES.ADMIN.GAMIFICATION_LEADERBOARD,
+      asyncHandler(gamificationCtrl.getLeaderboard.bind(gamificationCtrl)),
+    );
+    this.router.get(
+      ROUTES.ADMIN.GAMIFICATION_BADGES,
+      asyncHandler(gamificationCtrl.getBadgesGrid.bind(gamificationCtrl)),
+    );
+    this.router.patch(
+      ROUTES.ADMIN.GAMIFICATION_BADGE_TOGGLE,
+      asyncHandler(gamificationCtrl.toggleBadge.bind(gamificationCtrl)),
     );
   }
 }

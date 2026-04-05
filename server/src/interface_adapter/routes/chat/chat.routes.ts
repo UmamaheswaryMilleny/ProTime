@@ -16,6 +16,7 @@ import { ProposeNextSessionRequestDTO } from '../../../application/dto/calendar/
 import { ProposeRecurringSessionRequestDTO } from '../../../application/dto/calendar/request/propose-recurring-session.request.dto'
 import { RespondToScheduleRequestDTO } from '../../../application/dto/calendar/request/respond-to-schedule-request.request.dto';
 import { SaveSessionNotesRequestDTO } from '../../../application/dto/calendar/request/save-session-notes.request.dto';
+import { chatUploadMiddleware } from '../../middlewares/upload.middleware';
 
 @injectable()
 export class ChatRoutes extends BaseRoute {
@@ -57,6 +58,13 @@ const sessionCtrl        = container.resolve(ChatSessionController);
         this.router.patch(
             ROUTES.CHAT.MARK_AS_READ,
             asyncHandler(ctrl.markAsRead.bind(ctrl)),
+        );
+        
+        // POST /api/v1/chat/upload
+        this.router.post(
+            ROUTES.CHAT.UPLOAD,
+            chatUploadMiddleware.single('file'),
+            asyncHandler(ctrl.uploadAttachment.bind(ctrl)),
         );
 
         // POST /api/v1/chat/:conversationId/session/start

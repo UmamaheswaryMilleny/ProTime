@@ -45,6 +45,12 @@ export const ROUTES = {
     RESOLVE_REPORT: '/reports/:reportId/resolve',    // ← add
     SUBSCRIPTIONS:  '/subscriptions',
     SUBSCRIPTION_STATS: '/subscriptions/stats',
+    GAMIFICATION_OVERVIEW: '/gamification/overview',
+    GAMIFICATION_USERS: '/gamification/users',
+    GAMIFICATION_USER_DETAIL: '/gamification/users/:userId',
+    GAMIFICATION_LEADERBOARD: '/gamification/leaderboard',
+    GAMIFICATION_BADGES: '/gamification/badges',
+    GAMIFICATION_BADGE_TOGGLE: '/gamification/badges/:badgeId/toggle',
     DASHBOARD_STATS: '/dashboard/stats',
     MEETINGS:         '/meetings',
     MEETING_FORCE_CLOSE: '/meetings/:meetingId/force-close',
@@ -122,6 +128,7 @@ export const ROUTES = {
     START_SESSION: '/:conversationId/session/start',
     END_SESSION: '/:conversationId/session/end',
     DELETE_CHAT: '/:conversationId/messages',
+    UPLOAD: '/upload',
   },
 
 };

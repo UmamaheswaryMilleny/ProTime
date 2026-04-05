@@ -9,6 +9,7 @@ import type { IMarkAsReadUsecase } from '../../../application/usecase/interface/
 import type { IStartChatSessionUsecase } from '../../../application/usecase/interface/chat/start-chat-session.usecase.interface';
 import type { IEndChatSessionUsecase } from '../../../application/usecase/interface/chat/end-chat-session.usecase.interface';
 import type { IDeleteChatUsecase } from '../../../application/usecase/implementation/chat/delete-chat.usecase';
+import type { ICloudinaryService } from '../../../application/service_interface/cloudinary.service.interface';
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import type { GetChatMessagesRequestDTO } from '../../../application/dto/chat/request/get-chat-messages.request.dto';
 import type { SendDirectMessageRequestDTO } from '../../../application/dto/chat/request/send-direct-message.request.dto';
@@ -40,6 +41,9 @@ export class ChatController implements IChatController {
 
         @inject('IDeleteChatUsecase')
         private readonly deleteChatUsecase: IDeleteChatUsecase,
+
+        @inject('ICloudinaryService')
+        private readonly cloudinaryService: ICloudinaryService,
     ) { }
 
     // ─── GET /api/v1/chat ─────────────────────────────────────────────────────
@@ -151,6 +155,39 @@ export class ChatController implements IChatController {
             const conversationId = req.params.conversationId as string;
             await this.deleteChatUsecase.execute(userId, conversationId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Chat deleted successfully', null);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    // ─── POST /api/v1/chat/upload ─────────────────────────────────────────────
+    async uploadAttachment(
+        req: CustomRequest,
+        res: Response,
+        next: NextFunction,
+    ): Promise<void> {
+        try {
+            if (!req.file) {
+                ResponseHelper.error(res, 'No file uploaded', HTTP_STATUS.BAD_REQUEST);
+                return;
+            }
+
+            const file = req.file;
+            const folder = 'chat_attachments';
+            const fileName = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
+
+            const result = await this.cloudinaryService.uploadFile(
+                file.buffer,
+                folder,
+                fileName
+            );
+
+            ResponseHelper.success(res, HTTP_STATUS.OK, 'File uploaded correctly', {
+                fileUrl: result.url,
+                fileName: file.originalname,
+                fileSize: file.size,
+                fileType: file.mimetype
+            });
         } catch (error) {
             next(error);
         }
