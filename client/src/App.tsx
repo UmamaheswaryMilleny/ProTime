@@ -40,6 +40,7 @@ import { AdminDashboardPage } from "./features/admin/pages/AdminDashboardPage";
 import { AdminUsersPage } from "./features/admin/pages/AdminUsersPage";
 import { AdminReportsPage } from "./features/admin/pages/AdminReportsPage";
 import { AdminSubscriptionsPage } from "./features/admin/pages/AdminSubscriptionsPage";
+import { AdminMeetingsPage }      from "./features/admin/pages/AdminMeetingsPage";
 
 import { BadgeEarnedModal } from "./features/gamification/components/BadgeEarnedModal";
 
@@ -91,10 +92,11 @@ function App() {
         {/* ─── Admin Panel (nested under AdminLayout) ───────────────────── */}
         <Route element={<ProtectedRoute allowedRole="ADMIN" />}>
           <Route element={<AdminLayout />}>
-            <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
-            <Route path={ROUTES.ADMIN_USERS} element={<AdminUsersPage />} />
-            <Route path={ROUTES.ADMIN_REPORTS} element={<AdminReportsPage />} />
-            <Route path={ROUTES.ADMIN_SUBSCRIPTIONS} element={<AdminSubscriptionsPage />} />
+            <Route path={ROUTES.ADMIN_DASHBOARD}     element={<AdminDashboardPage />} />
+            <Route path={ROUTES.ADMIN_USERS}          element={<AdminUsersPage />} />
+            <Route path={ROUTES.ADMIN_REPORTS}        element={<AdminReportsPage />} />
+            <Route path={ROUTES.ADMIN_SUBSCRIPTIONS}  element={<AdminSubscriptionsPage />} />
+            <Route path={ROUTES.ADMIN_MEETINGS}       element={<AdminMeetingsPage />} />
           </Route>
         </Route>
 

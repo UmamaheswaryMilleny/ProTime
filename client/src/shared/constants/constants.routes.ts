@@ -33,6 +33,7 @@ export const ROUTES = {
   ADMIN_USERS: "/admin/users",
   ADMIN_REPORTS: "/admin/reports",
   ADMIN_SUBSCRIPTIONS: "/admin/subscriptions",
+  ADMIN_MEETINGS: "/admin/meetings",
 } as const;
 
 export const API_ROUTES = {
@@ -77,6 +78,8 @@ export const API_ROUTES = {
   ADMIN_RESOLVE_REPORT: (id: string) => `/admin/reports/${id}/resolve`,
   ADMIN_SUBSCRIPTIONS:  "/admin/subscriptions",
   ADMIN_SUBSCRIPTION_STATS: "/admin/subscriptions/stats",
+  ADMIN_MEETINGS:           "/admin/meetings",
+  ADMIN_MEETING_FORCE_CLOSE: (id: string) => `/admin/meetings/${id}/force-close`,
 
   // ─── Buddy ────────────────────────────────────────────────────────────────
   BUDDY_PREFERENCE:       "/buddy/preference",

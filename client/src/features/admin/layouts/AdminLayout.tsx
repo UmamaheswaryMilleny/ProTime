@@ -11,10 +11,10 @@ const realRoutes = [
     { to: ROUTES.ADMIN_USERS, icon: Users, label: 'User Management' },
     { to: ROUTES.ADMIN_SUBSCRIPTIONS, icon: CreditCard, label: 'Subscriptions' },
     { to: ROUTES.ADMIN_REPORTS, icon: Flag, label: 'User Reports' },
+    { to: ROUTES.ADMIN_MEETINGS, icon: CalendarDays, label: 'Meeting Management' },
 ];
 
 const placeholderItems = [
-    { icon: CalendarDays, label: 'Meeting Management' },
     { icon: Layers, label: 'Skills Management' },
     { icon: Gamepad2, label: 'Gamification Mana...' },
 ];
