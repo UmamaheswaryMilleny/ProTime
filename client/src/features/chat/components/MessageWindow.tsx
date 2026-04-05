@@ -6,7 +6,7 @@ import { socketService } from '../../../shared/services/socketService';
 import { MessageBubble } from './MessageBubble';
 import { MessageInput } from './MessageInput';
 import { clearUnreadCount, setActiveCall, updateConversationPreview } from '../store/chatSlice';
-import { MoreVertical, Calendar, PhoneOff, Flag, ListTodo, ShieldOff, ShieldX } from 'lucide-react';
+import { MoreVertical, Calendar, Flag, ListTodo, ShieldOff, ShieldX, Zap } from 'lucide-react';
 import { ReportModal } from './ReportModal';
 import { ShareTodoModal } from './ShareTodoModal';
 import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
@@ -55,7 +55,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
 
   const [aiMessage, setAiMessage] = useState('');
 
-  const { messages: aiMessages, loading: aiLoading, sendMessage: sendAiMessage } = useProBuddyChat(`1on1_${conversationId}`);
+  const { 
+    messages: aiMessages, 
+    loading: aiLoading, 
+    sendMessage: sendAiMessage,
+    usage: aiUsage,
+    isPremium: isUserPremium
+  } = useProBuddyChat(`1on1_${conversationId}`);
+
+  const isAiLimitReached = aiUsage.count >= aiUsage.limit;
+
   const aiScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -66,7 +75,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
 
   const handleSendAi = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!aiMessage.trim() || aiLoading) return;
+    if (!aiMessage.trim() || aiLoading || isAiLimitReached) return;
     sendAiMessage(aiMessage);
     setAiMessage('');
   };
@@ -253,7 +262,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     };
   }, [conversationId, userId, dispatch]);
 
-  const handleSend = async (content: string) => {
+  const handleSend = async (content: string, attachment?: { fileUrl: string; fileName: string; fileSize: number; fileType: string; messageType: 'IMAGE' | 'FILE' }) => {
     // ─── Fix 3: guard before sending — userId must be available ─────────────
     if (!userId) {
       toast.error('Unable to send message — please refresh the page');
@@ -266,8 +275,12 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       senderId: userId,   // ← guaranteed non-empty due to guard above
       fullName: null,
       content,
-      messageType: 'TEXT',
+      messageType: attachment ? attachment.messageType : 'TEXT',
       status: 'SENT',
+      fileUrl: attachment?.fileUrl,
+      fileName: attachment?.fileName,
+      fileSize: attachment?.fileSize,
+      fileType: attachment?.fileType,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -276,7 +289,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     setTimeout(() => scrollToBottom('smooth'), 50);
 
     try {
-      const res = await chatApi.sendMessage(conversationId, content);
+      const res = await chatApi.sendMessage(conversationId, content, attachment);
       if (res.success) {
         setMessages(prev => prev.map(m => m.id === optimisticMessage.id ? res.data : m));
         dispatch(updateConversationPreview({
@@ -421,13 +434,6 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                     >
                       <Calendar className="w-4 h-4" />
                       <span>Schedule</span>
-                    </button>
-                    <button
-                      onClick={() => setIsSettingsOpen(false)}
-                      className="w-full flex items-center px-4 py-2 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
-                    >
-                      <PhoneOff className="w-4 h-4" />
-                      <span>End Call</span>
                     </button>
                     <div className="h-px bg-white/10 my-1" />
                     <button
@@ -669,17 +675,42 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       {isAiMode && (
         <div className="w-80 border-l border-white/10 bg-zinc-900/60 flex flex-col h-full animate-in slide-in-from-right-2 duration-300 relative z-10 flex-shrink-0">
           {/* Header */}
-          <div className="p-4 border-b border-white/10 flex items-center justify-between bg-zinc-900/80">
-            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-              <Bot size={16} className="text-[blueviolet]" />
-              ProBuddy AI
+          <div className="p-4 border-b border-white/10 flex flex-col bg-zinc-900/80 gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
+                <Bot size={16} className="text-[blueviolet]" />
+                ProBuddy AI
+              </div>
+              <button
+                onClick={() => setIsAiMode(false)}
+                className="text-zinc-500 hover:text-white transition-colors"
+                title="Close AI Assistant"
+              >
+                <CloseIcon size={14} />
+              </button>
             </div>
-            <button
-              onClick={() => setIsAiMode(false)}
-              className="text-zinc-500 hover:text-white transition-colors"
-            >
-              <CloseIcon size={14} />
-            </button>
+            {/* Usage Status (Drawer) */}
+            <div className="flex items-center justify-between mt-1 px-0.5">
+              <div className="flex items-center gap-1.5">
+                <div className={`w-1.5 h-1.5 rounded-full ${isAiLimitReached ? 'bg-red-500 animate-pulse' : 'bg-emerald-500'}`} />
+                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wider">
+                  {isAiLimitReached ? 'Limit Reached' : `${Math.max(0, aiUsage.limit - aiUsage.count)} left today`}
+                </span>
+              </div>
+              {isAiLimitReached && !isUserPremium && (
+                <button 
+                  onClick={() => {
+                    setIsAiMode(false);
+                    // Navigate to subscription is handled elsewhere or via standard router Link, 
+                    // but here we'll just show the user where to look
+                    toast.error("Upgrade to Premium for more messages!");
+                  }}
+                  className="text-[9px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-0.5"
+                >
+                  UPGRADE <Zap size={8} className="fill-current" />
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Messages */}
@@ -726,14 +757,18 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                 type="text"
                 value={aiMessage}
                 onChange={(e) => setAiMessage(e.target.value)}
-                placeholder="Ask ProBuddy..."
-                disabled={aiLoading}
-                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2 pl-3 pr-10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-all border-b border-b-[blueviolet]/30 disabled:opacity-50"
+                placeholder={isAiLimitReached ? "Out of messages..." : "Ask ProBuddy..."}
+                disabled={aiLoading || isAiLimitReached}
+                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2.5 pl-3 pr-10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-all border-b border-b-[blueviolet]/30 disabled:opacity-30 disabled:grayscale transition-all"
               />
               <button 
                 type="submit"
-                disabled={!aiMessage.trim() || aiLoading}
-                className="absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-[blueviolet] text-white hover:bg-[blueviolet]/80 transition-colors disabled:opacity-50"
+                disabled={!aiMessage.trim() || aiLoading || isAiLimitReached}
+                className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-colors ${
+                  isAiLimitReached 
+                    ? 'bg-zinc-700 text-zinc-500 opacity-50 cursor-not-allowed'
+                    : 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80'
+                }`}
               >
                 <Play size={10} className="fill-current" />
               </button>

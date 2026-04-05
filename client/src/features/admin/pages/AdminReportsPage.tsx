@@ -361,8 +361,8 @@ export const AdminReportsPage: React.FC = () => {
                                         >
                                             <option value={ReportAction.NO_ACTION}>Dismiss (No Action)</option>
                                             <option value={ReportAction.WARNING}>Issue Warning</option>
-                                            <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block</option>
-                                            <option value={ReportAction.PERMANENT_BLOCK}>Permanent Block</option>
+                                            {/* <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block</option>
+                                            <option value={ReportAction.PERMANENT_BLOCK}>Permanent Block</option> */}
                                         </select>
                                     </div>
                                     {/* <div className="space-y-2">

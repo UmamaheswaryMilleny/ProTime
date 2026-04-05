@@ -47,9 +47,26 @@ export const ScheduleRecurringSessionModal: React.FC<ScheduleRecurringSessionMod
 
   const timeError = useMemo(() => {
     if (durationMinutes <= 0) return 'End time must be after start time';
+    if (durationMinutes < 30) return 'Session duration must be at least 30 minutes';
     if (durationMinutes > 360) return 'Session duration cannot exceed 6 hours';
+
+    // ─── New: Past Time Validation ──────────────────────────────────
+    const now = new Date();
+    const currentDayName = DAYS[now.getDay()];
+    
+    if (selectedDays.includes(currentDayName)) {
+      const [startH = 0, startM = 0] = startTime.split(':').map(Number);
+      const scheduledToday = new Date(now);
+      scheduledToday.setHours(startH, startM, 0, 0);
+
+      if (scheduledToday.getTime() <= now.getTime()) {
+        return `Start time must be in the future (after ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`;
+      }
+    }
+    // ────────────────────────────────────────────────────────────────
+
     return null;
-  }, [durationMinutes]);
+  }, [durationMinutes, selectedDays, startTime]);
 
   const isValid = selectedDays.length > 0 && !timeError;
 

@@ -60,14 +60,14 @@ export const ProBuddyPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="hidden md:flex flex-col items-end mr-2">
+          <div className="flex flex-col items-end mr-2">
             <div className="flex items-center gap-2 mb-1">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Daily Usage</span>
+              <span className="hidden xs:inline-block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Daily Usage</span>
               <span className={`text-xs font-mono font-bold ${isLimitReached ? 'text-red-400' : 'text-[blueviolet]'}`}>
                 {usage.count}/{usage.limit}
               </span>
             </div>
-            <div className="w-32 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
+            <div className="w-24 xs:w-32 h-1.5 bg-white/5 rounded-full overflow-hidden border border-white/5 shadow-inner">
               <div 
                 className={`h-full transition-all duration-500 rounded-full ${
                   isLimitReached ? 'bg-red-500' : 'bg-gradient-to-r from-[blueviolet] to-[#7f00ff]'
@@ -88,10 +88,10 @@ export const ProBuddyPage: React.FC = () => {
           {!isPremium && (
             <button 
               onClick={() => navigate('/subscription')}
-              className="flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 hover:scale-105 transition-all group active:scale-95"
+              className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 hover:scale-105 transition-all group active:scale-95"
             >
               <Zap className="w-3 h-3 fill-current" />
-              <span className="hidden sm:inline">Upgrade</span>
+              <span>Upgrade</span>
             </button>
           )}
         </div>
@@ -128,7 +128,7 @@ export const ProBuddyPage: React.FC = () => {
                      </button>
                    ))}
                 </div>
-             </div>
+              </div>
           ) : (
             messages.map((msg) => (
               <ProBuddyMessage key={msg.id} message={msg} />
@@ -140,14 +140,6 @@ export const ProBuddyPage: React.FC = () => {
                <div className="bg-red-500/10 border border-red-500/20 rounded-2xl px-4 py-3 flex items-center gap-3">
                   <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                   <p className="text-sm text-red-400 font-medium">{error}</p>
-                  {isLimitReached && !isPremium && (
-                    <button 
-                      onClick={() => navigate('/subscription')}
-                      className="ml-2 text-xs font-bold text-amber-500 hover:underline underline-offset-4"
-                    >
-                      Upgrade now
-                    </button>
-                  )}
                </div>
             </div>
           )}
@@ -155,44 +147,55 @@ export const ProBuddyPage: React.FC = () => {
 
         {/* Input Area */}
         <div className="p-4 sm:p-6 bg-zinc-900/80 backdrop-blur-md rounded-t-3xl border-t border-white/5 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-          <div className="max-w-4xl mx-auto flex items-end gap-3">
-            <div className="flex-1 relative group">
-              <textarea
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder={isLimitReached ? "Daily limit reached..." : "Ask ProBuddy anything..."}
-                disabled={loading || isLimitReached}
-                className="w-full bg-zinc-800/50 text-white text-sm rounded-2xl px-4 py-3 sm:py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 focus:bg-zinc-800 transition-all resize-none max-h-32 border border-white/10 group-hover:border-white/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                rows={1}
-                style={{ height: 'auto', minHeight: '48px' }}
-              />
-              <div className="absolute right-3 bottom-3 text-[10px] text-zinc-500 font-mono hidden sm:block">
-                Enter
+          <div className="max-w-4xl mx-auto flex flex-col gap-3">
+            {/* Usage Badge (NEW) */}
+            <div className="flex items-center justify-between px-1 mb-1">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full animate-pulse ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                  {isLimitReached ? 'Daily Limit Reached' : `${Math.max(0, usage.limit - usage.count)} messages remaining today`}
+                </span>
               </div>
+              {isLimitReached && !isPremium && (
+                <button 
+                  onClick={() => navigate('/subscription')}
+                  className="text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-colors uppercase tracking-widest flex items-center gap-1 group"
+                >
+                  Upgrade to Premium <Zap className="w-2.5 h-2.5 fill-current group-hover:scale-110 transition-transform" />
+                </button>
+              )}
             </div>
-            <button
-              onClick={handleSend}
-              disabled={loading || !input.trim() || isLimitReached}
-              className={`p-3 sm:p-3.5 rounded-2xl transition-all shadow-lg active:scale-95 ${
-                !input.trim() || loading || isLimitReached
-                  ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
-                  : 'bg-[blueviolet] text-white shadow-[blueviolet]/20 hover:scale-105 hover:bg-[#7c2ae8]'
-              }`}
-            >
-              {loading ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Send className="w-5 h-5 sm:w-6 sm:h-6" />}
-            </button>
-          </div>
-          <div className="mt-3 flex justify-center md:hidden">
-             <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-zinc-500 uppercase">Usage: {usage.count}/{usage.limit}</span>
-                <div className="w-20 h-1 bg-white/5 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${isLimitReached ? 'bg-red-500' : 'bg-[blueviolet]'}`}
-                    style={{ width: `${usagePercent}%` }}
-                  />
-                </div>
-             </div>
+
+            <div className="flex items-end gap-3">
+              <div className="flex-1 relative group">
+                <textarea
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={isLimitReached ? "Out of messages for today..." : "Ask ProBuddy anything..."}
+                  disabled={loading || isLimitReached}
+                  className="w-full bg-zinc-800/50 text-white text-sm rounded-2xl px-4 py-3 sm:py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 focus:bg-zinc-800 transition-all resize-none max-h-32 border border-white/10 group-hover:border-white/20 disabled:opacity-30 disabled:bg-zinc-900/50 disabled:grayscale transition-all"
+                  rows={1}
+                  style={{ height: 'auto', minHeight: '48px' }}
+                />
+                {!isLimitReached && (
+                  <div className="absolute right-3 bottom-3 text-[10px] text-zinc-500 font-mono hidden sm:block pointer-events-none">
+                    Enter
+                  </div>
+                )}
+              </div>
+              <button
+                onClick={handleSend}
+                disabled={loading || !input.trim() || isLimitReached}
+                className={`p-3 sm:p-3.5 rounded-2xl transition-all shadow-lg active:scale-95 ${
+                  !input.trim() || loading || isLimitReached
+                    ? 'bg-zinc-800 text-zinc-600 grayscale opacity-40 cursor-not-allowed shadow-none'
+                    : 'bg-[blueviolet] text-white shadow-[blueviolet]/20 hover:scale-105 hover:bg-[#7c2ae8]'
+                }`}
+              >
+                {loading ? <Loader2 className="w-5 h-5 sm:w-6 sm:h-6 animate-spin" /> : <Send className="w-5 h-5 sm:w-6 sm:h-6" />}
+              </button>
+            </div>
           </div>
         </div>
       </div>

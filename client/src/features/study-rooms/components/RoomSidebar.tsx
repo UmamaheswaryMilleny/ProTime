@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { startPomodoro, stopPomodoro, pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
-import { Timer, Play, Pause, Square, ChevronDown, Bot, Loader2 } from 'lucide-react';
+import { Timer, Play, Pause, Square, ChevronDown, Bot, Loader2, Zap } from 'lucide-react';
 import type { TodoItem } from '../../todo/types/todo.types';
 import { useProBuddyChat } from '../../chat/hooks/useProBuddyChat';
+import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 interface RoomSidebarProps {
   isHost: boolean;
@@ -12,12 +14,22 @@ interface RoomSidebarProps {
 
 export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { activeTask, isRunning, timeRemaining, initialTime } = useAppSelector(s => s.pomodoro);
   const { activeRoom } = useAppSelector(s => s.studyRoom);
   const [durationMinutes, setDurationMinutes] = useState(25);
   const [aiMessage, setAiMessage] = useState('');
 
-  const { messages, loading, sendMessage } = useProBuddyChat(activeRoom?.id || 'default');
+  const { 
+    messages, 
+    loading, 
+    sendMessage,
+    usage: aiUsage,
+    isPremium: isUserPremium
+  } = useProBuddyChat(activeRoom?.id || 'default');
+
+  const isAiLimitReached = aiUsage.count >= aiUsage.limit;
+
   const chatScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -28,7 +40,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
 
   const handleSendAi = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!aiMessage.trim() || loading) return;
+    if (!aiMessage.trim() || loading || isAiLimitReached) return;
     sendMessage(aiMessage);
     setAiMessage('');
   };
@@ -43,7 +55,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
 
   return (
     <div className="flex flex-col h-full gap-4 overflow-hidden pr-1">
-      {/* ─── Pomodoro Timer Panel ─────────────────────────────────────────── */}
+      {/* ─── Pomodoro Timer Panel (Commented Out as requested) ───────────────────────────────────────────
       <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 flex-shrink-0">
         <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
           <Timer size={16} className="text-[blueviolet]" />
@@ -52,13 +64,11 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
 
         {activeTask ? (
           <>
-            {/* Active task info */}
             <div className="bg-zinc-800 rounded-xl p-3 border border-white/10">
               <p className="text-xs text-zinc-400 mb-0.5">Active Task</p>
               <p className="text-sm text-white font-medium line-clamp-2">{activeTask.title}</p>
             </div>
 
-            {/* Circular progress */}
             <div className="flex flex-col items-center gap-3">
               <div className="relative w-24 h-24">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
@@ -95,7 +105,6 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
           </>
         ) : (
           <>
-            {/* No active task — only host can start */}
             {isHost ? (
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-zinc-500 text-center">As the host, you can start a Pomodoro session for everyone</p>
@@ -116,7 +125,6 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
 
                 <button
                   onClick={() => {
-                    // Create a virtual task for the room session
                     const roomTask: TodoItem = {
                       id: `room-${Date.now()}`,
                       title: 'Group Study Session',
@@ -156,18 +164,38 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
           </>
         )}
       </div>
+      ────────────────────────────────────────────────────────────────────── */}
 
       {/* ─── Bottom Section: ProBuddy AI (Only shows when active) ────────────────── */}
       {isAiMode && (
         <div className="bg-zinc-900/60 border border-white/10 rounded-2xl p-5 flex flex-col gap-4 flex-1 min-h-0 relative animate-in slide-in-from-bottom-2 duration-300">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
-              <Bot size={16} className="text-[blueviolet]" />
-              ProBuddy AI
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-zinc-200">
+                <Bot size={16} className="text-[blueviolet]" />
+                ProBuddy AI
+              </div>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${isAiLimitReached ? 'bg-red-500/10 text-red-500 border-red-500/20' : 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20'} animate-pulse`}>
+                {isAiLimitReached ? 'Limit Reached' : 'Online'}
+              </span>
             </div>
-            <span className="text-[10px] bg-[blueviolet]/10 text-[blueviolet] px-2 py-0.5 rounded-full border border-[blueviolet]/20 font-bold animate-pulse">
-              Online
-            </span>
+            {/* Usage status for drawers */}
+            <div className="flex items-center justify-between px-0.5 mt-0.5">
+               <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
+                 {isAiLimitReached ? 'Daily Limit Reached' : `${Math.max(0, aiUsage.limit - aiUsage.count)} messages left`}
+               </span>
+               {isAiLimitReached && !isUserPremium && (
+                 <button 
+                  onClick={() => {
+                    navigate('/subscription');
+                    toast.error("Upgrade to Premium for more!");
+                  }}
+                  className="text-[9px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-0.5 uppercase tracking-widest"
+                 >
+                   Upgrade <Zap size={8} className="fill-current" />
+                 </button>
+               )}
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
@@ -213,19 +241,27 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
                 type="text"
                 value={aiMessage}
                 onChange={(e) => setAiMessage(e.target.value)}
-                placeholder="Ask ProBuddy anything..."
-                disabled={loading}
-                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2.5 pl-3.5 pr-10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-all border-b-2 border-b-[blueviolet]/30 disabled:opacity-50"
+                placeholder={isAiLimitReached ? "Daily limit reached..." : "Ask ProBuddy anything..."}
+                disabled={loading || isAiLimitReached}
+                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2.5 pl-3.5 pr-10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-all border-b-2 border-b-[blueviolet]/30 disabled:opacity-30 disabled:grayscale"
               />
               <button 
                 type="submit"
-                disabled={!aiMessage.trim() || loading}
-                className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg bg-[blueviolet] text-white hover:bg-[blueviolet]/80 transition-colors shadow-lg shadow-[blueviolet]/20 disabled:opacity-50"
+                disabled={!aiMessage.trim() || loading || isAiLimitReached}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-lg transition-all shadow-lg ${
+                  isAiLimitReached 
+                    ? 'bg-zinc-700 text-zinc-500 opacity-50 cursor-not-allowed'
+                    : 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80 shadow-[blueviolet]/20'
+                }`}
               >
                 <Play size={10} className="fill-current" />
               </button>
             </div>
-            <p className="text-[9px] text-zinc-500 mt-2 text-center">AI responses may be limited by session length.</p>
+            {!isAiLimitReached ? (
+              <p className="text-[9px] text-zinc-500 mt-2 text-center italic opacity-60">AI responses are fast & helpful!</p>
+            ) : (
+              <p className="text-[9px] text-red-500/60 mt-2 text-center font-bold">Daily limit reached. Come back tomorrow!</p>
+            )}
           </form>
         </div>
       )}

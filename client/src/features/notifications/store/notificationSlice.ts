@@ -17,6 +17,9 @@ export type NotificationType =
     | 'missed_call'
     | 'study_room_invite'
     | 'study_room_request'
+    | 'subscription_expiring'
+    | 'subscription_expired'
+    | 'subscription_cancelled'
     | 'admin_warning';
 
 export interface Notification {

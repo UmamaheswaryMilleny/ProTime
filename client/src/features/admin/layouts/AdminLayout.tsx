@@ -12,11 +12,11 @@ const realRoutes = [
     { to: ROUTES.ADMIN_SUBSCRIPTIONS, icon: CreditCard, label: 'Subscriptions' },
     { to: ROUTES.ADMIN_REPORTS, icon: Flag, label: 'User Reports' },
     { to: ROUTES.ADMIN_MEETINGS, icon: CalendarDays, label: 'Meeting Management' },
+    { to: ROUTES.ADMIN_GAMIFICATION, icon: Gamepad2, label: 'Gamification Management' },
 ];
 
 const placeholderItems = [
     { icon: Layers, label: 'Skills Management' },
-    { icon: Gamepad2, label: 'Gamification Mana...' },
 ];
 
 export const AdminLayout: React.FC = () => {

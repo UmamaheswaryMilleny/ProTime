@@ -20,10 +20,14 @@ export interface DirectMessageResponseDTO {
   senderId: string | null;
   fullName: string | null;
   content: string;
-  messageType: 'TEXT' | 'SYSTEM' | 'AI';
+  messageType: 'TEXT' | 'SYSTEM' | 'AI' | 'IMAGE' | 'FILE';
   status: 'SENT' | 'DELIVERED' | 'READ';
   readAt?: string;
   sessionId?: string;
+  fileUrl?: string;
+  fileName?: string;
+  fileSize?: number;
+  fileType?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -111,10 +115,28 @@ export const chatApi = {
     );
     return response.data;
   },
-  sendMessage: async (conversationId: string, content: string) => {
+  sendMessage: async (conversationId: string, content: string, attachment?: { fileUrl: string; fileName: string; fileSize: number; fileType: string; messageType: 'IMAGE' | 'FILE' }) => {
+    const payload: any = { content };
+    if (attachment) {
+      payload.messageType = attachment.messageType;
+      payload.fileUrl = attachment.fileUrl;
+      payload.fileName = attachment.fileName;
+      payload.fileSize = attachment.fileSize;
+      payload.fileType = attachment.fileType;
+    }
     const response = await ProTimeBackend.post<{ success: boolean; data: DirectMessageResponseDTO }>(
       API_ROUTES.CHAT_MESSAGES(conversationId),
-      { content }
+      payload
+    );
+    return response.data;
+  },
+  uploadAttachment: async (file: File) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await ProTimeBackend.post<{ success: boolean; data: { fileUrl: string; fileName: string; fileSize: number; fileType: string } }>(
+      API_ROUTES.CHAT_UPLOAD,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
     return response.data;
   },
