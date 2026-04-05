@@ -10,6 +10,10 @@ export interface DirectMessageDocument extends Document {
     status: MessageStatus;
     readAt: Date | null;
     sessionId: mongoose.Types.ObjectId | null;
+    fileUrl: string | null;
+    fileName: string | null;
+    fileSize: number | null;
+    fileType: string | null;
     createdAt: Date;
     updatedAt: Date;
 }

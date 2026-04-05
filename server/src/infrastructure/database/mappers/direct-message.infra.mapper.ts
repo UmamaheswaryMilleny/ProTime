@@ -13,6 +13,10 @@ export class DirectMessageInfraMapper {
             status: doc.status,
             readAt: doc.readAt ?? undefined,
             sessionId: doc.sessionId?.toString() ?? undefined,
+            fileUrl: doc.fileUrl ?? undefined,
+            fileName: doc.fileName ?? undefined,
+            fileSize: doc.fileSize ?? undefined,
+            fileType: doc.fileType ?? undefined,
             createdAt: doc.createdAt,
             updatedAt: doc.updatedAt,
         };

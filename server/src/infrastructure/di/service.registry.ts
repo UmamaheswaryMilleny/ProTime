@@ -51,6 +51,8 @@ import { IUserBadgeRepository } from '../../domain/repositories/gamification/gam
 import { MongoGamificationRepository } from '../repositories/gamification/gamification.repository';
 import { MongoBadgeDefinitionRepository } from '../repositories/gamification/badge.repository';
 import { MongoUserBadgeRepository } from '../repositories/gamification/badge.repository';
+import type { IAdminGamificationRepository } from '../../domain/repositories/admin/admin-gamification.repository.interface';
+import { AdminGamificationRepository } from '../repositories/admin/admin-gamification.repository';
 
 //buddy-match
 import type { IBuddyPreferenceRepository } from '../../domain/repositories/buddy/buddy.preference.repository.interface';
@@ -169,6 +171,9 @@ export class ServiceRegistry {
     );
     container.register<IUserBadgeRepository>('IUserBadgeRepository', {
       useClass: MongoUserBadgeRepository,
+    });
+    container.register<IAdminGamificationRepository>('IAdminGamificationRepository', {
+      useClass: AdminGamificationRepository,
     });
 
     //subscription

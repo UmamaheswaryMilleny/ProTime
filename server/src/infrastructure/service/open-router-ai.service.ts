@@ -47,7 +47,8 @@ export class OpenRouterAIService implements IAIService {
       return response.data.choices[0].message.content || 'I apologize, but I am unable to generate a response at the moment.';
     } catch (error: any) {
       console.error('OpenRouter AI Error:', error.response?.data || error.message);
-      throw new Error('Failed to get response from AI service');
+      // Don't leak API details, but provide a clear message for the controller
+      throw new Error('AI_SERVICE_UNAVAILABLE');
     }
   }
 }

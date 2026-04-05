@@ -69,6 +69,10 @@ export const SubscriptionSchema = new Schema(
       required: true,
       default: () => new Date(),
     },
+    lastExpiryNotificationSentAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,

@@ -15,6 +15,24 @@ import GoogleAuthUsecase from '../../application/usecase/implementation/auth/goo
 import { GetAdminDashboardStatsUsecase } from '../../application/usecase/implementation/admin/get-admin-dashboard-stats.usecase';
 import type { IGetAdminDashboardStatsUsecase } from '../../application/usecase/interface/admin/get-admin-dashboard-stats.usecase.interface';
 
+// Admin Gamification
+import {
+  GetGamificationOverviewUsecase,
+  GetUsersProgressUsecase,
+  GetGamificationUserDetailUsecase,
+  GetGamificationLeaderboardUsecase,
+  GetBadgesGridUsecase,
+  ToggleBadgeUsecase
+} from '../../application/usecase/implementation/admin/admin-gamification.usecases';
+import type {
+  IGetGamificationOverviewUsecase,
+  IGetUsersProgressUsecase,
+  IGetGamificationUserDetailUsecase,
+  IGetGamificationLeaderboardUsecase,
+  IGetBadgesGridUsecase,
+  IToggleBadgeUsecase
+} from '../../application/usecase/interface/admin/admin-gamification.usecases.interface';
+
 // Use case interfaces
 import type { IRegisterUsecase } from '../../application/usecase/interface/auth/register.usecase.interface';
 import type { ILogoutUseCase } from '../../application/usecase/interface/auth/logout.usecase.interface';
@@ -72,6 +90,8 @@ import type { IGetSubscriptionUsecase } from '../../application/usecase/interfac
 import type { ICreateCheckoutSessionUsecase } from '../../application/usecase/interface/subscription/create-checkout-session.usecase.interface';
 import type { ICancelSubscriptionUsecase } from '../../application/usecase/interface/subscription/cancel-subscription.usecase.interface';
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
+import { SendSubscriptionNotificationsUsecase } from '../../application/usecase/implementation/subscription/send-subscription-notifications.usecase';
+import type { ISendSubscriptionNotificationsUsecase } from '../../application/usecase/interface/subscription/send-subscription-notifications.usecase.interface';
 import { GetSubscriptionStatsUsecase } from '../../application/usecase/implementation/subscription/get-subscription-stats.usecase';
 import { GetSubscriptionsAdminUsecase } from '../../application/usecase/implementation/subscription/get-subscriptions-admin.usecase';
 import type { IGetSubscriptionStatsUsecase } from '../../application/usecase/interface/subscription/get-subscription-stats.usecase.interface';
@@ -243,6 +263,14 @@ export class UsecaseRegistry {
       useClass: GetAdminDashboardStatsUsecase,
     });
 
+    // Admin Gamification
+    container.register<IGetGamificationOverviewUsecase>('IGetGamificationOverviewUsecase', { useClass: GetGamificationOverviewUsecase });
+    container.register<IGetUsersProgressUsecase>('IGetUsersProgressUsecase', { useClass: GetUsersProgressUsecase });
+    container.register<IGetGamificationUserDetailUsecase>('IGetGamificationUserDetailUsecase', { useClass: GetGamificationUserDetailUsecase });
+    container.register<IGetGamificationLeaderboardUsecase>('IGetGamificationLeaderboardUsecase', { useClass: GetGamificationLeaderboardUsecase });
+    container.register<IGetBadgesGridUsecase>('IGetBadgesGridUsecase', { useClass: GetBadgesGridUsecase });
+    container.register<IToggleBadgeUsecase>('IToggleBadgeUsecase', { useClass: ToggleBadgeUsecase });
+
     // todo
     container.register<ICreateTodoUsecase>('ICreateTodoUsecase', {
       useClass: CreateTodoUsecase,
@@ -332,6 +360,12 @@ export class UsecaseRegistry {
       'IHandleStripeWebhookUsecase',
       {
         useClass: HandleStripeWebhookUsecase,
+      },
+    );
+    container.register<ISendSubscriptionNotificationsUsecase>(
+      'ISendSubscriptionNotificationsUsecase',
+      {
+        useClass: SendSubscriptionNotificationsUsecase,
       },
     );
 

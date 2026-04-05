@@ -55,6 +55,7 @@ export class SubscriptionRepository
       | 'cancelledAt'
       | 'aiUsageCount'
       | 'lastAiUsageReset'
+      | 'lastExpiryNotificationSentAt'
     >>,
   ): Promise<SubscriptionEntity | null> {
     const update = SubscriptionInfraMapper.toPersistence(data);
@@ -85,6 +86,34 @@ export class SubscriptionRepository
     return docs.map((doc) =>
       SubscriptionInfraMapper.toDomain(doc as SubscriptionDocument),
     );
+  }
+
+  async findExpiringSubscriptions(withinDays: number): Promise<SubscriptionEntity[]> {
+    const now = new Date();
+    const futureDate = new Date();
+    futureDate.setDate(now.getDate() + withinDays);
+
+    // Find active premium subscriptions expiring within the time frame
+    // that haven't had an expiry notification sent in the current period
+    const docs = await SubscriptionModel.find({
+      plan: 'PREMIUM',
+      status: 'ACTIVE',
+      currentPeriodEnd: { $gt: now, $lte: futureDate },
+      $or: [
+        { lastExpiryNotificationSentAt: { $exists: false } },
+        { lastExpiryNotificationSentAt: null },
+        { lastExpiryNotificationSentAt: { $lt: '$currentPeriodStart' } } // This is tricky in Mongoose find, might need to re-evaluate or do it in memory
+      ]
+    }).lean();
+
+    // Re-filtering in memory for the date comparison to be safe and accurate
+    return docs
+      .map(doc => SubscriptionInfraMapper.toDomain(doc as SubscriptionDocument))
+      .filter(entity => {
+        if (!entity.lastExpiryNotificationSentAt) return true;
+        if (!entity.currentPeriodStart) return true;
+        return entity.lastExpiryNotificationSentAt < entity.currentPeriodStart;
+      });
   }
 
   // ─── Admin logic ──────────────────────────────────────────────────────────

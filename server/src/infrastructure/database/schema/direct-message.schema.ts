@@ -18,8 +18,8 @@ export const DirectMessageSchema = new Schema(
 
         content: {
             type: String,
-            required: true,
             maxlength: 1000,
+            default: '',
         },
 
         messageType: {
@@ -47,6 +47,10 @@ export const DirectMessageSchema = new Schema(
             ref: 'ChatSession',
             default: null,
         },
+        fileUrl:  { type: String, default: null },
+        fileName: { type: String, default: null },
+        fileSize: { type: Number, default: null },
+        fileType: { type: String, default: null },
     },
     { timestamps: true },
 );

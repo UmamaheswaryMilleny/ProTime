@@ -13,6 +13,7 @@ export interface SubscriptionDocument extends Document {
   cancelledAt: Date | null;
   aiUsageCount: number;
   lastAiUsageReset: Date;
+  lastExpiryNotificationSentAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
 }
