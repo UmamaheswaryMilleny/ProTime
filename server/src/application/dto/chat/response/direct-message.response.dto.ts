@@ -10,6 +10,10 @@ export interface DirectMessageResponseDTO {
     status: MessageStatus;
     readAt?: Date;
     sessionId?: string;
+    fileUrl?: string;
+    fileName?: string;
+    fileSize?: number;
+    fileType?: string;
     createdAt: Date;
     updatedAt: Date;
 }

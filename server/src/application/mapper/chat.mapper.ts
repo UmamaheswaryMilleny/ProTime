@@ -20,6 +20,10 @@ export class ChatMapper {
             status: entity.status,
             readAt: entity.readAt,
             sessionId: entity.sessionId,
+            fileUrl: entity.fileUrl,
+            fileName: entity.fileName,
+            fileSize: entity.fileSize,
+            fileType: entity.fileType,
             createdAt: entity.createdAt,
             updatedAt: entity.updatedAt,
         };

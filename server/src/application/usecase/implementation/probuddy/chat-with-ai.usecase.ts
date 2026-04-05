@@ -14,20 +14,28 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
   ) {}
 
   async execute(userId: string, prompt: string): Promise<string> {
-    const subscription = await this.subscriptionRepository.findByUserId(userId);
+    let subscription = await this.subscriptionRepository.findByUserId(userId);
     
+    // Auto-provision FREE subscription if missing (prevents 500 error for older users)
     if (!subscription) {
-      throw new Error('Subscription not found for user');
+      subscription = await this.subscriptionRepository.updateByUserId(userId, {
+        plan: SubscriptionPlan.FREE,
+        aiUsageCount: 0,
+        lastAiUsageReset: new Date(),
+      });
+      
+      if (!subscription) throw new Error('Failed to initialize subscription for user');
     }
 
     const now = new Date();
-    const lastReset = new Date(subscription.lastAiUsageReset);
+    // Default to a safe date if lastAiUsageReset is somehow invalid/null
+    const lastReset = subscription.lastAiUsageReset ? new Date(subscription.lastAiUsageReset) : new Date(0);
     const diffInHours = (now.getTime() - lastReset.getTime()) / (1000 * 60 * 60);
 
-    let currentUsage = subscription.aiUsageCount;
+    let currentUsage = subscription.aiUsageCount || 0;
 
     // Reset counter if more than 24 hours have passed
-    if (diffInHours >= 24) {
+    if (diffInHours >= 24 || isNaN(diffInHours)) {
       currentUsage = 0;
       await this.subscriptionRepository.updateByUserId(userId, {
         aiUsageCount: 0,
@@ -36,10 +44,14 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
     }
 
     // Enforce daily limits: 20 for Free, 100 for Premium
-    const limit = subscription.plan === SubscriptionPlan.PREMIUM ? 100 : 20;
+    const isPremium = subscription.plan === SubscriptionPlan.PREMIUM;
+    const limit = isPremium ? 100 : 20;
 
     if (currentUsage >= limit) {
-      throw new Error(`Daily AI limit reached (${limit} messages). Upgrade or wait until tomorrow!`);
+      const upgradeMsg = isPremium 
+        ? "Daily Premium AI limit reached. Please wait until tomorrow!" 
+        : "Daily Free AI limit reached (20 messages). Upgrade to Premium for 100 daily messages!";
+      throw new Error(upgradeMsg);
     }
 
     // Call AI Service

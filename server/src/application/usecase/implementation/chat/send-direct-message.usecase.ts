@@ -58,6 +58,10 @@ export class SendDirectMessageUsecase implements ISendDirectMessageUsecase {
             content: dto.content.trim(),
             messageType: dto.messageType || MessageType.TEXT,
             status: MessageStatus.SENT,
+            fileUrl: dto.fileUrl,
+            fileName: dto.fileName,
+            fileSize: dto.fileSize,
+            fileType: dto.fileType,
         });
 
         // Update conversation preview

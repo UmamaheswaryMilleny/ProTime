@@ -10,6 +10,7 @@ import {
   SubscriptionStatus,
 } from '../../../../domain/enums/subscription.enums';
 import { logger } from '../../../../infrastructure/config/logger.config';
+import type { ISocketService } from '../../../service_interface/socket-service.interface';
 
 @injectable()
 export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
@@ -22,6 +23,9 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
 
     @inject('IStripeService')
     private readonly stripeService: IStripeService,
+
+    @inject('ISocketService')
+    private readonly socketService: ISocketService,
   ) {}
 
   async execute(rawBody: Buffer, signature: string): Promise<void> {
@@ -110,6 +114,13 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
       }),
       this.userRepository.updateById(userId, { isPremium: true }),
     ]);
+
+    // ④ Emit welcome notification
+    this.socketService.emitToUser(userId, 'notification:new', {
+      type: 'premium_purchased',
+      title: 'Welcome to Premium! 💎',
+      message: 'Your ProTime Premium subscription is now active. Enjoy all the exclusive benefits!',
+    });
   }
 
   // ─── invoice.payment_succeeded ────────────────────────────────────────────
@@ -162,6 +173,13 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
       }),
       this.userRepository.updateById(subscription.userId, { isPremium: false }),
     ]);
+
+    // Emit expiry notification
+    this.socketService.emitToUser(subscription.userId, 'notification:new', {
+      type: 'subscription_expired',
+      title: 'Subscription Expired 💎',
+      message: 'Your premium subscription has expired. You have been moved to the free plan.',
+    });
   }
 
   // ─── customer.subscription.updated ────────────────────────────────────────
@@ -182,6 +200,13 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
     await this.subscriptionRepository.updateByUserId(subscription.userId, {
       status: SubscriptionStatus.CANCELLED,
       cancelledAt: new Date(),
+    });
+
+    // Emit cancellation notification
+    this.socketService.emitToUser(subscription.userId, 'notification:new', {
+      type: 'subscription_cancelled',
+      title: 'Subscription Cancelled 💎',
+      message: 'Your premium subscription has been cancelled. You will retain premium benefits until the end of your current period.',
     });
   }
 }

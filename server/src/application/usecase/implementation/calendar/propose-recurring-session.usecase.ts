@@ -53,15 +53,13 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
     const endMinutes   = endH   * 60 + endM;
     const durationMinutes = endMinutes - startMinutes;
 
-    if (durationMinutes <= 0) {
-      throw new Error('End time must be after start time');
+    if (durationMinutes < 30) {
+      throw new Error('Session duration must be at least 30 minutes');
     }
     if (durationMinutes > 360) {
       throw new Error('Session duration cannot exceed 6 hours');
     }
 
-    // Calculate recurring dates (prioritize provided dates from frontend for timezone accuracy)
-    let recurringDates: Date[];
     if (dto.dates && dto.dates.length > 0) {
       recurringDates = dto.dates.map(ds => {
         const d = new Date(`${ds}T00:00:00`); // Parse as local-like
@@ -71,6 +69,15 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
     } else {
       recurringDates = this.calculateRecurringDates(dto);
     }
+
+    // ─── New Validation: No sessions in the past ────────────────────
+    if (recurringDates.length === 0) {
+        throw new Error('No valid dates found for this schedule');
+    }
+    if (recurringDates[0].getTime() <= Date.now()) {
+        throw new Error('Cannot schedule a session that has already passed today');
+    }
+    // ────────────────────────────────────────────────────────────────
 
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
