@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { IGetRoomsUsecase } from "../../interface/study-room/get-rooms.usecase.interface";
-import { GetRoomsRequestDTO, GetRoomsResponseDTO, StudyRoomResponseDTO } from "../../../dtos/study-room.dto";
+import { GetRoomsRequestDTO, GetRoomsResponseDTO, StudyRoomResponseDTO } from "../../../dto/study-room/study-room.dto";
 import { RoomStatus } from "../../../../domain/enums/study-room.enums";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";

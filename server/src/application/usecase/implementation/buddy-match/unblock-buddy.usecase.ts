@@ -21,11 +21,10 @@ export class UnblockBuddyUsecase implements IUnblockBuddyUsecase {
     // Only the person who blocked can unblock
     if (connection.blockedBy !== userId) throw new UnauthorizedUnblockError();
 
-    // Set back to DECLINED — strangers again, not buddies
-    // DECLINED means either side can send a fresh request
+   
     await this.buddyConnectionRepo.updateStatusWithBlockedBy(
       connectionId,
-      BuddyConnectionStatus.DECLINED,
+      BuddyConnectionStatus.DECLINED, //Can send request again
       undefined, // clear blockedBy
     );
   }

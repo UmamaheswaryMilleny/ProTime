@@ -60,8 +60,10 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
       throw new Error('Session duration cannot exceed 6 hours');
     }
 
+    let recurringDates: Date[] = [];
+
     if (dto.dates && dto.dates.length > 0) {
-      recurringDates = dto.dates.map(ds => {
+      recurringDates = dto.dates.map((ds) => {
         const d = new Date(`${ds}T00:00:00`); // Parse as local-like
         d.setHours(startH, startM, 0, 0);
         return d;
@@ -71,10 +73,11 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
     }
 
     // ─── New Validation: No sessions in the past ────────────────────
-    if (recurringDates.length === 0) {
+    const firstDate = recurringDates[0];
+    if (!firstDate) {
         throw new Error('No valid dates found for this schedule');
     }
-    if (recurringDates[0].getTime() <= Date.now()) {
+    if (firstDate.getTime() <= Date.now()) {
         throw new Error('Cannot schedule a session that has already passed today');
     }
     // ────────────────────────────────────────────────────────────────
@@ -85,7 +88,7 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
       // We are creating a recurring request, don't set sessionId
       proposedBy:     userId,
       proposedTo:     participantId,
-      scheduledAt:    recurringDates[0], // primary date for legacy compatibility
+      scheduledAt:    firstDate, // primary date for legacy compatibility
       recurringDates,
       durationMinutes,
       confirmStatus: ScheduleConfirmStatus.PENDING,
@@ -114,7 +117,13 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
   private calculateRecurringDates(dto: ProposeRecurringSessionRequestDTO): Date[] {
     const dates: Date[] = [];
     const currentDate = new Date();
-    const targetDays = dto.days.map(day => DAYS_OF_WEEK.indexOf(day));
+    const targetDays = dto.days
+      .map(day => DAYS_OF_WEEK.findIndex(d => d.toLowerCase() === day.toLowerCase()))
+      .filter(idx => idx !== -1);
+
+    if (targetDays.length === 0) {
+      throw new Error('No valid study days provided (e.g. Monday, Tuesday)');
+    }
     const timeParts = dto.startTime.split(':').map(Number);
     const hour = timeParts[0] || 0;
     const min = timeParts[1] || 0;

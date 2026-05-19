@@ -7,8 +7,7 @@ import type { IProfileRepository } from '../../../../domain/repositories/profile
 import type { FindBuddyMatchesRequestDTO } from '../../../dto/buddy-match/request/find-buddy-matches.request.dto';
 import type { PaginatedBuddyProfileResponseDTO } from '../../../dto/buddy-match/response/paginated-buddy-profile.response.dto';
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
-
-const { log } = console;
+import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
@@ -28,27 +27,30 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
 
   async execute(
     userId: string,
-    dto:    FindBuddyMatchesRequestDTO,
+    dto: FindBuddyMatchesRequestDTO,
   ): Promise<PaginatedBuddyProfileResponseDTO> {
-
     const myPreference = await this.buddyPreferenceRepo.findByUserId(userId);
-    log(`[FindBuddyMatches] userId: ${userId}`);
-    log(`[FindBuddyMatches] myPreference: ${myPreference ? `goal=${myPreference.studyGoal} country=${myPreference.country} visible=${myPreference.isVisible}` : 'NOT FOUND'}`);
+    logger.info(`[FindBuddyMatches] userId: ${userId}`);
+    logger.info(
+      `[FindBuddyMatches] myPreference: ${myPreference ? `goal=${myPreference.studyGoal} country=${myPreference.country} visible=${myPreference.isVisible}` : 'NOT FOUND'}`,
+    );
 
     if (!myPreference) {
       return { profiles: [], total: 0, page: dto.page, limit: dto.limit };
     }
 
-    // Fetch isPremium from DB — not from JWT to avoid stale data
-    const user      = await this.userRepo.findById(userId);
+    const user = await this.userRepo.findById(userId);
     const isPremium = user?.isPremium ?? false;
 
     // Exclude users already connected (any status)
-    const existingConnections = await this.buddyConnectionRepo.findByUserId(userId);
-    const excludeUserIds = existingConnections.map(c =>
+    const existingConnections =
+      await this.buddyConnectionRepo.findByUserId(userId);
+    const excludeUserIds = existingConnections.map((c) =>
       c.userId === userId ? c.buddyId : c.userId,
     );
-    log(`[FindBuddyMatches] isPremium: ${isPremium} | excludeUserIds count: ${excludeUserIds.length}`);
+    logger.info(
+      `[FindBuddyMatches] isPremium: ${isPremium} | excludeUserIds count: ${excludeUserIds.length}`,
+    );
 
     const result = await this.buddyPreferenceRepo.findMatches(
       userId,
@@ -60,39 +62,49 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
       dto.limit,
       dto.search,
       dto.global === 'true',
-      isPremium ? {
-        subjectDomain:   myPreference.subjectDomain,
-        availability:    myPreference.availability,
-        sessionDuration: myPreference.sessionDuration,
-        focusLevel:      myPreference.focusLevel,
-        studyPreference: myPreference.studyPreference,
-      } : undefined
+      isPremium
+        ? {
+            subjectDomain: myPreference.subjectDomain,
+            availability: myPreference.availability,
+            sessionDuration: myPreference.sessionDuration,
+            focusLevel: myPreference.focusLevel,
+            studyPreference: myPreference.studyPreference,
+          }
+        : undefined,
     );
     const profiles = result.profiles;
-    const total    = result.total;
+    const total = result.total;
 
-    log(`[FindBuddyMatches] profiles from DB: ${total} | returned: ${profiles.length}`);
+    logger.info(
+      `[FindBuddyMatches] profiles from DB: ${total} | returned: ${profiles.length}`,
+    );
 
-    const userIds = profiles.map(p => p.userId);
+    const userIds = profiles.map((p) => p.userId);
     const matchedProfiles = await this.profileRepo.findByUserIds(userIds);
     // Create a map for quick lookup since findByUserIds might not return profiles in same order as userIds
-    const profileMap = new Map(matchedProfiles.map(p => [p.userId, p]));
+    const profileMap = new Map(matchedProfiles.map((p) => [p.userId, p]));
 
-    const profileDTOs = profiles.map((preference) => {
-      const profile = profileMap.get(preference.userId);
-      if (!profile) {
-        log(`[FindBuddyMatches] ⚠️ No profile found for userId: ${preference.userId}`);
-        return null;
-      }
-      return BuddyMapper.preferenceToPublicProfile(preference, profile);
-    }).filter((p): p is NonNullable<typeof p> => p !== null);
+    const profileDTOs = profiles
+      .map((preference) => {
+        const profile = profileMap.get(preference.userId);
+        if (!profile) {
+          logger.warn(
+            `[FindBuddyMatches] ⚠️ No profile found for userId: ${preference.userId}`,
+          );
+          return null;
+        }
+        return BuddyMapper.preferenceToPublicProfile(preference, profile);
+      })
+      .filter((p): p is NonNullable<typeof p> => p !== null);
 
-    log(`[FindBuddyMatches] final profileDTOs returned: ${profileDTOs.length}`);
+    logger.info(
+      `[FindBuddyMatches] final profileDTOs returned: ${profileDTOs.length}`,
+    );
 
     return {
       profiles: profileDTOs,
       total,
-      page:  dto.page,
+      page: dto.page,
       limit: dto.limit,
     };
   }
