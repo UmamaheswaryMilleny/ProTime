@@ -1,12 +1,12 @@
 export enum ReportStatus {
   PENDING   = 'PENDING',
-  RESOLVED  = 'RESOLVED',   // action was taken
-  DISMISSED = 'DISMISSED',  // admin reviewed but no action needed
+  RESOLVED  = 'RESOLVED',  
+  DISMISSED = 'DISMISSED',  
 }
 
 export enum ReportContext {
-  CHAT       = 'CHAT',       // ← consistent with rest of codebase
-  VIDEO_CALL = 'VIDEO_CALL', // ← no spaces
+  CHAT       = 'CHAT',      
+  VIDEO_CALL = 'VIDEO_CALL',
   GROUP_ROOM = 'GROUP_ROOM',
 }
 

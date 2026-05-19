@@ -36,7 +36,7 @@ export interface IGamificationRepository extends IBaseRepository<UserGamificatio
 
   incrementDailyChatCount(userId: string): Promise<void>;
 
-  // Used by UpdateStreakUsecase to verify streak eligibility (needs pomodoro)
+
   markPomodoroUsedToday(userId: string): Promise<void>;
 }
 

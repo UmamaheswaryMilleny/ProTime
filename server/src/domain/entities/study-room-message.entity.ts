@@ -3,8 +3,8 @@ export interface StudyRoomMessageEntity {
   roomId: string;
   senderId: string;
   content?: string;
-  fileUrl?: string; // URL of the uploaded file
-  fileType?: string; // MIME type or category (image, document, etc.)
+  fileUrl?: string; 
+  fileType?: string; 
   createdAt: Date;
   updatedAt: Date;
 }

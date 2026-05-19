@@ -12,7 +12,7 @@ export interface ISessionScheduleRequestRepository
     sessionId: string,
   ): Promise<SessionScheduleRequestEntity | null>;
 
-  // Find PENDING requests past expiresAt — used by cron job
+
   findExpiredRequests(): Promise<SessionScheduleRequestEntity[]>;
 
   updateConfirmStatus(

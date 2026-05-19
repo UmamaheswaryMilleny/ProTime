@@ -7,7 +7,7 @@ export enum MessageType {
 }
 
 export enum MessageStatus {
-    SENT = 'SENT',       // saved to DB
-    DELIVERED = 'DELIVERED',  // receiver online, received via socket
-    READ = 'READ',       // receiver opened the chat
+    SENT = 'SENT',     
+    DELIVERED = 'DELIVERED',  
+    READ = 'READ',     
 }

@@ -31,7 +31,7 @@ export interface UserBadgeEntity {
   userId: string;
   badgeDefinitionId: string;
   badgeKey: string; //for when you need full badge details.
-  // badgeKey is just for the fast "does this user already have this badge" check.
+  // badgeKey is just for the fast lookup "does this user already have this badge" check.
   earnedAt: Date;
   xpAwarded: boolean; // true = 50 XP bonus was credited to gamification
   // false = user was FREE, badge earned but no XP bonus
