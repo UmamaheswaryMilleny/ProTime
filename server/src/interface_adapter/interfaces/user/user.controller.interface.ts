@@ -13,4 +13,5 @@ export interface IUserController {
     next: NextFunction,
   ): Promise<void>;
   uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  getActiveSkills(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }

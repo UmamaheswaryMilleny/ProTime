@@ -15,6 +15,7 @@ export class ProfileMapper {
       country: doc.country ?? undefined,
       languages: doc.languages ?? [],
       profileImage: doc.profileImage ?? undefined,
+      skills: doc.skills ?? [],
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -34,6 +35,7 @@ export class ProfileMapper {
     if (data.languages !== undefined) result.languages = data.languages;
     if (data.profileImage !== undefined)
       result.profileImage = data.profileImage;
+    if (data.skills !== undefined) result.skills = data.skills;
 
     return result;
   }

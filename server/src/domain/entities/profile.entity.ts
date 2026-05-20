@@ -7,6 +7,7 @@ export interface ProfileEntity {
   country?: string;
   languages?: string[];
   profileImage?: string;
+  skills?: any[];
   createdAt: Date;
   updatedAt: Date;
 }

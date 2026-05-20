@@ -39,6 +39,11 @@ export const ProfileSchema=new Schema(
             type:String,
             default:null,
         },
+        skills: {
+            type: [Schema.Types.ObjectId],
+            ref: "Skill",
+            default: [],
+        },
     },
     {
         timestamps:true,

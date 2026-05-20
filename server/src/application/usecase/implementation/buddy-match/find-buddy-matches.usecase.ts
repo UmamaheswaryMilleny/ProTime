@@ -87,6 +87,23 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
       return BuddyMapper.preferenceToPublicProfile(preference, profile);
     }).filter((p): p is NonNullable<typeof p> => p !== null);
 
+    // Sort profileDTOs based on number of matching skills (highest first)
+    try {
+      const myProfile = await this.profileRepo.findByUserId(userId);
+      const mySkills = myProfile?.skills?.map((s: any) => s._id?.toString() || s.toString()) || [];
+      if (mySkills.length > 0) {
+        profileDTOs.sort((a, b) => {
+          const aSkills = a.skills?.map((s: any) => s._id?.toString() || s.toString()) || [];
+          const bSkills = b.skills?.map((s: any) => s._id?.toString() || s.toString()) || [];
+          const aMatch = aSkills.filter((s: any) => mySkills.includes(s)).length;
+          const bMatch = bSkills.filter((s: any) => mySkills.includes(s)).length;
+          return bMatch - aMatch;
+        });
+      }
+    } catch (err) {
+      log(`[FindBuddyMatches] Error sorting by skills:`, err);
+    }
+
     log(`[FindBuddyMatches] final profileDTOs returned: ${profileDTOs.length}`);
 
     return {

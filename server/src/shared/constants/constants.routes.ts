@@ -65,6 +65,7 @@ export const ROUTES = {
   USER: {
     PROFILE: '/profile',
     AVATAR: '/profile/avatar',
+    SKILLS: '/skills',
   },
 
   // Todo Routes

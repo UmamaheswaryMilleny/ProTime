@@ -8,6 +8,7 @@ export interface UserProfileResponseDTO {
   country?: string;
   profileImage?: string;
   languages?:string[];
+  skills?: any[];
   createdAt: string;
 }
 

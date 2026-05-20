@@ -54,6 +54,7 @@ export class BuddyMapper {
       sessionDuration: entity.sessionDuration,
       focusLevel: entity.focusLevel,
       studyPreference: entity.studyPreference,
+      skills: profile.skills,
     };
   }
 

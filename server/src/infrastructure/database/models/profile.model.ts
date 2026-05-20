@@ -8,6 +8,7 @@ export interface ProfileDocument extends Document {
   country?: string | null;
   languages?: string[];
   profileImage?: string | null;
+  skills?: Types.ObjectId[] | any[];
   createdAt: Date;
   updatedAt: Date;
 }

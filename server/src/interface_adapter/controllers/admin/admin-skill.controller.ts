@@ -4,6 +4,10 @@ import { ResponseHelper } from '../../helpers/response.helper';
 import { HTTP_STATUS } from '../../../shared/constants/constants';
 import { SkillModel } from '../../../infrastructure/database/models/skill.model';
 
+function escapeRegExp(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 @injectable()
 export class AdminSkillController {
   
@@ -20,7 +24,7 @@ export class AdminSkillController {
       const query: Record<string, any> = {};
       
       if (search) {
-        query.name = { $regex: new RegExp(search, 'i') };
+        query.name = { $regex: new RegExp(escapeRegExp(search), 'i') };
       }
       
       if (category && category !== 'ALL') {
@@ -90,7 +94,7 @@ export class AdminSkillController {
       
       // Check for duplicate name case-insensitive
       const existing = await SkillModel.findOne({
-        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+        name: { $regex: new RegExp(`^${escapeRegExp(trimmedName)}$`, 'i') }
       }).lean();
       
       if (existing) {
@@ -133,7 +137,7 @@ export class AdminSkillController {
       // Check duplicate name excluding current skillId
       const existing = await SkillModel.findOne({
         _id: { $ne: skillId as any },
-        name: { $regex: new RegExp(`^${trimmedName}$`, 'i') }
+        name: { $regex: new RegExp(`^${escapeRegExp(trimmedName)}$`, 'i') }
       }).lean();
       
       if (existing) {

@@ -19,4 +19,5 @@ export interface BuddyProfileResponseDTO {
   sessionDuration?: SessionDuration;
   focusLevel?:      FocusLevel;
   studyPreference?: StudyPreference;
+  skills?:          any[];
 }

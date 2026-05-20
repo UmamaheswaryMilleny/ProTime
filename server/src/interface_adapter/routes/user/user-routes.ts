@@ -37,6 +37,9 @@ export class UserRoutes extends BaseRoute {
     // Get own profile
     this.router.get(ROUTES.USER.PROFILE, asyncHandler(ctrl.getProfile.bind(ctrl)));
 
+    // Get dynamic active skills
+    this.router.get(ROUTES.USER.SKILLS, asyncHandler(ctrl.getActiveSkills.bind(ctrl)));
+
       // Update own profile
     this.router.put(
       ROUTES.USER.PROFILE,

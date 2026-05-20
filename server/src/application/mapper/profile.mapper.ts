@@ -15,6 +15,7 @@ export class ProfileMapper {
       country: profile.country,
       languages:profile.languages,
       profileImage: profile.profileImage,
+      skills: profile.skills ?? [],
       createdAt: profile.createdAt.toISOString(),
     };
   }

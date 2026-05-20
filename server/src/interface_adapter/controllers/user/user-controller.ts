@@ -9,6 +9,7 @@ import { ResponseHelper } from "../../helpers/response.helper";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
 import type { CustomRequest } from "../../middlewares/auth.middleware";
 import type { IUploadProfileImageUsecase } from "../../../application/usecase/interface/user/image.usecase.interface";
+import { SkillModel } from "../../../infrastructure/database/models/skill.model";
 
 @injectable()
 export class UserController implements IUserController {
@@ -19,7 +20,7 @@ export class UserController implements IUserController {
     @inject("IProfileRepository")
     private readonly profileRepository: IProfileRepository,
     @inject('IUploadProfileImageUsecase')
-private readonly uploadProfileImageUsecase: IUploadProfileImageUsecase
+    private readonly uploadProfileImageUsecase: IUploadProfileImageUsecase
   ) {}
 
   // ─── Get Profile ──────────────────────────────────────────────────────────
@@ -81,8 +82,8 @@ async updateProfile(
       return;
     }
 
-    // ✅ languages added
-    const { fullName, username, bio, country, profileImage, languages } = req.body;
+    // ✅ languages and skills added
+    const { fullName, username, bio, country, profileImage, languages, skills } = req.body;
 
     if (username) {
       const isTaken = await this.profileRepository.existsByUsername(
@@ -96,10 +97,10 @@ async updateProfile(
       }
     }
 
-    // ✅ languages included in profile update
+    // ✅ languages and skills included in profile update
     const updatedProfile = await this.profileRepository.updateByUserId(
       req.user.id,
-      { fullName, username, bio, country, profileImage, languages },
+      { fullName, username, bio, country, profileImage, languages, skills },
     );
 
     if (!updatedProfile) {
@@ -157,5 +158,12 @@ async uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promi
   }
 }
 
-
+  async getActiveSkills(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const skills = await SkillModel.find({ isActive: true }).sort({ name: 1 }).lean();
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Active skills retrieved successfully', skills);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
