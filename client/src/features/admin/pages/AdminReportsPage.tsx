@@ -361,11 +361,11 @@ export const AdminReportsPage: React.FC = () => {
                                         >
                                             <option value={ReportAction.NO_ACTION}>Dismiss (No Action)</option>
                                             <option value={ReportAction.WARNING}>Issue Warning</option>
-                                            {/* <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block</option>
-                                            <option value={ReportAction.PERMANENT_BLOCK}>Permanent Block</option> */}
+                                            <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block</option>
+                                            <option value={ReportAction.PERMANENT_BLOCK}>Permanent Block</option>
                                         </select>
                                     </div>
-                                    {/* <div className="space-y-2">
+                                    <div className="space-y-2">
                                         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Admin Note</p>
                                         <textarea 
                                             value={adminNote}
@@ -373,7 +373,7 @@ export const AdminReportsPage: React.FC = () => {
                                             placeholder="Reason for this action..."
                                             className="w-full bg-[#1F1F23] border border-[#27272A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500 min-h-[80px] resize-none"
                                         />
-                                    </div> */}
+                                    </div>
                                     <div className="flex justify-end pt-2">
                                         <button
                                             onClick={handleResolve}
@@ -390,9 +390,9 @@ export const AdminReportsPage: React.FC = () => {
                                 <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
                                     <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Resolution Detail</p>
                                     <p className="text-sm font-medium text-emerald-400 mb-1">Action: {selectedReport.actionTaken}</p>
-                                    {/* {selectedReport.adminNote && (
+                                    {selectedReport.adminNote && (
                                         <p className="text-sm text-zinc-400 italic">"{selectedReport.adminNote}"</p>
-                                    )} */}
+                                    )}
                                 </div>
                             )}
                         </div>
