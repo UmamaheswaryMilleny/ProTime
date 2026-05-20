@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { ICreateRoomUsecase } from "../../interface/study-room/create-room.usecase.interface";
-import { CreateRoomRequestDTO, StudyRoomResponseDTO } from "../../../dto/study-room/study-room.dto";
+import { CreateRoomRequestDTO, StudyRoomResponseDTO } from "../../../dtos/study-room.dto";
 import { RoomStatus, RoomType, LevelRequired } from "../../../../domain/enums/study-room.enums";
 import { StudyRoomEntity } from "../../../../domain/entities/study-room.entity";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
@@ -9,6 +9,7 @@ import type { IRoomJoinRequestRepository } from "../../../../domain/repositories
 import type { INotificationService } from "../../../service_interface/notification-service.interface";
 import { NotificationType } from "../../../service_interface/notification-service.interface";
 import { JoinRequestStatus } from "../../../../domain/enums/study-room.enums";
+import { RoomCreationLimitExceededError } from "../../../../domain/errors/study-room.errors";
 
 @injectable()
 export class CreateRoomUsecase implements ICreateRoomUsecase {
@@ -20,6 +21,20 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
   ) {}
 
   async execute(hostId: string, dto: CreateRoomRequestDTO): Promise<StudyRoomResponseDTO> {
+    const hostUser = await this.userRepo.findById(hostId);
+
+    // Enforce creation limit for free users (max 5 rooms per calendar month)
+    if (!hostUser?.isPremium) {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+      const count = await this.studyRoomRepo.countCreatedByHostInMonth(hostId, startOfMonth, endOfMonth);
+      if (count >= 5) {
+        throw new RoomCreationLimitExceededError();
+      }
+    }
+
     const roomEntity: Partial<StudyRoomEntity> = {
       hostId,
       name: dto.name,
@@ -34,10 +49,8 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
       endTime: dto.endTime,
       participantIds: [hostId] // Host is automatically joined
     };
-    // if()
 
     const savedRoom = await this.studyRoomRepo.save(roomEntity);
-    const hostUser = await this.userRepo.findById(hostId);
 
     // Send notifications to invited buddies and create persistent invitation records
     if (dto.invitedUserIds && dto.invitedUserIds.length > 0) {

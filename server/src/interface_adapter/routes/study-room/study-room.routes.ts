@@ -45,6 +45,11 @@ export class StudyRoomRoutes extends BaseRoute {
     );
 
     this.router.get(
+      ROUTES.ROOMS.LIMIT_CHECK,
+      asyncHandler(ctrl.checkCreationLimit.bind(ctrl))
+    );
+
+    this.router.get(
       ROUTES.ROOMS.ALL_REQUESTS,
       asyncHandler(ctrl.getAllRequests.bind(ctrl))
     );
@@ -78,6 +83,16 @@ export class StudyRoomRoutes extends BaseRoute {
     this.router.post(
       ROUTES.ROOMS.LEAVE,
       asyncHandler(ctrl.leaveRoom.bind(ctrl))
+    );
+
+    this.router.post(
+      ROUTES.ROOMS.KICK,
+      asyncHandler(ctrl.kickUser.bind(ctrl))
+    );
+
+    this.router.post(
+      ROUTES.ROOMS.INVITE,
+      asyncHandler(ctrl.inviteUser.bind(ctrl))
     );
 
     this.router.post(

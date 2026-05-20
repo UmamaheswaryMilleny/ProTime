@@ -16,6 +16,7 @@ import { AdminSubscriptionController } from "../../controllers/admin/admin-subsc
 import { AdminDashboardController } from "../../controllers/admin/admin-dashboard.controller";
 import { AdminMeetingController }  from '../../controllers/admin/admin-meeting.controller';
 import { AdminGamificationController } from '../../controllers/admin/admin-gamification.controller';
+import { AdminSkillController } from '../../controllers/admin/admin-skill.controller';
 
 @injectable()
 export class AdminRoutes extends BaseRoute {
@@ -30,6 +31,7 @@ export class AdminRoutes extends BaseRoute {
     const dashboardCtrl  = container.resolve(AdminDashboardController);
     const meetingCtrl    = new AdminMeetingController();
     const gamificationCtrl = container.resolve(AdminGamificationController);
+    const skillCtrl      = container.resolve(AdminSkillController);
 
     this.router.use(verifyAuth);
     this.router.use(authorizeRole([UserRole.ADMIN]));
@@ -123,6 +125,28 @@ export class AdminRoutes extends BaseRoute {
     this.router.patch(
       ROUTES.ADMIN.GAMIFICATION_BADGE_TOGGLE,
       asyncHandler(gamificationCtrl.toggleBadge.bind(gamificationCtrl)),
+    );
+
+    // ─── Skills Management ───────────────────────────────────────────────
+    this.router.get(
+      ROUTES.ADMIN.SKILLS,
+      asyncHandler(skillCtrl.getSkills.bind(skillCtrl)),
+    );
+    this.router.post(
+      ROUTES.ADMIN.SKILLS,
+      asyncHandler(skillCtrl.createSkill.bind(skillCtrl)),
+    );
+    this.router.put(
+      ROUTES.ADMIN.SKILL_BY_ID,
+      asyncHandler(skillCtrl.updateSkill.bind(skillCtrl)),
+    );
+    this.router.patch(
+      ROUTES.ADMIN.SKILL_TOGGLE,
+      asyncHandler(skillCtrl.toggleSkillStatus.bind(skillCtrl)),
+    );
+    this.router.delete(
+      ROUTES.ADMIN.SKILL_BY_ID,
+      asyncHandler(skillCtrl.deleteSkill.bind(skillCtrl)),
     );
   }
 }

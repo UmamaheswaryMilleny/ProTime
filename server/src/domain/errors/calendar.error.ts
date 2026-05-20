@@ -1,6 +1,6 @@
 import { DomainError } from './base-domain.error';
 
-
+// ─── 404 ──────────────────────────────────────────────────────────────────────
 export class SessionNotFoundError extends DomainError {
   constructor() {
     super('Session not found');
@@ -19,21 +19,22 @@ export class ScheduleRequestNotFoundError extends DomainError {
   }
 }
 
-
+// ─── 403 ──────────────────────────────────────────────────────────────────────
 export class UnauthorizedSessionActionError extends DomainError {
   constructor() {
     super('You are not authorized to perform this action on this session');
   }
 }
 
-
+// ─── 400 ──────────────────────────────────────────────────────────────────────
+// Renamed from SessionAlreadyActiveError to avoid collision with chat.errors.ts
 export class BuddySessionAlreadyActiveError extends DomainError {
   constructor() {
     super('A session is already active in this conversation');
   }
 }
 
-
+// Renamed from SessionNotActiveError to avoid collision with chat.errors.ts
 export class BuddySessionNotActiveError extends DomainError {
   constructor() {
     super('No active session found in this conversation');

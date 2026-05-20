@@ -74,6 +74,7 @@ export class MongoUserRepository
     status: "all" | "blocked" | "unblocked" = "all",
     sort: string = "createdAt",
     order: "asc" | "desc" = "asc",
+    subscription?: string
   ): Promise<{ users: UserEntity[]; total: number }> {
     const skip = (page - 1) * limit;
 
@@ -86,6 +87,10 @@ export class MongoUserRepository
     // Status filter
     if (status === "blocked") filter.isBlocked = true;
     if (status === "unblocked") filter.isBlocked = false;
+
+    // Subscription filter
+    if (subscription === "premium") filter.isPremium = true;
+    if (subscription === "free") filter.isPremium = { $ne: true };
 
     // Search — matches against fullname or email
     if (search?.trim()) {

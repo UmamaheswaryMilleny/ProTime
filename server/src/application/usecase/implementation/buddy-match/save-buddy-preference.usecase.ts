@@ -23,7 +23,7 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
     dto:    SaveBuddyPreferenceRequestDTO,
   ): Promise<BuddyPreferenceResponseDTO> {
 
-
+    // Fetch isPremium from DB — not from JWT to avoid stale data
     const user      = await this.userRepo.findById(userId);
     const isPremium = user?.isPremium ?? false;
 

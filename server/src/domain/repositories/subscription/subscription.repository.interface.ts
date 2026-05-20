@@ -38,7 +38,7 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
   // Used by cron job to send expiry warning notifications
   findExpiringSubscriptions(withinDays: number): Promise<SubscriptionEntity[]>;
 
-  // Admin logic 
+  // ─── Admin logic ──────────────────────────────────────────────────────────
 
   // Returns total counts satisfying filter (for stats)
   countDocuments(filter: any): Promise<number>;

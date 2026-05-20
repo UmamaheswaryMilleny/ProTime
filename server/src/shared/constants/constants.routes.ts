@@ -33,7 +33,9 @@ export const ROUTES = {
 
   // Report Routes — user side
   REPORTS: {
-    ROOT: '/',                            // POST /api/v1/reports
+    ROOT:               '/',                     // POST /api/v1/reports   (complaint)
+    PRODUCTIVITY:       '/productivity',         // GET  /api/v1/reports/productivity
+    PRODUCTIVITY_EXPORT:'/productivity/export',  // GET  /api/v1/reports/productivity/export
   },
   // Admin Routes
   ADMIN: {
@@ -54,6 +56,9 @@ export const ROUTES = {
     DASHBOARD_STATS: '/dashboard/stats',
     MEETINGS:         '/meetings',
     MEETING_FORCE_CLOSE: '/meetings/:meetingId/force-close',
+    SKILLS: '/skills',
+    SKILL_BY_ID: '/skills/:skillId',
+    SKILL_TOGGLE: '/skills/:skillId/toggle',
   },
 
   // User Routes
@@ -81,6 +86,7 @@ export const ROUTES = {
   // Gamification Routes
   GAMIFICATION: {
     ROOT: '/',
+    LEADERBOARD: '/leaderboard',
   },
 
   // Buddy Routes
@@ -107,6 +113,7 @@ export const ROUTES = {
   ROOMS: {
     ROOT: '/',
     MY: '/my',
+    LIMIT_CHECK: '/limit-check',
     BY_ID: '/:roomId',
     JOIN: '/:roomId/join',
     REQUEST: '/:roomId/request',
@@ -114,6 +121,8 @@ export const ROUTES = {
     ALL_REQUESTS: '/requests/all',
     RESPOND_REQUEST: '/join-requests/:requestId/respond',
     LEAVE: '/:roomId/leave',
+    KICK: '/:roomId/kick',
+    INVITE: '/:roomId/invite',
     END: '/:roomId/end',
     START: '/:roomId/start',
     MESSAGES: '/:roomId/messages',

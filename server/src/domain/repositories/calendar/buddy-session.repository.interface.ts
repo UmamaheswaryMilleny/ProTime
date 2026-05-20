@@ -14,7 +14,8 @@ export interface IBuddySessionRepository
 
   findPlannedByUserId(userId: string): Promise<BuddySessionEntity[]>;
 
-
+  // Renamed from findMissableSessionsBefore — finds PLANNED sessions
+  // where scheduledAt < cutoffTime — used by cron job
   findPlannedSessionsBefore(
     cutoffTime: Date,
   ): Promise<BuddySessionEntity[]>;
@@ -25,5 +26,5 @@ export interface IBuddySessionRepository
     data?:  Partial<Pick<BuddySessionEntity, 'startedAt' | 'endedAt'>>,
   ): Promise<BuddySessionEntity | null>;
 
-
+  // updateNotes removed — notes moved to SessionNoteEntity (private per user)
 }

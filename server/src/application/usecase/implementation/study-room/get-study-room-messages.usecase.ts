@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { IGetStudyRoomMessagesUsecase } from "../../interface/study-room/get-study-room-messages.usecase.interface";
-import { StudyRoomMessageResponseDTO } from "../../../dto/study-room/study-room.dto";
+import { StudyRoomMessageResponseDTO } from "../../../dtos/study-room.dto";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
 import type { IStudyRoomMessageRepository } from "../../../../domain/repositories/study-room/study-room-message.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";

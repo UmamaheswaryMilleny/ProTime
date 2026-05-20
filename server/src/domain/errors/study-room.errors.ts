@@ -47,3 +47,10 @@ export class AlreadyRequestedError extends DomainError {
     super('You already have a pending join request for this room.');
   }
 }
+
+export class RoomCreationLimitExceededError extends DomainError {
+  constructor() {
+    super('Monthly study room creation limit exceeded. Upgrade to premium for unlimited rooms.');
+  }
+}
+

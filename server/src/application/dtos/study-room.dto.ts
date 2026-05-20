@@ -1,4 +1,4 @@
-import { RoomType, RoomStatus, RoomFeature, LevelRequired, JoinRequestStatus } from "../../../domain/enums/study-room.enums";
+import { RoomType, RoomStatus, RoomFeature, LevelRequired, JoinRequestStatus } from "../../domain/enums/study-room.enums";
 import { IsString, IsEnum, IsNumber, IsOptional, MaxLength, Min, Max, IsArray, IsIn } from "class-validator";
 
 export class CreateRoomRequestDTO {
@@ -126,4 +126,9 @@ export interface StudyRoomMessageResponseDTO {
   createdAt: string;
   updatedAt: string;
 }
-
+export interface StudyRoomLimitResponseDTO {
+  count: number;
+  limit: number;
+  isLimitReached: boolean;
+  isPremium: boolean;
+}

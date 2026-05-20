@@ -53,6 +53,7 @@ import { CompletePomodoroUsecase } from '../../application/usecase/implementatio
 import { PausePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.pause.usecase';
 import { ResumePomodoroUsecase } from '../../application/usecase/implementation/todo/pomodoro.resume.usecase';
 import { ExpireTodosUsecase } from '../../application/usecase/implementation/todo/expire-todos.usecase';
+import { GetProductivityReportUsecase } from '../../application/usecase/implementation/todo/get-productivity-report.usecase';
 
 //todo
 import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface';
@@ -64,6 +65,7 @@ import type { ICompletePomodoroUsecase } from '../../application/usecase/interfa
 import type { IPausePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-pause.usecase.interface';
 import type { IResumePomodoroUsecase } from '../../application/usecase/interface/todo/pomodoro-resume.usecase.interface';
 import type { IExpireTodosUsecase } from '../../application/usecase/interface/todo/expire-todos.usecase.interface';
+import type { IGetProductivityReportUsecase } from '../../application/usecase/interface/todo/get-productivity-report.usecase.interface';
 
 //profile-upload
 import { UploadProfileImageUsecase } from '../../application/usecase/implementation/user/image.usecase';
@@ -80,6 +82,8 @@ import { IUpdateStreakUsecase } from '../../application/usecase/interface/gamifi
 import { ICheckAndAwardBadgesUsecase } from '../../application/usecase/interface/gamification/check-and-award-badges.usecase.interface';
 import { InitializeGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.initialize.usecase';
 import { GetGamificationUsecase } from '../../application/usecase/implementation/gamification/gamification.get.usecase';
+import type { IGetLeaderboardUsecase } from '../../application/usecase/interface/gamification/get-leaderboard.usecase.interface';
+import { GetLeaderboardUsecase } from '../../application/usecase/implementation/gamification/get-leaderboard.usecase';
 
 //subscription
 import { GetSubscriptionUsecase } from '../../application/usecase/implementation/subscription/get-subscription.usecase';
@@ -92,6 +96,8 @@ import type { ICancelSubscriptionUsecase } from '../../application/usecase/inter
 import type { IHandleStripeWebhookUsecase } from '../../application/usecase/interface/subscription/handle-stripe-webhook.usecase.interface';
 import { SendSubscriptionNotificationsUsecase } from '../../application/usecase/implementation/subscription/send-subscription-notifications.usecase';
 import type { ISendSubscriptionNotificationsUsecase } from '../../application/usecase/interface/subscription/send-subscription-notifications.usecase.interface';
+import { ExpireSubscriptionsUsecase } from '../../application/usecase/implementation/subscription/expire-subscriptions.usecase';
+import type { IExpireSubscriptionsUsecase } from '../../application/usecase/interface/subscription/expire-subscriptions.usecase.interface';
 import { GetSubscriptionStatsUsecase } from '../../application/usecase/implementation/subscription/get-subscription-stats.usecase';
 import { GetSubscriptionsAdminUsecase } from '../../application/usecase/implementation/subscription/get-subscriptions-admin.usecase';
 import type { IGetSubscriptionStatsUsecase } from '../../application/usecase/interface/subscription/get-subscription-stats.usecase.interface';
@@ -204,6 +210,8 @@ import type { ISendStudyRoomMessageUsecase } from '../../application/usecase/int
 import type { IGetStudyRoomMessagesUsecase } from '../../application/usecase/interface/study-room/get-study-room-messages.usecase.interface';
 import type { IGetAllRoomRequestsUsecase } from '../../application/usecase/interface/study-room/get-all-requests.usecase.interface';
 import type { IStartRoomUsecase } from '../../application/usecase/interface/study-room/start-room.usecase.interface';
+import type { IKickUserUsecase } from '../../application/usecase/interface/study-room/kick-user.usecase.interface';
+import type { IInviteToRoomUsecase } from '../../application/usecase/interface/study-room/invite-to-room.usecase.interface';
 
 import { CreateRoomUsecase } from '../../application/usecase/implementation/study-room/create-room.usecase';
 import { JoinRoomUsecase } from '../../application/usecase/implementation/study-room/join-room.usecase';
@@ -219,6 +227,12 @@ import { SendStudyRoomMessageUsecase } from '../../application/usecase/implement
 import { GetStudyRoomMessagesUsecase } from '../../application/usecase/implementation/study-room/get-study-room-messages.usecase';
 import { GetAllRoomRequestsUsecase } from '../../application/usecase/implementation/study-room/get-all-requests.usecase';
 import { StartRoomUsecase } from '../../application/usecase/implementation/study-room/start-room.usecase';
+import { KickUserUsecase } from '../../application/usecase/implementation/study-room/kick-user.usecase';
+import { InviteToRoomUsecase } from '../../application/usecase/implementation/study-room/invite-to-room.usecase';
+import { DeleteExpiredRoomsUsecase } from '../../application/usecase/implementation/study-room/delete-expired-rooms.usecase';
+import type { IDeleteExpiredRoomsUsecase } from '../../application/usecase/interface/study-room/delete-expired-rooms.usecase.interface';
+import { CheckCreationLimitUsecase } from '../../application/usecase/implementation/study-room/check-creation-limit.usecase';
+import type { ICheckCreationLimitUsecase } from '../../application/usecase/interface/study-room/check-creation-limit.usecase.interface';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -304,6 +318,9 @@ export class UsecaseRegistry {
     container.register<IExpireTodosUsecase>('IExpireTodosUsecase', {
       useClass: ExpireTodosUsecase,
     });
+    container.register<IGetProductivityReportUsecase>('IGetProductivityReportUsecase', {
+      useClass: GetProductivityReportUsecase,
+    });
 
     container.register<IUploadProfileImageUsecase>(
       'IUploadProfileImageUsecase',
@@ -334,6 +351,9 @@ export class UsecaseRegistry {
         useClass: CheckAndAwardBadgesUsecase,
       },
     );
+    container.register<IGetLeaderboardUsecase>('IGetLeaderboardUsecase', {
+      useClass: GetLeaderboardUsecase,
+    });
 
 
     //subscription
@@ -366,6 +386,13 @@ export class UsecaseRegistry {
       'ISendSubscriptionNotificationsUsecase',
       {
         useClass: SendSubscriptionNotificationsUsecase,
+      },
+    );
+
+    container.register<IExpireSubscriptionsUsecase>(
+      'IExpireSubscriptionsUsecase',
+      {
+        useClass: ExpireSubscriptionsUsecase,
       },
     );
 
@@ -454,5 +481,9 @@ container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass:
     container.register<IGetStudyRoomMessagesUsecase>('IGetStudyRoomMessagesUsecase', { useClass: GetStudyRoomMessagesUsecase });
     container.register<IGetAllRoomRequestsUsecase>('IGetAllRoomRequestsUsecase', { useClass: GetAllRoomRequestsUsecase });
     container.register<IStartRoomUsecase>('IStartRoomUsecase', { useClass: StartRoomUsecase });
+    container.register<IKickUserUsecase>('IKickUserUsecase', { useClass: KickUserUsecase });
+    container.register<IInviteToRoomUsecase>('IInviteToRoomUsecase', { useClass: InviteToRoomUsecase });
+    container.register<IDeleteExpiredRoomsUsecase>('IDeleteExpiredRoomsUsecase', { useClass: DeleteExpiredRoomsUsecase });
+    container.register<ICheckCreationLimitUsecase>('ICheckCreationLimitUsecase', { useClass: CheckCreationLimitUsecase });
   }
 }

@@ -8,6 +8,7 @@ export interface UserResponseDTO {
   isBlocked: boolean;
   createdAt: Date;
   updatedAt: Date;
+  subscription?: 'free' | 'premium';
   // profileImage?: string;
 }
 

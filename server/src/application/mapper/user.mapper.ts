@@ -13,6 +13,7 @@ export class UserMapper {
       isBlocked: user.isBlocked,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
+      subscription: user.isPremium ? 'premium' : 'free',
     };
   }
   static toPaginatedResponse(

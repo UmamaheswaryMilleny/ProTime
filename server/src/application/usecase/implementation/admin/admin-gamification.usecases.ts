@@ -6,71 +6,41 @@ import type {
   IGetGamificationUserDetailUsecase,
   IGetGamificationLeaderboardUsecase,
   IGetBadgesGridUsecase,
-  IToggleBadgeUsecase,
+  IToggleBadgeUsecase
 } from '../../interface/admin/admin-gamification.usecases.interface';
 
 @injectable()
 export class GetGamificationOverviewUsecase implements IGetGamificationOverviewUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute() {
-    return this.repo.getOverviewStats();
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute() { return this.repo.getOverviewStats(); }
 }
 
 @injectable()
 export class GetUsersProgressUsecase implements IGetUsersProgressUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute(params: any) {
-    return this.repo.getUsersProgress(params);
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute(params: any) { return this.repo.getUsersProgress(params); }
 }
 
 @injectable()
 export class GetGamificationUserDetailUsecase implements IGetGamificationUserDetailUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute(userId: string) {
-    return this.repo.getUserDetail(userId);
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute(userId: string) { return this.repo.getUserDetail(userId); }
 }
 
 @injectable()
 export class GetGamificationLeaderboardUsecase implements IGetGamificationLeaderboardUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute(params: any) {
-    return this.repo.getLeaderboard(params);
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute(params: any) { return this.repo.getLeaderboard(params); }
 }
 
 @injectable()
 export class GetBadgesGridUsecase implements IGetBadgesGridUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute() {
-    return this.repo.getBadgesGrid();
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute() { return this.repo.getBadgesGrid(); }
 }
 
 @injectable()
 export class ToggleBadgeUsecase implements IToggleBadgeUsecase {
-  constructor(
-    @inject('IAdminGamificationRepository')
-    private repo: IAdminGamificationRepository,
-  ) {}
-  async execute(badgeId: string) {
-    return this.repo.toggleBadgeActivation(badgeId);
-  }
+  constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
+  async execute(badgeId: string) { return this.repo.toggleBadgeActivation(badgeId); }
 }
