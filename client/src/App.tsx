@@ -18,11 +18,13 @@ import { ResetPasswordPage } from "./features/auth/pages/ResetPasswordPage";
 // User Dashboard
 import { DashboardLayout } from "./features/dashboard/layouts/DashboardLayout";
 import { DashboardPage } from "./features/dashboard/pages/DashboardPage";
+import { ReportsPage } from "./features/dashboard/pages/ReportsPage";
 import { ProfilePage } from "./features/dashboard/pages/ProfilePage";
 import { TodoPage } from "./features/todo/pages/TodoPage";
 import { FindBuddyPage } from "./features/buddy-match/pages/FindBuddyPage";
 import { HelpPage } from "./features/dashboard/pages/HelpPage";
 import { LevelsPage } from "./features/dashboard/pages/LevelsPage";
+import { LeaderboardPage } from "./features/dashboard/pages/LeaderboardPage";
 import { SubscriptionPage } from "./features/dashboard/pages/SubscriptionPage";
 import { PlanDetailPage } from "./features/dashboard/pages/PlanDetailPage";
 import { PaymentPage } from "./features/dashboard/pages/PaymentPage";
@@ -42,6 +44,7 @@ import { AdminReportsPage } from "./features/admin/pages/AdminReportsPage";
 import { AdminSubscriptionsPage } from "./features/admin/pages/AdminSubscriptionsPage";
 import { AdminMeetingsPage } from "./features/admin/pages/AdminMeetingsPage";
 import { GamificationManagementPage } from "./features/admin/pages/GamificationManagementPage";
+import { SkillManagementPage } from "./features/admin/pages/SkillManagementPage";
 
 import { BadgeEarnedModal } from "./features/gamification/components/BadgeEarnedModal";
 
@@ -70,6 +73,8 @@ function App() {
         <Route element={<ProtectedRoute allowedRole="CLIENT" />}>
           <Route element={<DashboardLayout />}>
             <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+            <Route path={ROUTES.DASHBOARD_REPORTS} element={<ReportsPage />} />
+            <Route path={ROUTES.DASHBOARD_LEADERBOARD} element={<LeaderboardPage />} />
             <Route path={ROUTES.USER_PROFILE} element={<ProfilePage />} />
             <Route path={ROUTES.DASHBOARD_TODO_LIST} element={<TodoPage />} />
             <Route path={ROUTES.DASHBOARD_FIND_BUDDY} element={<FindBuddyPage />} />
@@ -99,6 +104,7 @@ function App() {
             <Route path={ROUTES.ADMIN_SUBSCRIPTIONS} element={<AdminSubscriptionsPage />} />
             <Route path={ROUTES.ADMIN_MEETINGS} element={<AdminMeetingsPage />} />
             <Route path={ROUTES.ADMIN_GAMIFICATION} element={<GamificationManagementPage />} />
+            <Route path={ROUTES.ADMIN_SKILLS} element={<SkillManagementPage />} />
           </Route>
         </Route>
 

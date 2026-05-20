@@ -9,6 +9,8 @@ export const ROUTES = {
 
   // ─── User Dashboard ───────────────────────────────────────────────────────
   DASHBOARD: "/dashboard",                              // main dashboard home
+  DASHBOARD_REPORTS: "/dashboard/reports",             // user reports dashboard
+  DASHBOARD_LEADERBOARD: "/dashboard/leaderboard",     // user leaderboard
   USER_PROFILE: "/dashboard/profile",                  // profile tab (inside dashboard)
   DASHBOARD_FIND_BUDDY: "/dashboard/find-buddy",
   DASHBOARD_MY_BUDDIES: "/dashboard/my-buddies",
@@ -35,6 +37,7 @@ export const ROUTES = {
   ADMIN_SUBSCRIPTIONS: "/admin/subscriptions",
   ADMIN_MEETINGS: "/admin/meetings",
   ADMIN_GAMIFICATION: "/admin/gamification",
+  ADMIN_SKILLS: "/admin/skills",
 } as const;
 
 export const API_ROUTES = {
@@ -64,7 +67,9 @@ export const API_ROUTES = {
   GAMIFICATION: "/gamification",
 
   // ─── Reporting ────────────────────────────────────────────────────────────
-  REPORT_SUBMIT: "/reports",
+  REPORT_SUBMIT:            '/reports',
+  PRODUCTIVITY_REPORT:      '/reports/productivity',
+  PRODUCTIVITY_REPORT_EXPORT:'/reports/productivity/export',
 
   // ─── Subscription ─────────────────────────────────────────────────────────
   SUBSCRIPTION:          "/subscription/me",
@@ -87,6 +92,9 @@ export const API_ROUTES = {
   ADMIN_GAMIFICATION_LEADERBOARD: "/admin/gamification/leaderboard",
   ADMIN_GAMIFICATION_BADGES: "/admin/gamification/badges",
   ADMIN_GAMIFICATION_BADGE_TOGGLE: (badgeId: string) => `/admin/gamification/badges/${badgeId}/toggle`,
+  ADMIN_SKILLS: "/admin/skills",
+  ADMIN_SKILL_BY_ID: (id: string) => `/admin/skills/${id}`,
+  ADMIN_SKILL_TOGGLE: (id: string) => `/admin/skills/${id}/toggle`,
 
   // ─── Buddy ────────────────────────────────────────────────────────────────
   BUDDY_PREFERENCE:       "/buddy/preference",
@@ -126,6 +134,7 @@ export const API_ROUTES = {
   // ─── Study Rooms ───────────────────────────────────────────────────────────
   ROOMS:                   "/rooms",
   ROOMS_MY:                "/rooms/my",
+  ROOMS_LIMIT_CHECK:       "/rooms/limit-check",
   ROOMS_ALL_REQUESTS:      "/rooms/requests/all",
   ROOMS_BY_ID:             (roomId: string) => `/rooms/${roomId}`,
   ROOMS_JOIN:              (roomId: string) => `/rooms/${roomId}/join`,
@@ -133,6 +142,8 @@ export const API_ROUTES = {
   ROOMS_PENDING_REQUESTS:  (roomId: string) => `/rooms/${roomId}/join-requests/pending`,
   ROOMS_RESPOND_REQUEST:   (requestId: string) => `/rooms/join-requests/${requestId}/respond`,
   ROOMS_LEAVE:             (roomId: string) => `/rooms/${roomId}/leave`,
+  ROOMS_KICK:              (roomId: string) => `/rooms/${roomId}/kick`,
+  ROOMS_INVITE:            (roomId: string) => `/rooms/${roomId}/invite`,
   ROOMS_END:               (roomId: string) => `/rooms/${roomId}/end`,
   ROOMS_START:             (roomId: string) => `/rooms/${roomId}/start`,
   ROOMS_MESSAGES:          (roomId: string) => `/rooms/${roomId}/messages`,
