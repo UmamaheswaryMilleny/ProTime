@@ -60,12 +60,26 @@ export const ProfilePage: React.FC = () => {
     languages: user?.languages?.[0] || 'English',
   });
 
+  const [activeSkills, setActiveSkills] = React.useState<any[]>([]);
+  const [selectedSkills, setSelectedSkills] = React.useState<any[]>([]);
+  const [skillSearch, setSkillSearch] = React.useState('');
+  const [isSkillDropdownOpen, setIsSkillDropdownOpen] = React.useState(false);
+
   const [isEditingAbout, setIsEditingAbout] = React.useState(false);
   const [isSavingAbout, setIsSavingAbout] = React.useState(false);
   const [aboutText, setAboutText] = React.useState(user?.bio || '');
 
   React.useEffect(() => {
     dispatch(fetchPreferences());
+    
+    // Fetch active skills catalog
+    userApi.getActiveSkillsService()
+      .then(res => {
+        setActiveSkills(res || []);
+      })
+      .catch(err => {
+        console.error("Failed to fetch active skills", err);
+      });
   }, [dispatch]);
 
   React.useEffect(() => {
@@ -78,6 +92,7 @@ export const ProfilePage: React.FC = () => {
         languages: user.languages?.[0] || 'English',
       }));
       setAboutText(user.bio || '');
+      setSelectedSkills(user.skills || []);
 
       // Auto-detect location if they don't have one saved yet
       if (!user.country && !detectionAttempted) {
@@ -107,11 +122,12 @@ export const ProfilePage: React.FC = () => {
         fullName: profileForm.fullName,
         username: profileForm.username,
         country: profileForm.country,
-        languages: [profileForm.languages] // Send as array per backend schema
+        languages: [profileForm.languages], // Send as array per backend schema
+        skills: selectedSkills.map(s => s._id || s) // Send as array of IDs/strings
       };
 
-      await userApi.updateProfileService(payload);
-      dispatch(updateUser(payload));
+      const updatedProfileDTO = await userApi.updateProfileService(payload);
+      dispatch(updateUser(updatedProfileDTO));
       setIsEditingProfile(false);
       toast.success("Profile updated successfully!");
     } catch {
@@ -455,6 +471,98 @@ export const ProfilePage: React.FC = () => {
                       )}
                     </div>
                   </div>
+                </div>
+                
+                {/* Skills Autocomplete / Tag Input */}
+                <div className="space-y-1.5 mt-4 relative">
+                  <label className="text-sm text-zinc-400 font-medium">My Skills & Expertise</label>
+                  
+                  {/* Selected Tags Display */}
+                  <div className="flex flex-wrap gap-2 p-3 bg-zinc-800 rounded-xl min-h-[46px] border border-white/5">
+                    {selectedSkills.length > 0 ? (
+                      selectedSkills.map((skill) => {
+                        const name = typeof skill === 'string' ? skill : (skill.name || '');
+                        const id = typeof skill === 'string' ? skill : (skill._id || '');
+                        return (
+                          <div
+                            key={id}
+                            className="flex items-center gap-1 px-3 py-1 bg-[#8A2BE2]/10 border border-[#8A2BE2]/20 hover:border-[#8A2BE2]/40 rounded-full text-white text-xs font-medium transition-all group"
+                          >
+                            <span>{name}</span>
+                            {isEditingProfile && (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setSelectedSkills(selectedSkills.filter(s => (s._id || s) !== id));
+                                }}
+                                className="text-zinc-400 hover:text-white transition-colors"
+                              >
+                                <X size={12} className="stroke-[2.5]" />
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <span className="text-zinc-500 text-xs my-auto">No skills added yet. Click edit to customize your expertise.</span>
+                    )}
+                  </div>
+
+                  {/* Autocomplete Input Search and Dropdown when in Edit Mode */}
+                  {isEditingProfile && (
+                    <div className="relative mt-2">
+                      <input
+                        type="text"
+                        placeholder="Search & add skills (e.g. React, Python, C++)..."
+                        value={skillSearch}
+                        onChange={(e) => {
+                          setSkillSearch(e.target.value);
+                          setIsSkillDropdownOpen(true);
+                        }}
+                        onFocus={() => setIsSkillDropdownOpen(true)}
+                        className="w-full bg-zinc-800/60 border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] outline-none"
+                      />
+                      
+                      {isSkillDropdownOpen && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setIsSkillDropdownOpen(false)} />
+                          <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-white/10 rounded-xl shadow-2xl z-50 max-h-60 overflow-y-auto flex flex-col animate-in fade-in slide-in-from-top-2 duration-200">
+                            {activeSkills.filter(s => {
+                              const skillName = s.name || '';
+                              const alreadySelected = selectedSkills.some(sel => (sel._id || sel) === s._id);
+                              return skillName.toLowerCase().includes(skillSearch.toLowerCase()) && !alreadySelected;
+                            }).length > 0 ? (
+                              activeSkills
+                                .filter(s => {
+                                  const skillName = s.name || '';
+                                  const alreadySelected = selectedSkills.some(sel => (sel._id || sel) === s._id);
+                                  return skillName.toLowerCase().includes(skillSearch.toLowerCase()) && !alreadySelected;
+                                })
+                                .map((skill) => (
+                                  <button
+                                    key={skill._id}
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      setSelectedSkills([...selectedSkills, skill]);
+                                      setSkillSearch('');
+                                      setIsSkillDropdownOpen(false);
+                                    }}
+                                    className="w-full text-left px-4 py-2.5 text-sm text-zinc-300 hover:bg-zinc-700 hover:text-white transition-colors flex justify-between items-center"
+                                  >
+                                    <span className="font-medium text-white">{skill.name}</span>
+                                    <span className="text-xs bg-zinc-900 px-2 py-0.5 rounded text-zinc-400">{skill.category}</span>
+                                  </button>
+                                ))
+                            ) : (
+                              <div className="px-4 py-3 text-sm text-zinc-500 text-center">No matching new skills found</div>
+                            )}
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

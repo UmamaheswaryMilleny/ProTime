@@ -1,3 +1,4 @@
+import React from 'react';
 import { X, Clock, Video, CheckSquare, FileText, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { DayDetail } from '../types/calendar.types';
@@ -40,7 +41,7 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
               <div>
                 <h3 className="text-xl font-bold text-white">Day Details</h3>
                 <p className="text-sm text-zinc-400">
-                  {dayDetail ? new Date(dayDetail.date).toLocaleDateString('default', {
+                  {dayDetail ? new Date(dayDetail.date + 'T00:00:00').toLocaleDateString('default', {
                     weekday: 'long',
                     year: 'numeric',
                     month: 'long',

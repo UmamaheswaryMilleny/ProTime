@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import type { CalendarEvent } from '../types/calendar.types';
@@ -54,35 +54,44 @@ export const MonthGrid: React.FC<MonthGridProps> = ({
     setCurrentDate((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
-  const getDaysInGrid = () => {
+  const days = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
 
-    const days = [];
+    const daysList = [];
     // Previous month padding
     for (let i = 0; i < firstDay.getDay(); i++) {
       const d = new Date(year, month, 0 - (firstDay.getDay() - 1 - i));
-      days.push({ date: d, isCurrentMonth: false });
+      daysList.push({ date: d, isCurrentMonth: false });
     }
     // Current month days
     for (let i = 1; i <= lastDay.getDate(); i++) {
       const d = new Date(year, month, i);
-      days.push({ date: d, isCurrentMonth: true });
+      daysList.push({ date: d, isCurrentMonth: true });
     }
     // Next month padding
-    const remainingSlots = 42 - days.length; // 6 rows * 7 days
+    const remainingSlots = 42 - daysList.length; // 6 rows * 7 days
     for (let i = 1; i <= remainingSlots; i++) {
       const d = new Date(year, month + 1, i);
-      days.push({ date: d, isCurrentMonth: false });
+      daysList.push({ date: d, isCurrentMonth: false });
     }
-    return days;
-  };
+    return daysList;
+  }, [currentDate]);
 
-  const days = getDaysInGrid();
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, CalendarEvent[]> = {};
+    events.forEach((evt) => {
+      if (!map[evt.date]) {
+        map[evt.date] = [];
+      }
+      map[evt.date].push(evt);
+    });
+    return map;
+  }, [events]);
 
-  const getDayEvents = (dateStr: string) => events.filter((e) => e.date === dateStr);
+  const getDayEvents = (dateStr: string) => eventsByDate[dateStr] || [];
 
   return (
     <div className="bg-zinc-900/50 backdrop-blur-md border border-white/10 rounded-2xl p-6 shadow-xl">

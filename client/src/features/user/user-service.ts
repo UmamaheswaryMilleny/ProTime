@@ -6,9 +6,12 @@ export interface UserProfile {
   id: string;
   fullName: string;
   email: string;
+  username: string;
   bio?: string;
   country?: string;
   profileImage?: string;
+  languages?: string[];
+  skills?: any[];
   createdAt: string;
 }
 
@@ -19,6 +22,8 @@ export interface UpdateUserProfileRequest {
   bio?: string;
   country?: string;
   profileImage?: string;
+  languages?: string[];
+  skills?: string[];
 }
 
 export const userApi = {
@@ -45,5 +50,11 @@ export const userApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
     return response.data.data.profileImage;
+  },
+
+  // GET /user/skills → returns array of active Skill documents
+  getActiveSkillsService: async (): Promise<any[]> => {
+    const response = await ProTimeBackend.get(API_ROUTES.USER_SKILLS);
+    return response.data.data;
   },
 };

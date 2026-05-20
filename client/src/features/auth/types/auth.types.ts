@@ -72,6 +72,7 @@ export interface AuthUser {
   accessToken: string;
   profileImage?: string;    // ← from profile, optional
   isPremium: boolean;
+  skills?: any[];
 }
 
 // ─── Redux Auth State ─────────────────────────────────────────────────────────

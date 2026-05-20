@@ -14,6 +14,7 @@ export interface AuthUser {
   country?: string;
   languages?: string[];
   isPremium: boolean;
+  skills?: any[];
 }
 
 interface AuthState {
@@ -48,6 +49,7 @@ const sanitizeUser = (data: unknown): AuthUser | null => {
     country: obj.country ? String(obj.country) : undefined,
     languages: Array.isArray(obj.languages) ? obj.languages.map(String) : undefined,
     isPremium: Boolean(obj.isPremium),
+    skills: Array.isArray(obj.skills) ? obj.skills : undefined,
   };
 };
 

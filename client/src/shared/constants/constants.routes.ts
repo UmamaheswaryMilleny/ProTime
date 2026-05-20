@@ -56,6 +56,7 @@ export const API_ROUTES = {
   // ─── User ─────────────────────────────────────────────────────────────────
   USER_PROFILE: "/user/profile",
   USER_AVATAR:  "/user/profile/avatar",
+  USER_SKILLS:  "/user/skills",
 
   // ─── Todo ─────────────────────────────────────────────────────────────────
   TODO_ROOT:             "/todos",

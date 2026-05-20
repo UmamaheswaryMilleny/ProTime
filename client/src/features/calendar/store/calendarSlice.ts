@@ -4,6 +4,7 @@ import type { CalendarEvent, DayDetail, PendingScheduleRequest, RespondRequestPa
 
 interface CalendarState {
   events: CalendarEvent[];
+  todayEvents: CalendarEvent[];
   selectedDateDetails: DayDetail | null;
   pendingRequests: PendingScheduleRequest[];
   
@@ -20,6 +21,7 @@ interface CalendarState {
 
 const initialState: CalendarState = {
   events: [],
+  todayEvents: [],
   selectedDateDetails: null,
   pendingRequests: [],
 
@@ -41,6 +43,17 @@ export const fetchCalendarEvents = createAsyncThunk(
       return await calendarService.getCalendarEvents(from, to);
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Failed to fetch calendar events');
+    }
+  }
+);
+
+export const fetchTodayEvents = createAsyncThunk(
+  'calendar/fetchTodayEvents',
+  async ({ from, to }: { from: string; to: string }, { rejectWithValue }) => {
+    try {
+      return await calendarService.getCalendarEvents(from, to);
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || 'Failed to fetch today\'s events');
     }
   }
 );
@@ -115,6 +128,17 @@ const calendarSlice = createSlice({
       })
       .addCase(fetchCalendarEvents.rejected, (state, action) => {
         state.isLoadingEvents = false;
+        state.error = action.payload as string;
+      })
+
+      // Fetch Today Events
+      .addCase(fetchTodayEvents.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(fetchTodayEvents.fulfilled, (state, action: PayloadAction<CalendarEvent[]>) => {
+        state.todayEvents = action.payload;
+      })
+      .addCase(fetchTodayEvents.rejected, (state, action) => {
         state.error = action.payload as string;
       })
 
