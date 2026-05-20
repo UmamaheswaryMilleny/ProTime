@@ -1,8 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { startPomodoro, stopPomodoro, pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
-import { Timer, Play, Pause, Square, ChevronDown, Bot, Loader2, Zap } from 'lucide-react';
-import type { TodoItem } from '../../todo/types/todo.types';
+import { useAppSelector } from '../../../store/hooks';
+import { Play, Bot, Loader2, Zap } from 'lucide-react';
 import { useProBuddyChat } from '../../chat/hooks/useProBuddyChat';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -12,12 +10,9 @@ interface RoomSidebarProps {
   isAiMode?: boolean;
 }
 
-export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) => {
-  const dispatch = useAppDispatch();
+export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost: _isHost, isAiMode }) => {
   const navigate = useNavigate();
-  const { activeTask, isRunning, timeRemaining, initialTime } = useAppSelector(s => s.pomodoro);
   const { activeRoom } = useAppSelector(s => s.studyRoom);
-  const [durationMinutes, setDurationMinutes] = useState(25);
   const [aiMessage, setAiMessage] = useState('');
 
   const { 
@@ -45,13 +40,6 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost, isAiMode }) =>
     setAiMessage('');
   };
 
-  const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60).toString().padStart(2, '0');
-    const s = (seconds % 60).toString().padStart(2, '0');
-    return `${m}:${s}`;
-  };
-
-  const progressPercent = initialTime > 0 ? ((initialTime - timeRemaining) / initialTime) * 100 : 0;
 
   return (
     <div className="flex flex-col h-full gap-4 overflow-hidden pr-1">

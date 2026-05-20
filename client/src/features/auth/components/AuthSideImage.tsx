@@ -8,19 +8,19 @@ export interface Slide {
 
 const defaultSlides: Slide[] = [
     {
-        image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=2669&auto=format&fit=crop",
-        title: "Manage your time,\nmaximize your productivity",
-        desc: "ProTime gives you the clarity you need to focus on what matters most."
+        image: "https://images.unsplash.com/photo-1588873281272-14886ba1f737?q=80&w=2670&auto=format&fit=crop",
+        title: "Find your perfect\nstudy buddy",
+        desc: "Match with motivated peers and crush your study goals together."
     },
     {
-        image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=2670&auto=format&fit=crop",
-        title: "Collaborate seamlessly\nacross teams",
-        desc: "Keep everyone aligned and moving forward with shared timelines."
+        image: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2670&auto=format&fit=crop",
+        title: "Collaborate in\nVirtual Study Rooms",
+        desc: "Join immersive focus sessions and stay accountable with your group."
     },
     {
-        image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2670&auto=format&fit=crop",
-        title: "Gain insights into\nyour workflow",
-        desc: "Data-driven decisions to optimize your daily efficiency."
+        image: "https://images.unsplash.com/photo-1677442136019-21780ecad995?q=80&w=2670&auto=format&fit=crop",
+        title: "Meet ProBuddy,\nyour AI sidekick",
+        desc: "Get instant answers and keep your productivity on track 24/7."
     }
 ];
 

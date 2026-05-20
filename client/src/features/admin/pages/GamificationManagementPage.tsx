@@ -28,7 +28,7 @@ export const GamificationManagementPage: React.FC = () => {
   const { data: overview, isLoading: overviewLoading } = useGamificationOverview();
   const { data: usersData, isLoading: usersLoading } = useGamificationUsers(userFilters);
   const { data: leaderboardData, isLoading: leaderboardLoading } = useGamificationLeaderboard(leaderboardFilters);
-  // const { data: badgesData, isLoading: badgesLoading } = useGamificationBadges();
+  const { data: badgesData, isLoading: badgesLoading } = useGamificationBadges();
   const toggleBadge = useToggleBadgeStatus();
 
   const handleToggleBadge = (badgeId: string) => {
@@ -60,7 +60,7 @@ export const GamificationManagementPage: React.FC = () => {
         {[
           { id: 'overview', label: 'Overview', icon: BarChart3 },
           { id: 'users', label: 'Users Progress', icon: Users },
-          // { id: 'badges', label: 'Badges', icon: Trophy },
+          { id: 'badges', label: 'Badges', icon: Trophy },
           { id: 'leaderboard', label: 'Leaderboard', icon: Star },
         ].map((tab) => (
           <button
@@ -96,13 +96,13 @@ export const GamificationManagementPage: React.FC = () => {
           />
         )}
 
-        {/* {activeTab === 'badges' && (
+        {activeTab === 'badges' && (
           <BadgesTab 
             data={badgesData} 
             isLoading={badgesLoading} 
             onToggleBadge={handleToggleBadge}
           />
-        )} */}
+        )}
 
         {activeTab === 'leaderboard' && (
           <LeaderboardTab

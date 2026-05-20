@@ -11,7 +11,6 @@ import {
     ChevronRight,
     Trophy as TrophyIcon,
     Search,
-    Sparkles,
 } from 'lucide-react';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -59,8 +58,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
         { icon: Video, label: 'Study Rooms', path: ROUTES.DASHBOARD_STUDY_ROOMS, end: false },
         { icon: Calendar, label: 'Calendar', path: ROUTES.DASHBOARD_CALENDAR, end: false },
         { icon: MessageSquare, label: 'Community', path: ROUTES.DASHBOARD_COMMUNITY_CHAT, end: false },
-        { icon: BarChart2, label: 'Reports', path: '#', end: false },
-        // { icon: TrophyIcon, label: 'Leaderboard', path: '#', end: false },
+        { icon: BarChart2, label: 'Reports', path: ROUTES.DASHBOARD_REPORTS, end: false },
+        { icon: TrophyIcon, label: 'Leaderboard', path: ROUTES.DASHBOARD_LEADERBOARD, end: false },
     ];
 
     return (
@@ -109,7 +108,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                         }}
                         onMouseLeave={() => setHoveredItem(null)}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${isActive && item.path !== '#'
+                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${isActive
                                 ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
                                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
                             } ${isCollapsed ? 'justify-center' : ''}`

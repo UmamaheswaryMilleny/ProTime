@@ -4,7 +4,7 @@ import type { RootState } from '../../../store/store';
 import { setIncomingCall, setActiveCall } from '../store/chatSlice';
 import { ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
-import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, PhoneOff, MoreVertical, Loader } from 'lucide-react';
+import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, PhoneOff, Loader } from 'lucide-react';
 import { ReportModal } from './ReportModal';
 import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
 import toast from 'react-hot-toast';
@@ -16,10 +16,9 @@ import { PomodoroModal } from '../../todo/components/PomodoroModal';
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
   const { incomingCall, activeCall, conversations } = useSelector((state: RootState) => state.chat);
-  const currentUserId = useSelector((state: RootState) => state.auth.user?.id ?? '');
   const currentUserFullName = useSelector((state: RootState) => state.auth.user?.fullName ?? 'Someone');
 
-  const { todos, isLoading: isTodosLoading, deleteTodo } = useTodo();
+  const { todos, isLoading: isTodosLoading } = useTodo();
   const {
     activeTask,
     timeRemainingFormatted,

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
-import { Smile, Send, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon } from 'lucide-react';
+import { Smile, Send, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon, UserMinus, Plus, UserPlus } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endRoom, leaveRoom, startRoom } from '../store/studyRoomSlice';
+import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endRoom, leaveRoom, startRoom, kickUser, inviteToRoom } from '../store/studyRoomSlice';
 import { pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
 import { ReportModal } from '../../chat/components/ReportModal';
 import { ReportContext } from '../../chat/api/chatApi';
@@ -10,6 +10,8 @@ import type { RoomMessageDTO } from '../api/studyRoomApi';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import toast from 'react-hot-toast';
+import { buddyService } from '../../buddy-match/services/buddy.service';
+import type { BuddyConnection } from '../../buddy-match/types/buddy.types';
 
 interface RoomChatWindowProps {
   roomId: string;
@@ -36,6 +38,13 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  // Buddy invitation states
+  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [buddies, setBuddies] = useState<BuddyConnection[]>([]);
+  const [isLoadingBuddies, setIsLoadingBuddies] = useState(false);
+  const [inviteSearch, setInviteSearch] = useState('');
+  const [invitingIds, setInvitingIds] = useState<string[]>([]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -66,6 +75,35 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       dispatch(fetchPendingRequests(roomId));
     }
   }, [isHost, roomId, dispatch]);
+
+  useEffect(() => {
+    if (showInviteModal) {
+      const fetchBuddies = async () => {
+        setIsLoadingBuddies(true);
+        try {
+          const data = await buddyService.getBuddyList();
+          setBuddies(data || []);
+        } catch (e: any) {
+          toast.error('Failed to load buddies.');
+        } finally {
+          setIsLoadingBuddies(false);
+        }
+      };
+      fetchBuddies();
+    }
+  }, [showInviteModal]);
+
+  const handleInviteBuddy = async (userId: string) => {
+    try {
+      setInvitingIds(prev => [...prev, userId]);
+      await dispatch(inviteToRoom({ roomId, userId })).unwrap();
+      toast.success('Invitation sent successfully!');
+    } catch (e: any) {
+      toast.error(e || 'Failed to send invitation');
+    } finally {
+      setInvitingIds(prev => prev.filter(id => id !== userId));
+    }
+  };
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -170,6 +208,18 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 </button>
               </div>
               <div className="max-h-64 overflow-y-auto p-2 space-y-1 custom-scrollbar bg-zinc-900/90">
+                {isHost && (
+                  <button
+                    onClick={() => {
+                      setShowInviteModal(true);
+                      setShowParticipants(false);
+                    }}
+                    className="w-full flex items-center justify-center gap-2 py-2 px-3 mb-2 rounded-xl bg-[blueviolet]/10 hover:bg-[blueviolet]/20 border border-[blueviolet]/20 text-[blueviolet] hover:text-white text-xs font-semibold transition-all duration-200"
+                  >
+                    <Plus size={12} />
+                    Invite Buddies
+                  </button>
+                )}
                 {/* Host */}
                 <div className="flex items-center justify-between p-2 rounded-xl bg-[blueviolet]/5 border border-[blueviolet]/10">
                   <div className="flex items-center gap-3">
@@ -211,7 +261,40 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                         {p.name} {p.id === user?.id && <span className="opacity-60">(You)</span>}
                       </p>
                     </div>
-                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    {isHost && p.id !== user?.id ? (
+                      <button
+                        onClick={() => {
+                          toast((t) => (
+                            <div className="flex flex-col gap-3">
+                              <p className="text-sm font-semibold text-zinc-100">Are you sure you want to remove {p.name} from the room?</p>
+                              <div className="flex justify-end gap-2 mt-1">
+                                <button
+                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+                                  onClick={() => toast.dismiss(t.id)}
+                                >
+                                  Cancel
+                                </button>
+                                <button
+                                  className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                                  onClick={() => {
+                                    dispatch(kickUser({ roomId, userId: p.id }));
+                                    toast.dismiss(t.id);
+                                  }}
+                                >
+                                  Remove
+                                </button>
+                              </div>
+                            </div>
+                          ), { duration: 5000, style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } });
+                        }}
+                        className="p-1.5 rounded-lg bg-red-500/10 text-red-500 hover:bg-red-500/20 transition-colors"
+                        title="Remove Member"
+                      >
+                        <UserMinus size={14} />
+                      </button>
+                    ) : (
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    )}
                   </div>
                 ))}
               </div>
@@ -569,6 +652,110 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             setReportingUserId(null);
           }}
         />
+      )}
+      {/* Invite Buddies Modal */}
+      {showInviteModal && (
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[50] animate-in fade-in duration-200">
+          <div className="bg-zinc-900 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+            {/* Header */}
+            <div className="p-4 border-b border-white/5 bg-zinc-800/40 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 rounded-lg bg-[blueviolet]/10 text-[blueviolet]">
+                  <Users size={16} />
+                </div>
+                <h3 className="text-sm font-bold text-zinc-100">Invite Buddies</h3>
+              </div>
+              <button 
+                onClick={() => setShowInviteModal(false)}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Search */}
+            <div className="p-3 border-b border-white/5">
+              <input
+                type="text"
+                value={inviteSearch}
+                onChange={e => setInviteSearch(e.target.value)}
+                placeholder="Search buddy by name..."
+                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2 px-3 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-colors"
+              />
+            </div>
+
+            {/* Buddy List */}
+            <div className="flex-1 max-h-64 overflow-y-auto p-2 space-y-1 custom-scrollbar">
+              {isLoadingBuddies ? (
+                <div className="flex flex-col items-center justify-center py-8 text-zinc-500 gap-2">
+                  <div className="w-5 h-5 border-2 border-white/30 border-t-[blueviolet] rounded-full animate-spin" />
+                  <p className="text-[11px]">Loading buddies...</p>
+                </div>
+              ) : (() => {
+                const currentParticipants = activeRoom?.participantIds || [];
+                const hostId = activeRoom?.hostId || '';
+                const filteredBuddies = buddies.filter(conn => {
+                  const b = conn.buddy;
+                  if (!b) return false;
+                  if (currentParticipants.includes(b.userId) || b.userId === hostId) return false;
+                  if (inviteSearch.trim()) {
+                    return b.fullName.toLowerCase().includes(inviteSearch.toLowerCase()) || 
+                           b.username.toLowerCase().includes(inviteSearch.toLowerCase());
+                  }
+                  return true;
+                });
+
+                if (filteredBuddies.length === 0) {
+                  return (
+                    <div className="text-center py-8 text-zinc-500 text-xs">
+                      {inviteSearch.trim() ? 'No buddies match your search.' : 'No buddies available to invite.'}
+                    </div>
+                  );
+                }
+
+                return filteredBuddies.map(conn => {
+                  const b = conn.buddy!;
+                  const isInviting = invitingIds.includes(b.userId);
+                  return (
+                    <div key={b.userId} className="flex items-center justify-between p-2.5 rounded-xl hover:bg-white/5 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="w-8 h-8 rounded-lg bg-zinc-800 flex items-center justify-center border border-white/5 overflow-hidden flex-shrink-0">
+                          {b.profileImage || b.avatar ? (
+                            <img
+                              src={b.profileImage || b.avatar}
+                              className="w-full h-full object-cover"
+                              alt={b.fullName}
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
+                            />
+                          ) : null}
+                          <User size={14} className={`text-zinc-500 ${b.profileImage || b.avatar ? 'hidden' : ''}`} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-zinc-200 truncate">{b.fullName}</p>
+                          <p className="text-[10px] text-zinc-500 truncate">@{b.username}</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => handleInviteBuddy(b.userId)}
+                        disabled={isInviting}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[blueviolet] text-white hover:bg-[blueviolet]/80 text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md shadow-[blueviolet]/10 flex-shrink-0"
+                      >
+                        {isInviting ? (
+                          <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        ) : (
+                          <>
+                            <UserPlus size={12} />
+                            Invite
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  );
+                });
+              })()}
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

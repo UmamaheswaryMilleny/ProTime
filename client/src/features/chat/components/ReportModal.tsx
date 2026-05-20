@@ -219,7 +219,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialCon
               <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Block this user</span>
             </label>
 
-            {/* <label className="flex items-center gap-3 cursor-pointer group">
+            <label className="flex items-center gap-3 cursor-pointer group">
               <div className="relative flex items-center justify-center w-5 h-5">
                 <input
                   type="checkbox"
@@ -232,7 +232,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialCon
                 </svg>
               </div>
               <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">I want to receive updates about this report</span>
-            </label> */}
+            </label>
           </div>
         </div>
 

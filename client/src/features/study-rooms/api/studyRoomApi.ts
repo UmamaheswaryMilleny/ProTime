@@ -92,6 +92,13 @@ export const studyRoomApi = {
     return response.data;
   },
 
+  checkCreationLimit: async () => {
+    const response = await ProTimeBackend.get<{ success: boolean; data: { count: number; limit: number; isLimitReached: boolean; isPremium: boolean } }>(
+      API_ROUTES.ROOMS_LIMIT_CHECK
+    );
+    return response.data;
+  },
+
   getAllRequests: async () => {
     const response = await ProTimeBackend.get<{ success: boolean; data: { invitations: RoomJoinRequestDTO[]; joinRequests: RoomJoinRequestDTO[] } }>(
       API_ROUTES.ROOMS_ALL_REQUESTS
@@ -146,6 +153,22 @@ export const studyRoomApi = {
   leaveRoom: async (roomId: string) => {
     const response = await ProTimeBackend.post<{ success: boolean; message: string }>(
       API_ROUTES.ROOMS_LEAVE(roomId)
+    );
+    return response.data;
+  },
+
+  kickUser: async (roomId: string, userId: string) => {
+    const response = await ProTimeBackend.post<{ success: boolean; message: string }>(
+      API_ROUTES.ROOMS_KICK(roomId),
+      { userId }
+    );
+    return response.data;
+  },
+
+  inviteToRoom: async (roomId: string, userId: string) => {
+    const response = await ProTimeBackend.post<{ success: boolean; data: RoomJoinRequestDTO }>(
+      API_ROUTES.ROOMS_INVITE(roomId),
+      { userId }
     );
     return response.data;
   },

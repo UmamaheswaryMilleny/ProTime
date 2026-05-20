@@ -148,6 +148,30 @@ export const leaveRoom = createAsyncThunk(
   }
 );
 
+export const kickUser = createAsyncThunk(
+  'studyRoom/kickUser',
+  async ({ roomId, userId }: { roomId: string; userId: string }, { rejectWithValue }) => {
+    try {
+      await studyRoomApi.kickUser(roomId, userId);
+      return { roomId, userId };
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to kick user');
+    }
+  }
+);
+
+export const inviteToRoom = createAsyncThunk(
+  'studyRoom/inviteToRoom',
+  async ({ roomId, userId }: { roomId: string; userId: string }, { rejectWithValue }) => {
+    try {
+      const res = await studyRoomApi.inviteToRoom(roomId, userId);
+      return res.data;
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to invite buddy');
+    }
+  }
+);
+
 export const endRoom = createAsyncThunk(
   'studyRoom/endRoom',
   async (roomId: string, { rejectWithValue }) => {
@@ -279,9 +303,31 @@ const studyRoomSlice = createSlice({
       state.rooms.unshift(action.payload);
     });
 
-    // joinRoom
+    // joinRoom — immediately update the room card in both lists so the
+    // button flips from "Join Now" → "Enter Room" without a page refresh.
     builder.addCase(joinRoom.fulfilled, (state, action) => {
       state.activeRoom = action.payload;
+      // Patch participantIds in the explore list
+      const rIdx = state.rooms.findIndex(r => r.id === action.payload.id);
+      if (rIdx !== -1) {
+        state.rooms[rIdx] = {
+          ...state.rooms[rIdx],
+          participantIds: action.payload.participantIds,
+          status: action.payload.status,
+        };
+      }
+      // Patch in myRooms as well (may not be there yet — add it if missing)
+      const mIdx = state.myRooms.findIndex(r => r.id === action.payload.id);
+      if (mIdx !== -1) {
+        state.myRooms[mIdx] = {
+          ...state.myRooms[mIdx],
+          participantIds: action.payload.participantIds,
+          status: action.payload.status,
+        };
+      } else {
+        // Room wasn't in myRooms yet — prepend it so it appears under My Rooms tab
+        state.myRooms.unshift(action.payload);
+      }
     });
 
     // fetchPendingRequests
@@ -298,6 +344,14 @@ const studyRoomSlice = createSlice({
     builder.addCase(leaveRoom.fulfilled, (state) => {
       state.activeRoom = null;
       state.messages = [];
+    });
+    // For kickUser, state refresh may be handled by sockets, but we can also handle it locally if needed.
+    // Host kicks someone, wait for socket event to refresh list, or do it immediately:
+    builder.addCase(kickUser.fulfilled, (state, action) => {
+      if (state.activeRoom) {
+        state.activeRoom.participants = state.activeRoom.participants?.filter(p => p.id !== action.payload.userId);
+        state.activeRoom.participantIds = state.activeRoom.participantIds.filter(id => id !== action.payload.userId);
+      }
     });
     builder.addCase(endRoom.fulfilled, (state) => {
       state.activeRoom = null;

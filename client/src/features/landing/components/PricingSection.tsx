@@ -28,7 +28,7 @@ export const PricingSection: React.FC = () => {
 
                     {/* Free Plan */}
                     <div className="flex-1 bg-zinc-900/30 border border-white/10 rounded-2xl p-8 text-left hover:border-white/20 transition-colors">
-                        <h3 className="text-lg font-medium text-white mb-2">Free Trial (1 Month)</h3>
+                        <h3 className="text-lg font-medium text-white mb-2">Free Version with limited features</h3>
                         <div className="text-4xl font-bold text-white mb-6">₹0<span className="text-lg font-normal text-zinc-500"> / for first month</span></div>
 
                         <button className="w-full bg-white text-black font-medium py-3 rounded-lg mb-8 hover:bg-gray-200 transition-colors">
@@ -54,7 +54,11 @@ export const PricingSection: React.FC = () => {
                             </li>
                             <li className="flex items-start gap-3">
                                 <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
-                                <span>10 Buddy Matches</span>
+                                <span>5 Buddy Matches</span>
+                            </li>
+                            <li className="flex items-start gap-3">
+                                <Check size={18} className="text-green-500 shrink-0 mt-0.5" />
+                                <span>Limited Badges & XP</span>
                             </li>
                             <li className="flex items-start gap-3">
                                 <X size={18} className="text-red-500 shrink-0 mt-0.5" />
@@ -64,10 +68,10 @@ export const PricingSection: React.FC = () => {
                                 <X size={18} className="text-red-500 shrink-0 mt-0.5" />
                                 <span className="text-zinc-500">Progress Report</span>
                             </li>
-                            <li className="flex items-start gap-3">
+                            {/* <li className="flex items-start gap-3">
                                 <X size={18} className="text-red-500 shrink-0 mt-0.5" />
                                 <span className="text-zinc-500">Badges or XP Points</span>
-                            </li>
+                            </li> */}
                         </ul>
                     </div>
 

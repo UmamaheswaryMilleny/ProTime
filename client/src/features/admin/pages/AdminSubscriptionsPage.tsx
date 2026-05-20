@@ -469,15 +469,39 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 </div>
               </div>
 
-              {selectedSub.plan === 'PREMIUM' && (
-                <div className="flex items-center justify-between p-4 rounded-xl bg-[rgb(168,85,247,0.1)] border border-[rgba(168,85,247,0.2)]">
-                  <div className="flex items-center gap-3">
-                    <Zap size={16} className="text-purple-400" />
-                    <span className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Next Billing Date</span>
+              {selectedSub.plan === 'PREMIUM' && (() => {
+                const periodEnd = new Date(selectedSub.currentPeriodEnd);
+                const isExpired = periodEnd < new Date();
+
+                // Derive the correct label from status + whether date has passed
+                let label = 'Next Billing Date';
+                if (selectedSub.status === 'CANCELLED') label = 'Premium Access Until';
+                if (selectedSub.status === 'EXPIRED' || isExpired) label = 'Expired On';
+
+                return (
+                  <div className={`flex items-center justify-between p-4 rounded-xl border ${
+                    isExpired
+                      ? 'bg-red-500/10 border-red-500/20'
+                      : selectedSub.status === 'CANCELLED'
+                        ? 'bg-orange-500/10 border-orange-500/20'
+                        : 'bg-[rgb(168,85,247,0.1)] border-[rgba(168,85,247,0.2)]'
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <Zap size={16} className={isExpired ? 'text-red-400' : selectedSub.status === 'CANCELLED' ? 'text-orange-400' : 'text-purple-400'} />
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${
+                        isExpired ? 'text-red-300' : selectedSub.status === 'CANCELLED' ? 'text-orange-200' : 'text-purple-200'
+                      }`}>{label}</span>
+                    </div>
+                    <div className="flex flex-col items-end gap-0.5">
+                      <span className="text-xs font-bold text-white">{periodEnd.toLocaleDateString()}</span>
+                      {isExpired && selectedSub.status === 'ACTIVE' && (
+                        <span className="text-[10px] text-red-400 font-semibold">⚠ Stale — webhook missed</span>
+                      )}
+                    </div>
                   </div>
-                  <span className="text-xs font-bold text-white">{new Date(selectedSub.currentPeriodEnd).toLocaleDateString()}</span>
-                </div>
-              )}
+                );
+              })()}
+
             </div>
           </div>
         </div>

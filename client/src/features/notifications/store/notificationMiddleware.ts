@@ -1,5 +1,5 @@
 import type { Middleware } from '@reduxjs/toolkit';
-import { loginUser, updateUser } from '../../auth/store/authSlice';
+import { updateUser } from '../../auth/store/authSlice';
 import { addNotification } from './notificationSlice';
 
 /**
@@ -13,7 +13,7 @@ export const notificationMiddleware: Middleware = (storeAPI) => (next) => (actio
 
     const result = next(action);
 
-    if (loginUser.match(action) || updateUser.match(action)) {
+    if (updateUser.match(action)) {
         const nextIsPremium = (storeAPI.getState() as any).auth.user?.isPremium ?? false;
 
         if (!prevIsPremium && nextIsPremium) {

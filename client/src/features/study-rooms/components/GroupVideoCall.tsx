@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { endGroupCall } from '../store/studyRoomSlice';
 import { socketService } from '../../../shared/services/socketService';
@@ -21,7 +21,7 @@ const ICE_SERVERS: RTCConfiguration = {
 
 export const GroupVideoCall: React.FC = () => {
   const dispatch = useAppDispatch();
-  const { groupCallRoomId, activeRoom } = useAppSelector(s => s.studyRoom);
+  const { groupCallRoomId } = useAppSelector(s => s.studyRoom);
   const { user } = useAppSelector(s => s.auth);
   const { activeTask, isRunning, timeRemaining } = useAppSelector(s => s.pomodoro);
 

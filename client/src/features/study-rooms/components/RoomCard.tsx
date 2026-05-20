@@ -10,9 +10,10 @@ interface RoomCardProps {
   onJoin: (roomId: string) => void;
   onRequest: (roomId: string) => void;
   isJoining?: boolean;
+  isInvited?: boolean;
 }
 
-export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin, onRequest, isJoining }) => {
+export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin, onRequest, isJoining, isInvited }) => {
   const navigate = useNavigate();
   const isHost = room.hostId === currentUserId;
   const isParticipant = room.participantIds.includes(currentUserId);
@@ -35,7 +36,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
       navigate(ROUTES.DASHBOARD_STUDY_ROOMS + `/${room.id}`);
       return;
     }
-    if (room.type === 'PUBLIC') {
+    if (room.type === 'PUBLIC' || isInvited) {
       onJoin(room.id);
     } else {
       onRequest(room.id);
@@ -149,7 +150,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
             ? (isWaiting && !hasAlreadyStarted)
               ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-white/5'
               : 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80 shadow-lg shadow-[blueviolet]/20'
-            : room.type === 'PUBLIC'
+            : (room.type === 'PUBLIC' || isInvited)
             ? isFull
               ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed'
               : 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80 shadow-lg shadow-[blueviolet]/20'
@@ -164,7 +165,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
           ? (isWaiting && !hasAlreadyStarted)
             ? 'Joined Room' 
             : 'Enter Room'
-          : room.type === 'PUBLIC'
+          : (room.type === 'PUBLIC' || isInvited)
           ? isFull
             ? 'Full'
             : 'Join Now'

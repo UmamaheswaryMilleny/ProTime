@@ -65,6 +65,7 @@ export const AdminUsersPage: React.FC = () => {
                 sort: sortField,
                 order: sortOrder,
                 ...(debouncedSearch.trim() ? { search: debouncedSearch.trim() } : {}),
+                ...(subscription !== 'all' ? { subscription } : {}),
             });
             const res = await ProTimeBackend.get(`${API_ROUTES.ADMIN_USERS}?${params}`);
             setUsers(res.data?.data?.users ?? []);
@@ -74,7 +75,7 @@ export const AdminUsersPage: React.FC = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [page, debouncedSearch, status, sort]);
+    }, [page, limit, debouncedSearch, status, sort, subscription]);
 
     useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
@@ -100,10 +101,7 @@ export const AdminUsersPage: React.FC = () => {
 
     const totalPages = Math.ceil(total / limit);
 
-    // Client-side subscription filter (backend doesn't have this field yet)
-    const displayedUsers = subscription === 'all'
-        ? users
-        : users.filter(u => (u.subscription ?? 'free') === subscription);
+    const displayedUsers = users;
 
     // Build page number buttons (max 7 visible with ellipsis)
     const getPageNumbers = () => {
@@ -236,7 +234,7 @@ export const AdminUsersPage: React.FC = () => {
                                                 ? 'bg-amber-500/15 text-amber-400'
                                                 : 'bg-zinc-800 text-zinc-400'
                                                 }`}>
-                                                {(user.subscription ?? 'free') === 'premium' ? '⭐ Premium' : 'Free'}
+                                                {(user.subscription ?? 'free') === 'premium' ? 'Premium' : 'Free'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-[#A1A1AA]">
@@ -464,7 +462,7 @@ export const AdminUsersPage: React.FC = () => {
                                         ? 'bg-amber-500/15 text-amber-400'
                                         : 'bg-zinc-800 text-zinc-300'
                                         }`}>
-                                        {(selectedUser.subscription ?? 'free') === 'premium' ? '⭐ Premium' : 'Free'}
+                                        {(selectedUser.subscription ?? 'free') === 'premium' ? 'Premium' : 'Free'}
                                     </span>
                                 </div>
                             </div>
