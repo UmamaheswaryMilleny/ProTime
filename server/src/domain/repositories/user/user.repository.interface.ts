@@ -13,7 +13,8 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
     search?: string,
     status?: "all" | "blocked" | "unblocked",
     sort?: string,
-    order?: "asc" | "desc"
+    order?: "asc" | "desc",
+    subscription?: string
   ): Promise<{ users: UserEntity[]; total: number }>;
   
   countDocuments(filter: any): Promise<number>;

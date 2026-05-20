@@ -34,13 +34,16 @@ export class AdminController {
       const rawOrder = req.query.order as string | undefined;
       const order: 'asc' | 'desc' = rawOrder === 'desc' ? 'desc' : 'asc';
 
+      const subscription = req.query.subscription as string | undefined;
+
       const { users, total } = await this.userRepository.findAllWithSearch(
         page,
         limit,
         search,
         status,
         sort,
-        order
+        order,
+        subscription
       );
 
       // Use UserMapper to build paginated response

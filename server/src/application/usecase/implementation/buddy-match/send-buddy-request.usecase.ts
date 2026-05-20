@@ -9,7 +9,6 @@ import { BuddyConnectionStatus } from '../../../../domain/enums/buddy.enums';
 import type { IProfileRepository } from '../../../../domain/repositories/profile/profile.repository.interface';
 import type { INotificationService } from '../../../service_interface/notification-service.interface';
 import { NotificationType } from '../../../service_interface/notification-service.interface';
-import { logger } from '../../../../infrastructure/config/logger.config';
 
 @injectable()
 export class SendBuddyRequestUsecase implements ISendBuddyRequestUsecase {
@@ -50,7 +49,6 @@ export class SendBuddyRequestUsecase implements ISendBuddyRequestUsecase {
       });
     } catch (_error) {
       // Don't fail the request if notification fails
-     logger.warn('Notification failed', { _error, buddyId });
     }
   }
 }

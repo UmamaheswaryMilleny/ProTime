@@ -12,16 +12,43 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
     super(StudyRoomModel, StudyRoomMapper.toDomain, StudyRoomMapper.toModel);
   }
 
-  async findAll(params: { type?: RoomType, status?: RoomStatus, search?: string, page: number, limit: number }): Promise<{ rooms: StudyRoomEntity[], total: number }> {
+  async findAll(params: { type?: RoomType, status?: RoomStatus, search?: string, page: number, limit: number, excludeEnded?: boolean }): Promise<{ rooms: StudyRoomEntity[], total: number }> {
     const query: any = {};
     if (params.type) query.type = params.type;
-    if (params.status) query.status = params.status;
+
+    if (params.status) {
+      // Explicit status filter — honour it exactly
+      query.status = params.status;
+    } else if (params.excludeEnded) {
+      // Explore tab: exclude ENDED rooms AND stale WAITING rooms whose session
+      // time has already passed (startTime + 4 h buffer, or endTime < now).
+      const now = new Date();
+      const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+
+      query.$or = [
+        // Always include LIVE sessions
+        { status: RoomStatus.LIVE },
+        // Include WAITING rooms that haven't started yet or start is recent
+        {
+          status: RoomStatus.WAITING,
+          $or: [
+            // Has explicit end time still in the future
+            { endTime: { $gt: now } },
+            // Has start time that was within the last 4 hours (grace window), no endTime
+            { startTime: { $gt: fourHoursAgo }, endTime: { $exists: false } },
+            // Immediate rooms (no startTime set) — always show
+            { startTime: { $exists: false } },
+          ],
+        },
+      ];
+    }
+
     if (params.search) {
       query.name = { $regex: params.search, $options: 'i' };
     }
 
     const skip = (params.page - 1) * params.limit;
-    
+
     const [docs, total] = await Promise.all([
       this.model.find(query).sort({ createdAt: -1 }).skip(skip).limit(params.limit).exec(),
       this.model.countDocuments(query).exec()
@@ -54,5 +81,22 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
   async updateStatus(roomId: string, status: RoomStatus): Promise<StudyRoomEntity | null> {
     const doc = await this.model.findByIdAndUpdate(roomId, { status }, { new: true }).exec();
     return doc ? StudyRoomMapper.toDomain(doc) : null;
+  }
+
+  async findEndedBefore(date: Date): Promise<StudyRoomEntity[]> {
+    const docs = await this.model
+      .find({ status: RoomStatus.ENDED, updatedAt: { $lt: date } })
+      .exec();
+    return docs.map(StudyRoomMapper.toDomain);
+  }
+
+  async countCreatedByHostInMonth(hostId: string, startDate: Date, endDate: Date): Promise<number> {
+    return this.model.countDocuments({
+      hostId,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).exec();
   }
 }

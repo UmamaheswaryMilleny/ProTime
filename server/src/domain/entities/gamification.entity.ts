@@ -17,3 +17,13 @@ export interface UserGamificationEntity {
   createdAt: Date;
   updatedAt: Date;
 }
+
+export interface LeaderboardEntry {
+  userId: string;
+  username: string;
+  avatar?: string;
+  totalXp: number;
+  currentLevel: number;
+  currentTitle: LevelTitle;
+  currentStreak: number;
+}

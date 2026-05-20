@@ -1,24 +1,28 @@
 import type { ReportStatus, ReportContext, ReportReason, ReportAction } from '../enums/report.enums';
 
-
-
+// ─── ReportEntity ─────────────────────────────────────────────────────────────
+// Created when a user reports another user from Chat or Video Call.
+// Admin reviews and either resolves with an action or dismisses.
+// Admin fields (reviewedBy, reviewedAt, adminNote, actionTaken) are set
+// when admin calls resolve — null/undefined when still PENDING.
 export interface ReportEntity {
   id:                  string;
-  reporterId:          string;         
+  reporterId:          string;         // userId who submitted the report
   reporter?:           { id: string; fullName: string; email: string; avatar?: string };
-  reportedUserId:      string;       
+  reportedUserId:      string;         // userId who was reported — renamed for clarity
   reportedUser?:       { id: string; fullName: string; email: string; avatar?: string };
   context:             ReportContext;
   reason:              ReportReason;
-  additionalDetails?:  string;       
-  screenshots?:        string[];     
-  blockUser?:          boolean;        
-  receiveUpdates?:     boolean;     
+  additionalDetails?:  string;         // optional extra detail from reporter
+  screenshots?:        string[];       // optional URLs to screenshots
+  blockUser?:          boolean;        // did the user request to block?
+  receiveUpdates?:     boolean;        // does the user want updates?
   status:              ReportStatus;
-  reviewedBy?:         string;        
-  reviewedAt?:         Date;          
-  adminNote?:          string;         
-  actionTaken?:        ReportAction;  
+  // ─── Admin review fields ──────────────────────────────────────────────────
+  reviewedBy?:         string;         // adminId who reviewed
+  reviewedAt?:         Date;           // when admin reviewed
+  adminNote?:          string;         // admin internal note
+  actionTaken?:        ReportAction;   // what the admin did
   createdAt:           Date;
   updatedAt:           Date;
 }

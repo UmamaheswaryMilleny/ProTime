@@ -29,5 +29,12 @@ export class GamificationRoutes extends BaseRoute {
       ROUTES.GAMIFICATION.ROOT,
       asyncHandler(ctrl.getGamification.bind(ctrl)),
     );
+
+    // GET /api/v1/gamification/leaderboard
+    // Returns global or friends leaderboard
+    this.router.get(
+      ROUTES.GAMIFICATION.LEADERBOARD,
+      asyncHandler(ctrl.getLeaderboard.bind(ctrl)),
+    );
   }
 }

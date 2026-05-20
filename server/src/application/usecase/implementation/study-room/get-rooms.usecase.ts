@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { IGetRoomsUsecase } from "../../interface/study-room/get-rooms.usecase.interface";
-import { GetRoomsRequestDTO, GetRoomsResponseDTO, StudyRoomResponseDTO } from "../../../dto/study-room/study-room.dto";
+import { GetRoomsRequestDTO, GetRoomsResponseDTO, StudyRoomResponseDTO } from "../../../dtos/study-room.dto";
 import { RoomStatus } from "../../../../domain/enums/study-room.enums";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
@@ -13,12 +13,15 @@ export class GetRoomsUsecase implements IGetRoomsUsecase {
   ) {}
 
   async execute(dto: GetRoomsRequestDTO): Promise<GetRoomsResponseDTO> {
+    // When no explicit status is requested (normal Explore tab usage),
+    // exclude ENDED rooms — users should only see WAITING or LIVE rooms.
     const { rooms, total } = await this.studyRoomRepo.findAll({
-      type: dto.type,
-      status: dto.status,
-      search: dto.search,
-      page: dto.page || 1,
-      limit: dto.limit || 20,
+      type:         dto.type,
+      status:       dto.status,        // undefined means "all active" (repo handles this)
+      excludeEnded: !dto.status,       // true when no status filter → exclude ENDED
+      search:       dto.search,
+      page:         dto.page  || 1,
+      limit:        dto.limit || 20,
     });
 
     const roomResponses: StudyRoomResponseDTO[] = await Promise.all(

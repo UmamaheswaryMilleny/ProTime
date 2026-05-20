@@ -14,6 +14,9 @@ import type { ISendStudyRoomMessageUsecase } from "../../../application/usecase/
 import type { IGetStudyRoomMessagesUsecase } from "../../../application/usecase/interface/study-room/get-study-room-messages.usecase.interface";
 import type { IGetAllRoomRequestsUsecase } from "../../../application/usecase/interface/study-room/get-all-requests.usecase.interface";
 import type { IStartRoomUsecase } from "../../../application/usecase/interface/study-room/start-room.usecase.interface";
+import type { IKickUserUsecase } from "../../../application/usecase/interface/study-room/kick-user.usecase.interface";
+import type { IInviteToRoomUsecase } from "../../../application/usecase/interface/study-room/invite-to-room.usecase.interface";
+import type { ICheckCreationLimitUsecase } from "../../../application/usecase/interface/study-room/check-creation-limit.usecase.interface";
 import type { ICloudinaryService } from "../../../application/service_interface/cloudinary.service.interface";
 import { CreateRoomRequestDTO, GetRoomsRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from "../../../application/dtos/study-room.dto";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
@@ -35,7 +38,10 @@ export class StudyRoomController {
     @inject('IGetStudyRoomMessagesUsecase') private getStudyRoomMessagesUsecase: IGetStudyRoomMessagesUsecase,
     @inject('IGetAllRoomRequestsUsecase') private getAllRoomRequestsUsecase: IGetAllRoomRequestsUsecase,
     @inject('IStartRoomUsecase') private startRoomUsecase: IStartRoomUsecase,
+    @inject('IKickUserUsecase') private kickUserUsecase: IKickUserUsecase,
+    @inject('IInviteToRoomUsecase') private inviteToRoomUsecase: IInviteToRoomUsecase,
     @inject('ICloudinaryService') private cloudinaryService: ICloudinaryService,
+    @inject('ICheckCreationLimitUsecase') private checkCreationLimitUsecase: ICheckCreationLimitUsecase,
   ) {}
 
   async createRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -132,6 +138,34 @@ export class StudyRoomController {
     } catch (error) { next(error); }
   }
 
+  async kickUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const hostId = (req as any).user.id;
+      const roomId = req.params.roomId as string;
+      const { userId } = req.body;
+      if (!userId) {
+        res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'userId is required' });
+        return;
+      }
+      await this.kickUserUsecase.execute(hostId, roomId, userId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'User kicked successfully' });
+    } catch (error) { next(error); }
+  }
+
+  async inviteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const hostId = (req as any).user.id;
+      const roomId = req.params.roomId as string;
+      const { userId } = req.body;
+      if (!userId) {
+        res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: 'userId is required' });
+        return;
+      }
+      const data = await this.inviteToRoomUsecase.execute(hostId, roomId, userId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'User invited successfully', data });
+    } catch (error) { next(error); }
+  }
+
   async startRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
       const hostId = (req as any).user.id;
@@ -180,6 +214,14 @@ export class StudyRoomController {
       const userId = (req as any).user.id;
       const data = await this.getAllRoomRequestsUsecase.execute(userId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room requests fetched', data });
+    } catch (error) { next(error); }
+  }
+
+  async checkCreationLimit(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      const userId = (req as any).user.id;
+      const data = await this.checkCreationLimitUsecase.execute(userId);
+      res.status(HTTP_STATUS.OK).json({ success: true, message: 'Creation limit checked', data });
     } catch (error) { next(error); }
   }
 }

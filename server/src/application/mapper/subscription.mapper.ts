@@ -37,8 +37,18 @@ export class SubscriptionMapper {
         : undefined,
 
 
-      isPremium: entity.plan === SubscriptionPlan.PREMIUM &&
-        entity.status === SubscriptionStatus.ACTIVE,
+      // A CANCELLED user still has premium access until currentPeriodEnd.
+      // Only revoke isPremium once the period has actually ended (webhook fires customer.subscription.deleted).
+      isPremium:
+        entity.plan === SubscriptionPlan.PREMIUM &&
+        (
+          entity.status === SubscriptionStatus.ACTIVE ||
+          (
+            entity.status === SubscriptionStatus.CANCELLED &&
+            !!entity.currentPeriodEnd &&
+            entity.currentPeriodEnd > now
+          )
+        ),
       isActive: entity.status === SubscriptionStatus.ACTIVE,
       daysRemaining,
 

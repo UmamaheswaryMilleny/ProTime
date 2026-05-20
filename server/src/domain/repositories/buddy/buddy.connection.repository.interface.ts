@@ -46,13 +46,13 @@ export interface IBuddyConnectionRepository
     >>,
   ): Promise<BuddyConnectionEntity | null>;
 
-
+  // Returns all PENDING connections where this user is the requester
   findPendingByRequesterId(requesterId: string): Promise<BuddyConnectionEntity[]>;
 
-
+  // Returns all PENDING connections where this user is the receiver
   findPendingByReceiverId(receiverId: string): Promise<BuddyConnectionEntity[]>;
 
-
+  // All connections where userId initiated a block
   findBlockedByUserId(userId: string): Promise<BuddyConnectionEntity[]>;
 
   // Update blockedBy field alongside status..to exclude blocked user from searches

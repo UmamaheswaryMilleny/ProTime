@@ -1,3 +1,4 @@
+// ─── Free user matching fields ────────────────────────────────────────────────
 
 export enum StudyGoal {
   TECHNOLOGY = 'TECHNOLOGY',
@@ -15,6 +16,7 @@ export enum StudyFrequency {
   FLEXIBLE = 'FLEXIBLE',
 }
 
+// ─── Premium advanced settings fields ────────────────────────────────────────
 
 export enum SubjectDomain {
   // ─── TECHNOLOGY ───────────────────────────────
@@ -99,7 +101,11 @@ export enum StudyMode {
   // GROUP = 'GROUP',
 }
 
-
+// ─── Connection lifecycle ─────────────────────────────────────────────────────
+// PENDING   → request sent, receiver has not responded yet
+// CONNECTED → receiver accepted — quota consumed at this point
+// DECLINED  → receiver declined the request
+// BLOCKED   → one user blocked the other
 export enum BuddyConnectionStatus {
   PENDING = 'PENDING',
   CONNECTED = 'CONNECTED',
@@ -107,7 +113,9 @@ export enum BuddyConnectionStatus {
   BLOCKED = 'BLOCKED',
 }
 
-
+// Maps each StudyGoal to its valid SubjectDomain options.
+// Used for backend validation and frontend dropdown filtering.
+// When user selects a StudyGoal, only show SubjectDomains from this map.
 export const STUDY_GOAL_DOMAIN_MAP: Record<StudyGoal, SubjectDomain[]> = {
   [StudyGoal.TECHNOLOGY]: [
     SubjectDomain.WEB_DEVELOPMENT,

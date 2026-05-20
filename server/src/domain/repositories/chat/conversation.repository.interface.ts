@@ -4,7 +4,8 @@ import type { ConversationEntity } from '../../entities/chat.entities';
 export interface IConversationRepository
     extends IBaseRepository<ConversationEntity> {
 
-    // Find existing conversation created for this buddy connection to prevent duplicates
+    // Find existing conversation created for this buddy connection
+    // Used in RespondToBuddyRequestUsecase to prevent duplicate rooms
     findByBuddyConnectionId(
         buddyConnectionId: string,
     ): Promise<ConversationEntity | null>;

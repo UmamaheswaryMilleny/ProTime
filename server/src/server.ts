@@ -33,6 +33,8 @@ import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-s
 import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
 import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
 import { startSubscriptionNotificationsCron } from "./infrastructure/cron/subscription-notifications.cron";
+import { startExpireSubscriptionsCron } from "./infrastructure/cron/expire-subscriptions.cron";
+import { startDeleteExpiredRoomsCron } from "./infrastructure/cron/delete-expired-rooms.cron";
 import { ProBuddyRoutes } from "./interface_adapter/routes/probuddy/probuddy.routes";
 
 
@@ -396,4 +398,6 @@ export const bootstrap = async (): Promise<void> => {
   startExpireScheduleRequestsCron();
   startExpireTodosCron();
   startSubscriptionNotificationsCron();
+  startExpireSubscriptionsCron(); // Safety net: downgrades missed-webhook expired subscriptions
+  startDeleteExpiredRoomsCron();  // Deletes ENDED study rooms after 3 days
 };

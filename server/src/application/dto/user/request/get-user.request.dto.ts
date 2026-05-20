@@ -44,6 +44,10 @@ export class GetUsersRequestDTO {
     message: "Order must be one of: asc, desc",
   })
   order?: SortOrder = SortOrder.ASC;
+
+  @IsOptional()
+  @IsString()
+  subscription?: string;
 }
 
 
