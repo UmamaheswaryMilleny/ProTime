@@ -40,18 +40,33 @@ export class GamificationMapper {
     earnedBadges: UserBadgeResponseDTO[],
     isPremium: boolean,
   ): GamificationResponseDTO {
-    const currentLevelXp = LEVEL_XP_THRESHOLDS[entity.currentLevel] ?? 0;
-    const nextLevel = Math.min(entity.currentLevel + 1, MAX_LEVEL);
-    const nextLevelXp =
-      LEVEL_XP_THRESHOLDS[nextLevel] ?? LEVEL_XP_THRESHOLDS[MAX_LEVEL];
-    const xpProgress = entity.totalXp - currentLevelXp;
+    const rawLevel = entity.currentLevel;
+    const currentLevel = !isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
 
-    const isTitleLocked = !isPremium && entity.currentLevel > FREE_MAX_LEVEL;
+    const currentLevelXp = LEVEL_XP_THRESHOLDS[currentLevel] ?? 0;
+    const nextLevel = Math.min(currentLevel + 1, MAX_LEVEL);
+    const nextLevelXp =
+      (LEVEL_XP_THRESHOLDS[nextLevel] ?? LEVEL_XP_THRESHOLDS[MAX_LEVEL])!;
+
+    const totalLevelXpDiff = nextLevelXp - currentLevelXp;
+    let xpProgress = 100;
+    if (totalLevelXpDiff > 0) {
+      xpProgress = Math.min(
+        100,
+        Math.max(
+          0,
+          Math.round(((entity.totalXp - currentLevelXp) / totalLevelXpDiff) * 100)
+        )
+      );
+    }
+
+    const isTitleLocked = !isPremium && rawLevel > FREE_MAX_LEVEL;
 
     return {
       userId: entity.userId,
       totalXp: entity.totalXp,
-      currentLevel: entity.currentLevel,
+      currentLevel,
+      rawLevel,
       currentTitle: entity.currentTitle,
       isTitleLocked,
 
@@ -85,13 +100,19 @@ export class GamificationMapper {
     streakUpdated: boolean;
     streakBonus: number;
     capReached: boolean;
+    isPremium: boolean;
   }): AwardXpResponseDTO {
+    const rawLevel = params.entity.currentLevel;
+    const currentLevel = !params.isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
+    const prevCappedLevel = !params.isPremium && params.prevLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : params.prevLevel;
+
     return {
       xpAwarded: params.xpAwarded,
       totalXp: params.entity.totalXp,
-      currentLevel: params.entity.currentLevel,
+      currentLevel,
+      rawLevel,
       currentTitle: params.entity.currentTitle,
-      leveledUp: params.entity.currentLevel > params.prevLevel,
+      leveledUp: currentLevel > prevCappedLevel,
       newBadges: params.newBadges,
       streakUpdated: params.streakUpdated,
       streakBonus: params.streakBonus,

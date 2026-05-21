@@ -7,6 +7,7 @@ export interface GamificationResponseDTO {
   totalXp: number;
   currentLevel: number;
   currentTitle: LevelTitle;
+  rawLevel: number;
 
   // isTitleLocked = true when user is FREE and title is above Learner
   isTitleLocked: boolean;

@@ -72,7 +72,8 @@ export class GamificationController implements IGamificationController {
         req.user.id,
         range as any,
         type as any,
-        20 // limit to 20
+        20, // limit to 20
+        req.user.isPremium,
       );
 
       ResponseHelper.success(

@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import { injectable } from 'tsyringe';
 import type { IGamificationRepository } from '../../../domain/repositories/gamification/gamification.repository.interface';
 import type { UserGamificationEntity } from '../../../domain/entities/gamification.entity';
-import type { LevelTitle } from '../../../domain/enums/gamification.enums';
+import { LevelTitle, FREE_MAX_LEVEL, getTitleForLevel } from '../../../domain/enums/gamification.enums';
 import { UserGamificationModel } from '../../database/models/user-gamification.model';
 import { UserGamificationMapper } from '../../database/mappers/gamification.mapper';
 import { BuddyConnectionModel } from '../../database/models/buddy-connection.model';
@@ -197,15 +197,22 @@ export class MongoGamificationRepository implements IGamificationRepository {
 
     const docs = await UserGamificationModel.aggregate(pipeline);
 
-    return docs.map((doc: any) => ({
-      userId: doc.userId.toString(),
-      username: doc.profileDoc?.username || doc.userDoc.fullName || 'Unknown User',
-      avatar: doc.profileDoc?.profileImage || '',
-      totalXp: range === 'today' ? doc.dailyXpEarned : doc.totalXp,
-      currentLevel: doc.currentLevel,
-      currentTitle: doc.currentTitle,
-      currentStreak: doc.currentStreak,
-    }));
+    return docs.map((doc: any) => {
+      const isPremium = doc.userDoc?.isPremium || false;
+      const rawLevel = doc.currentLevel;
+      const currentLevel = !isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
+      const currentTitle = !isPremium && rawLevel > FREE_MAX_LEVEL ? getTitleForLevel(FREE_MAX_LEVEL) : doc.currentTitle;
+
+      return {
+        userId: doc.userId.toString(),
+        username: doc.profileDoc?.username || doc.userDoc.fullName || 'Unknown User',
+        avatar: doc.profileDoc?.profileImage || '',
+        totalXp: range === 'today' ? doc.dailyXpEarned : doc.totalXp,
+        currentLevel,
+        currentTitle,
+        currentStreak: doc.currentStreak,
+      };
+    });
   }
 
   async getUserRank(

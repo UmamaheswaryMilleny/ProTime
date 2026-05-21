@@ -8,6 +8,8 @@ import { BuddyPreferenceMapper } from '../../database/mappers/buddy-preference.m
 import type { IBuddyPreferenceRepository } from '../../../domain/repositories/buddy/buddy.preference.repository.interface';
 import type { BuddyPreferenceEntity } from '../../../domain/entities/buddy.entities';
 import type { StudyGoal } from '../../../domain/enums/buddy.enums';
+import { ProfileModel } from '../../database/models/profile.model';
+import { SkillModel } from '../../database/models/skill.model';
 
 @injectable()
 export class BuddyPreferenceRepository
@@ -69,14 +71,27 @@ export class BuddyPreferenceRepository
     // Search complements the filters rather than overriding them
     if (search) {
         const searchRegex = { $regex: search, $options: 'i' };
-        // If searching, we check keywords in goal or language or country
-        // but we still want them to be somewhat relevant to the user's base preferences
-        // Or we can just add the search as another required filter field if it's broad
+        
+        // Find matching skills
+        const matchingSkills = await SkillModel.find({ name: searchRegex }).select('_id').lean();
+        const skillIds = matchingSkills.map(s => s._id);
+
+        // Find profiles matching username, fullName, or skills
+        const matchingProfiles = await ProfileModel.find({
+            $or: [
+                { fullName: searchRegex },
+                { username: searchRegex },
+                { skills: { $in: skillIds } }
+            ]
+        }).select('userId').lean();
+        const userIdsFromProfiles = matchingProfiles.map(p => p.userId);
+
         query.$or = [
             { studyGoal: searchRegex },
             { studyLanguage: searchRegex },
             { country: searchRegex },
-            { subjectDomain: searchRegex }
+            { subjectDomain: searchRegex },
+            { userId: { $in: userIdsFromProfiles } }
         ];
     }
 

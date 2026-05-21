@@ -6,6 +6,7 @@ export interface AwardXpResponseDTO {
   xpAwarded: number; // actual XP credited (0 if daily cap hit)
   totalXp: number; // new total XP
   currentLevel: number; // new level (may have increased)
+  rawLevel: number;
   currentTitle: LevelTitle; // new title (may have changed)
   leveledUp: boolean; // true if level increased this award
   newBadges: UserBadgeResponseDTO[]; // any badges earned from this action

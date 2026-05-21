@@ -51,10 +51,10 @@ export class AwardXpUsecase implements IAwardXpUsecase {
     //    We still run streak + badge checks even if xp=0
     const newTotalXp = gamification.totalXp + xp;
 
-    // 3. Recalculate level + title — cap at FREE_MAX_LEVEL for free users
+    // 3. Recalculate level + title — store uncapped in database
     const rawLevel = getLevelFromXp(newTotalXp);
-    const newLevel = !isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
-    const newTitle = getTitleForLevel(newLevel); // ✅ defined before use
+    const newLevel = rawLevel;
+    const newTitle = getTitleForLevel(rawLevel);
 
     // 4. Persist XP + level update
     await this.gamificationRepository.updateXpAndLevel(userId, {
@@ -78,7 +78,7 @@ export class AwardXpUsecase implements IAwardXpUsecase {
       finalTotalXp = newTotalXp + streakBonus;
 
       const afterStreakRaw = getLevelFromXp(finalTotalXp);
-      const afterStreak = !isPremium && afterStreakRaw > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : afterStreakRaw; // ✅ cap for free
+      const afterStreak = afterStreakRaw;
       const afterTitle = getTitleForLevel(afterStreak);
 
       await this.gamificationRepository.updateXpAndLevel(userId, {
@@ -104,7 +104,7 @@ export class AwardXpUsecase implements IAwardXpUsecase {
         const withBadgeXp = finalTotalXp + badgeBonusXp;
 
         const levelWithBadgeRaw = getLevelFromXp(withBadgeXp);
-        const levelWithBadge = !isPremium && levelWithBadgeRaw > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : levelWithBadgeRaw; // ✅ cap for free
+        const levelWithBadge = levelWithBadgeRaw;
         const titleWithBadge = getTitleForLevel(levelWithBadge);
         finalTotalXp = withBadgeXp;
 
@@ -129,11 +129,15 @@ export class AwardXpUsecase implements IAwardXpUsecase {
       });
     }
 
-    if (finalState.currentLevel > prevLevel) {
+    const prevCapped = !isPremium && prevLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : prevLevel;
+    const currentCapped = !isPremium && finalState.currentLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : finalState.currentLevel;
+
+    if (currentCapped > prevCapped) {
+      const cappedTitle = getTitleForLevel(currentCapped);
       this.notificationService.notifyUser(userId, {
         type: NotificationType.LEVEL_UP,
         title: 'Level Up!',
-        message: `Congratulations! You've reached Level ${finalState.currentLevel} and earned the title "${finalState.currentTitle}".`,
+        message: `Congratulations! You've reached Level ${currentCapped} and earned the title "${cappedTitle}".`,
       });
     }
 
@@ -145,6 +149,7 @@ export class AwardXpUsecase implements IAwardXpUsecase {
       streakUpdated,
       streakBonus,
       capReached: xp === 0,
+      isPremium,
     });
   }
 }

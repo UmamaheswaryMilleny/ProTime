@@ -2,6 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IGetLeaderboardUsecase } from '../../interface/gamification/get-leaderboard.usecase.interface.js';
 import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface.js';
 import type { LeaderboardEntry } from '../../../../domain/entities/gamification.entity.js';
+import { FREE_MAX_LEVEL, getTitleForLevel } from '../../../../domain/enums/gamification.enums';
 
 @injectable()
 export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
@@ -14,7 +15,8 @@ export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
     userId: string,
     range: 'today' | 'weekly' | 'monthly' | 'allTime',
     type: 'global' | 'friends',
-    limit: number = 50
+    limit: number = 50,
+    isPremium?: boolean
   ): Promise<{ leaderboard: LeaderboardEntry[]; userRank: number; userEntry: LeaderboardEntry | null }> {
     
     // 1. Fetch Top N
@@ -30,12 +32,16 @@ export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
       // Create user entry mock using their existing gamification record
       const gamificationDoc = await this.gamificationRepository.findByUserId(userId);
       if (gamificationDoc) {
+        const rawLevel = gamificationDoc.currentLevel;
+        const currentLevel = !isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
+        const currentTitle = !isPremium && rawLevel > FREE_MAX_LEVEL ? getTitleForLevel(FREE_MAX_LEVEL) : gamificationDoc.currentTitle;
+
         userEntry = {
           userId,
           username: 'You', // Since we don't have populate here, fallback to 'You' in frontend
           totalXp: gamificationDoc.totalXp,
-          currentLevel: gamificationDoc.currentLevel,
-          currentTitle: gamificationDoc.currentTitle,
+          currentLevel,
+          currentTitle,
           currentStreak: gamificationDoc.currentStreak,
         };
       }
