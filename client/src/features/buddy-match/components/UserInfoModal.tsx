@@ -7,7 +7,10 @@ interface UserInfoModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConnect: () => void;
+  onAccept?: () => void;
+  onChat?: () => void;
   isLoading?: boolean;
+  status?: 'NONE' | 'PENDING' | 'SENT' | 'CONNECTED';
 }
 
 export const UserInfoModal: React.FC<UserInfoModalProps> = ({ 
@@ -15,7 +18,10 @@ export const UserInfoModal: React.FC<UserInfoModalProps> = ({
   isOpen, 
   onClose,
   onConnect,
-  isLoading
+  onAccept,
+  onChat,
+  isLoading,
+  status = 'NONE'
 }) => {
   if (!isOpen || !buddy) return null;
 
@@ -101,13 +107,40 @@ export const UserInfoModal: React.FC<UserInfoModalProps> = ({
                 >
                     Cancel
                 </button>
-                <button 
-                    disabled={isLoading}
-                    onClick={onConnect}
-                    className="flex-1 bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold py-3 rounded-xl transition-all shadow-xl shadow-[blueviolet]/20 disabled:opacity-50 text-xs uppercase tracking-wider active:scale-95"
-                >
-                    {isLoading ? '...' : 'Send Request'}
-                </button>
+                {status === 'NONE' && (
+                  <button 
+                      disabled={isLoading}
+                      onClick={onConnect}
+                      className="flex-1 bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold py-3 rounded-xl transition-all shadow-xl shadow-[blueviolet]/20 disabled:opacity-50 text-xs uppercase tracking-wider active:scale-95"
+                  >
+                      {isLoading ? '...' : 'Send Request'}
+                  </button>
+                )}
+                {status === 'SENT' && (
+                  <button 
+                      disabled
+                      className="flex-1 bg-zinc-800 text-zinc-500 font-bold py-3 rounded-xl text-xs uppercase tracking-wider cursor-not-allowed"
+                  >
+                      Sent
+                  </button>
+                )}
+                {status === 'PENDING' && (
+                  <button 
+                      disabled={isLoading}
+                      onClick={onAccept}
+                      className="flex-1 bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold py-3 rounded-xl transition-all shadow-xl shadow-[blueviolet]/20 disabled:opacity-50 text-xs uppercase tracking-wider active:scale-95"
+                  >
+                      {isLoading ? '...' : 'Accept'}
+                  </button>
+                )}
+                {status === 'CONNECTED' && (
+                  <button 
+                      onClick={onChat}
+                      className="flex-1 bg-zinc-850 hover:bg-zinc-800 text-white font-bold py-3 rounded-xl transition-all border border-white/5 text-xs uppercase tracking-wider"
+                  >
+                      Message
+                  </button>
+                )}
             </div>
         </div>
       </div>

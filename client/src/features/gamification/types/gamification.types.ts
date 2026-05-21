@@ -33,6 +33,7 @@ export interface AwardXpResponse {
     xpAwarded: number;
     totalXp: number;
     currentLevel: number;
+    rawLevel?: number;
     currentTitle: string;
     leveledUp: boolean;
     newBadges: UserBadge[];

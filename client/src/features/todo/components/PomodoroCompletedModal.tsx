@@ -38,7 +38,7 @@ export const PomodoroCompletedModal: React.FC<PomodoroCompletedModalProps> = ({ 
 
                 <div className="text-white text-lg space-y-2 mb-8">
                     <p>Task : {task.title}</p>
-                    <p>Prioity : {task.priority}</p>
+                    <p>Priority : {task.priority}</p>
                 </div>
 
                 <button

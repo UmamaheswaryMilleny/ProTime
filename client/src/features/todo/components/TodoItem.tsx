@@ -82,9 +82,9 @@ export const TodoItem: React.FC<TodoItemProps> = ({ todo, onToggle, onDelete, on
                             });
                         }
                     }}
-                    disabled={todo.pomodoroEnabled || isExpired}
-                    className={`mt-1 flex-shrink-0 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[blueviolet] transition-colors ${todo.pomodoroEnabled || isExpired ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                        }`}
+                    disabled={todo.pomodoroEnabled || isExpired || isCompleted}
+                    className={`mt-1 flex-shrink-0 relative flex items-center justify-center w-5 h-5 rounded-full border-2 border-[blueviolet] transition-colors ${todo.pomodoroEnabled || isExpired || isCompleted ? 'cursor-not-allowed' : 'cursor-pointer'
+                        } ${todo.pomodoroEnabled || isExpired ? 'opacity-50' : ''}`}
                 >
                     {isCompleted && <div className="w-2.5 h-2.5 rounded-full bg-[blueviolet]" />}
                 </button>

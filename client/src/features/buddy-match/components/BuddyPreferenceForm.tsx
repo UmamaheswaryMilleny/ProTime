@@ -214,7 +214,7 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
     return (
       <div className="space-y-4">
         {renderSelect('Subject/ Domain', formData.subjectDomain, validDomains as any, 'subjectDomain', true)}
-        {renderSelect('Focul Level', formData.focusLevel, FocusLevel, 'focusLevel', true)}
+        {renderSelect('Focus Level', formData.focusLevel, FocusLevel, 'focusLevel', true)}
         {renderSelect('Study Preference', formData.studyPreference, StudyPreference, 'studyPreference', true)}
         {renderSelect('Availability', formData.availability, Availability, 'availability', true)}
         {renderSelect('Study Duration', formData.sessionDuration, SessionDuration, 'sessionDuration', true)}

@@ -5,7 +5,7 @@ import { useResetPassword } from '../hooks/useResetpassword';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const ResetPasswordForm = () => {
-  const { form, onSubmit, isLoading, token, isValidating, isValidToken } = useResetPassword();
+  const { form, onSubmit, isLoading, isValidating, isValidToken } = useResetPassword();
   const { register, handleSubmit, formState: { errors } } = form;
 
   const [showPassword, setShowPassword] = useState(false);

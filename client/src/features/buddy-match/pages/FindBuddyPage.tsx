@@ -15,7 +15,7 @@ import {
 import { updateUser } from '../../auth/store/authSlice';
 import { subscriptionService } from '../../dashboard/api/subscription-service';
 import { BuddyNavbar } from '../components/BuddyNavbar';
-// import { BuddySearch } from '../components/BuddySearch';
+import { BuddySearch } from '../components/BuddySearch';
 import { BuddyCard } from '../components/BuddyCard';
 import { BuddySidebar } from '../components/BuddySidebar';
 import { UserInfoModal } from '../components/UserInfoModal';
@@ -50,7 +50,7 @@ export const FindBuddyPage: React.FC = () => {
   };
 
   const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked'>(getTabFromPath(location.pathname));
-  const [searchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedBuddy, setSelectedBuddy] = useState<BuddyProfile | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -232,6 +232,35 @@ export const FindBuddyPage: React.FC = () => {
     }
   };
 
+  const handleAcceptRequest = async (connectionId: string) => {
+    try {
+      await dispatch(respondToBuddyRequest({ connectionId, status: 'CONNECTED' })).unwrap();
+      toast.success('Buddy request accepted!');
+      dispatch(fetchBuddyList());
+      dispatch(fetchPendingRequests());
+      setSelectedBuddy(null);
+    } catch (err: any) {
+      toast.error(err || 'Failed to accept request');
+    }
+  };
+
+  const handleOpenChat = async (connectionId: string, buddyUserId: string) => {
+    try {
+      const loadingId = toast.loading('Opening chat...');
+      const result = await chatApi.getConversations();
+      toast.dismiss(loadingId);
+      const conv = result.data.find(c => c.buddyConnectionId === connectionId || c.otherUser.userId === buddyUserId);
+      if (conv) {
+        navigate(`/dashboard/chat/${conv.id}`);
+      } else {
+        toast.error('Check your messages; chat could not be found right now.', { icon: '🥲' });
+        navigate('/dashboard/chat');
+      }
+    } catch (error) {
+      toast.error('Failed to load chat');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-black text-white p-6 pb-24 lg:p-12 lg:pb-12">
       <div className="mb-10">
@@ -239,37 +268,31 @@ export const FindBuddyPage: React.FC = () => {
         <p className="text-zinc-500 text-base">Connect With Like-Minded Learners Who Share Your Goals</p>
       </div>
 
-      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 mb-12">
-        <div className="flex items-center flex-1 max-w-4xl gap-4">
-          {/* <div className="relative flex-1">
-            <BuddySearch value={searchQuery} onChange={setSearchQuery} />
-          </div> */}
-
-          <div className="flex items-center gap-4">
-            <div className="bg-[#18181B] rounded-full p-1 border border-white/5 flex items-center">
-              <BuddyNavbar
-                activeTab={activeTab}
-                onTabChange={(tab) => setActiveTab(tab)}
-                requestCount={pendingRequests.length}
-              />
-              {/* Blocked tab */}
-              <button
-                onClick={() => setActiveTab('blocked')}
-                className={`px-4 py-2 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
-                  activeTab === 'blocked'
-                    ? 'bg-red-500/20 text-red-400'
-                    : 'text-zinc-500 hover:text-white'
-                }`}
-              >
-                <ShieldOff size={12} />
-                Blocked
-                {blockedUsers.length > 0 && (
-                  <span className="ml-0.5 bg-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                    {blockedUsers.length}
-                  </span>
-                )}
-              </button>
-            </div>
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+        <div className="flex items-center gap-4">
+          <div className="bg-[#18181B] rounded-full p-1 border border-white/5 flex items-center">
+            <BuddyNavbar
+              activeTab={activeTab}
+              onTabChange={(tab) => setActiveTab(tab)}
+              requestCount={pendingRequests.length}
+            />
+            {/* Blocked tab */}
+            <button
+              onClick={() => setActiveTab('blocked')}
+              className={`px-4 py-2 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
+                activeTab === 'blocked'
+                  ? 'bg-red-500/20 text-red-400'
+                  : 'text-zinc-500 hover:text-white'
+              }`}
+            >
+              <ShieldOff size={12} />
+              Blocked
+              {blockedUsers.length > 0 && (
+                <span className="ml-0.5 bg-red-500/30 text-red-400 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                  {blockedUsers.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
 
@@ -294,6 +317,12 @@ export const FindBuddyPage: React.FC = () => {
           </button>
         </div>
       </div>
+
+      {activeTab === 'find' && (
+        <div className="mb-10 max-w-2xl">
+          <BuddySearch value={searchQuery} onChange={setSearchQuery} />
+        </div>
+      )}
 
       <div className="flex flex-col lg:flex-row gap-8">
         {!preferences && activeTab === 'find' ? (
@@ -488,25 +517,12 @@ export const FindBuddyPage: React.FC = () => {
                         key={conn.id}
                         buddy={conn.buddy!}
                         status="CONNECTED"
-                        onAction={async (action) => {
+                        onAction={(action) => {
                           if (action === 'view') setSelectedBuddy(conn.buddy!);
                           if (action === 'block' && conn.buddy?.userId)
                             handleBlock(conn.buddy.userId, conn.buddy.username || conn.buddy.fullName);
                           if (action === 'chat') {
-                            try {
-                              const loadingId = toast.loading('Opening chat...');
-                              const result = await chatApi.getConversations();
-                              toast.dismiss(loadingId);
-                              const conv = result.data.find(c => c.buddyConnectionId === conn.id || c.otherUser.userId === conn.buddy?.userId);
-                              if (conv) {
-                                navigate(`/dashboard/chat/${conv.id}`);
-                              } else {
-                                toast.error('Check your messages; chat could not be found right now.', { icon: '🥲' });
-                                navigate('/dashboard/chat');
-                              }
-                            } catch (error) {
-                              toast.error('Failed to load chat');
-                            }
+                            handleOpenChat(conn.id, conn.buddy?.userId || '');
                           }
                         }}
                       />
@@ -551,7 +567,25 @@ export const FindBuddyPage: React.FC = () => {
         isOpen={!!selectedBuddy}
         onClose={() => setSelectedBuddy(null)}
         onConnect={() => selectedBuddy && handleSendRequest(selectedBuddy.userId)}
-        isLoading={selectedBuddy ? loading.actions[selectedBuddy.userId] : false}
+        onAccept={() => {
+          if (selectedBuddy) {
+            const conn = pendingRequests.find(c => c.buddy?.userId === selectedBuddy.userId);
+            if (conn) handleAcceptRequest(conn.id);
+          }
+        }}
+        onChat={() => {
+          if (selectedBuddy) {
+            const conn = buddyList.find(c => c.buddy?.userId === selectedBuddy.userId);
+            handleOpenChat(conn?.id || '', selectedBuddy.userId);
+          }
+        }}
+        status={selectedBuddy ? getBuddyStatus(selectedBuddy.userId) : 'NONE'}
+        isLoading={
+          selectedBuddy
+            ? (loading.actions[selectedBuddy.userId] ||
+               loading.actions[pendingRequests.find(c => c.buddy?.userId === selectedBuddy.userId)?.id || ''])
+            : false
+        }
       />
 
       <InformationModal

@@ -109,6 +109,7 @@ export const useTodo = () => {
                 dispatch(updateGamificationLocal({
                     totalXp: xpResult.totalXp,
                     currentLevel: xpResult.currentLevel,
+                    rawLevel: xpResult.rawLevel,
                     currentTitle: xpResult.currentTitle
                 }));
 
@@ -152,6 +153,7 @@ export const useTodo = () => {
                 dispatch(updateGamificationLocal({
                     totalXp: xpResult.totalXp,
                     currentLevel: xpResult.currentLevel,
+                    rawLevel: xpResult.rawLevel,
                     currentTitle: xpResult.currentTitle
                 }));
 
