@@ -264,7 +264,7 @@ export class AdminMeetingController {
         totalPages,
         stats,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -303,7 +303,7 @@ export class AdminMeetingController {
       }
 
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Session force-closed successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

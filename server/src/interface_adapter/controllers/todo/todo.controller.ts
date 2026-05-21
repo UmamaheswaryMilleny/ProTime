@@ -53,7 +53,7 @@ export class TodoController implements ITodoController {
       const todo = await this.createTodoUsecase.execute(req.user.id, req.body);
 
       ResponseHelper.success(res, HTTP_STATUS.CREATED, SUCCESS_MESSAGE.TODO.CREATED, todo);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -77,7 +77,7 @@ export class TodoController implements ITodoController {
       const result = await this.getTodosUsecase.execute(req.user.id, filter);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.FETCHED, result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -96,7 +96,7 @@ export class TodoController implements ITodoController {
       const todo = await this.updateTodoUsecase.execute(req.user.id, todoId, req.body);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.UPDATED, todo);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -115,7 +115,7 @@ export class TodoController implements ITodoController {
       await this.deleteTodoUsecase.execute(req.user.id, todoId);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.DELETED);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -135,7 +135,7 @@ export class TodoController implements ITodoController {
       const result = await this.completeTodoUsecase.execute(req.user.id, todoId,isPremium);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.COMPLETED, result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -159,7 +159,7 @@ export class TodoController implements ITodoController {
       );
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.POMODORO_COMPLETED, todo);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -175,7 +175,7 @@ export class TodoController implements ITodoController {
       const todo = await this.pausePomodoroUsecase.execute(req.user.id, todoId);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro paused successfully', todo);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -191,7 +191,7 @@ export class TodoController implements ITodoController {
       const todo = await this.resumePomodoroUsecase.execute(req.user.id, todoId);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro resumed successfully', todo);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

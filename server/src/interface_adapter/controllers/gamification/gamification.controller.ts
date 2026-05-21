@@ -39,7 +39,7 @@ export class GamificationController implements IGamificationController {
         'Gamification profile fetched successfully',
         data,
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -82,7 +82,7 @@ export class GamificationController implements IGamificationController {
         'Leaderboard fetched successfully',
         data,
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

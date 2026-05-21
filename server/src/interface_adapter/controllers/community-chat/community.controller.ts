@@ -35,7 +35,7 @@ export class CommunityChatController implements ICommunityChatController {
         message: 'Message sent successfully',
         data: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -58,7 +58,7 @@ export class CommunityChatController implements ICommunityChatController {
         message: 'Messages fetched successfully',
         data: result,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

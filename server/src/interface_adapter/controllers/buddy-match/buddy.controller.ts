@@ -64,7 +64,7 @@ export class BuddyController implements IBuddyController {
       const userId = req.user!.id;
       const result = await this.saveBuddyPreferenceUsecase.execute(userId, req.body as SaveBuddyPreferenceRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy preference saved successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getPreference(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
@@ -72,7 +72,7 @@ export class BuddyController implements IBuddyController {
       const userId = req.user!.id;
       const result = await this.getBuddyPreferenceUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy preference fetched successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async findMatches(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
@@ -80,42 +80,42 @@ export class BuddyController implements IBuddyController {
       const userId = req.user!.id;
       const result = await this.findBuddyMatchesUsecase.execute(userId, req.query as unknown as FindBuddyMatchesRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy matches fetched successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async sendRequest(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await this.sendBuddyRequestUsecase.execute(req.user!.id, req.params.buddyId as string);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy request sent successfully', null);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async respondToRequest(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       await this.respondToBuddyRequestUsecase.execute(req.user!.id, req.params.connectionId as string, req.body as RespondToBuddyRequestDTO);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy request responded successfully', null);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getBuddyList(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await this.getBuddyListUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy list fetched successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getPendingRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await this.getPendingRequestsUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pending requests fetched successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getSentRequests(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const result = await this.getSentRequestsUsecase.execute(req.user!.id);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Sent requests fetched successfully', result);
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   // ─── POST /api/v1/buddy/block/:targetUserId ───────────────────────────────
@@ -129,7 +129,7 @@ export class BuddyController implements IBuddyController {
       const targetUserId = req.params.targetUserId as string;
       await this.blockBuddyUsecase.execute(userId, targetUserId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'User blocked successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -145,7 +145,7 @@ export class BuddyController implements IBuddyController {
       const connectionId = req.params.connectionId as string;
       await this.unblockBuddyUsecase.execute(userId, connectionId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'User unblocked successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -160,7 +160,7 @@ export class BuddyController implements IBuddyController {
       const userId = req.user!.id;
       const data   = await this.getBlockedUsersUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Blocked users retrieved successfully', data);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

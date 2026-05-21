@@ -21,7 +21,7 @@ export class AdminDashboardController {
         'Admin dashboard stats retrieved successfully',
         stats
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

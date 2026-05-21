@@ -2,6 +2,7 @@ import type { NextFunction, Response, Request } from 'express';
 
 import { DomainError } from '../../domain/errors/base-domain.error';
 import { logger } from '../../infrastructure/config/logger.config';
+import { toError } from '../../shared/errors/normalize-error';
 
 // ─── User errors ───────────────────────────────────────────────────────────
 import {
@@ -113,12 +114,20 @@ import {
 } from '../../domain/errors/study-room.errors';
 
 export class ErrorMiddleware {
+  /**
+   * Global Express error handler.
+   * The first parameter is typed as `unknown` because:
+   *   - TS 4.0+ useUnknownInCatchVariables means anything can be thrown
+   *   - asyncHandler passes the rejection value to next() which could be non-Error
+   * We normalise it with toError() before inspecting.
+   */
   public handleError(
-    err: Error,
+    raw: unknown,
     _req: Request,
     res: Response,
     _next: NextFunction,
   ): void {
+    const err = toError(raw);
 
     // ─── 404 Not Found ────────────────────────────────────────────────
     if (
@@ -211,7 +220,11 @@ err instanceof JoinRequestAlreadyRespondedError
     }
 
     // ─── Unknown / unexpected errors ──────────────────────────────────
-    logger.error('[Internal Server Error]:', { error: err });
+    logger.error('[Internal Server Error]:', {
+      message: err.message,
+      stack:   err.stack,
+      raw,          // log the original thrown value for diagnostics
+    });
     res.status(HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
       success: false,
       message: 'Internal server error',

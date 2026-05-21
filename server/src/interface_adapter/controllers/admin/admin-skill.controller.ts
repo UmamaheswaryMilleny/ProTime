@@ -69,7 +69,7 @@ export class AdminSkillController {
         totalPages,
         stats,
       });
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -110,7 +110,7 @@ export class AdminSkillController {
       });
       
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Skill created successfully', skill);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -163,7 +163,7 @@ export class AdminSkillController {
       }
       
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Skill updated successfully', updated);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -183,7 +183,7 @@ export class AdminSkillController {
       await skill.save();
       
       ResponseHelper.success(res, HTTP_STATUS.OK, `Skill status toggled to ${skill.isActive ? 'Active' : 'Inactive'}`, skill);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -200,7 +200,7 @@ export class AdminSkillController {
       }
       
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Skill deleted successfully');
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

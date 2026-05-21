@@ -47,6 +47,8 @@ export const ROUTES = {
     RESOLVE_REPORT: '/reports/:reportId/resolve',    // ← add
     SUBSCRIPTIONS:  '/subscriptions',
     SUBSCRIPTION_STATS: '/subscriptions/stats',
+    SUBSCRIPTION_BY_USER_ID: '/subscriptions/:userId',
+    SUBSCRIPTION_ADD: '/subscriptions/add',
     GAMIFICATION_OVERVIEW: '/gamification/overview',
     GAMIFICATION_USERS: '/gamification/users',
     GAMIFICATION_USER_DETAIL: '/gamification/users/:userId',

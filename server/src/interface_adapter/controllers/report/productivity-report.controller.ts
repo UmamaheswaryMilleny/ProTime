@@ -21,7 +21,7 @@ export class ProductivityReportController {
       const month  = req.query.month as string | undefined;
       const data   = await this.getProductivityReportUsecase.execute(userId, range, month);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Productivity report fetched', data);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -81,7 +81,7 @@ export class ProductivityReportController {
 
       // Unsupported format fallback — return JSON
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Report data', data);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

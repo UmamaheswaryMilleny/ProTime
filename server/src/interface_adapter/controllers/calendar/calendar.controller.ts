@@ -41,7 +41,7 @@ export class CalendarController implements ICalendarController {
       };
       const result = await this.getCalendarEventsUsecase.execute(userId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Calendar events fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -57,7 +57,7 @@ export class CalendarController implements ICalendarController {
       const date   = req.params.date as string; // YYYY-MM-DD
       const result = await this.getDayDetailUsecase.execute(userId, date);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Day detail fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -72,7 +72,7 @@ export class CalendarController implements ICalendarController {
       const userId = req.user!.id;
       const result = await this.getPendingScheduleRequestsUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Pending schedule requests fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -88,7 +88,7 @@ export class CalendarController implements ICalendarController {
       const { title, date, startTime } = req.body;
       const result = await this.createSoloEventUsecase.execute(userId, title, date, startTime);
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Solo session scheduled successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

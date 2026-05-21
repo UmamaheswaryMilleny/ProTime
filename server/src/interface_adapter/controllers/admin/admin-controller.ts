@@ -55,7 +55,7 @@ export class AdminController {
         'Users retrieved successfully',
         result
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -69,7 +69,7 @@ async blockUser(req: Request, res: Response, next: NextFunction): Promise<void> 
     await this.userRepository.updateBlockStatus(userId, true);
 
     ResponseHelper.success(res, HTTP_STATUS.OK, 'User blocked successfully');
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }
@@ -81,7 +81,7 @@ async unblockUser(req: Request, res: Response, next: NextFunction): Promise<void
     await this.userRepository.updateBlockStatus(userId, false);
 
     ResponseHelper.success(res, HTTP_STATUS.OK, 'User unblocked successfully');
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }

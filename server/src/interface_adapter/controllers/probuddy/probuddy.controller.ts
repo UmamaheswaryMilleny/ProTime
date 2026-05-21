@@ -3,6 +3,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IChatWithAiUsecase } from '../../../application/usecase/interface/probuddy/chat-with-ai.usecase.interface';
 import { HTTP_STATUS } from '../../../shared/constants/constants';
 import type { CustomRequest } from '../../middlewares/auth.middleware';
+import { toError } from '../../../shared/errors/normalize-error';
 
 @injectable()
 export class ProBuddyController {
@@ -28,13 +29,14 @@ export class ProBuddyController {
 
       const response = await this.chatWithAiUsecase.execute(userId, prompt);
       res.status(HTTP_STATUS.OK).json({ success: true, response });
-    } catch (error: any) {
-      console.error('ProBuddy Controller Error:', error.message);
+    } catch (error: unknown) {
+      const err = toError(error);
+      console.error('ProBuddy Controller Error:', err.message);
       
-      const isLimitError = error.message.toLowerCase().includes('limit reached');
+      const isLimitError = err.message.toLowerCase().includes('limit reached');
       const statusCode = isLimitError ? HTTP_STATUS.FORBIDDEN : HTTP_STATUS.INTERNAL_SERVER_ERROR;
       const message = isLimitError 
-        ? error.message 
+        ? err.message 
         : "ProBuddy is temporarily overwhelmed by your brilliance. Please try again in a few moments!";
 
       res.status(statusCode).json({ success: false, message });

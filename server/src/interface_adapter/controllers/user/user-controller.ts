@@ -64,7 +64,7 @@ export class UserController implements IUserController {
         "Profile retrieved successfully",
         profileDTO,
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -127,7 +127,7 @@ async updateProfile(
     });
 
     ResponseHelper.success(res, HTTP_STATUS.OK, "Profile updated successfully", profileDTO);
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }
@@ -153,7 +153,7 @@ async uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promi
     );
 
     ResponseHelper.success(res, HTTP_STATUS.OK, 'Profile image updated successfully', result);
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }
@@ -162,7 +162,7 @@ async uploadAvatar(req: CustomRequest, res: Response, next: NextFunction): Promi
     try {
       const skills = await SkillModel.find({ isActive: true }).sort({ name: 1 }).lean();
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Active skills retrieved successfully', skills);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

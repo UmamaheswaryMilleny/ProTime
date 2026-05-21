@@ -15,7 +15,7 @@ export class UtilityController {
     try {
       const result = await this.getLocationUsecase.execute();
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Location fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

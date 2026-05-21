@@ -49,7 +49,7 @@ export class ChatSessionController implements IChatSessionController {
       const conversationId = req.params.conversationId as string;
       const result         = await this.startSessionUsecase.execute(userId, conversationId);
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Session started successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -65,7 +65,7 @@ export class ChatSessionController implements IChatSessionController {
       const conversationId = req.params.conversationId as string;
       const result         = await this.endSessionUsecase.execute(userId, conversationId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Session ended successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -82,7 +82,7 @@ export class ChatSessionController implements IChatSessionController {
       const dto            = req.body as ProposeNextSessionRequestDTO;
       const result         = await this.proposeNextSessionUsecase.execute(userId, conversationId, dto);
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Next session proposed successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -99,7 +99,7 @@ export class ChatSessionController implements IChatSessionController {
       const dto            = req.body as ProposeRecurringSessionRequestDTO;
       const result         = await this.proposeRecurringSessionUsecase.execute(userId, conversationId, dto);
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Recurring session proposed successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -116,7 +116,7 @@ export class ChatSessionController implements IChatSessionController {
       const dto       = req.body as RespondToScheduleRequestDTO;
       const result    = await this.respondToScheduleRequestUsecase.execute(userId, requestId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Schedule request responded successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -133,7 +133,7 @@ export class ChatSessionController implements IChatSessionController {
       const dto       = req.body as SaveSessionNotesRequestDTO;
       const result    = await this.saveSessionNotesUsecase.execute(userId, sessionId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Session notes saved successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

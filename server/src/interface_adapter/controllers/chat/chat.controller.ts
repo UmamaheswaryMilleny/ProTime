@@ -56,7 +56,7 @@ export class ChatController implements IChatController {
             const userId = req.user!.id;
             const result = await this.getConversationsUsecase.execute(userId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Conversations fetched successfully', result);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -73,7 +73,7 @@ export class ChatController implements IChatController {
             const dto = req.query as unknown as GetChatMessagesRequestDTO;
             const result = await this.getMessagesUsecase.execute(userId, conversationId, dto);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Messages fetched successfully', result);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -90,7 +90,7 @@ export class ChatController implements IChatController {
             const dto = req.body as SendDirectMessageRequestDTO;
             const result = await this.sendDirectMessageUsecase.execute(userId, conversationId, dto);
             ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Message sent successfully', result);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -106,7 +106,7 @@ export class ChatController implements IChatController {
             const conversationId = req.params.conversationId as string;
             await this.markAsReadUsecase.execute(userId, conversationId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Messages marked as read', null);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -123,7 +123,7 @@ export class ChatController implements IChatController {
             const dto = req.body as StartChatSessionRequestDTO;
             const result = await this.startChatSessionUsecase.execute(userId, conversationId, dto);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro session started', result);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -139,7 +139,7 @@ export class ChatController implements IChatController {
             const conversationId = req.params.conversationId as string;
             const result = await this.endChatSessionUsecase.execute(userId, conversationId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Pomodoro session ended', result);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -155,7 +155,7 @@ export class ChatController implements IChatController {
             const conversationId = req.params.conversationId as string;
             await this.deleteChatUsecase.execute(userId, conversationId);
             ResponseHelper.success(res, HTTP_STATUS.OK, 'Chat deleted successfully', null);
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }
@@ -188,7 +188,7 @@ export class ChatController implements IChatController {
                 fileSize: file.size,
                 fileType: file.mimetype
             });
-        } catch (error) {
+        } catch (error: unknown) {
             next(error);
         }
     }

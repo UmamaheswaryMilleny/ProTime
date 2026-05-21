@@ -41,7 +41,7 @@ export class ReportController implements IReportController {
       const dto        = req.body as SubmitReportRequestDTO;
       const result     = await this.submitReportUsecase.execute(reporterId, dto);
       ResponseHelper.success(res, HTTP_STATUS.CREATED, 'Report submitted successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -62,7 +62,7 @@ async getReports(
     };
     const result = await this.getReportsUsecase.execute(dto);
     ResponseHelper.success(res, HTTP_STATUS.OK, 'Reports fetched successfully', result);
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }
@@ -77,7 +77,7 @@ async getReports(
       const reportId = req.params.reportId as string;
       const result   = await this.getReportByIdUsecase.execute(reportId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Report fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -94,7 +94,7 @@ async getReports(
       const dto      = req.body as ResolveReportRequestDTO;
       const result   = await this.resolveReportUsecase.execute(adminId, reportId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Report resolved successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

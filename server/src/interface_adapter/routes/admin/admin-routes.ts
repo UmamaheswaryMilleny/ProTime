@@ -79,7 +79,7 @@ export class AdminRoutes extends BaseRoute {
       asyncHandler(reportCtrl.resolveReport.bind(reportCtrl)),
     );
 
-    // ─── Subscription Management ──────────────────────────────────────
+    // ─── Subscription Management ──────────────────────────────────────────────
     this.router.get(
       ROUTES.ADMIN.SUBSCRIPTION_STATS,
       asyncHandler(subCtrl.getStats.bind(subCtrl)),
@@ -88,6 +88,16 @@ export class AdminRoutes extends BaseRoute {
     this.router.get(
       ROUTES.ADMIN.SUBSCRIPTIONS,
       asyncHandler(subCtrl.getSubscriptions.bind(subCtrl)),
+    );
+
+    this.router.post(
+      ROUTES.ADMIN.SUBSCRIPTION_ADD,
+      asyncHandler(subCtrl.addSubscription.bind(subCtrl)),
+    );
+
+    this.router.patch(
+      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
+      asyncHandler(subCtrl.updateSubscription.bind(subCtrl)),
     );
 
     // ─── Meeting Management ───────────────────────────────────────────────

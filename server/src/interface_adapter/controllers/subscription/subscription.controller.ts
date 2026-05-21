@@ -37,7 +37,7 @@ export class SubscriptionController implements ISubscriptionController {
       const userId = req.user!.id;
       const result = await this.getSubscriptionUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Subscription fetched successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -54,7 +54,7 @@ export class SubscriptionController implements ISubscriptionController {
 
       const result = await this.createCheckoutSessionUsecase.execute(userId, dto);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Checkout session created', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -69,7 +69,7 @@ export class SubscriptionController implements ISubscriptionController {
       const userId = req.user!.id;
       const result = await this.cancelSubscriptionUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Subscription cancelled successfully', result);
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -91,7 +91,7 @@ export class SubscriptionController implements ISubscriptionController {
 
       // Stripe requires 200 — any non-2xx triggers a retry
       res.status(HTTP_STATUS.OK).json({ received: true });
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

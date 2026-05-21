@@ -196,7 +196,7 @@ export class App {
             offer: data.offer,
             callerName: data.callerName || 'Buddy',
           });
-        } catch (err) {
+        } catch (err: unknown) {
           logger.error('[Socket] webrtc:offer relay error:', { error: err });
         }
       });
@@ -216,7 +216,7 @@ export class App {
             conversationId: data.conversationId,
             answer: data.answer,
           });
-        } catch (err) {
+        } catch (err: unknown) {
           logger.error('[Socket] webrtc:answer relay error:', { error: err });
         }
       });
@@ -235,7 +235,7 @@ export class App {
             conversationId: data.conversationId,
             candidate: data.candidate,
           });
-        } catch (err) {
+        } catch (err: unknown) {
           logger.error('[Socket] webrtc:ice-candidate relay error:', { error: err });
         }
       });
@@ -276,7 +276,7 @@ export class App {
           
           // Emit the message back to the caller so it updates their local chat UI as well
           socketService.emitToUser(userId, 'chat:message', response);
-        } catch (err) {
+        } catch (err: unknown) {
           logger.error('[Socket] webrtc:missed-call relay error:', { error: err });
         }
       });
@@ -329,7 +329,7 @@ export class App {
           if (!conversation) return;
           const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:start', { ...data, startedBy: userId });
-        } catch (err) { logger.error('[Socket] pomodoro:start relay error:', err); }
+        } catch (err: unknown) { logger.error('[Socket] pomodoro:start relay error:', err); }
       });
 
       socket.on('pomodoro:pause', async (data: { conversationId: string }) => {
@@ -338,7 +338,7 @@ export class App {
           if (!conversation) return;
           const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:pause', data);
-        } catch (err) { logger.error('[Socket] pomodoro:pause relay error:', err); }
+        } catch (err: unknown) { logger.error('[Socket] pomodoro:pause relay error:', err); }
       });
 
       socket.on('pomodoro:resume', async (data: { conversationId: string }) => {
@@ -347,7 +347,7 @@ export class App {
           if (!conversation) return;
           const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:resume', data);
-        } catch (err) { logger.error('[Socket] pomodoro:resume relay error:', err); }
+        } catch (err: unknown) { logger.error('[Socket] pomodoro:resume relay error:', err); }
       });
 
       socket.on('pomodoro:stop', async (data: { conversationId: string }) => {
@@ -356,7 +356,7 @@ export class App {
           if (!conversation) return;
           const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:stop', data);
-        } catch (err) { logger.error('[Socket] pomodoro:stop relay error:', err); }
+        } catch (err: unknown) { logger.error('[Socket] pomodoro:stop relay error:', err); }
       });
 
       socket.on('pomodoro:tick', async (data: { conversationId: string, timeRemaining: number }) => {

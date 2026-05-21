@@ -67,7 +67,7 @@ export class BlockedUserMiddleware {
       }
 
       next();
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

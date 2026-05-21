@@ -70,7 +70,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.CREATED,
         SUCCESS_MESSAGE.AUTHORIZATION.ACCOUNT_CREATED
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -88,7 +88,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.OK,
         SUCCESS_MESSAGE.AUTHORIZATION.OTP_SEND_SUCCESS
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -107,7 +107,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.OK,
         SUCCESS_MESSAGE.AUTHORIZATION.OTP_RESENT_SUCCESS
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -126,7 +126,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.OK,
         SUCCESS_MESSAGE.AUTHORIZATION.OTP_VERIFIED
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -151,7 +151,7 @@ export class AuthController implements IAuthController {
         SUCCESS_MESSAGE.AUTHORIZATION.LOGIN_SUCCESS,
         { accessToken }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -174,7 +174,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.OK,
         SUCCESS_MESSAGE.AUTHORIZATION.LOGOUT_SUCCESS
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -208,7 +208,7 @@ export class AuthController implements IAuthController {
         'Access token refreshed successfully',
         { accessToken }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       // Clear cookies on any refresh failure — force re-login
       res.clearCookie(COOKIES_NAMES.ACCESS_TOKEN);
       res.clearCookie(COOKIES_NAMES.REFRESH_TOKEN);
@@ -230,7 +230,7 @@ export class AuthController implements IAuthController {
         HTTP_STATUS.OK,
         'If an account with that email exists, a reset link has been sent.'
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -258,7 +258,7 @@ async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise
     }
 
     ResponseHelper.success(res, HTTP_STATUS.OK, 'Reset token is valid');
-  } catch (error) {
+  } catch (error: unknown) {
     next(error);
   }
 }
@@ -277,7 +277,7 @@ async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise
         HTTP_STATUS.OK,
         'Password reset successfully. You can now login with your new password.'
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }
@@ -300,7 +300,7 @@ async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise
         SUCCESS_MESSAGE.AUTHORIZATION.LOGIN_SUCCESS,
         { accessToken, isNewUser }
       );
-    } catch (error) {
+    } catch (error: unknown) {
       next(error);
     }
   }

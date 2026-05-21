@@ -50,7 +50,7 @@ export class StudyRoomController {
       const dto = req.body as CreateRoomRequestDTO;
       const room = await this.createRoomUsecase.execute(hostId, dto);
       res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Room created', data: room });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getRooms(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -64,7 +64,7 @@ export class StudyRoomController {
       } as GetRoomsRequestDTO;
       const data = await this.getRoomsUsecase.execute(dto);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Rooms fetched', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getMyRooms(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -72,7 +72,7 @@ export class StudyRoomController {
       const hostId = (req as any).user.id;
       const rooms = await this.getMyRoomsUsecase.execute(hostId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'My rooms fetched', data: rooms });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getRoomById(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -80,7 +80,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       const room = await this.getRoomByIdUsecase.execute(roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room fetched', data: room });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async joinRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -89,7 +89,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       const updatedRoom = await this.joinRoomUsecase.execute(userId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Joined room successfully', data: updatedRoom });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async requestToJoin(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -98,7 +98,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       const request = await this.requestToJoinUsecase.execute(userId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Join request sent', data: request });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getPendingRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -107,7 +107,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       const requests = await this.getPendingJoinRequestsUsecase.execute(hostId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Pending requests fetched', data: requests });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async respondToRequest(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -117,7 +117,7 @@ export class StudyRoomController {
       const dto = req.body as RespondToJoinRequestDTO;
       const request = await this.respondToJoinRequestUsecase.execute(hostId, requestId, dto);
       res.status(HTTP_STATUS.OK).json({ success: true, message: `Request ${dto.action.toLowerCase()}ed`, data: request });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async leaveRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -126,7 +126,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       await this.leaveRoomUsecase.execute(userId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Left room successfully' });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async endRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -135,7 +135,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       await this.endRoomUsecase.execute(hostId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room ended successfully' });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async kickUser(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -149,7 +149,7 @@ export class StudyRoomController {
       }
       await this.kickUserUsecase.execute(hostId, roomId, userId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'User kicked successfully' });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async inviteUser(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -163,7 +163,7 @@ export class StudyRoomController {
       }
       const data = await this.inviteToRoomUsecase.execute(hostId, roomId, userId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'User invited successfully', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async startRoom(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -172,7 +172,7 @@ export class StudyRoomController {
       const roomId = req.params.roomId as string;
       const room = await this.startRoomUsecase.execute(hostId, roomId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room started successfully', data: room });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getMessages(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -183,7 +183,7 @@ export class StudyRoomController {
       const limit = parseInt(req.query.limit as string) || 50;
       const data = await this.getStudyRoomMessagesUsecase.execute(userId, roomId, page, limit);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Messages fetched', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async sendMessage(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -206,7 +206,7 @@ export class StudyRoomController {
 
       const data = await this.sendStudyRoomMessageUsecase.execute(userId, roomId, dto);
       res.status(HTTP_STATUS.CREATED).json({ success: true, message: 'Message sent', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async getAllRequests(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -214,7 +214,7 @@ export class StudyRoomController {
       const userId = (req as any).user.id;
       const data = await this.getAllRoomRequestsUsecase.execute(userId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Room requests fetched', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 
   async checkCreationLimit(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -222,6 +222,6 @@ export class StudyRoomController {
       const userId = (req as any).user.id;
       const data = await this.checkCreationLimitUsecase.execute(userId);
       res.status(HTTP_STATUS.OK).json({ success: true, message: 'Creation limit checked', data });
-    } catch (error) { next(error); }
+    } catch (error: unknown) { next(error); }
   }
 }
