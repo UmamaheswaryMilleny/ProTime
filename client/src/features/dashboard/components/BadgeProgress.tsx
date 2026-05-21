@@ -1,8 +1,11 @@
 import { Award, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useGamification } from '../../gamification/hooks/useGamification';
 
 export const BadgeProgress: React.FC = () => {
     const { gamification, isLoading } = useGamification();
+    const navigate = useNavigate();
 
     if (isLoading) {
         return (
@@ -21,7 +24,10 @@ export const BadgeProgress: React.FC = () => {
                         You've earned {earnedBadges.length} {earnedBadges.length === 1 ? 'badge' : 'badges'} so far.
                     </p>
                 </div>
-                <button className="text-sm font-semibold text-[#2563EB] hover:text-blue-400 transition-colors">
+                <button 
+                    onClick={() => navigate(ROUTES.USER_PROFILE, { state: { openBadges: true } })}
+                    className="text-sm font-semibold text-[#2563EB] hover:text-blue-400 transition-colors"
+                >
                     View Gallery
                 </button>
             </div>

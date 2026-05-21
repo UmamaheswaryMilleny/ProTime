@@ -1,10 +1,13 @@
 import React from 'react';
-import { FileText, Download, Lock } from 'lucide-react';
+import { FileText, Download, Lock, Loader2 } from 'lucide-react';
 import { useAppSelector } from '../../../store/hooks';
+import { reportsService } from '../services/reports.service';
+import toast from 'react-hot-toast';
 
 export const MonthlySummary: React.FC = () => {
     const { user } = useAppSelector((state) => state.auth);
     const isPremium = user?.isPremium || false;
+    const [exporting, setExporting] = React.useState(false);
 
     // NOTE: Monthly summary stats (tasks, pomodoro, xp, rooms) 
     // are currently hardcoded as there are no backend endpoints for monthly aggregates yet.
@@ -15,6 +18,30 @@ export const MonthlySummary: React.FC = () => {
         { label: 'Rooms Joined', value: '12', trend: '+2%' },
     ];
 
+    const handleExport = async () => {
+        if (!isPremium || exporting) return;
+
+        const toastId = toast.loading('Generating monthly report CSV...');
+        setExporting(true);
+        try {
+            const blob = await reportsService.exportReportCsv('30days');
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `protime-monthly-summary-${new Date().toISOString().slice(0, 7)}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.success('Report downloaded successfully! 🎉', { id: toastId });
+        } catch (error) {
+            console.error('Failed to export report CSV', error);
+            toast.error('Failed to export report. Please try again.', { id: toastId });
+        } finally {
+            setExporting(false);
+        }
+    };
+
     return (
         <div className="w-full bg-[#18181B] rounded-2xl shadow-sm border border-[#27272A] p-6 lg:p-8 flex flex-col gap-6 fade-in h-min">
             <div className="flex items-center justify-between">
@@ -23,14 +50,15 @@ export const MonthlySummary: React.FC = () => {
                     <p className="text-sm text-[#A1A1AA] mt-1">Your performance snapshot for March 2026.</p>
                 </div>
                 <button
-                    disabled={!isPremium}
+                    disabled={!isPremium || exporting}
+                    onClick={handleExport}
                     className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all
                         ${isPremium
                             ? 'bg-zinc-800 text-white hover:bg-zinc-700 active:scale-95'
                             : 'bg-zinc-800/50 text-zinc-500 cursor-not-allowed opacity-70'}
                     `}
                 >
-                    <Download size={16} />
+                    {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
                     Export
                     {!isPremium && <Lock size={12} className="ml-1" />}
                 </button>

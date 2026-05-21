@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Eye, CreditCard, ChevronDown, X, Trash2, Edit2, Save, Library, Zap, Target } from 'lucide-react';
 import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 import { userApi } from '../../user/user-service';
@@ -38,8 +38,15 @@ export const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
   const { preferences, loading } = useAppSelector((state) => state.buddy);
   const dispatch = useAppDispatch();
+  const location = useLocation();
   const [showBadgesModal, setShowBadgesModal] = React.useState(false);
   const [selectedBadge, setSelectedBadge] = React.useState<Badge | null>(null);
+
+  React.useEffect(() => {
+    if (location.state?.openBadges) {
+      setShowBadgesModal(true);
+    }
+  }, [location]);
   const [showPreviewModal, setShowPreviewModal] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);

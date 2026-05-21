@@ -174,7 +174,10 @@ export const TodaysTasksPanel: React.FC = () => {
                     </button>
 
                     <div className="flex flex-col gap-1 w-full">
-                        <button className="w-full flex items-center gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-[#1F1F23] transition-all group text-left">
+                        <button 
+                            onClick={() => navigate(ROUTES.DASHBOARD_STUDY_ROOMS)}
+                            className="w-full flex items-center gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-[#1F1F23] transition-all group text-left"
+                        >
                             <div className="p-2.5 rounded-lg bg-zinc-800 text-[#22C55E] group-hover:scale-110 group-hover:bg-[#22C55E] group-hover:text-white transition-all">
                                 <MonitorPlay size={20} />
                             </div>
@@ -186,7 +189,10 @@ export const TodaysTasksPanel: React.FC = () => {
                         </p>
                     </div>
 
-                    <button className="w-full flex items-center gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-[#1F1F23] transition-all group text-left mt-auto">
+                    <button 
+                        onClick={() => navigate(ROUTES.DASHBOARD_PROBUDDY)}
+                        className="w-full flex items-center gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-[#1F1F23] transition-all group text-left mt-auto"
+                    >
                         <div className="p-2.5 rounded-lg bg-zinc-800 text-[blueviolet] group-hover:scale-110 group-hover:bg-[blueviolet] group-hover:text-white transition-all">
                             <Bot size={20} />
                         </div>

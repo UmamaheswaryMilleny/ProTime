@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import { Timer, CheckCircle2, Award, Flame } from 'lucide-react';
 import { useTodo } from '../../todo/hooks/useTodo';
 import { useGamification } from '../../gamification/hooks/useGamification';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../../shared/constants/constants.routes';
+import { useAppSelector } from '../../../store/hooks';
 
 export const StatsSnapshotGrid: React.FC = () => {
     const { todos, stats, isLoading: isTodoLoading } = useTodo();
     const { gamification, isLoading: isGamificationLoading } = useGamification();
+    const navigate = useNavigate();
+    const { user } = useAppSelector((state) => state.auth);
+    const isPremium = user?.isPremium || false;
 
     // Simulating free user state for the click interaction
     const [showPremiumOverlay, setShowPremiumOverlay] = useState<number | null>(null);
@@ -36,9 +42,13 @@ export const StatsSnapshotGrid: React.FC = () => {
     ];
 
     const handleCardClick = (id: number) => {
-        setShowPremiumOverlay(id);
-        // Auto-hide the overlay after a few seconds for demo purposes
-        setTimeout(() => setShowPremiumOverlay(null), 3000);
+        if (isPremium) {
+            navigate(ROUTES.DASHBOARD_REPORTS);
+        } else {
+            setShowPremiumOverlay(id);
+            // Auto-hide the overlay after a few seconds for demo purposes
+            setTimeout(() => setShowPremiumOverlay(null), 3000);
+        }
     };
 
     return (
