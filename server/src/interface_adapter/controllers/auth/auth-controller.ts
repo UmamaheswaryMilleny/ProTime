@@ -12,6 +12,7 @@ import type { IforgotPasswordUseCase } from '../../../application/usecase/interf
 import type { IResetPasswordUsecase } from '../../../application/usecase/interface/auth/reset-password.usecase.interface';
 import type { IGoogleAuthUsecase } from '../../../application/usecase/interface/auth/google-auth.usecase.interface';
 import type { ITokenService } from '../../../application/service_interface/token.service.interface';
+import type { IResetTokenStore } from '../../../application/service_interface/reset-token-store.service.interface';
 
 import { ResponseHelper } from '../../helpers/response.helper';
 import {
@@ -19,7 +20,7 @@ import {
   HTTP_STATUS,
   SUCCESS_MESSAGE,
 } from '../../../shared/constants/constants';
-import { setAuthCookies } from '../../../shared/utils/cookie.helper';
+import { setAuthCookies, setAccessTokenCookie } from '../../../shared/utils/cookie.helper';
 
 @injectable()
 export class AuthController implements IAuthController {
@@ -51,7 +52,9 @@ export class AuthController implements IAuthController {
     @inject('IGoogleAuthUsecase')
     private readonly googleAuthUsecase: IGoogleAuthUsecase,
     @inject('ITokenService')
-private readonly tokenService: ITokenService,
+    private readonly tokenService: ITokenService,
+    @inject('ResetTokenStore')
+    private readonly resetTokenStore: IResetTokenStore,
   ) {}
 
   // ─── Register ─────────────────────────────────────────────────────────────
@@ -197,12 +200,7 @@ private readonly tokenService: ITokenService,
       const { accessToken } = await this.refreshTokenUsecase.execute(refreshToken);
 
       // Update access token cookie
-      res.cookie(COOKIES_NAMES.ACCESS_TOKEN, accessToken, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'strict',
-        maxAge: 15 * 60 * 1000,
-      });
+      setAccessTokenCookie(res, accessToken);
 
       ResponseHelper.success(
         res,
@@ -249,6 +247,12 @@ async verifyResetToken(req: Request, res: Response, next: NextFunction): Promise
 
     const payload = this.tokenService.verifyReset(token);
     if (!payload) {
+      ResponseHelper.error(res, 'Invalid or expired reset token', HTTP_STATUS.UNAUTHORIZED);
+      return;
+    }
+
+    const exists = await this.resetTokenStore.exists(payload.id, token);
+    if (!exists) {
       ResponseHelper.error(res, 'Invalid or expired reset token', HTTP_STATUS.UNAUTHORIZED);
       return;
     }

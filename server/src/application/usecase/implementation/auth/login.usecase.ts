@@ -37,7 +37,7 @@ export class LoginUsecase implements ILoginUsecase {
     //1. Find user
     const user = await this.userReposiroy.findByEmail(email);
     if (!user) {
-      throw new UserNotFoundError();
+      throw new InvalidPasswordError();
     }
 
     //2. Check blocked or deleted

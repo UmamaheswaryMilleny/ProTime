@@ -1,5 +1,5 @@
 import React from 'react';
-import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Eye, CreditCard, ChevronDown, X, Trash2, Edit2, Save, Library } from 'lucide-react';
+import { ArrowLeft, User, MapPin, Globe, Camera, Clock, Eye, CreditCard, ChevronDown, X, Trash2, Edit2, Save, Library, Zap, Target } from 'lucide-react';
 import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
 import { Link } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
@@ -40,6 +40,7 @@ export const ProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const [showBadgesModal, setShowBadgesModal] = React.useState(false);
   const [selectedBadge, setSelectedBadge] = React.useState<Badge | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = React.useState(false);
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -115,6 +116,14 @@ export const ProfilePage: React.FC = () => {
   }, [user]);
 
   const handleSaveProfile = async () => {
+    if (!profileForm.fullName.trim()) {
+      toast.error("Full Name cannot be empty.");
+      return;
+    }
+    if (!profileForm.username.trim()) {
+      toast.error("Username cannot be empty.");
+      return;
+    }
     try {
       setIsSavingProfile(true);
 
@@ -275,14 +284,34 @@ export const ProfilePage: React.FC = () => {
                 <h2 className="text-xl font-bold text-white">Basic Profile Information</h2>
               </div>
               {isEditingProfile ? (
-                <button
-                  onClick={handleSaveProfile}
-                  disabled={isSavingProfile}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <Save size={16} />
-                  {isSavingProfile ? 'Saving...' : 'Save'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setIsEditingProfile(false);
+                      if (user) {
+                        setProfileForm({
+                          fullName: user.fullName || '',
+                          username: user.username || (user.email ? user.email.split('@')[0] : ''),
+                          country: user.country || '',
+                          languages: user.languages?.[0] || 'English',
+                        });
+                        setSelectedSkills(user.skills || []);
+                      }
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors"
+                  >
+                    <X size={16} />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveProfile}
+                    disabled={isSavingProfile}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Save size={16} />
+                    {isSavingProfile ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={() => setIsEditingProfile(true)}
@@ -576,14 +605,26 @@ export const ProfilePage: React.FC = () => {
                 <h2 className="text-xl font-bold text-white">About Me & What I'm Looking For</h2>
               </div>
               {isEditingAbout ? (
-                <button
-                  onClick={handleSaveAbout}
-                  disabled={isSavingAbout}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white rounded-lg transition-colors disabled:opacity-50"
-                >
-                  <Save size={16} />
-                  {isSavingAbout ? 'Saving...' : 'Save'}
-                </button>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setIsEditingAbout(false);
+                      setAboutText(user?.bio || '');
+                    }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition-colors"
+                  >
+                    <X size={16} />
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveAbout}
+                    disabled={isSavingAbout}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <Save size={16} />
+                    {isSavingAbout ? 'Saving...' : 'Save'}
+                  </button>
+                </div>
               ) : (
                 <button
                   onClick={() => setIsEditingAbout(true)}
@@ -648,7 +689,10 @@ export const ProfilePage: React.FC = () => {
 
           {/* Actions */}
           <div className="space-y-3">
-            <button className="w-full bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white font-medium py-3 rounded-full transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#8A2BE2]/20">
+            <button 
+              onClick={() => setShowPreviewModal(true)}
+              className="w-full bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white font-medium py-3 rounded-full transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#8A2BE2]/20"
+            >
               <Eye size={16} />Preview My Public Profile
             </button>
             <Link to={ROUTES.DASHBOARD_SUBSCRIPTION} className="w-full bg-[#5b2091] hover:bg-[#8A2BE2] text-white font-medium py-3 rounded-full transition-all flex items-center justify-center gap-2 text-sm">
@@ -725,6 +769,125 @@ export const ProfilePage: React.FC = () => {
           isSaving={loading.preferences}
         />
       </section>
+
+      {/* Preview My Public Profile Modal */}
+      {showPreviewModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={() => setShowPreviewModal(false)} />
+          <div className="bg-zinc-900 border border-white/5 rounded-[32px] w-full max-w-md overflow-hidden relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
+            {/* Header Cover banner */}
+            <div className="h-28 bg-gradient-to-br from-[blueviolet] to-[#4b0082] relative">
+              <button 
+                onClick={() => setShowPreviewModal(false)} 
+                className="absolute top-4 right-4 w-8 h-8 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all backdrop-blur-md flex items-center justify-center border border-white/10"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Profile Info */}
+            <div className="px-6 pb-8 -mt-12 relative text-center sm:text-left">
+              <div className="relative inline-block mb-4">
+                <img 
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`} 
+                  alt={user?.fullName || 'User'} 
+                  className="w-24 h-24 rounded-full border-4 border-zinc-900 object-cover shadow-2xl"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`;
+                  }}
+                />
+                <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-zinc-900 rounded-full" />
+              </div>
+
+              <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-1">
+                  <h2 className="text-xl font-bold text-white tracking-tight">{user?.fullName}</h2>
+                  <span className="inline-block self-center sm:self-auto bg-[blueviolet]/10 text-[blueviolet] text-[9px] font-bold px-2 py-0.5 rounded-lg border border-[blueviolet]/20">YOU</span>
+                </div>
+                <p className="text-zinc-500 text-sm font-medium">@{user?.username || (user?.email ? user.email.split('@')[0] : '')}</p>
+                
+                {user?.country && (
+                  <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-2 text-zinc-400 text-sm">
+                    <MapPin size={14} className="text-[blueviolet]" /> {user.country}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4 mb-8 text-left">
+                <div>
+                  <h4 className="text-white font-bold text-xs mb-2 flex items-center gap-2">
+                    <Zap size={14} className="text-yellow-500" /> About Me
+                  </h4>
+                  <p className="text-zinc-400 text-[13px] leading-relaxed bg-black/40 p-4 rounded-xl border border-white/5 italic">
+                    "{user?.bio || "Tell others about your goals and what you're looking for in a study buddy..."}"
+                  </p>
+                </div>
+
+                {selectedSkills && selectedSkills.length > 0 && (
+                  <div>
+                    <h4 className="text-white font-bold text-xs mb-2">Skills & Expertise</h4>
+                    <div className="flex flex-wrap gap-1.5">
+                      {selectedSkills.map((skill) => {
+                        const name = typeof skill === 'string' ? skill : (skill.name || '');
+                        const id = typeof skill === 'string' ? skill : (skill._id || '');
+                        return (
+                          <span
+                            key={id}
+                            className="bg-[#8A2BE2]/10 border border-[#8A2BE2]/20 text-[#8A2BE2] text-[10px] font-bold px-2.5 py-1 rounded-full"
+                          >
+                            {name}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                    <h4 className="text-zinc-600 text-[9px] font-bold uppercase mb-0.5 flex items-center gap-1">
+                      <Target size={10} /> Goal
+                    </h4>
+                    <p className="text-zinc-200 text-xs font-semibold truncate">
+                      {preferences?.studyGoal || 'FLEXIBLE'}
+                    </p>
+                  </div>
+                  <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                    <h4 className="text-zinc-600 text-[9px] font-bold uppercase mb-0.5 flex items-center gap-1">
+                      <Clock size={10} /> Freq
+                    </h4>
+                    <p className="text-zinc-200 text-xs font-semibold truncate">
+                      {preferences?.frequency || 'FLEXIBLE'}
+                    </p>
+                  </div>
+                  <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                    <h4 className="text-zinc-600 text-[9px] font-bold uppercase mb-0.5">Language</h4>
+                    <p className="text-zinc-200 text-xs font-semibold truncate">
+                      {preferences?.studyLanguage || 'English'}
+                    </p>
+                  </div>
+                  {preferences?.subjectDomain && (
+                    <div className="bg-black/40 p-3 rounded-xl border border-white/5">
+                      <h4 className="text-zinc-600 text-[9px] font-bold uppercase mb-0.5">Domain</h4>
+                      <p className="text-zinc-200 text-xs font-semibold truncate">
+                        {preferences.subjectDomain}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <button 
+                onClick={() => setShowPreviewModal(false)}
+                className="w-full bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold py-3 rounded-xl transition-all shadow-xl shadow-[blueviolet]/20 text-xs uppercase tracking-wider active:scale-95"
+              >
+                Close Preview
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

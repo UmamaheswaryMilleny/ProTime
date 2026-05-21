@@ -43,6 +43,8 @@ if (report.status !== ReportStatus.PENDING) {
       await this.userRepo.updateById(report.reportedUserId, {
         isBlocked: true,
       });
+      // Force disconnect the blocked user's websocket connection immediately
+      this.socketService.disconnectUser(report.reportedUserId);
     }
 
     const resolved = await this.reportRepo.resolveReport(reportId, {

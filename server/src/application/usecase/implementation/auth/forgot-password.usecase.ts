@@ -27,17 +27,17 @@ export class ForgotPasswordUsecase implements IforgotPasswordUseCase {
     //1. Check if user exists
     const user = await this.userRepository.findByEmail(email);
     if (!user) {
-      throw new UserNotFoundError();
+      return;
     }
 
     //2. Check if user is blocked
     if (user.isBlocked) {
-      throw new UserBlockedError();
+      return;
     }
 
     //3. Check user is deleted
     if (user.isDeleted) {
-      throw new UserDeletedError();
+      return;
     }
    //4. Generate reset token
     const resetToken = this.tokenPort.generateReset({

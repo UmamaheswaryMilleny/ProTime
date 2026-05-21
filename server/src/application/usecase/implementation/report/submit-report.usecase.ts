@@ -11,6 +11,7 @@ import {
 import { UserNotFoundError } from '../../../../domain/errors/user.error';
 import { ReportStatus } from '../../../../domain/enums/report.enums';
 import { ReportMapper } from '../../../mapper/report.mapper';
+import type { IBlockBuddyUsecase } from '../../interface/buddy-match/block-buddy.usecase.interface';
 
 @injectable()
 export class SubmitReportUsecase implements ISubmitReportUsecase {
@@ -20,6 +21,9 @@ export class SubmitReportUsecase implements ISubmitReportUsecase {
 
     @inject('IUserRepository')
     private readonly userRepo: IUserRepository,
+
+    @inject('IBlockBuddyUsecase')
+    private readonly blockBuddyUsecase: IBlockBuddyUsecase,
   ) {}
 
   async execute(
@@ -52,6 +56,14 @@ export class SubmitReportUsecase implements ISubmitReportUsecase {
       receiveUpdates:    dto.receiveUpdates,
       status:            ReportStatus.PENDING,
     });
+
+    if (dto.blockUser) {
+      try {
+        await this.blockBuddyUsecase.execute(reporterId, dto.reportedUserId);
+      } catch (err) {
+        // Ignore errors (e.g. already blocked) so the report submission doesn't fail
+      }
+    }
 
     return ReportMapper.toResponse(report);
   }

@@ -48,13 +48,18 @@ private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
     })
 
 
-        // 4. Create profile for this user  ← ADD THIS
-    await this.profileRepository.save({
-      userId: user.id,
-      fullName: tempUser.fullName,
-      username:`${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
-    });
-await this.initializeGamificationUsecase.execute(user.id);
+    try {
+      // 4. Create profile for this user  ← ADD THIS
+      await this.profileRepository.save({
+        userId: user.id,
+        fullName: tempUser.fullName,
+        username:`${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
+      });
+      await this.initializeGamificationUsecase.execute(user.id);
+    } catch (err) {
+      await this.userRepository.deleteById(user.id);
+      throw err;
+    }
 
     //4. clean up temp data
     await this.tempUserService.deleteUser(email);

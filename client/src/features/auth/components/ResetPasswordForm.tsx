@@ -5,14 +5,24 @@ import { useResetPassword } from '../hooks/useResetpassword';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const ResetPasswordForm = () => {
-  const { form, onSubmit, isLoading, token } = useResetPassword();
+  const { form, onSubmit, isLoading, token, isValidating, isValidToken } = useResetPassword();
   const { register, handleSubmit, formState: { errors } } = form;
 
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  // No token in URL — invalid link
-  if (!token) {
+  // Loading state
+  if (isValidating) {
+    return (
+      <div className="w-full max-w-md p-8 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 text-center flex flex-col items-center justify-center min-h-[300px]">
+        <Loader className="animate-spin text-[blueviolet] mb-4" size={40} />
+        <p className="text-zinc-400 text-sm">Verifying reset link...</p>
+      </div>
+    );
+  }
+
+  // Invalid token or link expired
+  if (!isValidToken) {
     return (
       <div className="w-full max-w-md p-8 bg-zinc-900 rounded-2xl shadow-xl border border-zinc-800 text-center">
         <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mx-auto mb-4">

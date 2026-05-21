@@ -12,6 +12,7 @@ import { useTodo } from '../../todo/hooks/useTodo';
 import { usePomodoro } from '../../todo/hooks/usePomodoro';
 import { PomodoroMinimized } from '../../todo/components/PomodoroMinimized';
 import { PomodoroModal } from '../../todo/components/PomodoroModal';
+import { buddyService } from '../../buddy-match/services/buddy.service';
 
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
@@ -651,8 +652,16 @@ export const VideoCallOverlay: React.FC = () => {
           reportedId={otherUserId}
           initialContext={ReportContext.VIDEO_CALL}
           onClose={() => setIsReportModalOpen(false)}
-          onSuccess={() => {
+          onSuccess={async (blockUser?: boolean) => {
             toast.success('Report submitted. Our team will review it.');
+            if (blockUser && otherUserId) {
+              try {
+                await buddyService.blockUser(otherUserId);
+                handleEndCall();
+              } catch (e) {
+                // silent
+              }
+            }
             setIsReportModalOpen(false);
           }}
         />

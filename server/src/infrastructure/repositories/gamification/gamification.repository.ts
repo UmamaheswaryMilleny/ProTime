@@ -5,6 +5,7 @@ import type { UserGamificationEntity } from '../../../domain/entities/gamificati
 import type { LevelTitle } from '../../../domain/enums/gamification.enums';
 import { UserGamificationModel } from '../../database/models/user-gamification.model';
 import { UserGamificationMapper } from '../../database/mappers/gamification.mapper';
+import { BuddyConnectionModel } from '../../database/models/buddy-connection.model';
 
 @injectable()
 export class MongoGamificationRepository implements IGamificationRepository {
@@ -126,12 +127,38 @@ export class MongoGamificationRepository implements IGamificationRepository {
   async getLeaderboard(
     range: 'today' | 'weekly' | 'monthly' | 'allTime',
     type: 'global' | 'friends',
-    limit: number
+    limit: number,
+    userId?: string
   ): Promise<import('../../../domain/entities/gamification.entity').LeaderboardEntry[]> {
     const sortField = range === 'today' ? 'dailyXpEarned' : 'totalXp';
     
+    let buddyIds: string[] = [];
+    if (type === 'friends' && userId) {
+      const connections = await BuddyConnectionModel.find({
+        status: 'CONNECTED',
+        $or: [
+          { userId: new mongoose.Types.ObjectId(userId) },
+          { buddyId: new mongoose.Types.ObjectId(userId) }
+        ]
+      });
+      buddyIds = connections.map(conn => 
+        conn.userId.toString() === userId ? conn.buddyId.toString() : conn.userId.toString()
+      );
+      buddyIds.push(userId);
+    }
+
     // Aggregation pipeline to filter real active users
-    const pipeline = [
+    const pipeline: any[] = [];
+
+    if (type === 'friends' && userId) {
+      pipeline.push({
+        $match: {
+          userId: { $in: buddyIds.map(id => new mongoose.Types.ObjectId(id)) }
+        }
+      });
+    }
+
+    pipeline.push(
       {
         $lookup: {
           from: 'users',
@@ -165,10 +192,10 @@ export class MongoGamificationRepository implements IGamificationRepository {
       },
       {
         $limit: limit,
-      },
-    ];
+      }
+    );
 
-    const docs = await UserGamificationModel.aggregate(pipeline as any[]);
+    const docs = await UserGamificationModel.aggregate(pipeline);
 
     return docs.map((doc: any) => ({
       userId: doc.userId.toString(),
@@ -192,14 +219,35 @@ export class MongoGamificationRepository implements IGamificationRepository {
     const sortField = range === 'today' ? 'dailyXpEarned' : 'totalXp';
     const userValue = range === 'today' ? doc.dailyXpEarned : doc.totalXp;
     
+    let buddyIds: string[] = [];
+    if (type === 'friends') {
+      const connections = await BuddyConnectionModel.find({
+        status: 'CONNECTED',
+        $or: [
+          { userId: new mongoose.Types.ObjectId(userId) },
+          { buddyId: new mongoose.Types.ObjectId(userId) }
+        ]
+      });
+      buddyIds = connections.map(conn => 
+        conn.userId.toString() === userId ? conn.buddyId.toString() : conn.userId.toString()
+      );
+      buddyIds.push(userId);
+    }
+
+    const matchConditions: any = {
+      $or: [
+        { [sortField]: { $gt: userValue } },
+        { [sortField]: userValue, currentStreak: { $gt: doc.currentStreak } },
+      ],
+    };
+
+    if (type === 'friends') {
+      matchConditions.userId = { $in: buddyIds.map(id => new mongoose.Types.ObjectId(id)) };
+    }
+
     const pipeline = [
       {
-        $match: {
-          $or: [
-            { [sortField]: { $gt: userValue } },
-            { [sortField]: userValue, currentStreak: { $gt: doc.currentStreak } },
-          ],
-        },
+        $match: matchConditions,
       },
       {
         $lookup: {

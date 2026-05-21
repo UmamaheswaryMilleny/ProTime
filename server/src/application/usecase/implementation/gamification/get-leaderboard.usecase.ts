@@ -18,7 +18,7 @@ export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
   ): Promise<{ leaderboard: LeaderboardEntry[]; userRank: number; userEntry: LeaderboardEntry | null }> {
     
     // 1. Fetch Top N
-    const leaderboard = await this.gamificationRepository.getLeaderboard(range, type, limit);
+    const leaderboard = await this.gamificationRepository.getLeaderboard(range, type, limit, userId);
     
     // 2. Fetch User Rank
     const userRank = await this.gamificationRepository.getUserRank(userId, range, type);

@@ -641,14 +641,23 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
         <div className="fixed inset-0 z-10" onClick={() => { setShowSettings(false); setShowParticipants(false); }} />
       )}
 
-      {/* Report Modal */}
       {reportingUserId && (
         <ReportModal
           reportedId={reportingUserId}
           initialContext={ReportContext.GROUP_ROOM}
           onClose={() => setReportingUserId(null)}
-          onSuccess={() => {
+          onSuccess={async (blockUser?: boolean) => {
             toast.success('Report submitted successfully. Thank you for making the community safer.');
+            if (blockUser && reportingUserId) {
+              try {
+                await buddyService.blockUser(reportingUserId);
+                if (isHost) {
+                  dispatch(kickUser({ roomId, userId: reportingUserId }));
+                }
+              } catch (e) {
+                // silent
+              }
+            }
             setReportingUserId(null);
           }}
         />

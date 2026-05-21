@@ -63,14 +63,19 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
         googleId, 
       } as Parameters<IUserRepository['save']>[0]);
 
-      await this.profileRepository.save({
-        userId: savedUser.id,
-        fullName: name || 'User',
-        username: `${email.split('@')[0]}_${Date.now()}`,
-        profileImage: picture ?? undefined,
-      });
+      try {
+        await this.profileRepository.save({
+          userId: savedUser.id,
+          fullName: name || 'User',
+          username: `${email.split('@')[0]}_${Date.now()}`,
+          profileImage: picture ?? undefined,
+        });
 
-      await this.initializeGamificationUsecase.execute(savedUser.id);
+        await this.initializeGamificationUsecase.execute(savedUser.id);
+      } catch (err) {
+        await this.userRepository.deleteById(savedUser.id);
+        throw err;
+      }
 
       user = savedUser;
       isNewUser = true;

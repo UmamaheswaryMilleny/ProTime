@@ -21,4 +21,5 @@ export interface ISocketService {
   setActiveRoom(userId: string, conversationId: string): void;
   clearActiveRoom(userId: string): void;
   getActiveRoom(userId: string): string | undefined;
+  disconnectUser(userId: string): void;
 }

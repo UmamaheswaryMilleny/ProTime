@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -6,7 +6,7 @@ import { z } from 'zod';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 
-import { resetPasswordAPI } from '../services/auth-service';
+import { resetPasswordAPI, verifyResetTokenAPI } from '../services/auth-service';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 
 const resetPasswordSchema = z.object({
@@ -27,11 +27,32 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 export const useResetPassword = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const [isValidating, setIsValidating] = useState(true);
+  const [isValidToken, setIsValidToken] = useState(false);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   // Token comes from URL: /reset-password?token=...
   const token = searchParams.get('token');
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      if (!token) {
+        setIsValidToken(false);
+        setIsValidating(false);
+        return;
+      }
+      try {
+        await verifyResetTokenAPI(token);
+        setIsValidToken(true);
+      } catch (err) {
+        setIsValidToken(false);
+      } finally {
+        setIsValidating(false);
+      }
+    };
+    verifyToken();
+  }, [token]);
 
   const form = useForm<ResetPasswordFormData>({
     resolver: zodResolver(resetPasswordSchema),
@@ -42,8 +63,8 @@ export const useResetPassword = () => {
   });
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) {
-      toast.error('Invalid or missing reset token.');
+    if (!token || !isValidToken) {
+      toast.error('Invalid or expired reset token.');
       return;
     }
 
@@ -73,5 +94,7 @@ export const useResetPassword = () => {
     onSubmit,
     isLoading,
     token,
+    isValidating,
+    isValidToken,
   };
 };

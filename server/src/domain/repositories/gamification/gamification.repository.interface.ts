@@ -39,7 +39,7 @@ export interface IGamificationRepository extends IBaseRepository<UserGamificatio
   // Used by UpdateStreakUsecase to verify streak eligibility (needs pomodoro)
   markPomodoroUsedToday(userId: string): Promise<void>;
 
-  getLeaderboard(range: 'today' | 'weekly' | 'monthly' | 'allTime', type: 'global' | 'friends', limit: number): Promise<import('../../entities/gamification.entity.js').LeaderboardEntry[]>;
+  getLeaderboard(range: 'today' | 'weekly' | 'monthly' | 'allTime', type: 'global' | 'friends', limit: number, userId?: string): Promise<import('../../entities/gamification.entity.js').LeaderboardEntry[]>;
   getUserRank(userId: string, range: 'today' | 'weekly' | 'monthly' | 'allTime', type: 'global' | 'friends'): Promise<number>;
 }
 

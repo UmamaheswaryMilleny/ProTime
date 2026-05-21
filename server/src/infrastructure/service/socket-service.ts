@@ -63,4 +63,14 @@ export class SocketIOService implements ISocketService {
   getActiveRoom(userId: string): string | undefined {
     return this.activeRooms.get(userId);
   }
+
+  disconnectUser(userId: string): void {
+    const socketId = this.onlineUsers.get(userId);
+    if (socketId) {
+      const socket = this.io.sockets.sockets.get(socketId);
+      if (socket) {
+        socket.disconnect(true);
+      }
+    }
+  }
 }
