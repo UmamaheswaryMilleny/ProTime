@@ -100,7 +100,7 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
           return bMatch - aMatch;
         });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       log(`[FindBuddyMatches] Error sorting by skills:`, err);
     }
 

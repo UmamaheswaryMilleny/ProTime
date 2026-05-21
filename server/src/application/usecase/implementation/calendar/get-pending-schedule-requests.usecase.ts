@@ -28,7 +28,7 @@ export class GetPendingScheduleRequestsUsecase implements IGetPendingScheduleReq
       );
 
       return mapped;
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[GetPendingScheduleRequestsUsecase] Error:', { error: err });
       throw err;
     }

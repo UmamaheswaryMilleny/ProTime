@@ -60,7 +60,7 @@ export class SubmitReportUsecase implements ISubmitReportUsecase {
     if (dto.blockUser) {
       try {
         await this.blockBuddyUsecase.execute(reporterId, dto.reportedUserId);
-      } catch (err) {
+      } catch (err: unknown) {
         // Ignore errors (e.g. already blocked) so the report submission doesn't fail
       }
     }

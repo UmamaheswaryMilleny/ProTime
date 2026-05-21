@@ -72,7 +72,7 @@ export default class GoogleAuthUsecase implements IGoogleAuthUsecase {
         });
 
         await this.initializeGamificationUsecase.execute(savedUser.id);
-      } catch (err) {
+      } catch (err: unknown) {
         await this.userRepository.deleteById(savedUser.id);
         throw err;
       }

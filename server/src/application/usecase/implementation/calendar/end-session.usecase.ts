@@ -45,7 +45,7 @@ export class EndSessionUsecase implements IEndSessionUsecase {
       this.socket.emitToConversation(conversationId, 'session:ended', response);
 
       return response;
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[EndSessionUsecase] Error:', { error: err });
       throw err;
     }

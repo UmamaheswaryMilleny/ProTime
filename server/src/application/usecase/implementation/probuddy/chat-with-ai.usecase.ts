@@ -62,7 +62,7 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
           title: 'Daily AI Limit Reached',
           message: upgradeMsg,
         });
-      } catch (err) {
+      } catch (err: unknown) {
         // Ignore notification delivery failures
       }
 

@@ -23,7 +23,7 @@ export class MarkMissedSessionsUsecase implements IMarkMissedSessionsUsecase {
           missed.map(s => this.sessionRepo.updateStatus(s.id!, SessionStatus.MISSED))
         );
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[MarkMissedSessionsUsecase] Error:', { error: err });
       throw err;
     }

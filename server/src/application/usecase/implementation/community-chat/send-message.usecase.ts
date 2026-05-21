@@ -51,7 +51,7 @@ export class SendMessageUsecase implements ISendMessageUsecase {
             title: 'Community Message Limit Hit',
             message: 'You have reached your free monthly limit of 50 community messages. Upgrade to Premium for unlimited messages!',
           });
-        } catch (err) {
+        } catch (err: unknown) {
           // Ignore notification delivery failures
         }
         throw new CommunityMessageLimitError();

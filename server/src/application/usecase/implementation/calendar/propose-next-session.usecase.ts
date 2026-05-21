@@ -78,7 +78,7 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
         message: `${proposer?.fullName ?? 'A Buddy'} proposed a study session.`,
         metadata: { requestId: request.id, conversationId }
       });
-    } catch (err) {
+    } catch (err: unknown) {
       // Ignore notification delivery failures
     }
 

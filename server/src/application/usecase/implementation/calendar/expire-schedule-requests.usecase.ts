@@ -23,7 +23,7 @@ export class ExpireScheduleRequestsUsecase implements IExpireScheduleRequestsUse
           expired.map(r => this.requestRepo.updateConfirmStatus(r.id!, ScheduleConfirmStatus.EXPIRED, now))
         );
       }
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[ExpireScheduleRequestsUsecase] Error:', { error: err });
       throw err;
     }

@@ -44,7 +44,7 @@ export class SendSubscriptionNotificationsUsecase implements ISendSubscriptionNo
         });
 
         logger.info(`[SendSubscriptionNotificationsUsecase] Notified user ${sub.userId} about expiry.`);
-      } catch (err) {
+      } catch (err: unknown) {
         logger.error(`[SendSubscriptionNotificationsUsecase] Error notifying user ${sub.userId}:`, err);
       }
     }

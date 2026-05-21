@@ -56,7 +56,7 @@ private readonly initializeGamificationUsecase: IInitializeGamificationUsecase,
         username:`${email.split('@')[0]}_${Date.now()}`,  // ✅ prevents duplicates
       });
       await this.initializeGamificationUsecase.execute(user.id);
-    } catch (err) {
+    } catch (err: unknown) {
       await this.userRepository.deleteById(user.id);
       throw err;
     }

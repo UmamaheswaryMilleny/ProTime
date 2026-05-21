@@ -75,7 +75,7 @@ export class GetDayDetailUsecase implements IGetDayDetailUsecase {
         date,
         events: mappedEvents,
       };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[GetDayDetailUsecase] Error:', { error: err });
       throw err;
     }

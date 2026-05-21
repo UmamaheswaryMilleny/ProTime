@@ -47,7 +47,7 @@ export class DeleteExpiredRoomsUsecase implements IDeleteExpiredRoomsUsecase {
       try {
         await this.studyRoomRepo.deleteById(room.id!);
         logger.info(`[DeleteExpiredRoomsUsecase] Deleted room "${room.name}" (${room.id})`);
-      } catch (err) {
+      } catch (err: unknown) {
         // One failure must not block the rest
         logger.error(
           `[DeleteExpiredRoomsUsecase] Failed to delete room ${room.id}:`,

@@ -37,7 +37,7 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
             title: 'Study Room Limit Hit',
             message: 'You have reached your monthly limit of 5 study rooms. Upgrade to Premium for unlimited room creation!',
           });
-        } catch (err) {
+        } catch (err: unknown) {
           // Ignore notification delivery failures
         }
         throw new RoomCreationLimitExceededError();

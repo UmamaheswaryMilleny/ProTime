@@ -54,7 +54,7 @@ export class GetCalendarEventsUsecase implements IGetCalendarEventsUsecase {
       }));
       
       return { events: mapped };
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[GetCalendarEventsUsecase] Error:', { error: err });
       throw err;
     }

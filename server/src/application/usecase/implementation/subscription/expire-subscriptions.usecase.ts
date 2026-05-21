@@ -66,7 +66,7 @@ export class ExpireSubscriptionsUsecase implements IExpireSubscriptionsUsecase {
         });
 
         logger.info(`[ExpireSubscriptionsUsecase] Force-expired subscription for user ${sub.userId}`);
-      } catch (err) {
+      } catch (err: unknown) {
         // Log but continue — one failure must not block the rest of the batch
         logger.error(`[ExpireSubscriptionsUsecase] Failed to expire subscription for user ${sub.userId}:`, err);
       }
