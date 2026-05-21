@@ -27,7 +27,7 @@ export class NodemailerEmailService implements IEmailService {
     try {
       await this.transporter.sendMail(mailOptions);
       logger.info("Email sent successfully");
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("failed to send email", { error });
       throw new Error(`failed to send email: ${(error as Error).message}`);
     }

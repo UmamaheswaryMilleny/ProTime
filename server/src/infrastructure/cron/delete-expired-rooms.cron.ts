@@ -15,7 +15,7 @@ export const startDeleteExpiredRoomsCron = (): void => {
       const usecase = container.resolve<IDeleteExpiredRoomsUsecase>('IDeleteExpiredRoomsUsecase');
       await usecase.execute();
       logger.info('[DeleteExpiredRoomsCron] Finished daily expired-room cleanup.');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('[DeleteExpiredRoomsCron] Unexpected error:', error);
     }
   });

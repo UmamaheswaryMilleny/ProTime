@@ -9,7 +9,7 @@ export const startExpireTodosCron = () => {
     try {
       const usecase = container.resolve<IExpireTodosUsecase>('IExpireTodosUsecase');
       await usecase.execute();
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('Error in ExpireTodosCron:', error);
     }
   });

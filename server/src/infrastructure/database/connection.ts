@@ -17,7 +17,7 @@ export class MongoConnect {
       mongoose.connection.on("disconnected", () => {
         logger.info("db disconnected");
       });
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error("failed to connect db", { error });
     }
   }

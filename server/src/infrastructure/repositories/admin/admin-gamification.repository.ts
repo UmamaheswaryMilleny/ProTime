@@ -6,6 +6,7 @@ import { UserBadgeModel } from '../../database/models/badge.model';
 import { BadgeDefinitionModel } from '../../database/models/badge.model';
 import { UserModel } from '../../database/models/user.model';
 import { UserRole } from '../../../domain/enums/user.enums';
+import { SubscriptionModel } from '../../database/models/subscription.model';
 
 @injectable()
 export class AdminGamificationRepository implements IAdminGamificationRepository {
@@ -158,8 +159,12 @@ export class AdminGamificationRepository implements IAdminGamificationRepository
   }
 
   async getUserDetail(userId: string) {
-    const user = await UserModel.findById(userId).select('fullName email createdAt isPremium').lean();
+    const user = await UserModel.findById(userId).select('fullName email createdAt').lean();
     if (!user) return null;
+
+    // Derive isPremium from subscription document
+    const subscription = await SubscriptionModel.findOne({ userId }).select('plan status').lean();
+    const isPremium = subscription?.plan === 'PREMIUM' && subscription?.status === 'ACTIVE';
 
     const gamification = await UserGamificationModel.findOne({ userId }).lean();
     const badges = await UserBadgeModel.aggregate([
@@ -176,8 +181,9 @@ export class AdminGamificationRepository implements IAdminGamificationRepository
       { $sort: { earnedAt: -1 } }
     ]);
 
-    return { user, gamification, badges };
+    return { user: { ...user, isPremium }, gamification, badges };
   }
+
 
   async getLeaderboard({ period, plan, page, limit = 10 }: any) {
     const matchUser: any = { role: UserRole.CLIENT };

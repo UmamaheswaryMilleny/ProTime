@@ -22,7 +22,7 @@ export const startExpireSubscriptionsCron = (): void => {
       const usecase = container.resolve<IExpireSubscriptionsUsecase>('IExpireSubscriptionsUsecase');
       await usecase.execute();
       logger.info('[ExpireSubscriptionsCron] Finished daily missed-webhook expiry check.');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('[ExpireSubscriptionsCron] Unexpected error:', error);
     }
   });

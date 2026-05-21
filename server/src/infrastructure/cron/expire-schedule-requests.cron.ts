@@ -9,7 +9,7 @@ export const startExpireScheduleRequestsCron = (): void => {
     try {
       const usecase = container.resolve<IExpireScheduleRequestsUsecase>('IExpireScheduleRequestsUsecase');
       await usecase.execute();
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[Cron] ExpireScheduleRequests error:', { error: err });
     }
   });

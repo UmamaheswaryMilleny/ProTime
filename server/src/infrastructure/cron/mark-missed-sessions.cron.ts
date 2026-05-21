@@ -9,7 +9,7 @@ export const startMarkMissedSessionsCron = (): void => {
     try {
       const usecase = container.resolve<IMarkMissedSessionsUsecase>('IMarkMissedSessionsUsecase');
       await usecase.execute();
-    } catch (err) {
+    } catch (err: unknown) {
       logger.error('[Cron] MarkMissedSessions error:', { error: err });
     }
   });

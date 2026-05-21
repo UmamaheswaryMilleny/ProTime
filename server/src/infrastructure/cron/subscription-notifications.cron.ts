@@ -13,7 +13,7 @@ export const startSubscriptionNotificationsCron = () => {
       const usecase = container.resolve<ISendSubscriptionNotificationsUsecase>('ISendSubscriptionNotificationsUsecase');
       await usecase.execute();
       logger.info('[SubscriptionNotificationsCron] Finished scheduled notification check.');
-    } catch (error) {
+    } catch (error: unknown) {
       logger.error('[SubscriptionNotificationsCron] Error:', error);
     }
   });
