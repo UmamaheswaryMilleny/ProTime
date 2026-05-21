@@ -18,7 +18,10 @@ import {
   CreditCard,
   UserCircle,
   Mail,
-  Shield
+  Shield,
+  Edit2,
+  Plus,
+  Save,
 } from 'lucide-react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { ProTimeBackend } from '../../../api/instance';
@@ -51,6 +54,396 @@ interface AdminSubscription {
   };
 }
 
+// ── Utility badge components ─────────────────────────────────────────────────
+const PlanBadge = ({ plan }: { plan: string }) => {
+  if (plan === 'PREMIUM') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/10">
+        <Zap size={10} fill="currentColor" />
+        PREMIUM
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+      FREE
+    </span>
+  );
+};
+
+const StatusBadge = ({ status }: { status: string }) => {
+  const styles: Record<string, string> = {
+    ACTIVE:    'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/10',
+    CANCELLED: 'bg-orange-500/10 text-orange-400 border-orange-500/10',
+    EXPIRED:   'bg-red-500/10 text-red-400 border-red-500/10'
+  };
+  return (
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${styles[status] || styles.ACTIVE}`}>
+      {status}
+    </span>
+  );
+};
+
+const SummaryCard = ({ title, value, detail, icon, loading, color }: { title: string, value: string | number, detail?: string, icon: React.ReactNode, loading: boolean, color: string }) => {
+  const colors: Record<string, string> = {
+    blue:   'from-blue-500/20 to-transparent text-blue-400 border-blue-500/20',
+    purple: 'from-purple-500/20 to-transparent text-purple-400 border-purple-500/20',
+    green:  'from-green-500/20 to-transparent text-green-400 border-green-500/20',
+    zinc:   'from-zinc-500/20 to-transparent text-zinc-400 border-zinc-500/20'
+  };
+  return (
+    <div className={`bg-[#18181B] border rounded-2xl p-5 relative overflow-hidden transition-all hover:scale-[1.02] ${colors[color] || colors.zinc}`}>
+      <div className="flex justify-between items-start relative z-10">
+        <div>
+          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
+          {loading ? (
+            <div className="h-8 w-20 bg-zinc-800 animate-pulse rounded mt-1" />
+          ) : (
+            <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
+          )}
+          {detail && !loading && (
+            <p className="text-[11px] font-medium text-zinc-500 mt-1">{detail}</p>
+          )}
+        </div>
+        <div className={`p-2.5 rounded-xl bg-black/20`}>{icon}</div>
+      </div>
+      <div className="absolute -right-2 -bottom-2 opacity-5 scale-150">{icon}</div>
+    </div>
+  );
+};
+
+// ── Edit Subscription Modal ───────────────────────────────────────────────────
+interface EditModalProps {
+  sub: AdminSubscription;
+  onClose: () => void;
+  onSaved: () => void;
+}
+const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
+  const [plan,   setPlan]   = useState<'FREE' | 'PREMIUM'>(sub.plan);
+  const [status, setStatus] = useState<'ACTIVE' | 'CANCELLED' | 'EXPIRED'>(sub.status);
+  const [periodEnd, setPeriodEnd] = useState(
+    sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString().slice(0, 10) : ''
+  );
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const userId = sub.user.id;
+      await ProTimeBackend.patch(API_ROUTES.ADMIN_UPDATE_SUBSCRIPTION(userId), {
+        plan,
+        status,
+        currentPeriodEnd: periodEnd || undefined,
+      });
+      toast.success('Subscription updated successfully');
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to update subscription');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-[#2563EB]/10">
+              <Edit2 size={18} className="text-[#2563EB]" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Edit Subscription</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">{sub.user.fullName}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleSave} className="space-y-4">
+          {/* Plan */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Plan</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['FREE', 'PREMIUM'] as const).map(p => (
+                <button
+                  key={p} type="button"
+                  onClick={() => setPlan(p)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${plan === p
+                    ? p === 'PREMIUM'
+                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                      : 'bg-zinc-700 border-zinc-600 text-white'
+                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
+                  }`}
+                >
+                  {p === 'PREMIUM' ? '⚡ PREMIUM' : 'FREE'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['ACTIVE', 'CANCELLED', 'EXPIRED'] as const).map(s => (
+                <button
+                  key={s} type="button"
+                  onClick={() => setStatus(s)}
+                  className={`py-2 rounded-xl text-xs font-semibold border transition-all ${status === s
+                    ? s === 'ACTIVE'
+                      ? 'bg-green-500/20 border-green-500/40 text-green-300'
+                      : s === 'CANCELLED'
+                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
+                        : 'bg-red-500/20 border-red-500/40 text-red-300'
+                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Period End — only relevant for PREMIUM */}
+          {plan === 'PREMIUM' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Period End Date</label>
+              <input
+                type="date"
+                value={periodEnd}
+                onChange={e => setPeriodEnd(e.target.value)}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#2563EB] transition-colors [color-scheme:dark]"
+              />
+              <p className="text-[10px] text-zinc-500">Leave blank to keep the existing period end date unchanged.</p>
+            </div>
+          )}
+
+          {/* Info row */}
+          <div className="p-3 rounded-xl bg-[#1F1F23] flex items-start gap-2.5">
+            <Mail size={14} className="text-zinc-500 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-0.5">User</p>
+              <p className="text-xs text-zinc-300">{sub.user.email}</p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all">
+              Cancel
+            </button>
+            <button
+              type="submit" disabled={saving}
+              className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+            >
+              {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
+              {saving ? 'Saving…' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ── Add Subscription Modal ────────────────────────────────────────────────────
+interface AddModalProps {
+  onClose: () => void;
+  onSaved: () => void;
+}
+const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
+  const [userId,    setUserId]    = useState('');
+  const [plan,      setPlan]      = useState<'FREE' | 'PREMIUM'>('PREMIUM');
+  const [status,    setStatus]    = useState<'ACTIVE' | 'CANCELLED' | 'EXPIRED'>('ACTIVE');
+  const [periodEnd, setPeriodEnd] = useState(() => {
+    const d = new Date();
+    d.setMonth(d.getMonth() + 1);
+    return d.toISOString().slice(0, 10);
+  });
+  const [saving, setSaving] = useState(false);
+
+  // User search
+  const [userSearch, setUserSearch] = useState('');
+  const [userResults, setUserResults] = useState<{ id: string; fullName: string; email: string }[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const debouncedSearch = useDebounce(userSearch, 400);
+
+  useEffect(() => {
+    if (!debouncedSearch.trim()) { setUserResults([]); return; }
+    setSearchLoading(true);
+    ProTimeBackend.get(`${API_ROUTES.ADMIN_USERS}?search=${encodeURIComponent(debouncedSearch)}&limit=8`)
+      .then(res => {
+        setUserResults(res.data?.data?.users ?? []);
+        setShowDropdown(true);
+      })
+      .catch(() => setUserResults([]))
+      .finally(() => setSearchLoading(false));
+  }, [debouncedSearch]);
+
+  const selectUser = (u: { id: string; fullName: string; email: string }) => {
+    setUserId(u.id);
+    setUserSearch(`${u.fullName} (${u.email})`);
+    setUserResults([]);
+    setShowDropdown(false);
+  };
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!userId) { toast.error('Please select a user first'); return; }
+    setSaving(true);
+    try {
+      await ProTimeBackend.post(API_ROUTES.ADMIN_SUBSCRIPTION_ADD, {
+        userId,
+        plan,
+        status,
+        currentPeriodEnd: plan === 'PREMIUM' ? periodEnd : undefined,
+      });
+      toast.success('Subscription assigned successfully');
+      onSaved();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || 'Failed to assign subscription');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
+      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 rounded-xl bg-purple-500/10">
+              <Plus size={18} className="text-purple-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-bold text-white">Add / Assign Subscription</h3>
+              <p className="text-xs text-zinc-500 mt-0.5">Manually grant a plan to any user</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
+            <X size={18} />
+          </button>
+        </div>
+
+        <form onSubmit={handleAdd} className="space-y-4">
+          {/* User Search */}
+          <div className="space-y-1.5 relative">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Search User</label>
+            <div className="relative">
+              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              <input
+                type="text"
+                value={userSearch}
+                onChange={e => { setUserSearch(e.target.value); setUserId(''); }}
+                placeholder="Type user name or email…"
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl pl-8 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
+              />
+              {searchLoading && <Loader size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 animate-spin" />}
+            </div>
+
+            {/* Dropdown */}
+            {showDropdown && userResults.length > 0 && (
+              <div className="absolute z-20 w-full bg-[#1F1F23] border border-[#27272A] rounded-xl shadow-2xl overflow-hidden">
+                {userResults.map(u => (
+                  <button
+                    key={u.id} type="button"
+                    onClick={() => selectUser(u)}
+                    className="w-full px-4 py-2.5 text-left hover:bg-zinc-700/50 transition-colors border-b border-[#27272A] last:border-b-0"
+                  >
+                    <p className="text-sm font-medium text-white">{u.fullName}</p>
+                    <p className="text-xs text-zinc-500">{u.email}</p>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Plan */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Plan</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['FREE', 'PREMIUM'] as const).map(p => (
+                <button
+                  key={p} type="button"
+                  onClick={() => setPlan(p)}
+                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${plan === p
+                    ? p === 'PREMIUM'
+                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
+                      : 'bg-zinc-700 border-zinc-600 text-white'
+                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
+                  }`}
+                >
+                  {p === 'PREMIUM' ? '⚡ PREMIUM' : 'FREE'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Status */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
+            <div className="grid grid-cols-3 gap-2">
+              {(['ACTIVE', 'CANCELLED', 'EXPIRED'] as const).map(s => (
+                <button
+                  key={s} type="button"
+                  onClick={() => setStatus(s)}
+                  className={`py-2 rounded-xl text-xs font-semibold border transition-all ${status === s
+                    ? s === 'ACTIVE'
+                      ? 'bg-green-500/20 border-green-500/40 text-green-300'
+                      : s === 'CANCELLED'
+                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
+                        : 'bg-red-500/20 border-red-500/40 text-red-300'
+                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Period End */}
+          {plan === 'PREMIUM' && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Period End Date</label>
+              <input
+                type="date"
+                value={periodEnd}
+                onChange={e => setPeriodEnd(e.target.value)}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#2563EB] transition-colors [color-scheme:dark]"
+              />
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all">
+              Cancel
+            </button>
+            <button
+              type="submit" disabled={saving || !userId}
+              className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20"
+            >
+              {saving ? <Loader size={14} className="animate-spin" /> : <Plus size={14} />}
+              {saving ? 'Assigning…' : 'Assign Plan'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
 export const AdminSubscriptionsPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
@@ -68,6 +461,8 @@ export const AdminSubscriptionsPage: React.FC = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<AdminSubscription | null>(null);
+  const [editSub, setEditSub] = useState<AdminSubscription | null>(null);
+  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchStats = async () => {
     setIsStatsLoading(true);
@@ -132,6 +527,8 @@ export const AdminSubscriptionsPage: React.FC = () => {
     return pages;
   };
 
+  const onSaved = () => { fetchSubscriptions(); fetchStats(); };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-10">
       {/* Header */}
@@ -140,6 +537,13 @@ export const AdminSubscriptionsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-white">Subscription Management</h1>
           <p className="text-[#A1A1AA] text-sm mt-1">Overview of platform revenue and active plans.</p>
         </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all shadow-lg shadow-purple-500/20 self-start sm:self-auto"
+        >
+          <Plus size={16} />
+          Add Subscription
+        </button>
       </div>
 
       {/* Summary Cards */}
@@ -243,7 +647,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                   <th className="px-6 py-4 font-semibold">Status</th>
                   <th className="px-6 py-4 font-semibold">Stripe ID</th>
                   <th className="px-6 py-4 font-semibold">Period</th>
-                  <th className="px-6 py-4 font-semibold text-right">Action</th>
+                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#27272A]">
@@ -292,19 +696,31 @@ export const AdminSubscriptionsPage: React.FC = () => {
                           </div>
                         ) : (
                           <div className="flex items-center gap-1.5 mt-1 text-zinc-600 italic">
-                            <div className="w-2.5" /> {/* Spacer to align with icons */}
+                            <div className="w-2.5" />
                             <span>Lifetime access</span>
                           </div>
                         )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button
-                        onClick={() => setSelectedSub(sub)}
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
-                      >
-                        <Eye size={13} /> View Detail
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        {/* Edit button */}
+                        <button
+                          onClick={() => setEditSub(sub)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20 border border-[#2563EB]/20 transition-all"
+                          title="Edit subscription"
+                        >
+                          <Edit2 size={12} />
+                          Edit
+                        </button>
+                        {/* View detail button */}
+                        <button
+                          onClick={() => setSelectedSub(sub)}
+                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
+                        >
+                          <Eye size={13} /> View
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -378,7 +794,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
         </div>
       </div>
 
-      {/* ─── Detail Modal ───────────────────────────────────────── */}
+      {/* ─── View Detail Modal ───────────────────────────────────────── */}
       {selectedSub && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
@@ -472,12 +888,9 @@ export const AdminSubscriptionsPage: React.FC = () => {
               {selectedSub.plan === 'PREMIUM' && (() => {
                 const periodEnd = new Date(selectedSub.currentPeriodEnd);
                 const isExpired = periodEnd < new Date();
-
-                // Derive the correct label from status + whether date has passed
                 let label = 'Next Billing Date';
                 if (selectedSub.status === 'CANCELLED') label = 'Premium Access Until';
                 if (selectedSub.status === 'EXPIRED' || isExpired) label = 'Expired On';
-
                 return (
                   <div className={`flex items-center justify-between p-4 rounded-xl border ${
                     isExpired
@@ -502,75 +915,34 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 );
               })()}
 
+              {/* Quick Edit button from view modal */}
+              <button
+                onClick={() => { setEditSub(selectedSub); setSelectedSub(null); }}
+                className="w-full py-2.5 rounded-xl bg-[#2563EB]/10 border border-[#2563EB]/20 text-[#2563EB] text-sm font-semibold hover:bg-[#2563EB]/20 transition-all flex items-center justify-center gap-2"
+              >
+                <Edit2 size={14} /> Edit This Subscription
+              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* ─── Edit Modal ───────────────────────────────────────────────── */}
+      {editSub && (
+        <EditModal
+          sub={editSub}
+          onClose={() => setEditSub(null)}
+          onSaved={onSaved}
+        />
+      )}
+
+      {/* ─── Add Modal ────────────────────────────────────────────────── */}
+      {showAddModal && (
+        <AddModal
+          onClose={() => setShowAddModal(false)}
+          onSaved={onSaved}
+        />
+      )}
     </div>
-  );
-};
-
-const SummaryCard = ({ title, value, detail, icon, loading, color }: { title: string, value: string | number, detail?: string, icon: React.ReactNode, loading: boolean, color: string }) => {
-  const colors: Record<string, string> = {
-    blue:   'from-blue-500/20 to-transparent text-blue-400 border-blue-500/20',
-    purple: 'from-purple-500/20 to-transparent text-purple-400 border-purple-500/20',
-    green:  'from-green-500/20 to-transparent text-green-400 border-green-500/20',
-    zinc:   'from-zinc-500/20 to-transparent text-zinc-400 border-zinc-500/20'
-  };
-
-  return (
-    <div className={`bg-[#18181B] border rounded-2xl p-5 relative overflow-hidden transition-all hover:scale-[1.02] ${colors[color] || colors.zinc}`}>
-      <div className="flex justify-between items-start relative z-10">
-        <div>
-          <p className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">{title}</p>
-          {loading ? (
-            <div className="h-8 w-20 bg-zinc-800 animate-pulse rounded mt-1" />
-          ) : (
-            <h3 className="text-2xl font-bold text-white mt-1">{value}</h3>
-          )}
-          {detail && !loading && (
-            <p className="text-[11px] font-medium text-zinc-500 mt-1 flex items-center gap-1">
-              {detail}
-            </p>
-          )}
-        </div>
-        <div className={`p-2.5 rounded-xl bg-black/20 ${colors[color].split(' ')[1]}`}>
-          {icon}
-        </div>
-      </div>
-      <div className={`absolute -right-2 -bottom-2 opacity-5 scale-150`}>
-        {icon}
-      </div>
-    </div>
-  );
-};
-
-const PlanBadge = ({ plan }: { plan: string }) => {
-  if (plan === 'PREMIUM') {
-    return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/10">
-        <Zap size={10} fill="currentColor" />
-        PREMIUM
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
-      FREE
-    </span>
-  );
-};
-
-const StatusBadge = ({ status }: { status: string }) => {
-  const styles: Record<string, string> = {
-    ACTIVE:    'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/10',
-    CANCELLED: 'bg-orange-500/10 text-orange-400 border-orange-500/10',
-    EXPIRED:   'bg-red-500/10 text-red-400 border-red-500/10'
-  };
-
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${styles[status] || styles.ACTIVE}`}>
-      {status}
-    </span>
   );
 };

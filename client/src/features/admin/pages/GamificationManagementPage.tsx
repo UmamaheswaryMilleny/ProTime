@@ -1,17 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   useGamificationOverview,
   useGamificationUsers,
   useGamificationLeaderboard,
   useGamificationBadges,
   useToggleBadgeStatus,
-  useGamificationUserDetail
+  useGamificationUserDetail,
+  gamificationKeys
 } from '../api/useAdminGamification';
 import {
-  Gamepad2, Users, Trophy, BarChart3, Star, Zap, Search, Calendar, X
+  Gamepad2, Users, Trophy, BarChart3, Star, Zap, Search, Calendar, X,
+  ChevronLeft, ChevronRight, AlertCircle, Crown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
+import { useDebounce } from '../../../hooks/useDebounce';
 
 export const GamificationManagementPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'badges' | 'leaderboard'>('overview');
@@ -20,6 +24,12 @@ export const GamificationManagementPage: React.FC = () => {
   // Users Filters
   const [userFilters, setUserFilters] = useState({ page: 1, limit: 10, search: '', level: '', title: '', sortBy: 'xp' });
   const [searchInput, setSearchInput] = useState('');
+  const debouncedSearch = useDebounce(searchInput, 400);
+
+  // Sync debounced search into filters
+  useEffect(() => {
+    setUserFilters(prev => ({ ...prev, search: debouncedSearch, page: 1 }));
+  }, [debouncedSearch]);
 
   // Leaderboard Filters
   const [leaderboardFilters, setLeaderboardFilters] = useState({ page: 1, limit: 10, period: 'all-time', plan: 'all' });
@@ -29,18 +39,18 @@ export const GamificationManagementPage: React.FC = () => {
   const { data: usersData, isLoading: usersLoading } = useGamificationUsers(userFilters);
   const { data: leaderboardData, isLoading: leaderboardLoading } = useGamificationLeaderboard(leaderboardFilters);
   const { data: badgesData, isLoading: badgesLoading } = useGamificationBadges();
+  const queryClient = useQueryClient();
   const toggleBadge = useToggleBadgeStatus();
 
   const handleToggleBadge = (badgeId: string) => {
     toggleBadge.mutate(badgeId, {
-      onSuccess: () => toast.success('Badge status updated'),
+      onSuccess: () => {
+        toast.success('Badge status updated');
+        // Also invalidate overview so badge stats refresh
+        queryClient.invalidateQueries({ queryKey: gamificationKeys.overview() });
+      },
       onError: () => toast.error('Failed to update badge'),
     });
-  };
-
-  const handleSearchUsers = (e: React.FormEvent) => {
-    e.preventDefault();
-    setUserFilters(prev => ({ ...prev, search: searchInput, page: 1 }));
   };
 
   return (
@@ -91,7 +101,6 @@ export const GamificationManagementPage: React.FC = () => {
             setFilters={setUserFilters}
             searchInput={searchInput}
             setSearchInput={setSearchInput}
-            handleSearch={handleSearchUsers}
             onRowClick={(userId: string) => setSelectedUserId(userId)}
           />
         )}
@@ -101,6 +110,7 @@ export const GamificationManagementPage: React.FC = () => {
             data={badgesData} 
             isLoading={badgesLoading} 
             onToggleBadge={handleToggleBadge}
+            isToggling={toggleBadge.isPending}
           />
         )}
 
@@ -140,102 +150,142 @@ export const GamificationManagementPage: React.FC = () => {
 // ─── Subcomponents ─────────────────────────────────────────────────────────────
 
 const OverviewTab = ({ data, isLoading }: any) => {
-  if (isLoading) return <div className="text-[#A1A1AA] p-8 text-center animate-pulse">Loading overview stats...</div>;
+  if (isLoading) return (
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+      {[...Array(4)].map((_, i) => (
+        <div key={i} className="bg-[#18181B] p-5 rounded-2xl border border-zinc-800/60 h-24 animate-pulse" />
+      ))}
+    </div>
+  );
   if (!data) return null;
 
-  // Maximum value for bar chart scaling
   const maxLevelCount = Math.max(...(data.levelDistribution.map((d: any) => d.count) || [0]), 1);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <SummaryCard title="Total XP Earned" value={data.totalXpEarned.toLocaleString()} subtext="platform total" icon={Zap} />
-        <SummaryCard title="Avg XP Per User" value={data.avgXpPerUser.toLocaleString()} subtext="" icon={Users} />
-        <SummaryCard title="Badges Awarded" value={data.totalBadgesAwarded.toLocaleString()} subtext="all time" icon={Trophy} />
-        <SummaryCard title="Active Streaks" value={data.activeStreaksCount.toLocaleString()} subtext="streak > 0" icon={Calendar} />
+        <SummaryCard title="Total XP Earned" value={data.totalXpEarned.toLocaleString()} subtext="platform total" icon={Zap} color="emerald" />
+        <SummaryCard title="Avg XP Per User" value={data.avgXpPerUser.toLocaleString()} subtext="per user" icon={Users} color="blue" />
+        <SummaryCard title="Badges Awarded" value={data.totalBadgesAwarded.toLocaleString()} subtext="all time" icon={Trophy} color="amber" />
+        <SummaryCard title="Active Streaks" value={data.activeStreaksCount.toLocaleString()} subtext="streak > 0" icon={Calendar} color="orange" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Level Distribution Bar Chart Custom Component */}
+        {/* Level Distribution Bar Chart */}
         <div className="bg-[#18181B] p-6 rounded-2xl border border-zinc-800/60 shadow-lg">
           <h3 className="text-sm font-semibold text-white mb-6">Level Distribution</h3>
-          <div className="flex h-56 items-end gap-2 overflow-x-auto pb-2">
-            {data.levelDistribution.map((dist: any) => (
-              <div key={dist.level} className="flex-1 flex flex-col justify-end items-center group relative min-w-[30px]">
-                {/* Tooltip */}
-                <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-zinc-800 text-xs px-2 py-1 rounded transition-opacity whitespace-nowrap z-10 text-white">
-                  Level {dist.level}: {dist.count} users
+          {data.levelDistribution.length === 0 ? (
+            <div className="flex items-center justify-center h-56 text-zinc-600 text-sm">No data yet</div>
+          ) : (
+            <div className="flex h-56 items-end gap-2 overflow-x-auto pb-2">
+              {data.levelDistribution.map((dist: any) => (
+                <div key={dist.level} className="flex-1 flex flex-col justify-end items-center group relative min-w-[30px]">
+                  <div className="opacity-0 group-hover:opacity-100 absolute -top-8 bg-zinc-800 text-xs px-2 py-1 rounded transition-opacity whitespace-nowrap z-10 text-white">
+                    Level {dist.level}: {dist.count} users
+                  </div>
+                  <div
+                    className="w-full bg-[#2563EB] rounded-t-sm transition-all duration-500 ease-out hover:brightness-125"
+                    style={{ height: `${(dist.count / maxLevelCount) * 100}%`, minHeight: dist.count > 0 ? '4px' : '0' }}
+                  />
+                  <span className="text-[10px] text-zinc-500 mt-2">L{dist.level}</span>
                 </div>
-                {/* Bar */}
-                <div
-                  className="w-full bg-[#2563EB] rounded-t-sm transition-all duration-500 ease-out hover:brightness-125"
-                  style={{ height: `${(dist.count / maxLevelCount) * 100}%`, minHeight: dist.count > 0 ? '4px' : '0' }}
-                />
-                <span className="text-[10px] text-zinc-500 mt-2">L{dist.level}</span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Top Badges */}
+        <div className="bg-[#18181B] p-6 rounded-2xl border border-zinc-800/60 shadow-lg">
+          <h3 className="text-sm font-semibold text-white mb-6">Top Badges Awarded</h3>
+          {data.topBadges.length === 0 ? (
+            <div className="flex items-center justify-center h-32 text-zinc-600 text-sm">No badges awarded yet</div>
+          ) : (
+            <div className="space-y-4">
+              {data.topBadges.map((badge: any, idx: number) => {
+                const maxCount = data.topBadges[0]?.count || 1;
+                const pct = (badge.count / maxCount) * 100;
+                return (
+                  <div key={idx} className="flex flex-col gap-1.5">
+                    <div className="flex justify-between text-xs font-medium text-[#A1A1AA]">
+                      <span className="text-white">{badge.badgeName}</span>
+                      <span>{badge.count.toLocaleString()} users</span>
+                    </div>
+                    <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full transition-all duration-700"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Recent Badge Awards */}
+      {data.recentBadgeAwards?.length > 0 && (
+        <div className="bg-[#18181B] p-6 rounded-2xl border border-zinc-800/60 shadow-lg">
+          <h3 className="text-sm font-semibold text-white mb-4">Recent Badge Awards</h3>
+          <div className="space-y-2">
+            {data.recentBadgeAwards.map((award: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between py-2.5 border-b border-zinc-800/60 last:border-b-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">🏆</div>
+                  <div>
+                    <p className="text-sm font-medium text-white">{award.fullName}</p>
+                    <p className="text-xs text-zinc-500">{award.badgeName}</p>
+                  </div>
+                </div>
+                <span className="text-xs text-zinc-400">{new Date(award.earnedAt).toLocaleString()}</span>
               </div>
             ))}
           </div>
         </div>
+      )}
+    </div>
+  );
+};
 
-        {/* Top Badges Custom Donut-style/List Presentation */}
-        <div className="bg-[#18181B] p-6 rounded-2xl border border-zinc-800/60 shadow-lg">
-          <h3 className="text-sm font-semibold text-white mb-6">Top Badges Awarded</h3>
-          <div className="space-y-4">
-            {data.topBadges.map((badge: any, idx: number) => {
-              const maxCount = data.topBadges[0]?.count || 1;
-              const pct = (badge.count / maxCount) * 100;
-              return (
-                <div key={idx} className="flex flex-col gap-1.5">
-                  <div className="flex justify-between text-xs font-medium text-[#A1A1AA]">
-                    <span className="text-white">{badge.badgeName}</span>
-                    <span>{badge.count.toLocaleString()}</span>
-                  </div>
-                  <div className="w-full h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
+const SummaryCard = ({ title, value, subtext, icon: Icon, color }: any) => {
+  const colorMap: Record<string, string> = {
+    emerald: 'bg-emerald-500/10 text-emerald-400',
+    blue:    'bg-blue-500/10 text-blue-400',
+    amber:   'bg-amber-500/10 text-amber-400',
+    orange:  'bg-orange-500/10 text-orange-400',
+  };
+  return (
+    <div className="bg-[#18181B] p-5 rounded-2xl border border-zinc-800/60 flex items-start justify-between shadow-sm hover:border-zinc-700 transition-colors">
+      <div className="space-y-1">
+        <p className="text-xs font-medium text-[#A1A1AA] uppercase tracking-wider">{title}</p>
+        <p className="text-2xl font-bold text-white">{value}</p>
+        {subtext && <p className="text-[11px] text-zinc-500">{subtext}</p>}
+      </div>
+      <div className={`p-3 rounded-xl ${colorMap[color] || 'bg-zinc-800/50 text-zinc-400'}`}>
+        <Icon size={20} />
       </div>
     </div>
   );
 };
 
-const SummaryCard = ({ title, value, subtext, icon: Icon }: any) => (
-  <div className="bg-[#18181B] p-5 rounded-2xl border border-zinc-800/60 flex items-start justify-between shadow-sm hover:border-zinc-700 transition-colors">
-    <div className="space-y-1">
-      <p className="text-xs font-medium text-[#A1A1AA] uppercase tracking-wider">{title}</p>
-      <p className="text-2xl font-bold text-white">{value}</p>
-      {subtext && <p className="text-[11px] text-zinc-500">{subtext}</p>}
-    </div>
-    <div className="p-3 rounded-xl bg-zinc-800/50 text-zinc-400">
-      <Icon size={20} />
-    </div>
-  </div>
-);
+const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearchInput, onRowClick }: any) => {
+  const totalPages = data?.total ? Math.ceil(data.total / filters.limit) : 1;
 
-const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearchInput, handleSearch, onRowClick }: any) => {
   return (
     <div className="space-y-4">
       {/* Filter Bar */}
       <div className="flex flex-col md:flex-row gap-3">
-        <form onSubmit={handleSearch} className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-            <input
-              type="text"
-              placeholder="Search user by name or email..."
-              value={searchInput}
-              onChange={e => setSearchInput(e.target.value)}
-              className="w-full bg-[#18181B] border border-zinc-800/60 rounded-xl py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-[#2563EB]"
-            />
-          </div>
-        </form>
+        <div className="flex-1 relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+          <input
+            type="text"
+            placeholder="Search user by name or email..."
+            value={searchInput}
+            onChange={e => setSearchInput(e.target.value)}
+            className="w-full bg-[#18181B] border border-zinc-800/60 rounded-xl py-2 pl-9 pr-4 text-sm text-white focus:outline-none focus:border-[#2563EB] transition-colors"
+          />
+        </div>
         <select
           value={filters.level} onChange={e => setFilters({ ...filters, level: e.target.value, page: 1 })}
           className="bg-[#18181B] border border-zinc-800/60 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
@@ -247,16 +297,23 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
           value={filters.sortBy} onChange={e => setFilters({ ...filters, sortBy: e.target.value, page: 1 })}
           className="bg-[#18181B] border border-zinc-800/60 rounded-xl px-4 py-2 text-sm text-white focus:outline-none"
         >
-          <option value="xp">Sort: XP High-Low</option>
-          <option value="streak">Sort: Streak High-Low</option>
-          <option value="badges">Sort: Badges High-Low</option>
+          <option value="xp">Sort: XP High→Low</option>
+          <option value="streak">Sort: Streak High→Low</option>
+          <option value="badges">Sort: Badges High→Low</option>
         </select>
       </div>
 
       {/* Table */}
       <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 overflow-hidden shadow-lg">
         {isLoading ? (
-          <div className="p-8 text-center text-zinc-500 animate-pulse">Loading users...</div>
+          <div className="p-8 space-y-3">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-zinc-800/50 rounded-xl animate-pulse" />)}
+          </div>
+        ) : !data?.users?.length ? (
+          <div className="p-16 text-center">
+            <Users size={32} className="text-zinc-700 mx-auto mb-3" />
+            <p className="text-zinc-500 text-sm">No users found matching your filters.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-zinc-400">
@@ -271,7 +328,7 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
-                {data?.users.map((user: any) => (
+                {data.users.map((user: any) => (
                   <tr
                     key={user.userId}
                     onClick={() => onRowClick(user.userId)}
@@ -288,13 +345,13 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right font-mono font-medium text-emerald-400">
-                      {user.totalXp.toLocaleString()}
+                      {(user.totalXp || 0).toLocaleString()}
                     </td>
                     <td className="px-6 py-4 text-right">
                       {user.currentStreak > 0 ? (
                         <span className="text-orange-400 font-medium">🔥 {user.currentStreak} days</span>
                       ) : (
-                        <span className="text-zinc-600">0 days</span>
+                        <span className="text-zinc-600">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-center">
@@ -303,38 +360,45 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right text-xs">
-                      {new Date(user.lastActiveAt).toLocaleDateString()}
+                      {user.lastActiveAt && user.lastActiveAt !== '1970-01-01T00:00:00.000Z'
+                        ? new Date(user.lastActiveAt).toLocaleDateString()
+                        : '—'
+                      }
                     </td>
                   </tr>
                 ))}
-                {data?.users.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-8 text-center text-zinc-500">No users found.</td>
-                  </tr>
-                )}
               </tbody>
             </table>
           </div>
         )}
       </div>
 
-      {/* Pagination Placeholder */}
+      {/* Pagination */}
       <div className="flex justify-between items-center text-sm text-zinc-400 px-1">
-        <span>Showing {data?.users.length || 0} of {data?.total || 0} users</span>
-        <div className="flex gap-2">
+        <span>
+          {data?.total > 0 && (
+            <>
+              Showing <span className="text-white font-medium">{(filters.page - 1) * filters.limit + 1}</span> –{' '}
+              <span className="text-white font-medium">{Math.min(filters.page * filters.limit, data.total)}</span>{' '}
+              of <span className="text-white font-medium">{data.total}</span> users
+            </>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5">
           <button
             disabled={filters.page === 1}
             onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-            className="p-1 px-3 bg-[#18181B] border border-zinc-800 disabled:opacity-50 rounded-lg hover:bg-zinc-800 transition-colors"
+            className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors"
           >
-            Prev
+            <ChevronLeft size={15} />
           </button>
+          <span className="text-xs text-zinc-400 px-1">Page {filters.page} of {totalPages}</span>
           <button
-            disabled={!data || data.users.length < filters.limit}
+            disabled={filters.page >= totalPages}
             onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-            className="p-1 px-3 bg-[#18181B] border border-zinc-800 disabled:opacity-50 rounded-lg hover:bg-zinc-800 transition-colors"
+            className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors"
           >
-            Next
+            <ChevronRight size={15} />
           </button>
         </div>
       </div>
@@ -344,14 +408,26 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
 
 // ─── Side Panel Content ───────────────────────────────────────────────────────
 const UserDetailPanel = ({ userId, onClose }: { userId: string, onClose: () => void }) => {
-  const { data, isLoading } = useGamificationUserDetail(userId);
+  const { data, isLoading, isError } = useGamificationUserDetail(userId);
 
   if (isLoading) {
-    return <div className="p-8 text-[#A1A1AA] animate-pulse">Loading user details...</div>;
+    return (
+      <div className="p-6 space-y-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-20 bg-zinc-800/50 rounded-xl animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
-  if (!data) {
-    return <div className="p-8 text-red-400">Failed to load data.</div>;
+  if (isError || !data) {
+    return (
+      <div className="p-8 flex flex-col items-center gap-3 text-red-400">
+        <AlertCircle size={28} />
+        <p className="text-sm font-medium">Failed to load user data.</p>
+        <button onClick={onClose} className="text-xs underline text-zinc-500 hover:text-white">Close</button>
+      </div>
+    );
   }
 
   const { user, gamification, badges } = data;
@@ -360,9 +436,14 @@ const UserDetailPanel = ({ userId, onClose }: { userId: string, onClose: () => v
     <div className="flex flex-col h-full">
       <div className="p-6 border-b border-zinc-800 flex justify-between items-start bg-[#121215]">
         <div>
-          <h2 className="text-xl font-bold text-white mb-1">{user.fullName}</h2>
-          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${user.isPremium ? 'bg-indigo-500/10 text-indigo-400 border border-indigo-500/20' : 'bg-zinc-800 text-zinc-400'}`}>
-            {user.isPremium ? 'Premium' : 'Free User'}
+          <h2 className="text-xl font-bold text-white mb-1.5">{user.fullName}</h2>
+          <p className="text-xs text-zinc-500 mb-2">{user.email}</p>
+          <span className={`text-xs px-2.5 py-1 rounded-full font-semibold border ${
+            user.isPremium
+              ? 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20'
+              : 'bg-zinc-800 text-zinc-400 border-zinc-700/50'
+          }`}>
+            {user.isPremium ? '⚡ Premium' : 'Free User'}
           </span>
         </div>
         <button onClick={onClose} className="p-2 text-zinc-500 hover:text-white rounded-xl hover:bg-zinc-800 transition">
@@ -370,67 +451,77 @@ const UserDetailPanel = ({ userId, onClose }: { userId: string, onClose: () => v
         </button>
       </div>
 
-      <div className="p-6 flex-1 overflow-y-auto space-y-6">
-        {/* Core Stats Box */}
-        <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 p-5 space-y-4 shadow-sm">
-          <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
-            <span className="text-[#A1A1AA] text-sm">Level</span>
-            <span className="text-white font-bold bg-[#2563EB]/10 text-[#2563EB] px-3 py-1 rounded-lg">Level {gamification.currentLevel}</span>
+      <div className="p-6 flex-1 overflow-y-auto space-y-5">
+        {!gamification ? (
+          <div className="p-4 rounded-xl bg-zinc-800/30 text-zinc-500 text-sm text-center">
+            No gamification record found for this user.
           </div>
-          <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
-            <span className="text-[#A1A1AA] text-sm">Title</span>
-            <span className="text-white font-medium">{gamification.currentTitle || 'Beginner'}</span>
-          </div>
-          <div className="flex justify-between items-center border-b border-zinc-800/60 pb-3">
-            <span className="text-[#A1A1AA] text-sm">Total XP</span>
-            <span className="text-emerald-400 font-mono font-bold">{gamification.totalXp.toLocaleString()} XP</span>
-          </div>
-          <div className="flex justify-between items-center pb-1">
-            <span className="text-[#A1A1AA] text-sm">Daily XP Today</span>
-            <div className="text-right">
-              <span className="text-white font-medium">{gamification.dailyXpEarned}</span>
-              <span className="text-zinc-500 text-xs ml-1">/ cap</span>
+        ) : (
+          <>
+            {/* Core Stats */}
+            <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 p-5 space-y-3 shadow-sm">
+              <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-3">Progress</h3>
+              {[
+                { label: 'Level', value: <span className="text-white font-bold bg-[#2563EB]/10 text-[#2563EB] px-3 py-1 rounded-lg">Level {gamification.currentLevel}</span> },
+                { label: 'Title', value: <span className="text-white font-medium">{gamification.currentTitle || 'Beginner'}</span> },
+                { label: 'Total XP', value: <span className="text-emerald-400 font-mono font-bold">{(gamification.totalXp || 0).toLocaleString()} XP</span> },
+                { label: 'Daily XP Today', value: <span className="text-white font-medium">{gamification.dailyXpEarned ?? 0} <span className="text-zinc-500 text-xs">/ cap</span></span> },
+              ].map(({ label, value }) => (
+                <div key={label} className="flex justify-between items-center border-b border-zinc-800/60 pb-3 last:border-b-0 last:pb-0">
+                  <span className="text-[#A1A1AA] text-sm">{label}</span>
+                  {value}
+                </div>
+              ))}
             </div>
-          </div>
-        </div>
 
-        {/* Streaks */}
-        <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 p-5 space-y-4 shadow-sm">
-          <h3 className="text-white font-semibold flex items-center gap-2 mb-2">
-            <span className="text-orange-400">🔥</span> Streak Information
-          </h3>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-zinc-800/30 p-3 rounded-xl border border-zinc-800">
-              <p className="text-xs text-zinc-500 mb-1">Current Streak</p>
-              <p className="text-lg text-white font-bold">{gamification.currentStreak} Days</p>
+            {/* Streaks */}
+            <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 p-5 space-y-3 shadow-sm">
+              <h3 className="text-white font-semibold flex items-center gap-2">
+                <span className="text-orange-400">🔥</span> Streak Information
+              </h3>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-orange-500/5 border border-orange-500/10 p-3 rounded-xl">
+                  <p className="text-xs text-zinc-500 mb-1">Current Streak</p>
+                  <p className="text-lg text-white font-bold">{gamification.currentStreak ?? 0} <span className="text-sm font-normal text-zinc-400">days</span></p>
+                </div>
+                <div className="bg-zinc-800/30 p-3 rounded-xl border border-zinc-800">
+                  <p className="text-xs text-zinc-500 mb-1">Longest Streak</p>
+                  <p className="text-lg text-white font-bold">{gamification.longestStreak ?? 0} <span className="text-sm font-normal text-zinc-400">days</span></p>
+                </div>
+              </div>
+              <p className="text-xs text-zinc-500 pt-1 border-t border-zinc-800/60">
+                Last streak activity: {gamification.lastStreakDate
+                  ? new Date(gamification.lastStreakDate).toLocaleDateString()
+                  : 'N/A'
+                }
+              </p>
             </div>
-            <div className="bg-zinc-800/30 p-3 rounded-xl border border-zinc-800">
-              <p className="text-xs text-zinc-500 mb-1">Longest Streak</p>
-              <p className="text-lg text-white font-bold">{gamification.longestStreak} Days</p>
-            </div>
-          </div>
-          <p className="text-xs text-zinc-500 pt-2 border-t border-zinc-800/60">
-            Last active streak: {gamification.lastStreakDate ? new Date(gamification.lastStreakDate).toLocaleDateString() : 'N/A'}
-          </p>
-        </div>
+          </>
+        )}
 
         {/* Badges Earned */}
         <div>
-          <h3 className="text-white font-semibold mb-4 px-1">Badges Earned ({badges.length})</h3>
-          <div className="space-y-3">
-            {badges.map((b: any, idx: number) => (
-              <div key={idx} className="bg-[#18181B] p-3 rounded-xl border border-zinc-800/60 flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 text-xl overflow-hidden relative">
-                  {b.iconUrl ? <img src={b.iconUrl} alt="icon" className="w-full h-full object-cover" /> : '🏆'}
+          <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+            <Trophy size={16} className="text-amber-400" /> Badges Earned
+            <span className="ml-auto text-xs bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded-full">{badges.length}</span>
+          </h3>
+          {badges.length === 0 ? (
+            <p className="text-sm text-zinc-500 px-2">No badges earned yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {badges.map((b: any, idx: number) => (
+                <div key={idx} className="bg-[#18181B] p-3 rounded-xl border border-zinc-800/60 flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-lg shrink-0 overflow-hidden">
+                    {b.iconUrl ? <img src={b.iconUrl} alt="icon" className="w-full h-full object-cover" /> : '🏆'}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-white truncate">{b.name}</p>
+                    <p className="text-xs text-zinc-500">{new Date(b.earnedAt).toLocaleDateString()}</p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <p className="text-sm font-medium text-white">{b.name}</p>
-                  <p className="text-xs text-zinc-500">{new Date(b.earnedAt).toLocaleDateString()}</p>
-                </div>
-              </div>
-            ))}
-            {badges.length === 0 && <p className="text-sm text-zinc-500 px-2">No badges earned yet.</p>}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -438,94 +529,113 @@ const UserDetailPanel = ({ userId, onClose }: { userId: string, onClose: () => v
 };
 
 // ─── Badges Tab ───────────────────────────────────────────────────────────────
-const BadgesTab = ({ data, isLoading, onToggleBadge }: any) => {
-  if (isLoading) return <div className="p-8 text-[#A1A1AA] animate-pulse">Loading badge data...</div>;
+const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
+  if (isLoading) return (
+    <div className="space-y-3">
+      {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-zinc-800/40 rounded-xl animate-pulse" />)}
+    </div>
+  );
 
   return (
     <div className="space-y-8">
-      {/* Section A: Definitions */}
+      {/* Section A: Badge Definitions */}
       <div className="space-y-4">
         <div>
           <h2 className="text-lg font-bold text-white mb-1">Badge Definitions</h2>
-          <p className="text-xs text-zinc-400">Manage platform badge availability. Criteria logic is hardcoded globally.</p>
+          <p className="text-xs text-zinc-400">Manage platform badge availability. Criteria logic is enforced server-side.</p>
         </div>
 
         <div className="bg-[#18181B] border border-zinc-800/60 rounded-2xl overflow-hidden shadow-lg">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm text-zinc-400">
-              <thead className="bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60 text-xs uppercase">
-                <tr>
-                  <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
-                  <th className="px-6 py-4 font-semibold">Badge</th>
-                  <th className="px-6 py-4 font-semibold">Criteria/Desc</th>
-                  <th className="px-6 py-4 font-semibold text-center">Earned</th>
-                  <th className="px-6 py-4 font-semibold text-center">Status</th>
-                  <th className="px-6 py-4 font-semibold w-32">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-800/60">
-                {data?.badges.map((badge: any) => (
-                  <tr key={badge.id} className="hover:bg-zinc-800/30 transition-colors">
-                    <td className="px-6 py-4 text-center text-2xl">
-                      {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-6 h-6 inline-block" /> : '🏆'}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="font-semibold text-white">{badge.name}</div>
-                      <div className="text-[10px] text-zinc-500 font-mono mt-0.5">{badge.key}</div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="text-sm text-zinc-300">{badge.description}</div>
-                      <div className="text-xs text-zinc-500 mt-1 inline-block bg-zinc-800 px-2 py-0.5 rounded">{badge.criteriaUrl}</div>
-                    </td>
-                    <td className="px-6 py-4 text-center font-medium">
-                      {badge.usersEarned.toLocaleString()}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${badge.isActive ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                        {badge.isActive ? 'Active' : 'Deactivated'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <button
-                        onClick={() => onToggleBadge(badge.id)}
-                        className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${badge.isActive
-                            ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                            : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
-                          }`}
-                      >
-                        {badge.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                    </td>
+          {!data?.badges?.length ? (
+            <div className="p-12 text-center">
+              <Trophy size={28} className="text-zinc-700 mx-auto mb-3" />
+              <p className="text-zinc-500 text-sm">No badge definitions found. Add badges in the database.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-sm text-zinc-400">
+                <thead className="bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60 text-xs uppercase">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
+                    <th className="px-6 py-4 font-semibold">Badge</th>
+                    <th className="px-6 py-4 font-semibold">Description / Criteria</th>
+                    <th className="px-6 py-4 font-semibold text-center">Earned By</th>
+                    <th className="px-6 py-4 font-semibold text-center">Status</th>
+                    <th className="px-6 py-4 font-semibold w-32">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/60">
+                  {data.badges.map((badge: any) => (
+                    <tr key={badge.id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-6 py-4 text-center text-2xl">
+                        {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-6 h-6 inline-block rounded" /> : '🏆'}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="font-semibold text-white">{badge.name}</div>
+                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5 bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded">{badge.key}</div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="text-sm text-zinc-300 mb-1">{badge.description}</div>
+                        <div className="text-xs text-zinc-500 inline-block bg-zinc-800 px-2 py-0.5 rounded">{badge.criteriaUrl}</div>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className="font-semibold text-white">{(badge.usersEarned || 0).toLocaleString()}</span>
+                        <span className="text-zinc-600 text-xs ml-1">users</span>
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
+                          badge.isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                            : 'bg-red-500/10 text-red-400 border-red-500/20'
+                        }`}>
+                          {badge.isActive ? 'Active' : 'Deactivated'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => onToggleBadge(badge.id)}
+                          disabled={isToggling}
+                          className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
+                            badge.isActive
+                              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                              : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
+                          }`}
+                        >
+                          {badge.isActive ? 'Deactivate' : 'Activate'}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Section B: Recent */}
+      {/* Section B: Recent Awards */}
       <div className="space-y-4">
         <div>
           <h2 className="text-lg font-bold text-white mb-1">Recent Badge Awards</h2>
           <p className="text-xs text-zinc-400">Latest badges earned across the platform</p>
         </div>
-        <div className="bg-[#18181B] border border-zinc-800/60 rounded-2xl overflow-hidden shadow-lg p-1">
-          {data?.recentAwards.map((award: any, idx: number) => (
-            <div key={idx} className="flex items-center justify-between p-4 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/30 transition">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-zinc-800 flex items-center justify-center text-sm">🏆</div>
-                <div>
-                  <p className="text-sm font-medium text-white">{award.fullName}</p>
-                  <p className="text-xs text-zinc-500">{award.badgeName}</p>
+        <div className="bg-[#18181B] border border-zinc-800/60 rounded-2xl overflow-hidden shadow-lg">
+          {!data?.recentAwards?.length ? (
+            <div className="p-8 text-center text-zinc-500 text-sm">No recent badge awards.</div>
+          ) : (
+            data.recentAwards.map((award: any, idx: number) => (
+              <div key={idx} className="flex items-center justify-between p-4 border-b border-zinc-800/60 last:border-b-0 hover:bg-zinc-800/20 transition">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-sm">🏆</div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">{award.fullName}</p>
+                    <p className="text-xs text-zinc-500">{award.badgeName}</p>
+                  </div>
                 </div>
+                <div className="text-xs text-zinc-400">{new Date(award.earnedAt).toLocaleString()}</div>
               </div>
-              <div className="text-xs text-zinc-400">
-                {new Date(award.earnedAt).toLocaleString()}
-              </div>
-            </div>
-          ))}
-          {data?.recentAwards.length === 0 && <div className="p-6 text-center text-zinc-500">No recent awards.</div>}
+            ))
+          )}
         </div>
       </div>
     </div>
@@ -534,8 +644,20 @@ const BadgesTab = ({ data, isLoading, onToggleBadge }: any) => {
 
 // ─── Leaderboard Tab ──────────────────────────────────────────────────────────
 const LeaderboardTab = ({ data, isLoading, filters, setFilters }: any) => {
+  const totalPages = data?.total ? Math.ceil(data.total / filters.limit) : 1;
+
   return (
     <div className="space-y-4">
+      {/* Period note */}
+      {filters.period !== 'all-time' && (
+        <div className="flex items-start gap-2.5 p-3.5 bg-amber-500/5 border border-amber-500/20 rounded-xl">
+          <AlertCircle size={15} className="text-amber-400 mt-0.5 shrink-0" />
+          <p className="text-xs text-amber-300">
+            <span className="font-semibold">Note:</span> Period filtering shows all-time XP ranking. Time-scoped XP leaderboards require an XP transaction log which can be added as a future enhancement.
+          </p>
+        </div>
+      )}
+
       {/* Filters */}
       <div className="flex gap-3">
         <select
@@ -560,7 +682,14 @@ const LeaderboardTab = ({ data, isLoading, filters, setFilters }: any) => {
       {/* Table */}
       <div className="bg-[#18181B] rounded-2xl border border-zinc-800/60 overflow-hidden shadow-lg">
         {isLoading ? (
-          <div className="p-8 text-center text-zinc-500 animate-pulse">Loading rankings...</div>
+          <div className="p-8 space-y-3">
+            {[...Array(5)].map((_, i) => <div key={i} className="h-10 bg-zinc-800/50 rounded-xl animate-pulse" />)}
+          </div>
+        ) : !data?.rankings?.length ? (
+          <div className="p-14 text-center">
+            <Star size={28} className="text-zinc-700 mx-auto mb-3" />
+            <p className="text-zinc-500 text-sm">No leaderboard data yet.</p>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-sm text-zinc-400">
@@ -575,33 +704,34 @@ const LeaderboardTab = ({ data, isLoading, filters, setFilters }: any) => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
-                {data?.rankings.map((user: any, idx: number) => {
+                {data.rankings.map((user: any, idx: number) => {
                   const actualRank = (filters.page - 1) * filters.limit + idx + 1;
+                  const rankDisplay = actualRank === 1 ? '🥇' : actualRank === 2 ? '🥈' : actualRank === 3 ? '🥉' : `#${actualRank}`;
                   return (
-                    <tr key={user.userId} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4 text-center font-black text-white text-lg">
-                        {actualRank === 1 ? '🥇' : actualRank === 2 ? '🥈' : actualRank === 3 ? '🥉' : actualRank}
-                      </td>
+                    <tr key={user.userId} className={`hover:bg-zinc-800/30 transition-colors ${actualRank <= 3 ? 'bg-gradient-to-r from-amber-500/3 to-transparent' : ''}`}>
+                      <td className="px-6 py-4 text-center font-black text-white text-lg">{rankDisplay}</td>
                       <td className="px-6 py-4 font-medium text-white">{user.fullName}</td>
                       <td className="px-6 py-4">
                         <span className="text-[#2563EB] font-bold mr-2">Lvl {user.currentLevel}</span>
                         <span className="text-zinc-400">{user.currentTitle || 'Beginner'}</span>
                       </td>
                       <td className="px-6 py-4 text-right font-mono font-medium text-emerald-400">
-                        {user.totalXp.toLocaleString()}
+                        {(user.totalXp || 0).toLocaleString()}
                       </td>
                       <td className="px-6 py-4 text-center text-orange-400 font-medium">
-                        {user.currentStreak > 0 ? `🔥 ${user.currentStreak}` : '-'}
+                        {user.currentStreak > 0 ? `🔥 ${user.currentStreak}` : '—'}
                       </td>
                       <td className="px-6 py-4 text-right">
                         {user.isPremium ? (
-                          <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded-md text-xs font-semibold border border-indigo-500/20">PREMIUM</span>
+                          <span className="px-2 py-1 bg-indigo-500/10 text-indigo-400 rounded-md text-xs font-semibold border border-indigo-500/20 inline-flex items-center gap-1">
+                            <Crown size={10} />PREMIUM
+                          </span>
                         ) : (
                           <span className="px-2 py-1 bg-zinc-800 text-zinc-400 text-xs font-medium rounded-md">FREE</span>
                         )}
                       </td>
                     </tr>
-                  )
+                  );
                 })}
               </tbody>
             </table>
@@ -610,21 +740,28 @@ const LeaderboardTab = ({ data, isLoading, filters, setFilters }: any) => {
       </div>
 
       <div className="flex justify-between items-center text-sm text-zinc-400 px-1">
-        <span>Showing {data?.rankings.length || 0} top users</span>
-        <div className="flex gap-2">
+        <span>
+          {data?.total > 0 && (
+            <>
+              <span className="text-white font-medium">{data.total}</span> users ranked
+            </>
+          )}
+        </span>
+        <div className="flex items-center gap-1.5">
           <button
             disabled={filters.page === 1}
             onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
-            className="p-1 px-3 bg-[#18181B] border border-zinc-800 disabled:opacity-50 rounded-lg"
+            className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors"
           >
-            Prev
+            <ChevronLeft size={15} />
           </button>
+          <span className="text-xs text-zinc-400 px-1">Page {filters.page} of {totalPages}</span>
           <button
-            disabled={!data || data.rankings.length < filters.limit}
+            disabled={filters.page >= totalPages}
             onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
-            className="p-1 px-3 bg-[#18181B] border border-zinc-800 disabled:opacity-50 rounded-lg"
+            className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors"
           >
-            Next
+            <ChevronRight size={15} />
           </button>
         </div>
       </div>

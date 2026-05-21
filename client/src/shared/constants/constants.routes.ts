@@ -85,6 +85,8 @@ export const API_ROUTES = {
   ADMIN_RESOLVE_REPORT: (id: string) => `/admin/reports/${id}/resolve`,
   ADMIN_SUBSCRIPTIONS:  "/admin/subscriptions",
   ADMIN_SUBSCRIPTION_STATS: "/admin/subscriptions/stats",
+  ADMIN_SUBSCRIPTION_ADD: "/admin/subscriptions/add",
+  ADMIN_UPDATE_SUBSCRIPTION: (userId: string) => `/admin/subscriptions/${userId}`,
   ADMIN_MEETINGS:           "/admin/meetings",
   ADMIN_MEETING_FORCE_CLOSE: (id: string) => `/admin/meetings/${id}/force-close`,
   ADMIN_GAMIFICATION_OVERVIEW: "/admin/gamification/overview",
