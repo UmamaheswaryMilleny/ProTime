@@ -174,7 +174,7 @@ export const NotificationBell: React.FC = () => {
                                     <div
                                         key={n.id}
                                         onClick={() => handleClickNotification(n)}
-                                        className={`relative flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-white/5 ${!n.isRead ? 'bg-white/[0.03]' : ''}`}
+                                        className={`group relative flex items-start gap-3 p-4 cursor-pointer transition-colors hover:bg-white/5 ${!n.isRead ? 'bg-white/[0.03]' : ''}`}
                                     >
                                         {/* Icon */}
                                         <div className={`flex-shrink-0 w-9 h-9 rounded-xl flex items-center justify-center text-lg ${cfg.bg} border ${cfg.border}`}>

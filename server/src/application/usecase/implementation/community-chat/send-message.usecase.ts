@@ -11,6 +11,8 @@ import {
 import { CommunityMapper } from '../../../mapper/community.mapper';
 import { FREE_MONTHLY_COMMUNITY_MESSAGES } from '../../../../shared/constants/constants';
 import type { ISocketService } from '../../../service_interface/socket-service.interface';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
 
 
 @injectable()
@@ -24,6 +26,9 @@ export class SendMessageUsecase implements ISendMessageUsecase {
 
     @inject('ISocketService')
     private readonly socketService: ISocketService,
+
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) { }
 
   async execute(
@@ -40,6 +45,15 @@ export class SendMessageUsecase implements ISendMessageUsecase {
     if (!isPremium) {
       const monthlyCount = await this.communityRepo.countMonthlyMessages(userId);
       if (monthlyCount >= FREE_MONTHLY_COMMUNITY_MESSAGES) {
+        try {
+          this.notificationService.notifyUser(userId, {
+            type: NotificationType.ADMIN_WARNING,
+            title: 'Community Message Limit Hit',
+            message: 'You have reached your free monthly limit of 50 community messages. Upgrade to Premium for unlimited messages!',
+          });
+        } catch (err) {
+          // Ignore notification delivery failures
+        }
         throw new CommunityMessageLimitError();
       }
     }

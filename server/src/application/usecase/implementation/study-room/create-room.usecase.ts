@@ -31,6 +31,15 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
 
       const count = await this.studyRoomRepo.countCreatedByHostInMonth(hostId, startOfMonth, endOfMonth);
       if (count >= 5) {
+        try {
+          this.notificationService.notifyUser(hostId, {
+            type: NotificationType.ADMIN_WARNING,
+            title: 'Study Room Limit Hit',
+            message: 'You have reached your monthly limit of 5 study rooms. Upgrade to Premium for unlimited room creation!',
+          });
+        } catch (err) {
+          // Ignore notification delivery failures
+        }
         throw new RoomCreationLimitExceededError();
       }
     }

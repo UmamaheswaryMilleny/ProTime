@@ -5,6 +5,8 @@ import type { IBuddySessionRepository } from '../../../../domain/repositories/ca
 import type { IUserRepository } from '../../../../domain/repositories/user/user.repository.interface';
 import type { IConversationRepository } from '../../../../domain/repositories/chat/conversation.repository.interface';
 import type { ISocketService } from '../../../service_interface/socket-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
 import type { ProposeNextSessionRequestDTO } from '../../../dto/calendar/request/propose-next-session.request.dto';
 import type { SessionScheduleRequestResponseDTO } from '../../../dto/calendar/response/session-schedule-request.response.dto';
 // import { SessionNotFoundError, NotInActiveSessionError } from '../../../../domain/errors/calendar.errors';
@@ -29,6 +31,9 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
 
     @inject('ISocketService')
     private readonly socketService: ISocketService,
+
+    @inject('INotificationService')
+    private readonly notificationService: INotificationService,
   ) {}
 
   async execute(
@@ -64,6 +69,18 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
     );
 
     this.socketService.emitToUser(participantId, 'schedule:proposed', response);
+
+    // Also send in-app notification for the bell icon
+    try {
+      this.notificationService.notifyUser(participantId, {
+        type: NotificationType.SCHEDULE_REQUESTED,
+        title: '📅 New Study Schedule Request',
+        message: `${proposer?.fullName ?? 'A Buddy'} proposed a study session.`,
+        metadata: { requestId: request.id, conversationId }
+      });
+    } catch (err) {
+      // Ignore notification delivery failures
+    }
 
     return response;
   }

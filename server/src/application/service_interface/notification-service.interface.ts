@@ -13,6 +13,10 @@ export enum NotificationType {
   CHAT_MESSAGE = 'chat_message',
   STUDY_ROOM_INVITE = 'study_room_invite',
   STUDY_ROOM_START = 'study_room_start',
+  ADMIN_WARNING = 'admin_warning',
+  SUBSCRIPTION_EXPIRING = 'subscription_expiring',
+  SUBSCRIPTION_EXPIRED = 'subscription_expired',
+  SUBSCRIPTION_CANCELLED = 'subscription_cancelled',
 }
 
 export interface InAppNotification {

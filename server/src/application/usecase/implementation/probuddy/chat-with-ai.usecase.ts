@@ -3,6 +3,8 @@ import { IChatWithAiUsecase } from '../../interface/probuddy/chat-with-ai.usecas
 import type { IAIService } from '../../../service_interface/ai-service.interface';
 import type { ISubscriptionRepository } from '../../../../domain/repositories/subscription/subscription.repository.interface';
 import { SubscriptionPlan } from '../../../../domain/enums/subscription.enums';
+import type { INotificationService } from '../../../service_interface/notification-service.interface';
+import { NotificationType } from '../../../service_interface/notification-service.interface';
 
 @injectable()
 export class ChatWithAiUsecase implements IChatWithAiUsecase {
@@ -10,7 +12,9 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
     @inject('ISubscriptionRepository')
     private subscriptionRepository: ISubscriptionRepository,
     @inject('IAIService')
-    private aiService: IAIService
+    private aiService: IAIService,
+    @inject('INotificationService')
+    private notificationService: INotificationService
   ) {}
 
   async execute(userId: string, prompt: string): Promise<string> {
@@ -51,6 +55,17 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
       const upgradeMsg = isPremium 
         ? "Daily Premium AI limit reached. Please wait until tomorrow!" 
         : "Daily Free AI limit reached (20 messages). Upgrade to Premium for 100 daily messages!";
+      
+      try {
+        this.notificationService.notifyUser(userId, {
+          type: NotificationType.ADMIN_WARNING,
+          title: 'Daily AI Limit Reached',
+          message: upgradeMsg,
+        });
+      } catch (err) {
+        // Ignore notification delivery failures
+      }
+
       throw new Error(upgradeMsg);
     }
 
