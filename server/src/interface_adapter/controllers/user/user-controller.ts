@@ -4,7 +4,9 @@ import { inject, injectable } from "tsyringe";
 import type { IUserController } from "../../interfaces/user/user.controller.interface";
 import type { IProfileRepository } from "../../../domain/repositories/profile/profile.repository.interface";
 import type { IUserRepository } from "../../../domain/repositories/user/user.repository.interface";
+import type { IBuddyConnectionRepository } from "../../../domain/repositories/buddy/buddy.connection.repository.interface";
 import { ProfileMapper } from "../../../application/mapper/profile.mapper";
+import { BuddyMapper } from "../../../application/mapper/buddy.mapper";
 import { ResponseHelper } from "../../helpers/response.helper";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
 import type { CustomRequest } from "../../middlewares/auth.middleware";
@@ -19,6 +21,10 @@ export class UserController implements IUserController {
 
     @inject("IProfileRepository")
     private readonly profileRepository: IProfileRepository,
+
+    @inject('IBuddyConnectionRepository')
+    private readonly buddyConnectionRepository: IBuddyConnectionRepository,
+
     @inject('IUploadProfileImageUsecase')
     private readonly uploadProfileImageUsecase: IUploadProfileImageUsecase
   ) {}
@@ -36,9 +42,10 @@ export class UserController implements IUserController {
         return;
       }
 
-      const [user, profile] = await Promise.all([
+      const [user, profile, connections] = await Promise.all([
         this.userRepository.findById(req.user.id),
         this.profileRepository.findByUserId(req.user.id),
+        this.buddyConnectionRepository.findByUserId(req.user.id),
       ]);
 
       if (!user) {
@@ -51,12 +58,22 @@ export class UserController implements IUserController {
         return;
       }
 
-      // ProfileMapper.toProfileResponse takes both profile + user info
-      const profileDTO = ProfileMapper.toProfileResponse(profile, {
-        id: user.id,
-        email: user.email,
-        fullName: user.fullName,
-      });
+      const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(
+        req.user.id,
+        connections || [],
+      );
+
+      // ProfileMapper.toProfileResponse takes both profile + user info + rating stats
+      const profileDTO = ProfileMapper.toProfileResponse(
+        profile,
+        {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+        },
+        averageRating,
+        ratingCount,
+      );
 
       ResponseHelper.success(
         res,
@@ -113,18 +130,31 @@ async updateProfile(
       await this.userRepository.updateById(req.user.id, { fullName });
     }
 
-    const user = await this.userRepository.findById(req.user.id);
+    const [user, connections] = await Promise.all([
+      this.userRepository.findById(req.user.id),
+      this.buddyConnectionRepository.findByUserId(req.user.id),
+    ]);
 
     if (!user) {
       ResponseHelper.error(res, "User not found", HTTP_STATUS.NOT_FOUND);
       return;
     }
 
-    const profileDTO = ProfileMapper.toProfileResponse(updatedProfile, {
-      id: user.id,
-      email: user.email,
-      fullName: fullName ?? user.fullName, // ✅ always returns the updated value
-    });
+    const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(
+      req.user.id,
+      connections || [],
+    );
+
+    const profileDTO = ProfileMapper.toProfileResponse(
+      updatedProfile,
+      {
+        id: user.id,
+        email: user.email,
+        fullName: fullName ?? user.fullName, // ✅ always returns the updated value
+      },
+      averageRating,
+      ratingCount,
+    );
 
     ResponseHelper.success(res, HTTP_STATUS.OK, "Profile updated successfully", profileDTO);
   } catch (error: unknown) {

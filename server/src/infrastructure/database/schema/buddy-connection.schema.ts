@@ -56,6 +56,44 @@ export const BuddyConnectionSchema = new Schema(
       type: Date,
       default: null,
     },
+
+    ratingSum: {
+      type: Number,
+      default: 0,
+    },
+
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
+
+    averageRating: {
+      type: Number,
+      default: null,
+    },
+
+    ratedUserIds: {
+      type: [Schema.Types.ObjectId],
+      ref: 'User',
+      default: [],
+    },
+
+    ratings: {
+      type: [{
+        raterId: {
+          type: Schema.Types.ObjectId,
+          ref: 'User',
+          required: true,
+        },
+        rating: {
+          type: Number,
+          required: true,
+          min: 1,
+          max: 5,
+        },
+      }],
+      default: [],
+    },
   },
   {
     timestamps: true,

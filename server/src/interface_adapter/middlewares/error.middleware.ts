@@ -67,6 +67,9 @@ import {
   InvalidSubjectDomainError,
   BuddyAlreadyBlockedError,
   UnauthorizedUnblockError,
+  BuddyRatingRangeError,
+  DuplicateBuddyRatingError,
+  BuddyRatingUpdateError,
 } from '../../domain/errors/buddy.errors';
 
 // ─── Chat errors ───────────────────────────────────────────────────────────
@@ -207,7 +210,10 @@ err instanceof ScheduleRequestAlreadyRespondedError ||
 err instanceof RoomFullError ||
 err instanceof RoomAlreadyJoinedError ||
 err instanceof RoomNotLiveError ||
-err instanceof JoinRequestAlreadyRespondedError
+      err instanceof JoinRequestAlreadyRespondedError ||
+      err instanceof BuddyRatingRangeError ||
+      err instanceof DuplicateBuddyRatingError ||
+      err instanceof BuddyRatingUpdateError
     ) {
       res.status(HTTP_STATUS.BAD_REQUEST).json({ success: false, message: err.message });
       return;

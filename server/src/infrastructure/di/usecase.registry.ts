@@ -119,6 +119,7 @@ import { GetSentRequestsUsecase } from '../../application/usecase/implementation
 import { BlockBuddyUsecase } from '../../application/usecase/implementation/buddy-match/block-buddy.usecase';
 import { UnblockBuddyUsecase } from '../../application/usecase/implementation/buddy-match/unblock-buddy.usecase';
 import { GetBlockedUsersUsecase } from '../../application/usecase/implementation/buddy-match/get-blocked-users.usecase';
+import { RateBuddyUsecase } from '../../application/usecase/implementation/buddy-match/rate-buddy.usecase';
 
 import type { ISaveBuddyPreferenceUsecase } from '../../application/usecase/interface/buddy-match/save-buddy-preference.usecase.interface';
 import type { IGetBuddyPreferenceUsecase } from '../../application/usecase/interface/buddy-match/get-buddy-preference.usecase.interface';
@@ -131,6 +132,7 @@ import type { IGetSentRequestsUsecase } from '../../application/usecase/interfac
 import type { IBlockBuddyUsecase } from '../../application/usecase/interface/buddy-match/block-buddy.usecase.interface';
 import type { IUnblockBuddyUsecase } from '../../application/usecase/interface/buddy-match/unblock-buddy.usecase.interface';
 import type { IGetBlockedUsersUsecase } from '../../application/usecase/interface/buddy-match/get-blocked-users.usecase.interface';
+import type { IRateBuddyUsecase } from '../../application/usecase/interface/buddy-match/rate-buddy.usecase.interface';
 
 import { IGetLocationUsecase } from '../../application/usecase/interface/utility/get-location.usecase.interface';
 import { GetLocationUsecase } from '../../application/usecase/implementation/utility/get-location.usecase';
@@ -427,6 +429,7 @@ export class UsecaseRegistry {
     container.register<IBlockBuddyUsecase>('IBlockBuddyUsecase', { useClass: BlockBuddyUsecase });
     container.register<IUnblockBuddyUsecase>('IUnblockBuddyUsecase', { useClass: UnblockBuddyUsecase });
     container.register<IGetBlockedUsersUsecase>('IGetBlockedUsersUsecase', { useClass: GetBlockedUsersUsecase });
+    container.register<IRateBuddyUsecase>('IRateBuddyUsecase', { useClass: RateBuddyUsecase });
 
     // utility
     container.register<IGetLocationUsecase>('IGetLocationUsecase', { useClass: GetLocationUsecase });

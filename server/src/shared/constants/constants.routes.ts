@@ -101,6 +101,7 @@ export const ROUTES = {
     REQUESTS_SENT: '/requests/sent',
     SEND_REQUEST: '/request/:buddyId',
     RESPOND_REQUEST: '/request/:connectionId/respond',
+    RATE: '/rate', // New endpoint for rating after a call
   },
 
   // Utility Routes

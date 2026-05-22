@@ -13,6 +13,8 @@ import type { IGetSentRequestsUsecase }       from '../../../application/usecase
 import type { IBlockBuddyUsecase }      from '../../../application/usecase/interface/buddy-match/block-buddy.usecase.interface';
 import type { IUnblockBuddyUsecase }    from '../../../application/usecase/interface/buddy-match/unblock-buddy.usecase.interface';
 import type { IGetBlockedUsersUsecase } from '../../../application/usecase/interface/buddy-match/get-blocked-users.usecase.interface';
+import type { IRateBuddyUsecase } from '../../../application/usecase/interface/buddy-match/rate-buddy.usecase.interface';
+import type { RateBuddyRequestDTO } from '../../../application/dto/buddy-match/request/rate-buddy.request.dto';
 
 import type { CustomRequest } from '../../middlewares/auth.middleware';
 import type { SaveBuddyPreferenceRequestDTO } from '../../../application/dto/buddy-match/request/save-buddy-preference.request.dto';
@@ -57,6 +59,8 @@ export class BuddyController implements IBuddyController {
 
     @inject('IGetBlockedUsersUsecase')
     private readonly getBlockedUsersUsecase: IGetBlockedUsersUsecase,
+    @inject('IRateBuddyUsecase')
+    private readonly rateBuddyUsecase: IRateBuddyUsecase,
   ) {}
 
   async savePreference(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
@@ -160,6 +164,22 @@ export class BuddyController implements IBuddyController {
       const userId = req.user!.id;
       const data   = await this.getBlockedUsersUsecase.execute(userId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Blocked users retrieved successfully', data);
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
+
+  // ─── POST /api/v1/buddy/rate ───────────────────────────────────────────────
+  async rateBuddy(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const raterId = req.user!.id;
+      const { sessionId, rating } = req.body as RateBuddyRequestDTO;
+      const result = await this.rateBuddyUsecase.execute(sessionId, rating, raterId);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Buddy rated successfully', result);
     } catch (error: unknown) {
       next(error);
     }

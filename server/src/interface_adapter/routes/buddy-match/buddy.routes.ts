@@ -9,6 +9,7 @@ import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware
 import { BuddyController } from '../../controllers/buddy-match/buddy.controller';
 import { SaveBuddyPreferenceRequestDTO } from '../../../application/dto/buddy-match/request/save-buddy-preference.request.dto';
 import { RespondToBuddyRequestDTO }      from '../../../application/dto/buddy-match/request/respond-to-buddy-request.request.dto';
+import { RateBuddyRequestDTO }            from '../../../application/dto/buddy-match/request/rate-buddy.request.dto';
 
 import { UserRole } from '../../../domain/enums/user.enums';
 import { ROUTES } from '../../../shared/constants/constants.routes';
@@ -96,6 +97,13 @@ this.router.get(
       ROUTES.BUDDY.RESPOND_REQUEST,
       validationMiddleware(RespondToBuddyRequestDTO),
       asyncHandler(ctrl.respondToRequest.bind(ctrl)),
+    );
+
+    // POST /api/v1/buddy/rate
+    this.router.post(
+      ROUTES.BUDDY.RATE,
+      validationMiddleware(RateBuddyRequestDTO),
+      asyncHandler(ctrl.rateBuddy.bind(ctrl)),
     );
   }
 }

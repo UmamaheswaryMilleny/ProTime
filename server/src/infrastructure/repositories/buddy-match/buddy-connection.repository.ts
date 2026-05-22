@@ -25,6 +25,18 @@ export class BuddyConnectionRepository
     return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
   }
 
+  async findConnectionsByUserIds(userIds: string[]): Promise<BuddyConnectionEntity[]> {
+    if (userIds.length === 0) return [];
+    const objectIds = userIds.map(id => new mongoose.Types.ObjectId(id));
+    const docs = await BuddyConnectionModel.find({
+      $or: [
+        { userId: { $in: objectIds } },
+        { buddyId: { $in: objectIds } },
+      ],
+    }).lean();
+    return docs.map(d => BuddyConnectionMapper.toDomain(d as BuddyConnectionDocument));
+  }
+
   async findConnection(
     userId:  string,
     buddyId: string,
@@ -106,6 +118,7 @@ export class BuddyConnectionRepository
     buddyId: string,
     data:    Partial<Pick<BuddyConnectionEntity,
       | 'rating' | 'totalSessionsCompleted' | 'totalSessionMinutes' | 'lastSessionAt'
+      | 'ratingSum' | 'ratingCount' | 'averageRating' | 'ratedUserIds' | 'ratings'
     >>,
   ): Promise<BuddyConnectionEntity | null> {
     const update = BuddyConnectionMapper.toPersistence(data);

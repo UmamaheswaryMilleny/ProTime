@@ -12,6 +12,11 @@ export interface BuddyConnectionDocument extends Document {
   totalSessionsCompleted: number;
   totalSessionMinutes:    number;
   lastSessionAt:          Date | null;
+  ratingSum:              number;
+  ratingCount:            number;
+  averageRating:          number | null;
+  ratedUserIds:           mongoose.Types.ObjectId[];
+  ratings:                { raterId: mongoose.Types.ObjectId; rating: number }[];
   createdAt:              Date;
   updatedAt:              Date;
 }

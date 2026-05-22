@@ -12,4 +12,5 @@ export interface IBuddyController {
   blockUser(req: CustomRequest, res: Response, next: NextFunction):       Promise<void>;
   unblockUser(req: CustomRequest, res: Response, next: NextFunction):     Promise<void>;
   getBlockedUsers(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  rateBuddy(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
 }
