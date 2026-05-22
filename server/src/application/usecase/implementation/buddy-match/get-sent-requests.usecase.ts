@@ -24,9 +24,10 @@ export class GetSentRequestsUsecase implements IGetSentRequestsUsecase {
     if (connections.length === 0) return [];
 
     const receiverIds = connections.map(c => c.buddyId);
-    const [profiles, preferences] = await Promise.all([
+    const [profiles, preferences, allConnections] = await Promise.all([
       this.profileRepo.findByUserIds(receiverIds),
       this.buddyPreferenceRepo.findByUserIds(receiverIds),
+      this.buddyConnectionRepo.findConnectionsByUserIds(receiverIds),
     ]);
 
     const profileMap = new Map<string, ProfileEntity>(profiles.map(p => [p.userId, p]));
@@ -38,7 +39,8 @@ export class GetSentRequestsUsecase implements IGetSentRequestsUsecase {
       
       let buddyDto = undefined;
       if (profile && pref) {
-        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile);
+        const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(conn.buddyId, allConnections);
+        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile, averageRating, ratingCount);
       }
       
       return BuddyMapper.connectionToResponse(conn, buddyDto);

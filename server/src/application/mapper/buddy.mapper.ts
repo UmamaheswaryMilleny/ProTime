@@ -37,6 +37,8 @@ export class BuddyMapper {
   static preferenceToPublicProfile(
     entity: BuddyPreferenceEntity,
     profile: ProfileEntity,
+    averageRating?: number,
+    ratingCount?: number,
   ): BuddyProfileResponseDTO {
     return {
       userId: entity.userId,
@@ -55,6 +57,8 @@ export class BuddyMapper {
       focusLevel: entity.focusLevel,
       studyPreference: entity.studyPreference,
       skills: profile.skills,
+      averageRating,
+      ratingCount,
     };
   }
 
@@ -76,6 +80,33 @@ export class BuddyMapper {
       lastSessionAt: entity.lastSessionAt,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
+    };
+  }
+
+  static calculateUserAverageRating(
+    userId: string,
+    allConnections: BuddyConnectionEntity[],
+  ): { averageRating: number; ratingCount: number } {
+    let ratingSum = 0;
+    let ratingCount = 0;
+
+    for (const conn of allConnections) {
+      if (conn.userId !== userId && conn.buddyId !== userId) {
+        continue;
+      }
+      if (conn.ratings && conn.ratings.length > 0) {
+        for (const r of conn.ratings) {
+          if (r.raterId !== userId) {
+            ratingSum += r.rating;
+            ratingCount += 1;
+          }
+        }
+      }
+    }
+
+    return {
+      averageRating: ratingCount > 0 ? Number((ratingSum / ratingCount).toFixed(1)) : 0,
+      ratingCount,
     };
   }
 }

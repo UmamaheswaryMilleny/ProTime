@@ -4,7 +4,9 @@ import { UserProfileResponseDTO } from "../dto/user/response/user-profile.respon
 export class ProfileMapper {
   static toProfileResponse(
     profile: ProfileEntity,
-    user: { id: string; email: string; fullName: string }
+    user: { id: string; email: string; fullName: string },
+    averageRating?: number,
+    ratingCount?: number,
   ): UserProfileResponseDTO {
     return {
       id: user.id,
@@ -16,6 +18,8 @@ export class ProfileMapper {
       languages:profile.languages,
       profileImage: profile.profileImage,
       skills: profile.skills ?? [],
+      averageRating,
+      ratingCount,
       createdAt: profile.createdAt.toISOString(),
     };
   }

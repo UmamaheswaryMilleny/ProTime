@@ -74,7 +74,10 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
     log(`[FindBuddyMatches] profiles from DB: ${total} | returned: ${profiles.length}`);
 
     const userIds = profiles.map(p => p.userId);
-    const matchedProfiles = await this.profileRepo.findByUserIds(userIds);
+    const [matchedProfiles, allConnections] = await Promise.all([
+      this.profileRepo.findByUserIds(userIds),
+      this.buddyConnectionRepo.findConnectionsByUserIds(userIds),
+    ]);
     // Create a map for quick lookup since findByUserIds might not return profiles in same order as userIds
     const profileMap = new Map(matchedProfiles.map(p => [p.userId, p]));
 
@@ -84,7 +87,8 @@ export class FindBuddyMatchesUsecase implements IFindBuddyMatchesUsecase {
         log(`[FindBuddyMatches] ⚠️ No profile found for userId: ${preference.userId}`);
         return null;
       }
-      return BuddyMapper.preferenceToPublicProfile(preference, profile);
+      const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(preference.userId, allConnections);
+      return BuddyMapper.preferenceToPublicProfile(preference, profile, averageRating, ratingCount);
     }).filter((p): p is NonNullable<typeof p> => p !== null);
 
     // Sort profileDTOs based on number of matching skills (highest first)

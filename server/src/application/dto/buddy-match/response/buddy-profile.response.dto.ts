@@ -20,4 +20,6 @@ export interface BuddyProfileResponseDTO {
   focusLevel?:      FocusLevel;
   studyPreference?: StudyPreference;
   skills?:          any[];
+  averageRating?:   number;
+  ratingCount?:     number;
 }

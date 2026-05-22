@@ -28,9 +28,10 @@ export class GetBuddyListUsecase implements IGetBuddyListUsecase {
 
     const buddyIds = acceptedConnections.map(c => c.userId === userId ? c.buddyId : c.userId);
     
-    const [profiles, preferences] = await Promise.all([
+    const [profiles, preferences, allConnections] = await Promise.all([
       this.profileRepo.findByUserIds(buddyIds),
       this.buddyPreferenceRepo.findByUserIds(buddyIds),
+      this.buddyConnectionRepo.findConnectionsByUserIds(buddyIds),
     ]);
 
     const profileMap = new Map<string, ProfileEntity>(profiles.map(p => [p.userId, p]));
@@ -43,7 +44,8 @@ export class GetBuddyListUsecase implements IGetBuddyListUsecase {
       
       let buddyDto = undefined;
       if (profile && pref) {
-        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile);
+        const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(buddyId, allConnections);
+        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile, averageRating, ratingCount);
       }
       
       return BuddyMapper.connectionToResponse(conn, buddyDto);

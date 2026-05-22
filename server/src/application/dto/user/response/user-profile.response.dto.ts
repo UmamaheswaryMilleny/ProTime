@@ -9,6 +9,8 @@ export interface UserProfileResponseDTO {
   profileImage?: string;
   languages?:string[];
   skills?: any[];
+  averageRating?: number;
+  ratingCount?: number;
   createdAt: string;
 }
 

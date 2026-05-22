@@ -24,9 +24,10 @@ export class GetPendingRequestsUsecase implements IGetPendingRequestsUsecase {
     if (pending.length === 0) return [];
 
     const requesterIds = pending.map(c => c.userId);
-    const [profiles, preferences] = await Promise.all([
+    const [profiles, preferences, allConnections] = await Promise.all([
       this.profileRepo.findByUserIds(requesterIds),
       this.buddyPreferenceRepo.findByUserIds(requesterIds),
+      this.buddyConnectionRepo.findConnectionsByUserIds(requesterIds),
     ]);
 
     const profileMap = new Map<string, ProfileEntity>(profiles.map(p => [p.userId, p]));
@@ -38,7 +39,8 @@ export class GetPendingRequestsUsecase implements IGetPendingRequestsUsecase {
       
       let buddyDto = undefined;
       if (profile && pref) {
-        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile);
+        const { averageRating, ratingCount } = BuddyMapper.calculateUserAverageRating(conn.userId, allConnections);
+        buddyDto = BuddyMapper.preferenceToPublicProfile(pref, profile, averageRating, ratingCount);
       }
       
       return BuddyMapper.connectionToResponse(conn, buddyDto);
