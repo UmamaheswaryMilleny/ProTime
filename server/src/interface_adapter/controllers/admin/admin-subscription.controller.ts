@@ -46,7 +46,7 @@ export class AdminSubscriptionController {
   }
 
   // ─── Update subscription for a user (admin override) ──────────────────────
-  async updateSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async updateSubscription(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const userId = req.params.userId as string;
     const { plan, status, currentPeriodEnd } = req.body;
 
@@ -74,7 +74,7 @@ export class AdminSubscriptionController {
   }
 
   // ─── Manually assign / create subscription for a user ─────────────────────
-  async addSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
+  async addSubscription(req: Request, res: Response, _next: NextFunction): Promise<void> {
     const { userId, plan, status, currentPeriodEnd } = req.body;
 
     if (!userId || !plan) {
