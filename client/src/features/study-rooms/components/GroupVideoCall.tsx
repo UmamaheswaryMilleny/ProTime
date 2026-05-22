@@ -32,6 +32,7 @@ export const GroupVideoCall: React.FC = () => {
   const [showChat, setShowChat] = useState(false);
 
   const localVideoRef = useRef<HTMLVideoElement>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
   const peersRef = useRef<Map<string, PeerConnection>>(new Map());
 
   const formatTime = (seconds: number) => {
@@ -48,6 +49,7 @@ export const GroupVideoCall: React.FC = () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
         setLocalStream(stream);
+        localStreamRef.current = stream;
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
@@ -57,6 +59,7 @@ export const GroupVideoCall: React.FC = () => {
         try {
           const audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
           setLocalStream(audioStream);
+          localStreamRef.current = audioStream;
           setIsVideoOn(false);
         } catch {
           console.error('[GroupVideo] Failed to get any media');
@@ -67,7 +70,8 @@ export const GroupVideoCall: React.FC = () => {
     initMedia();
 
     return () => {
-      localStream?.getTracks().forEach(t => t.stop());
+      localStreamRef.current?.getTracks().forEach(t => t.stop());
+      localStreamRef.current = null;
     };
   }, [groupCallRoomId]);
 
@@ -165,7 +169,8 @@ export const GroupVideoCall: React.FC = () => {
     setPeers(new Map());
 
     // Stop local stream
-    localStream?.getTracks().forEach(t => t.stop());
+    localStreamRef.current?.getTracks().forEach(t => t.stop());
+    localStreamRef.current = null;
     setLocalStream(null);
 
     dispatch(endGroupCall());

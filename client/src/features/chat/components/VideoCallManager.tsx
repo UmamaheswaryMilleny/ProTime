@@ -69,6 +69,23 @@ export const VideoCallOverlay: React.FC = () => {
   const localStreamRef = useRef<MediaStream | null>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
 
+  const activeCallRef = useRef(activeCall);
+  const conversationsRef = useRef(conversations);
+  const currentUserFullNameRef = useRef(currentUserFullName);
+
+  // Keep refs up-to-date
+  useEffect(() => {
+    activeCallRef.current = activeCall;
+  }, [activeCall]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
+  useEffect(() => {
+    currentUserFullNameRef.current = currentUserFullName;
+  }, [currentUserFullName]);
+
   const [callStatus, setCallStatus] = useState<string>('');
   const [isMicMuted, setIsMicMuted] = useState(false);
   const [isCamOff, setIsCamOff] = useState(false);
@@ -129,14 +146,15 @@ export const VideoCallOverlay: React.FC = () => {
   };
 
   const handleEndCall = () => {
-    if (activeCall) {
-      if (isCaller && callStatus.startsWith('Calling')) {
+    const currentCall = activeCallRef.current;
+    if (currentCall) {
+      if (currentCall.isCaller && callStatus.startsWith('Calling')) {
         socketService.emit('webrtc:missed-call', { 
-          conversationId: activeCall.conversationId, 
-          callerName: currentUserFullName
+          conversationId: currentCall.conversationId, 
+          callerName: currentUserFullNameRef.current
         });
       }
-      socketService.emit('webrtc:call-ended', { conversationId: activeCall.conversationId });
+      socketService.emit('webrtc:call-ended', { conversationId: currentCall.conversationId });
     }
     setCallStatus(''); // safe here — called from event handlers, not effect body
     setCallDuration(0); // reset duration
@@ -198,16 +216,21 @@ export const VideoCallOverlay: React.FC = () => {
   }, [activeCall, incomingCall]);
 
   // WebRTC Setup
+  const activeCallId = activeCall?.conversationId;
+
   useEffect(() => {
-    if (!activeCall) {
+    if (!activeCallId) {
       cleanup();
       return;
     }
 
-    const { conversationId, isCaller, offer, isReconnecting } = activeCall;
+    const currentCall = activeCallRef.current;
+    if (!currentCall) return;
+
+    const { conversationId, isCaller, offer, isReconnecting } = currentCall;
     
     // Finds partner name
-    const conv = conversations.find(c => c.id === conversationId);
+    const conv = conversationsRef.current.find(c => c.id === conversationId);
     const partnerName = conv?.otherUser?.fullName || 'Buddy';
 
     const initCall = async () => {
@@ -248,10 +271,10 @@ export const VideoCallOverlay: React.FC = () => {
           socketService.emit('webrtc:offer', { 
             conversationId, 
             offer: offerParams, 
-            callerName: currentUserFullName 
+            callerName: currentUserFullNameRef.current 
           });
           if (isReconnecting) {
-             dispatch(setActiveCall({ ...activeCall, isReconnecting: false }));
+             dispatch(setActiveCall({ ...currentCall, isReconnecting: false }));
           } else {
             setCallStatus(`Calling ${partnerName}...`);
           }
@@ -290,8 +313,9 @@ export const VideoCallOverlay: React.FC = () => {
     return () => {
       socketService.off('webrtc:answer', handleAnswer);
       socketService.off('webrtc:ice-candidate', handleIceCandidate);
+      cleanup();
     };
-  }, [activeCall, conversations]);
+  }, [activeCallId]);
 
 
 
@@ -339,7 +363,7 @@ export const VideoCallOverlay: React.FC = () => {
     const callerName = conv?.otherUser?.fullName || incomingCall.callerName || 'Buddy';
 
     return (
-      <div className="fixed top-8 right-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl z-50 animate-bounce flex flex-col items-center border border-indigo-100 dark:border-indigo-900/50">
+      <div className="fixed top-8 right-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl z-50 flex flex-col items-center border border-indigo-100 dark:border-indigo-900/50">
         <div className="w-16 h-16 rounded-full flex items-center justify-center bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 font-bold text-2xl mb-4">
           {callerName.charAt(0).toUpperCase()}
         </div>

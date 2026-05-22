@@ -160,7 +160,7 @@ export const FindBuddyPage: React.FC = () => {
     ), { duration: 10000, style: { background: '#18181B', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', maxWidth: '320px' } });
   };
 
-  // Debounced search & Global toggle effect — also runs when preferences first load
+  // Debounced search & Global toggle effect — also runs when preferences first load or are updated
   useEffect(() => {
     if (activeTab !== 'find') return;
     if (!preferencesReady) return; // wait until preferences have been fetched
@@ -176,7 +176,9 @@ export const FindBuddyPage: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchQuery, isGlobal, activeTab, preferencesReady, dispatch]);
+  // NOTE: `preferences` is intentionally included so that saving new preferences
+  // automatically triggers a fresh match fetch without requiring a manual page refresh.
+  }, [searchQuery, isGlobal, activeTab, preferencesReady, preferences, dispatch]);
 
   useEffect(() => {
     setActiveTab(getTabFromPath(location.pathname));
@@ -200,8 +202,9 @@ export const FindBuddyPage: React.FC = () => {
       const prefsToSave = data || editPrefs;
       await dispatch(savePreferences(prefsToSave)).unwrap();
       toast.success('Preferences updated!');
-      setCurrentPage(1);
-      dispatch(fetchMatches({ page: 1, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+      // The debounced useEffect watches `preferences` in its dependency array and will
+      // automatically re-fetch matches once Redux updates with the new preferences.
+      // No manual fetchMatches dispatch needed here.
     } catch (err) { }
   };
 
@@ -341,14 +344,16 @@ export const FindBuddyPage: React.FC = () => {
           </div>
         ) : (
           <>
-            {/* Sidebar */}
-            <BuddySidebar
-              preferences={editPrefs}
-              isPremium={isPremium}
-              onApply={handleApplyPreferences}
-              onChange={setEditPrefs}
-              isSaving={loading.preferences}
-            />
+            {/* Sidebar — only visible on the Find tab */}
+            {activeTab === 'find' && (
+              <BuddySidebar
+                preferences={editPrefs}
+                isPremium={isPremium}
+                onApply={handleApplyPreferences}
+                onChange={setEditPrefs}
+                isSaving={loading.preferences}
+              />
+            )}
 
             {/* Content Area */}
             <div className="flex-1">
