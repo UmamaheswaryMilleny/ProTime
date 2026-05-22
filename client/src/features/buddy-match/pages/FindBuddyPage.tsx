@@ -43,13 +43,17 @@ export const FindBuddyPage: React.FC = () => {
   const totalMatches = useAppSelector(state => state.buddy.totalMatches);
   const isPremium = useAppSelector((state) => state.auth.user?.isPremium || false);
 
-  const getTabFromPath = (path: string) => {
+  const getTabFromPath = (path: string, search: string) => {
+    const params = new URLSearchParams(search);
+    if (params.get('tab') === 'blocked') return 'blocked';
     if (path === ROUTES.DASHBOARD_BUDDY_REQUESTS) return 'requests';
     if (path === ROUTES.DASHBOARD_MY_BUDDIES) return 'mybuddy';
     return 'find';
   };
 
-  const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked'>(getTabFromPath(location.pathname));
+  const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked'>(() =>
+    getTabFromPath(location.pathname, location.search)
+  );
   const [searchQuery, setSearchQuery] = useState('');
   const [isInfoModalOpen, setIsInfoModalOpen] = useState(false);
   const [selectedBuddy, setSelectedBuddy] = useState<BuddyProfile | null>(null);
@@ -181,8 +185,8 @@ export const FindBuddyPage: React.FC = () => {
   }, [searchQuery, isGlobal, activeTab, preferencesReady, preferences, dispatch]);
 
   useEffect(() => {
-    setActiveTab(getTabFromPath(location.pathname));
-  }, [location.pathname]);
+    setActiveTab(getTabFromPath(location.pathname, location.search));
+  }, [location.pathname, location.search]);
 
   useEffect(() => {
     if (preferences) {
@@ -276,12 +280,16 @@ export const FindBuddyPage: React.FC = () => {
           <div className="bg-[#18181B] rounded-full p-1 border border-white/5 flex items-center">
             <BuddyNavbar
               activeTab={activeTab}
-              onTabChange={(tab) => setActiveTab(tab)}
+              onTabChange={(tab) => {
+                if (tab === 'find') navigate(ROUTES.DASHBOARD_FIND_BUDDY);
+                else if (tab === 'requests') navigate(ROUTES.DASHBOARD_BUDDY_REQUESTS);
+                else if (tab === 'mybuddy') navigate(ROUTES.DASHBOARD_MY_BUDDIES);
+              }}
               requestCount={pendingRequests.length}
             />
             {/* Blocked tab */}
             <button
-              onClick={() => setActiveTab('blocked')}
+              onClick={() => navigate(`${ROUTES.DASHBOARD_FIND_BUDDY}?tab=blocked`)}
               className={`px-4 py-2 text-xs font-semibold rounded-full transition-all flex items-center gap-1.5 ${
                 activeTab === 'blocked'
                   ? 'bg-red-500/20 text-red-400'

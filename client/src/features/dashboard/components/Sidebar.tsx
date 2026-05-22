@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
     LayoutDashboard,
     CheckSquare,
@@ -24,6 +24,7 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
+    const location = useLocation();
     const [hoveredItem, setHoveredItem] = React.useState<{ label: string; top: number } | null>(null);
     const { user } = useAppSelector((state) => state.auth);
     const { pendingRequests } = useAppSelector((state) => state.buddy);
@@ -107,12 +108,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                             }
                         }}
                         onMouseLeave={() => setHoveredItem(null)}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${isActive
+                        className={({ isActive }) => {
+                            const isBuddyRoute = item.path === ROUTES.DASHBOARD_FIND_BUDDY && 
+                                (location.pathname === ROUTES.DASHBOARD_FIND_BUDDY || 
+                                 location.pathname === ROUTES.DASHBOARD_MY_BUDDIES || 
+                                 location.pathname === ROUTES.DASHBOARD_BUDDY_REQUESTS);
+                            const active = isActive || isBuddyRoute;
+                            return `flex items-center gap-3 px-4 py-3 rounded-xl transition-all relative group ${active
                                 ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
                                 : 'text-zinc-400 hover:text-white hover:bg-zinc-800'
-                            } ${isCollapsed ? 'justify-center' : ''}`
-                        }
+                            } ${isCollapsed ? 'justify-center' : ''}`;
+                        }}
                     >
                         <item.icon size={20} className="flex-shrink-0" />
                         {!isCollapsed && <span className="font-medium whitespace-nowrap">{item.label}</span>}
