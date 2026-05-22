@@ -76,3 +76,21 @@ export class UnauthorizedUnblockError extends DomainError {
     super('You can only unblock users that you have blocked');
   }
 }
+
+export class BuddyRatingRangeError extends DomainError {
+  constructor() {
+    super('Rating must be between 1 and 5');
+  }
+}
+
+export class DuplicateBuddyRatingError extends DomainError {
+  constructor() {
+    super('You have already rated this session');
+  }
+}
+
+export class BuddyRatingUpdateError extends DomainError {
+  constructor() {
+    super('Failed to update rating');
+  }
+}

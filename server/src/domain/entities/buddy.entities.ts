@@ -49,6 +49,11 @@ export interface BuddyConnectionEntity {
   totalSessionsCompleted: number;
   totalSessionMinutes: number;
   lastSessionAt?: Date;
+  ratingSum: number;
+  ratingCount: number;
+  averageRating?: number;
+  ratedUserIds: string[];
+  ratings: { raterId: string; rating: number }[];
   createdAt: Date;
   updatedAt: Date;
 }

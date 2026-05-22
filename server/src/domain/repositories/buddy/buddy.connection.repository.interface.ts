@@ -7,6 +7,9 @@ export interface IBuddyConnectionRepository
   // Full buddy list sorted by Sorted by lastSessionAt so most recently studied buddies appear first.- "My Buddies" page.
   findByUserId(userId: string): Promise<BuddyConnectionEntity[]>;
 
+  // Find all connections involving any of the specified user IDs
+  findConnectionsByUserIds(userIds: string[]): Promise<BuddyConnectionEntity[]>;
+
 
   // Check if a connection exists in either direction:
   //before creating a new request — if a connection already exists 
@@ -43,6 +46,11 @@ export interface IBuddyConnectionRepository
       | 'totalSessionsCompleted'
       | 'totalSessionMinutes'
       | 'lastSessionAt'
+      | 'ratingSum'
+      | 'ratingCount'
+      | 'averageRating'
+      | 'ratedUserIds'
+      | 'ratings'
     >>,
   ): Promise<BuddyConnectionEntity | null>;
 
