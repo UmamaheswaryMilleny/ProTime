@@ -13,6 +13,7 @@ import { usePomodoro } from '../../todo/hooks/usePomodoro';
 import { PomodoroMinimized } from '../../todo/components/PomodoroMinimized';
 import { PomodoroModal } from '../../todo/components/PomodoroModal';
 import { buddyService } from '../../buddy-match/services/buddy.service';
+import { RatingModal } from './RatingModal';
 
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
@@ -52,8 +53,10 @@ export const VideoCallOverlay: React.FC = () => {
   const pauseTodoTimer = (conversationId?: string) => pause(conversationId);
   const resetTodoTimer = () => reset();
   const handleStopTodoPomodoro = () => {
-    stop(activeCall?.conversationId);
-    setIsPomodoroModalOpen(false);
+    if (window.confirm('Are you sure you want to stop the Pomodoro timer?')) {
+      stop(activeCall?.conversationId);
+      setIsPomodoroModalOpen(false);
+    }
   };
 
   const {
@@ -72,6 +75,7 @@ export const VideoCallOverlay: React.FC = () => {
   const activeCallRef = useRef(activeCall);
   const conversationsRef = useRef(conversations);
   const currentUserFullNameRef = useRef(currentUserFullName);
+  const wasConnectedRef = useRef(false);
 
   // Keep refs up-to-date
   useEffect(() => {
@@ -99,6 +103,29 @@ export const VideoCallOverlay: React.FC = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [ringTimeout, setRingTimeout] = useState(60);
+
+  const [showRatingModal, setShowRatingModal] = useState(false);
+  const [lastCallInfo, setLastCallInfo] = useState<{
+    buddyConnectionId: string;
+    partnerName: string;
+  } | null>(null);
+
+  const activeCallRefForEnd = useRef(activeCall);
+  useEffect(() => {
+    if (!activeCall && activeCallRefForEnd.current) {
+      const prevCall = activeCallRefForEnd.current;
+      const conv = conversationsRef.current.find(c => c.id === prevCall.conversationId);
+      if (conv && conv.buddyConnectionId && wasConnectedRef.current) {
+        setLastCallInfo({
+          buddyConnectionId: conv.buddyConnectionId,
+          partnerName: conv.otherUser?.fullName || 'Buddy'
+        });
+        setShowRatingModal(true);
+      }
+      wasConnectedRef.current = false;
+    }
+    activeCallRefForEnd.current = activeCall;
+  }, [activeCall]);
 
   const isCaller = activeCall?.isCaller || false;
 
@@ -227,6 +254,8 @@ export const VideoCallOverlay: React.FC = () => {
     const currentCall = activeCallRef.current;
     if (!currentCall) return;
 
+    wasConnectedRef.current = false;
+
     const { conversationId, isCaller, offer, isReconnecting } = currentCall;
     
     // Finds partner name
@@ -263,6 +292,7 @@ export const VideoCallOverlay: React.FC = () => {
           if (remoteVideoRef.current) {
             remoteVideoRef.current.srcObject = e.streams[0];
           }
+          wasConnectedRef.current = true;
         };
 
         if (isCaller || isReconnecting) {
@@ -284,6 +314,7 @@ export const VideoCallOverlay: React.FC = () => {
           await pc.setLocalDescription(answer);
           socketService.emit('webrtc:answer', { conversationId, answer });
           setCallStatus(''); // Connected
+          wasConnectedRef.current = true;
         }
       } catch (err) {
         console.error('Failed to init WebRTC:', err);
@@ -298,6 +329,7 @@ export const VideoCallOverlay: React.FC = () => {
       if (data.conversationId === conversationId && peerConnectionRef.current) {
         await peerConnectionRef.current.setRemoteDescription(new RTCSessionDescription(data.answer));
         setCallStatus('');
+        wasConnectedRef.current = true;
       }
     };
 
@@ -377,7 +409,21 @@ export const VideoCallOverlay: React.FC = () => {
     );
   }
 
-  if (!activeCall) return null;
+  if (!activeCall) {
+    if (showRatingModal && lastCallInfo) {
+      return (
+        <RatingModal
+          buddyConnectionId={lastCallInfo.buddyConnectionId}
+          partnerName={lastCallInfo.partnerName}
+          onClose={() => {
+            setShowRatingModal(false);
+            setLastCallInfo(null);
+          }}
+        />
+      );
+    }
+    return null;
+  }
 
   // Get the other user's name for display in the active call header
   const activeConv = conversations.find(c => c.id === activeCall.conversationId);

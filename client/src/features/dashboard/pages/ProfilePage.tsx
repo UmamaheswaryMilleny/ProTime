@@ -814,11 +814,16 @@ export const ProfilePage: React.FC = () => {
                 </div>
                 <p className="text-zinc-500 text-sm font-medium">@{user?.username || (user?.email ? user.email.split('@')[0] : '')}</p>
                 
-                {user?.country && (
-                  <div className="flex items-center justify-center sm:justify-start gap-1.5 mt-2 text-zinc-400 text-sm">
-                    <MapPin size={14} className="text-[blueviolet]" /> {user.country}
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 mt-2 text-zinc-400 text-sm">
+                  {user?.country && (
+                    <span className="flex items-center gap-1.5">
+                      <MapPin size={14} className="text-[blueviolet]" /> {user.country}
+                    </span>
+                  )}
+                  <span className="text-amber-400 font-semibold flex items-center gap-0.5">
+                    ⭐ {user?.averageRating !== undefined && user?.averageRating !== null ? user.averageRating.toFixed(1) : '0.0'} ({user?.ratingCount || 0})
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-4 mb-8 text-left">

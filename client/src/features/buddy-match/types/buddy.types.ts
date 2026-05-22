@@ -173,6 +173,8 @@ export interface BuddyProfile {
   studyPreference?: StudyPreference;
   profileImage?: string;
   avatar?: string;
+  averageRating?: number;
+  ratingCount?: number;
 }
 
 export interface BuddyPreference {
@@ -215,4 +217,6 @@ export interface BuddyConnection {
   createdAt: string;
   updatedAt: string;
   buddy?: BuddyProfile;
+  averageRating?: number;
+  ratingCount?: number;
 }

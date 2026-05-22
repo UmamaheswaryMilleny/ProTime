@@ -45,6 +45,11 @@ export const BuddyCard: React.FC<BuddyCardProps> = ({
               @{buddy.username || buddy.fullName.toLowerCase().replace(/\s+/g, '_')}
             </h3>
             <p className="text-zinc-500 text-[11px] font-medium truncate mt-0.5">{buddy.country}</p>
+            <div className="flex items-center gap-1 mt-1">
+              <span className="text-amber-400 text-[11px] font-semibold flex items-center gap-0.5">
+                ⭐ {buddy.averageRating !== undefined && buddy.averageRating !== null ? buddy.averageRating.toFixed(1) : '0.0'} ({buddy.ratingCount || 0})
+              </span>
+            </div>
           </div>
         </div>
         

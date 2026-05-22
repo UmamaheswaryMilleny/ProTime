@@ -88,4 +88,12 @@ export const buddyService = {
     );
     return response.data.data;
   },
+
+  rateBuddy: async (sessionId: string, rating: number) => {
+    const response = await ProTimeBackend.post<{ data: { averageRating: number; ratingCount: number } }>(
+      API_ROUTES.BUDDY_RATE,
+      { sessionId, rating }
+    );
+    return response.data.data;
+  },
 };

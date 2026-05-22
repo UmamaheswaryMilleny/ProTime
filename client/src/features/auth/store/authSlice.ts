@@ -15,6 +15,8 @@ export interface AuthUser {
   languages?: string[];
   isPremium: boolean;
   skills?: any[];
+  averageRating?: number;
+  ratingCount?: number;
 }
 
 interface AuthState {
@@ -50,6 +52,8 @@ const sanitizeUser = (data: unknown): AuthUser | null => {
     languages: Array.isArray(obj.languages) ? obj.languages.map(String) : undefined,
     isPremium: Boolean(obj.isPremium),
     skills: Array.isArray(obj.skills) ? obj.skills : undefined,
+    averageRating: obj.averageRating !== undefined && obj.averageRating !== null ? Number(obj.averageRating) : undefined,
+    ratingCount: obj.ratingCount !== undefined && obj.ratingCount !== null ? Number(obj.ratingCount) : undefined,
   };
 };
 

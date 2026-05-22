@@ -13,6 +13,8 @@ export interface UserProfile {
   languages?: string[];
   skills?: any[];
   createdAt: string;
+  averageRating?: number;
+  ratingCount?: number;
 }
 
 // Matches backend UpdateProfileRequestDTO exactly

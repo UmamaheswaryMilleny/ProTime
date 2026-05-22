@@ -107,6 +107,7 @@ export const API_ROUTES = {
   BUDDY_SENT_REQUESTS:    "/buddy/requests/sent",
   BUDDY_SEND_REQUEST:     (buddyId: string) => `/buddy/request/${buddyId}`,
   BUDDY_RESPOND_REQUEST:  (connectionId: string) => `/buddy/request/${connectionId}/respond`,
+  BUDDY_RATE:             "/buddy/rate",
 
   // ─── Community Chat ───────────────────────────────────────────────────────
   COMMUNITY_CHAT: "/community-chat",
