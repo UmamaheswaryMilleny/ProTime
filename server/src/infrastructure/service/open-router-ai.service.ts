@@ -44,10 +44,16 @@ export class OpenRouterAIService implements IAIService {
         }
       );
 
-      return response.data.choices[0].message.content || 'I apologize, but I am unable to generate a response at the moment.';
+      const content = response.data?.choices?.[0]?.message?.content;
+      if (!content) {
+        // Empty response from the model — treat same as a service failure
+        throw new Error('AI_SERVICE_UNAVAILABLE');
+      }
+      return content;
     } catch (error: any) {
+      // Re-throw our own sentinel so callers don't have to inspect raw axios errors
+      if (error.message === 'AI_SERVICE_UNAVAILABLE') throw error;
       console.error('OpenRouter AI Error:', error.response?.data || error.message);
-      // Don't leak API details, but provide a clear message for the controller
       throw new Error('AI_SERVICE_UNAVAILABLE');
     }
   }
