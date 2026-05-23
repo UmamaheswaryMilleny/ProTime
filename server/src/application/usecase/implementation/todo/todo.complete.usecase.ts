@@ -22,6 +22,9 @@ import {
 } from "../../../../domain/errors/todo.error";
 import { GamificationNotFoundError } from "../../../../domain/errors/gamification.error";
 import { TodoExpiredError } from "../../../../domain/errors/todo.error";
+import type { INotificationService } from "../../../service_interface/notification-service.interface";
+import { NotificationType } from "../../../service_interface/notification-service.interface";
+
 @injectable()
 export class CompleteTodoUsecase implements ICompleteTodoUsecase {
   constructor(
@@ -36,6 +39,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
 
     @inject("IAwardXpUsecase")
     private readonly awardXpUsecase: IAwardXpUsecase,
+
+    @inject("INotificationService")
+    private readonly notificationService: INotificationService,
   ) { }
 
   async execute(
@@ -107,8 +113,17 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
       isPremium,
       source,
       todoId,
+      suppressNotification: updated.pomodoroCompleted,
     });
 
+    if (updated.pomodoroCompleted) {
+      this.notificationService.notifyUser(userId, {
+        type: NotificationType.TASK_COMPLETED,
+        title: 'Pomodoro Completed!',
+        message: `Great job! You've successfully finished your pomodoro for "${updated.title}" and earned ${xpResult.xpAwarded} XP.`,
+        metadata: { isPomodoro: true },
+      });
+    }
 
     return {
         todo: TodoMapper.toResponse(updated),
