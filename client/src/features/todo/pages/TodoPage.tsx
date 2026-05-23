@@ -50,11 +50,11 @@ export const TodoPage: React.FC = () => {
         return todos.find(t => t.id === activeTaskId) || null;
     }, [todos, activeTaskId]);
 
-    const handlePomodoroComplete = async () => {
+    const handlePomodoroComplete = React.useCallback(async (pausedSeconds: number) => {
         let earnedXp = 0;
         if (activeTask && activeTask.status !== 'COMPLETED') {
             const timeSpent = activeTask.estimatedTime * 60;
-            const result = await toggleTodo(activeTask.id, timeSpent, totalPausedSeconds);
+            const result = await toggleTodo(activeTask.id, timeSpent, pausedSeconds);
             if (result && result.earnedXp !== undefined) {
                 earnedXp = result.earnedXp;
             }
@@ -64,7 +64,7 @@ export const TodoPage: React.FC = () => {
         setIsPomodoroModalOpen(false);
         setIsPomodoroMinimized(false);
         setIsPomodoroCompletedOpen(true);
-    };
+    }, [activeTask, toggleTodo, refreshGamification]);
 
     const {
         timeRemaining,
@@ -111,11 +111,43 @@ export const TodoPage: React.FC = () => {
     };
 
     const handleStopTimer = () => {
-        pause();
-        setActiveTaskId(null);
-        setIsPomodoroMinimized(false);
-        setIsPomodoroModalOpen(false);
+        toast((t) => (
+            <div className="flex flex-col gap-3 p-1">
+                <p className="text-sm font-semibold text-white text-center">Are you sure you want to stop the Pomodoro timer?</p>
+                <div className="flex gap-2 justify-end">
+                    <button
+                        onClick={() => toast.dismiss(t.id)}
+                        className="px-3 py-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                    >
+                        Cancel
+                    </button>
+                    <button
+                        onClick={() => {
+                            toast.dismiss(t.id);
+                            pause();
+                            setActiveTaskId(null);
+                            setIsPomodoroMinimized(false);
+                            setIsPomodoroModalOpen(false);
+                        }}
+                        className="px-4 py-1.5 text-xs font-semibold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-sm cursor-pointer"
+                    >
+                        Stop
+                    </button>
+                </div>
+            </div>
+        ), {
+            duration: 5000,
+            position: 'top-center',
+            style: {
+                background: '#2A2B36',
+                color: '#fff',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+                borderRadius: '16px',
+            }
+        });
     };
+
+
 
     const filteredTodos = todos.filter(t => {
         if (filter === 'Active') return t.status === 'PENDING';

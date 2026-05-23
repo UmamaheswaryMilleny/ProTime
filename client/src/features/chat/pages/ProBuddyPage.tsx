@@ -3,6 +3,8 @@ import { Sparkles, Loader2, Send, Trash2, Zap, AlertCircle } from "lucide-react"
 import { useProBuddyChat } from "../hooks/useProBuddyChat";
 import { ProBuddyMessage, ProBuddyLoading } from "../components/ProBuddyMessage";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ROUTES } from "../../../shared/constants/constants.routes";
 
 export const ProBuddyPage: React.FC = () => {
   const { 
@@ -78,7 +80,46 @@ export const ProBuddyPage: React.FC = () => {
           </div>
 
           <button 
-            onClick={clearChat}
+            onClick={() => {
+              toast((t) => (
+                <div className="flex flex-col gap-3 p-1">
+                  <p className="text-sm font-semibold text-white">
+                    Are you sure you want to clear your chat history?
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    This action cannot be undone and will permanently delete all messages with ProBuddy.
+                  </p>
+                  <div className="flex gap-2 justify-end mt-1">
+                    <button 
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-colors border border-white/5"
+                      onClick={() => toast.dismiss(t.id)}
+                    >
+                      No, Cancel
+                    </button>
+                    <button 
+                      className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-red-500/10"
+                      onClick={() => {
+                        toast.dismiss(t.id);
+                        clearChat();
+                      }}
+                    >
+                      Yes, Clear
+                    </button>
+                  </div>
+                </div>
+              ), {
+                duration: Infinity,
+                position: 'top-center',
+                style: {
+                  background: '#18181B', // zinc-900
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: '#fff',
+                  borderRadius: '20px',
+                  padding: '16px',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+                }
+              });
+            }}
             className="p-2 sm:p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm group"
             title="Clear Chat"
           >
@@ -87,7 +128,7 @@ export const ProBuddyPage: React.FC = () => {
           
           {!isPremium && (
             <button 
-              onClick={() => navigate('/subscription')}
+              onClick={() => navigate(ROUTES.DASHBOARD_SUBSCRIPTION)}
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 hover:scale-105 transition-all group active:scale-95"
             >
               <Zap className="w-3 h-3 fill-current" />
@@ -158,7 +199,7 @@ export const ProBuddyPage: React.FC = () => {
               </div>
               {isLimitReached && !isPremium && (
                 <button 
-                  onClick={() => navigate('/subscription')}
+                  onClick={() => navigate(ROUTES.DASHBOARD_SUBSCRIPTION)}
                   className="text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-colors uppercase tracking-widest flex items-center gap-1 group"
                 >
                   Upgrade to Premium <Zap className="w-2.5 h-2.5 fill-current group-hover:scale-110 transition-transform" />
