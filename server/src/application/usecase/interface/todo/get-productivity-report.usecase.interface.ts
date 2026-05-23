@@ -15,6 +15,7 @@ export interface ProductivitySummary {
   tasksWithPomodoro:    number;
   tasksWithoutPomodoro: number;
   totalFocusMinutes:    number;
+  roomsJoined:          number;
 }
 
 export interface XpTrendPoint {

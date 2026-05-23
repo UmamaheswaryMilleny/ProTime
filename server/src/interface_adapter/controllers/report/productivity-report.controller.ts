@@ -68,6 +68,7 @@ export class ProductivityReportController {
           `Level,${data.summary.currentLevel} - ${data.summary.currentTitle}`,
           `Tasks Completed,${data.summary.tasksCompleted}`,
           `Focus Time,${Math.floor(data.summary.totalFocusMinutes / 60)}h ${data.summary.totalFocusMinutes % 60}m`,
+          `Rooms Joined,${data.summary.roomsJoined}`,
         ];
 
         const csv = [header, ...rows, ...summarySection].join('\n');

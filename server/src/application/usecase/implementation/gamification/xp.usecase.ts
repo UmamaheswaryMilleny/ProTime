@@ -38,6 +38,7 @@ export class AwardXpUsecase implements IAwardXpUsecase {
     isPremium: boolean;
     source: XpSource;
     todoId?: string;
+    suppressNotification?: boolean;
   }): Promise<AwardXpResponseDTO> {
     const { userId, xp, isPremium, source } = params;
 
@@ -121,7 +122,7 @@ export class AwardXpUsecase implements IAwardXpUsecase {
 
     // Notify user of progress
     const xpAwardedTotal = xp + streakBonus + badgeBonusXp;
-    if (xpAwardedTotal > 0) {
+    if (xpAwardedTotal > 0 && !params.suppressNotification) {
       this.notificationService.notifyUser(userId, {
         type: NotificationType.XP_GAINED,
         title: 'XP Gained!',

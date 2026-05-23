@@ -4,6 +4,7 @@ import type { ITodoRepository }           from '../../../../domain/repositories/
 import type { IGamificationRepository }   from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IUserBadgeRepository }       from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IStudyRoomRepository }      from '../../../../domain/repositories/study-room/study-room.repository.interface';
 
 import { TodoStatus, TodoPriority }  from '../../../../domain/enums/todo.enums';
 import type {
@@ -47,6 +48,9 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
 
     @inject('IBadgeDefinitionRepository')
     private readonly badgeDefinitionRepository: IBadgeDefinitionRepository,
+
+    @inject('IStudyRoomRepository')
+    private readonly studyRoomRepository: IStudyRoomRepository,
   ) {}
 
   async execute(userId: string, range: ReportRange, month?: string): Promise<ProductivityReportDTO> {
@@ -86,11 +90,12 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     }
 
     // ── 1. Fetch raw data in parallel ─────────────────────────────────────────
-    const [allTodos, gamification, userBadges, allBadgeDefs] = await Promise.all([
+    const [allTodos, gamification, userBadges, allBadgeDefs, roomsJoined] = await Promise.all([
       this.todoRepository.findByUserId(userId, 'all'),
       this.gamificationRepository.findByUserId(userId),
       this.userBadgeRepository.findAllByUserId(userId),
       this.badgeDefinitionRepository.findAllActive(),
+      this.studyRoomRepository.countJoinedOrHostedInMonth(userId, since, until),
     ]);
 
     // ── 2. Filter todos to date range ──────────────────────────────────────────
@@ -214,6 +219,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         tasksWithPomodoro,
         tasksWithoutPomodoro,
         totalFocusMinutes,
+        roomsJoined,
       },
       xpTrend,
       taskByPriority,
