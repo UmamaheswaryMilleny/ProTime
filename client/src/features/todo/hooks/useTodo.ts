@@ -93,11 +93,6 @@ export const useTodo = () => {
                 // 3. Earned XP is total from this action
                 earnedXp = xpResult.xpAwarded;
 
-                toast.success(`Pomodoro & Task Complete! Earned ${earnedXp}XP`, {
-                    icon: '🚀',
-                    duration: 5000
-                });
-
                 // Show badge notifications
                 if (xpResult.newBadges?.length > 0) {
                     xpResult.newBadges.forEach((badge: any) => {
@@ -112,24 +107,6 @@ export const useTodo = () => {
                     rawLevel: xpResult.rawLevel,
                     currentTitle: xpResult.currentTitle
                 }));
-
-                // Notification: task completed
-                dispatch(addNotification({
-                    type: 'task_completed',
-                    title: '🏆 Task Completed',
-                    message: `"${todo.title}" completed with Pomodoro! +${earnedXp} XP`,
-                    metadata: { taskId: id, xpAwarded: earnedXp },
-                }));
-
-                // Notification: XP gained
-                if (earnedXp > 0) {
-                    dispatch(addNotification({
-                        type: 'xp_gained',
-                        title: '⭐ XP Earned',
-                        message: `+${earnedXp} XP from Pomodoro session. Total: ${xpResult.totalXp} XP`,
-                        metadata: { xpAwarded: earnedXp, totalXp: xpResult.totalXp },
-                    }));
-                }
             } else {
                 const completeResponse = await todoService.completeTodo(id);
                 updatedTodo = completeResponse.todo;

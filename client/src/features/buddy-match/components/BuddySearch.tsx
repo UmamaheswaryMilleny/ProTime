@@ -15,7 +15,7 @@ export const BuddySearch: React.FC<BuddySearchProps> = ({ value, onChange, place
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder || "Search for buddies by username or skill..."}
+        placeholder={placeholder || "Search for buddies by username..."}
         className="w-full bg-[#18181B] border border-white/5 rounded-2xl pl-14 pr-4 py-3.5 text-sm text-white placeholder-zinc-500 focus:border-[blueviolet]/30 focus:ring-2 focus:ring-[blueviolet]/10 outline-none transition-all shadow-lg shadow-black/35"
       />
     </div>

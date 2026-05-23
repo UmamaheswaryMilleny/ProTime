@@ -4,6 +4,7 @@ import { Play, Bot, Loader2, Zap } from 'lucide-react';
 import { useProBuddyChat } from '../../chat/hooks/useProBuddyChat';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 interface RoomSidebarProps {
   isHost: boolean;
@@ -175,7 +176,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost: _isHost, isAiM
                {isAiLimitReached && !isUserPremium && (
                  <button 
                   onClick={() => {
-                    navigate('/subscription');
+                    navigate(ROUTES.DASHBOARD_SUBSCRIPTION);
                     toast.error("Upgrade to Premium for more!");
                   }}
                   className="text-[9px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-0.5 uppercase tracking-widest"
