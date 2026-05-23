@@ -112,10 +112,23 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   } = usePomodoro();
 
   const handleStartTodoPomodoro = (todo: TodoItem) => {
+    // 1. Check if running in Redux for a DIFFERENT task
     if (activeTask?.id && isTodoRunning && activeTask.id !== todo.id) {
-      toast.error('A Pomodoro is already running. Finish it first.');
+      toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
       return;
     }
+
+    // 2. Check if running in TodoPage local storage
+    const localActiveTaskId = localStorage.getItem('pomodoro_activeTaskId');
+    if (localActiveTaskId) {
+      const isLocalRunning = localStorage.getItem(`pomodoro_${localActiveTaskId}_isRunning`) === 'true';
+      if (isLocalRunning) {
+        const localTitle = localStorage.getItem('pomodoro_activeTaskTitle') || 'another task';
+        toast.error(`A Pomodoro is already running for "${localTitle}". Stop it to start a new one.`);
+        return;
+      }
+    }
+
     startTodoTimer(todo, 25 * 60, conversationId);
     setIsTodoPomodoroModalOpen(true);
   };

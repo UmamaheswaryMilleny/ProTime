@@ -9,24 +9,25 @@ import toast from 'react-hot-toast';
 import { updateUser } from '../../auth/store/authSlice';
 import { fetchPreferences, savePreferences } from '../../buddy-match/store/buddySlice';
 import { BuddyPreferenceForm } from '../../buddy-match/components/BuddyPreferenceForm';
+import { useGamification } from '../../gamification/hooks/useGamification';
 
-interface Badge { name: string; color: string; icon: string; criteria: string; reward: string; }
+interface Badge { key: string; name: string; color: string; icon: string; criteria: string; reward: string; }
 
 const badges: Badge[] = [
-  { name: 'High Achiever', color: 'bg-green-500', icon: '🍃', criteria: 'Complete 10 High-Priority tasks', reward: '+50 XP' },
-  { name: 'Medium Master', color: 'bg-yellow-500', icon: '💪', criteria: 'Complete 15 Medium-Priority tasks', reward: '+50 XP' },
-  { name: 'Steady Starter', color: 'bg-teal-500', icon: '🌱', criteria: 'Complete 20 Low-Priority tasks', reward: '+50 XP' },
-  { name: 'Focus Builder', color: 'bg-rose-400', icon: '⭐', criteria: 'Complete a 7-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { name: 'Consistency Champ', color: 'bg-red-500', icon: '❤️', criteria: 'Complete a 10-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { name: 'Discipline Hero', color: 'bg-blue-500', icon: '🛡️', criteria: 'Complete a 16-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { name: 'Persistence Pro', color: 'bg-orange-800', icon: '🏋️', criteria: 'Complete a 28-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { name: 'Real Warrior', color: 'bg-orange-500', icon: '⚙️', criteria: 'Complete a 52-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { name: 'Buddy Beginner', color: 'bg-yellow-600', icon: '🤝', criteria: 'Match with 2 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { name: 'Buddy Builder', color: 'bg-orange-400', icon: '☀️', criteria: 'Match with 5 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { name: 'Buddy Master', color: 'bg-purple-600', icon: '🌊', criteria: 'Match with 10 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { name: 'Room Explorer', color: 'bg-blue-600', icon: '📍', criteria: 'Attend 2 group study rooms for min 1 hour each', reward: '+50 XP' },
-  { name: 'Room Regular', color: 'bg-sky-400', icon: '🏠', criteria: 'Attend 5 group study rooms for min 1 hour each', reward: '+50 XP' },
-  { name: 'Room Leader', color: 'bg-pink-500', icon: '🎯', criteria: 'Attend 10 group study rooms for min 1 hour each', reward: '+50 XP' },
+  { key: 'HIGH_ACHIEVER', name: 'High Achiever', color: 'bg-green-500', icon: '🍃', criteria: 'Complete 1 High-Priority task', reward: '+50 XP' },
+  { key: 'MEDIUM_MASTER', name: 'Medium Master', color: 'bg-yellow-500', icon: '💪', criteria: 'Complete 1 Medium-Priority task', reward: '+50 XP' },
+  { key: 'STEADY_STARTER', name: 'Steady Starter', color: 'bg-teal-500', icon: '🌱', criteria: 'Complete 1 Low-Priority task', reward: '+50 XP' },
+  { key: 'FOCUS_BUILDER', name: 'Focus Builder', color: 'bg-rose-400', icon: '⭐', criteria: 'Complete a 7-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
+  { key: 'CONSISTENCY_CHAMP', name: 'Consistency Champ', color: 'bg-red-500', icon: '❤️', criteria: 'Complete a 10-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
+  { key: 'DISCIPLINE_HERO', name: 'Discipline Hero', color: 'bg-blue-500', icon: '🛡️', criteria: 'Complete a 16-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
+  { key: 'PERSISTENCE_PRO', name: 'Persistence Pro', color: 'bg-orange-800', icon: '🏋️', criteria: 'Complete a 28-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
+  { key: 'REAL_WARRIOR', name: 'Real Warrior', color: 'bg-orange-500', icon: '⚙️', criteria: 'Complete a 52-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
+  { key: 'BUDDY_BEGINNER', name: 'Buddy Beginner', color: 'bg-yellow-600', icon: '🤝', criteria: 'Match with 2 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
+  { key: 'BUDDY_BUILDER', name: 'Buddy Builder', color: 'bg-orange-400', icon: '☀️', criteria: 'Match with 5 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
+  { key: 'BUDDY_MASTER', name: 'Buddy Master', color: 'bg-purple-600', icon: '🌊', criteria: 'Match with 10 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
+  { key: 'ROOM_EXPLORER', name: 'Room Explorer', color: 'bg-blue-600', icon: '📍', criteria: 'Attend 2 group study rooms for min 1 hour each', reward: '+50 XP' },
+  { key: 'ROOM_REGULAR', name: 'Room Regular', color: 'bg-sky-400', icon: '🏠', criteria: 'Attend 5 group study rooms for min 1 hour each', reward: '+50 XP' },
+  { key: 'ROOM_LEADER', name: 'Room Leader', color: 'bg-pink-500', icon: '🎯', criteria: 'Attend 10 group study rooms for min 1 hour each', reward: '+50 XP' },
 ];
 
 
@@ -36,6 +37,7 @@ let detectionAttempted = false;
 
 export const ProfilePage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
+  const { gamification } = useGamification();
   const { preferences, loading } = useAppSelector((state) => state.buddy);
   const dispatch = useAppDispatch();
   const location = useLocation();
@@ -169,12 +171,12 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  // ⚠️ XP/level placeholder — replace when backend returns these on profile endpoint
-  const currentXP = 0;
-  const currentLevel = 0;
-  const currentTitle = 'Early Bird';
-  const nextLevelXP = 100;
-  const progress = nextLevelXP > 0 ? Math.round((currentXP / nextLevelXP) * 100) : 0;
+  // Dynamic XP/level values from user's gamification data
+  const currentXP = gamification?.totalXp ?? 0;
+  const currentLevel = gamification?.currentLevel ?? 1;
+  const currentTitle = gamification?.currentTitle ?? 'Early Bird';
+  const nextLevelXP = gamification?.xpForNextLevel ?? 100;
+  const progress = gamification?.xpProgress ?? 0;
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -670,7 +672,7 @@ export const ProfilePage: React.FC = () => {
                 {currentXP}<span className="text-zinc-500 text-lg font-normal">XP</span>
               </div>
               <div className="text-green-500 font-bold mb-1">{currentTitle} <span className="text-zinc-500 font-normal">(Level {currentLevel})</span></div>
-              <p className="text-zinc-400 text-sm">Earned Badges (0)</p>
+              <p className="text-zinc-400 text-sm">Earned Badges ({gamification?.totalBadgeCount ?? 0})</p>
             </div>
             <Link to={ROUTES.DASHBOARD_SUBSCRIPTION} className="block w-full bg-[#5b2091] hover:bg-[#8A2BE2] text-white font-medium py-3 rounded-full transition-all shadow-lg shadow-[#8A2BE2]/20 text-sm mb-4">
               {user?.isPremium ? 'Subscribed To Premium' : 'Subscribe To Premium'}
@@ -720,40 +722,69 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {badges.map((badge, index) => (
-                  <button key={index} onClick={() => setSelectedBadge(badge)} className={`${badge.color} p-3 rounded-xl flex items-center gap-2 shadow-lg hover:scale-105 transition-transform text-left w-full`}>
-                    <span className="text-lg">{badge.icon}</span>
-                    <span className="text-xs font-bold text-white leading-tight">{badge.name}</span>
-                  </button>
-                ))}
+                {badges.map((badge, index) => {
+                  const isEarned = gamification?.earnedBadges.some(b => b.badgeKey === badge.key);
+                  return (
+                    <button
+                      key={index}
+                      onClick={() => setSelectedBadge(badge)}
+                      className={`p-3 rounded-xl flex items-center gap-2 shadow-lg hover:scale-105 transition-transform text-left w-full ${
+                        isEarned 
+                          ? `${badge.color} text-white` 
+                          : 'bg-zinc-800/40 text-zinc-500 border border-zinc-700/50 hover:bg-zinc-800/60'
+                      }`}
+                    >
+                      <span className={`text-lg ${isEarned ? '' : 'grayscale opacity-50'}`}>{badge.icon}</span>
+                      <div className="flex flex-col">
+                        <span className={`text-xs font-bold leading-tight ${isEarned ? 'text-white' : 'text-zinc-400'}`}>
+                          {badge.name}
+                        </span>
+                        <span className="text-[9px] opacity-75">
+                          {isEarned ? 'Earned' : 'Locked'}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
-          {selectedBadge && (
-            <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/40 backdrop-blur-sm">
-              <div className={`relative ${selectedBadge.color} rounded-2xl p-6 w-80 shadow-2xl`}>
-                <button onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }} className="absolute top-2 right-2 p-1 bg-black/20 rounded-full hover:bg-black/40 text-white transition-colors"><X size={16} /></button>
-                <div className="text-center mb-6">
-                  <div className="text-4xl mb-2">{selectedBadge.icon}</div>
-                  <h3 className="text-xl font-bold text-white">Badge Details</h3>
-                </div>
-                <div className="space-y-4 text-white">
-                  <div className="flex justify-between items-start border-b border-white/20 pb-2">
-                    <span className="text-xs font-medium opacity-90">Badge Name</span>
-                    <span className="text-sm font-bold text-right">{selectedBadge.name}</span>
+          {selectedBadge && (() => {
+            const isEarned = gamification?.earnedBadges.some(b => b.badgeKey === selectedBadge.key);
+            return (
+              <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/40 backdrop-blur-sm">
+                <div className={`relative rounded-2xl p-6 w-80 shadow-2xl ${
+                  isEarned ? `${selectedBadge.color} text-white` : 'bg-zinc-800 border border-zinc-700/80 text-zinc-300'
+                }`}>
+                  <button onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }} className="absolute top-2 right-2 p-1 bg-black/20 rounded-full hover:bg-black/40 text-white transition-colors"><X size={16} /></button>
+                  <div className="text-center mb-6">
+                    <div className={`text-4xl mb-2 ${isEarned ? '' : 'grayscale opacity-50'}`}>{selectedBadge.icon}</div>
+                    <h3 className="text-xl font-bold text-white">Badge Details</h3>
                   </div>
-                  <div className="flex justify-between items-start border-b border-white/20 pb-2">
-                    <span className="text-xs font-medium opacity-90">Criteria</span>
-                    <span className="text-sm font-bold text-right max-w-[60%]">{selectedBadge.criteria}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium opacity-90">Reward</span>
-                    <span className="text-sm font-bold">{selectedBadge.reward}</span>
+                  <div className="space-y-4">
+                    <div className={`flex justify-between items-start border-b pb-2 ${isEarned ? 'border-white/20' : 'border-zinc-700'}`}>
+                      <span className="text-xs font-medium opacity-90">Badge Name</span>
+                      <span className="text-sm font-bold text-right text-white">{selectedBadge.name}</span>
+                    </div>
+                    <div className={`flex justify-between items-start border-b pb-2 ${isEarned ? 'border-white/20' : 'border-zinc-700'}`}>
+                      <span className="text-xs font-medium opacity-90">Criteria</span>
+                      <span className="text-sm font-bold text-right max-w-[60%] text-white">{selectedBadge.criteria}</span>
+                    </div>
+                    <div className={`flex justify-between items-start border-b pb-2 ${isEarned ? 'border-white/20' : 'border-zinc-700'}`}>
+                      <span className="text-xs font-medium opacity-90">Status</span>
+                      <span className="text-sm font-bold text-right text-white">
+                        {isEarned ? '🏆 Earned' : '🔒 Locked'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-medium opacity-90">Reward</span>
+                      <span className="text-sm font-bold text-white">{selectedBadge.reward}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
         </div>
       )}
 
