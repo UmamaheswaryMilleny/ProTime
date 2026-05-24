@@ -7,6 +7,7 @@ export interface SubscriptionResponse {
     plan: string;
     daysRemaining: number;
     isPremium: boolean;
+    currentPeriodStart: string | null;
     currentPeriodEnd: string | null;
     aiUsageCount: number;
     lastAiUsageReset: string | null;

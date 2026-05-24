@@ -14,6 +14,9 @@ export const LeaderboardHeader: React.FC<LeaderboardHeaderProps> = ({
   filterType,
   setFilterType,
 }) => {
+  // Silence unused variable compiler checks for commented out time filters
+  void [timeRange, setTimeRange];
+
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
       <div>
@@ -51,7 +54,7 @@ export const LeaderboardHeader: React.FC<LeaderboardHeaderProps> = ({
           </button>
         </div>
 
-        {/* Time Range Selector */}
+        {/* Time Range Selector - Commented out as requested
         <select
           value={timeRange}
           onChange={(e) => setTimeRange(e.target.value as any)}
@@ -62,6 +65,7 @@ export const LeaderboardHeader: React.FC<LeaderboardHeaderProps> = ({
           <option value="monthly">Monthly</option>
           <option value="allTime">All Time</option>
         </select>
+        */}
       </div>
     </div>
   );

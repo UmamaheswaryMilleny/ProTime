@@ -3,8 +3,15 @@ import { API_ROUTES } from '../../../shared/constants/constants.routes';
 import type { TodoItem, CreateTodoDTO, UpdateTodoDTO, TodoListResponse, CompleteTodoResponse } from '../types/todo.types';
 
 export const todoService = {
-    getTodos: async (filter: 'all' | 'pending' | 'completed' = 'all'): Promise<TodoListResponse> => {
-        const response = await api.get(`${API_ROUTES.TODO_ROOT}?filter=${filter}`);
+    getTodos: async (
+        filter: 'all' | 'pending' | 'completed' | 'expired' = 'all',
+        page?: number,
+        limit?: number
+    ): Promise<TodoListResponse> => {
+        let url = `${API_ROUTES.TODO_ROOT}?filter=${filter}`;
+        if (page !== undefined) url += `&page=${page}`;
+        if (limit !== undefined) url += `&limit=${limit}`;
+        const response = await api.get(url);
         return response.data.data;
     },
 

@@ -112,10 +112,23 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   } = usePomodoro();
 
   const handleStartTodoPomodoro = (todo: TodoItem) => {
+    // 1. Check if running in Redux for a DIFFERENT task
     if (activeTask?.id && isTodoRunning && activeTask.id !== todo.id) {
-      toast.error('A Pomodoro is already running. Finish it first.');
+      toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
       return;
     }
+
+    // 2. Check if running in TodoPage local storage
+    const localActiveTaskId = localStorage.getItem('pomodoro_activeTaskId');
+    if (localActiveTaskId) {
+      const isLocalRunning = localStorage.getItem(`pomodoro_${localActiveTaskId}_isRunning`) === 'true';
+      if (isLocalRunning) {
+        const localTitle = localStorage.getItem('pomodoro_activeTaskTitle') || 'another task';
+        toast.error(`A Pomodoro is already running for "${localTitle}". Stop it to start a new one.`);
+        return;
+      }
+    }
+
     startTodoTimer(todo, 25 * 60, conversationId);
     setIsTodoPomodoroModalOpen(true);
   };
@@ -467,7 +480,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                       onClick={() => {
                         toast((t) => (
                           <div className="flex flex-col gap-3 p-1">
-                            <p className="text-sm font-medium text-zinc-900">Are you sure you want to delete all messages?</p>
+                            <p className="text-sm font-medium text-zinc-900">Are you sure you want to clear all messages?</p>
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => toast.dismiss(t.id)}
@@ -483,16 +496,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                                     if (res.success) {
                                       setMessages([]);
                                       setIsSettingsOpen(false);
-                                      toast.success("Chat history deleted", { id: 'delete-success' });
+                                      toast.success("Chat history cleared", { id: 'delete-success' });
                                     }
                                   } catch (err: any) {
                                     const backendMessage = err?.response?.data?.message;
-                                    toast.error(backendMessage || "Failed to delete chat history");
+                                    toast.error(backendMessage || "Failed to clear chat history");
                                   }
                                 }}
                                 className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
                               >
-                                Delete
+                                Clear
                               </button>
                             </div>
                           </div>
@@ -503,7 +516,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span>Delete Chat</span>
+                      <span>Clear Chat</span>
                     </button>
                   </div>
                 </div>

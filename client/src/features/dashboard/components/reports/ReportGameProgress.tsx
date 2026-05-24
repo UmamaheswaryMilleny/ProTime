@@ -1,5 +1,5 @@
 import React from 'react';
-import { Trophy, Lock } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 
 interface Badge {
     id: string;
@@ -18,13 +18,14 @@ interface ReportGameProgressProps {
 
 export const ReportGameProgress: React.FC<ReportGameProgressProps> = ({ level, title, currentXp, nextLevelXp, badges }) => {
     const progressPercent = Math.min(((currentXp) / nextLevelXp) * 100, 100);
+    const unlockedBadges = badges.filter(badge => badge.unlocked);
 
     return (
         <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm mb-8">
             <div className="flex flex-col md:flex-row gap-8 items-start md:items-center">
                 
                 {/* Level Info */}
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full min-w-0">
                     <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-3">
                             <div className="w-12 h-12 bg-gradient-to-br from-[#8b5cf6] to-[#4c1d95] rounded-xl flex items-center justify-center border border-white/10 shadow-lg shadow-[#8b5cf6]/20">
@@ -53,7 +54,7 @@ export const ReportGameProgress: React.FC<ReportGameProgressProps> = ({ level, t
                 <div className="hidden md:block w-px h-16 bg-white/10" />
 
                 {/* Badges Preview */}
-                <div className="flex-1 w-full">
+                <div className="flex-1 w-full min-w-0">
                     <div className="flex items-center justify-between mb-3">
                         <h4 className="text-white text-sm font-semibold flex items-center gap-2">
                             <Trophy size={16} className="text-yellow-500" />
@@ -62,20 +63,19 @@ export const ReportGameProgress: React.FC<ReportGameProgressProps> = ({ level, t
                         <span className="text-xs text-[blueviolet] cursor-pointer hover:underline">View all</span>
                     </div>
                     <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2">
-                        {badges.map(badge => (
-                            <div 
-                                key={badge.id}
-                                className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center border-2 ${badge.unlocked ? 'border-yellow-500 bg-yellow-500/10' : 'border-zinc-700 bg-zinc-800'} relative group cursor-pointer`}
-                                title={badge.name}
-                            >
-                                <span className={`text-2xl ${!badge.unlocked && 'grayscale opacity-50'}`}>{badge.icon}</span>
-                                {!badge.unlocked && (
-                                    <div className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full">
-                                        <Lock size={12} className="text-zinc-400" />
-                                    </div>
-                                )}
-                            </div>
-                        ))}
+                        {unlockedBadges.length > 0 ? (
+                            unlockedBadges.map(badge => (
+                                <div 
+                                    key={badge.id}
+                                    className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center border-2 border-yellow-500 bg-yellow-500/10 relative group cursor-pointer"
+                                    title={badge.name}
+                                >
+                                    <span className="text-2xl">{badge.icon}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-xs text-zinc-500 py-2">No badges earned yet</p>
+                        )}
                     </div>
                 </div>
 

@@ -14,16 +14,30 @@ export const useTodo = () => {
     const [error, setError] = useState<string | null>(null);
     const [dailyXp, setDailyXp] = useState<{ current: number, cap: number }>({ current: 0, cap: 50 });
 
+    // Pagination & Filtering state
+    const [page, setPage] = useState<number>(1);
+    const [limit, setLimit] = useState<number>(5); // default 5 items per page
+    const [filter, setFilter] = useState<'all' | 'pending' | 'completed' | 'expired'>(() => {
+        return (localStorage.getItem('todo_filter') as 'all' | 'pending' | 'completed' | 'expired') || 'all';
+    });
+    const [totalPages, setTotalPages] = useState<number>(1);
+    const [totalItems, setTotalItems] = useState<number>(0);
+
+    // Save filter selection to localStorage when it changes
+    useEffect(() => {
+        localStorage.setItem('todo_filter', filter);
+    }, [filter]);
+
     // Track expired task IDs we've already notified about (persisted across re-renders)
     const notifiedExpiredRef = useRef<Set<string>>(new Set(
         JSON.parse(localStorage.getItem('protime_notified_expired') || '[]') as string[]
     ));
 
-    const fetchTodos = useCallback(async (filter: 'all' | 'pending' | 'completed' = 'all') => {
+    const fetchTodos = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
-            const data = await todoService.getTodos(filter);
+            const data = await todoService.getTodos(filter, page, limit);
             setTodos(data.todos);
             setDailyXp({ current: data.todayXp, cap: data.dailyXpCap });
             setStats({
@@ -33,6 +47,14 @@ export const useTodo = () => {
                 shared: data.shared,
                 progress: data.progress
             });
+
+            if (data.pagination) {
+                setTotalPages(data.pagination.totalPages);
+                setTotalItems(data.pagination.totalItems);
+                if (data.pagination.currentPage > data.pagination.totalPages && data.pagination.totalPages > 0) {
+                    setPage(data.pagination.totalPages);
+                }
+            }
 
             // Dispatch task_expired notifications for newly-detected expired tasks
             const expiredTodos = data.todos.filter((t: TodoItem) => t.status === 'EXPIRED');
@@ -55,13 +77,14 @@ export const useTodo = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [dispatch]);
+    }, [dispatch, filter, page, limit]);
 
     const addTodo = async (dto: CreateTodoDTO) => {
         try {
-            const newTodo = await todoService.addTodo(dto);
-            setTodos(prev => [newTodo, ...prev]);
+            await todoService.addTodo(dto);
             toast.success('Task added successfully');
+            setPage(1); // Go back to page 1 to see the new task
+            void fetchTodos();
             return true;
         } catch {
             toast.error('Failed to add task');
@@ -93,11 +116,6 @@ export const useTodo = () => {
                 // 3. Earned XP is total from this action
                 earnedXp = xpResult.xpAwarded;
 
-                toast.success(`Pomodoro & Task Complete! Earned ${earnedXp}XP`, {
-                    icon: '🚀',
-                    duration: 5000
-                });
-
                 // Show badge notifications
                 if (xpResult.newBadges?.length > 0) {
                     xpResult.newBadges.forEach((badge: any) => {
@@ -112,24 +130,6 @@ export const useTodo = () => {
                     rawLevel: xpResult.rawLevel,
                     currentTitle: xpResult.currentTitle
                 }));
-
-                // Notification: task completed
-                dispatch(addNotification({
-                    type: 'task_completed',
-                    title: '🏆 Task Completed',
-                    message: `"${todo.title}" completed with Pomodoro! +${earnedXp} XP`,
-                    metadata: { taskId: id, xpAwarded: earnedXp },
-                }));
-
-                // Notification: XP gained
-                if (earnedXp > 0) {
-                    dispatch(addNotification({
-                        type: 'xp_gained',
-                        title: '⭐ XP Earned',
-                        message: `+${earnedXp} XP from Pomodoro session. Total: ${xpResult.totalXp} XP`,
-                        metadata: { xpAwarded: earnedXp, totalXp: xpResult.totalXp },
-                    }));
-                }
             } else {
                 const completeResponse = await todoService.completeTodo(id);
                 updatedTodo = completeResponse.todo;
@@ -219,8 +219,8 @@ export const useTodo = () => {
     const deleteTodo = async (id: string) => {
         try {
             await todoService.deleteTodo(id);
-            setTodos(prev => prev.filter(t => t.id !== id));
             toast.success('Task deleted successfully');
+            void fetchTodos();
         } catch {
             toast.error('Failed to delete task');
         }
@@ -228,9 +228,9 @@ export const useTodo = () => {
 
     const updateTodo = async (id: string, updates: Partial<CreateTodoDTO>) => {
         try {
-            const updatedTodo = await todoService.updateTodo(id, updates);
-            setTodos(prev => prev.map(t => t.id === id ? updatedTodo : t));
+            await todoService.updateTodo(id, updates);
             toast.success('Task updated successfully');
+            void fetchTodos();
             return true;
         } catch {
             toast.error('Failed to update task');
@@ -248,6 +248,14 @@ export const useTodo = () => {
         error,
         stats,
         dailyXp,
+        page,
+        setPage,
+        limit,
+        setLimit,
+        filter,
+        setFilter,
+        totalPages,
+        totalItems,
         addTodo,
         toggleTodo,
         deleteTodo,

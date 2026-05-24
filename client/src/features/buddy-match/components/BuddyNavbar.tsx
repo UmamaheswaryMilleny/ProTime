@@ -1,22 +1,29 @@
 import React from 'react';
 
 interface BuddyNavbarProps {
-  activeTab: 'find' | 'requests' | 'mybuddy' | 'blocked';
-  onTabChange: (tab: 'find' | 'requests' | 'mybuddy' | 'blocked') => void;
+  activeTab: 'find' | 'requests' | 'mybuddy' | 'blocked' | 'messages';
+  onTabChange: (tab: 'find' | 'requests' | 'mybuddy' | 'blocked' | 'messages') => void;
   requestCount?: number;
+  unreadMessagesCount?: number;
 }
 
 interface Tab {
-  id: 'find' | 'requests' | 'mybuddy' | 'blocked';
+  id: 'find' | 'requests' | 'mybuddy' | 'messages';
   label: string;
   count?: number;
 }
 
-export const BuddyNavbar: React.FC<BuddyNavbarProps> = ({ activeTab, onTabChange, requestCount = 0 }) => {
+export const BuddyNavbar: React.FC<BuddyNavbarProps> = ({ 
+  activeTab, 
+  onTabChange, 
+  requestCount = 0,
+  unreadMessagesCount = 0
+}) => {
   const tabs: Tab[] = [
-    { id: 'find', label: 'Find Buddies' },
-    { id: 'requests', label: 'Buddy Requests', count: requestCount },
-    { id: 'mybuddy', label: 'My Buddy' },
+    { id: 'find', label: 'Find' },
+    { id: 'requests', label: 'Requests', count: requestCount },
+    { id: 'mybuddy', label: 'Buddies' },
+    { id: 'messages', label: 'Messages', count: unreadMessagesCount },
   ];
 
   return (
@@ -33,7 +40,9 @@ export const BuddyNavbar: React.FC<BuddyNavbarProps> = ({ activeTab, onTabChange
         >
           {tab.label}
           {tab.count !== undefined && tab.count > 0 && (
-            <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[blueviolet] text-[10px] text-white rounded-full">
+            <span className={`flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] text-white rounded-full ${
+              tab.id === 'messages' ? 'bg-red-500' : 'bg-[blueviolet]'
+            }`}>
               {tab.count}
             </span>
           )}
