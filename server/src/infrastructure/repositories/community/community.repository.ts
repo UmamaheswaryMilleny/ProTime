@@ -19,10 +19,18 @@ export class CommunityMessageRepository
   async findMessages(params: {
     limit:   number;
     before?: Date;
+    since?:  Date;
   }): Promise<CommunityChatEntity[]> {
     const query: Record<string, unknown> = {};
-    if (params.before) {
-      query.createdAt = { $lt: params.before };
+    if (params.before || params.since) {
+      const createdAtQuery: Record<string, unknown> = {};
+      if (params.before) {
+        createdAtQuery.$lt = params.before;
+      }
+      if (params.since) {
+        createdAtQuery.$gte = params.since;
+      }
+      query.createdAt = createdAtQuery;
     }
 
     const docs = await CommunityChatModel

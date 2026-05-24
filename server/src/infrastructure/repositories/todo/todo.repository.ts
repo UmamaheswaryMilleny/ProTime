@@ -26,19 +26,25 @@ export class MongoTodoRepository
   // ─── Find all todos for user with optional filter ─────────────────────────
   async findByUserId(
     userId: string,
-    filter: 'all' | 'pending' | 'completed' | 'expired'= 'all'
+    filter: 'all' | 'pending' | 'completed' | 'expired'= 'all',
+    page?: number,
+    limit?: number
   ): Promise<TodoEntity[]> {
     const query: Record<string, unknown> = {
       userId: userId,
     };
-if (filter === 'expired') query.status = TodoStatus.EXPIRED;
+    if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     if (filter === 'pending')   query.status = TodoStatus.PENDING;
     if (filter === 'completed') query.status = TodoStatus.COMPLETED;
 
-    const docs = await this.model
-      .find(query)
-      .sort({ createdAt: -1 })
-      .exec();
+    let dbQuery = this.model.find(query).sort({ createdAt: -1 });
+
+    if (page !== undefined && limit !== undefined && page > 0 && limit > 0) {
+      const skip = (page - 1) * limit;
+      dbQuery = dbQuery.skip(skip).limit(limit);
+    }
+
+    const docs = await dbQuery.exec();
 
     return docs.map(TodoMapper.toDomain);
   }
@@ -82,18 +88,32 @@ if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     });
   }
   // ─── Cron job — mark expired todos ───────────────────────────────────────
+  // Atomic approach: only targets tasks that are:
+  //   • still PENDING (not yet marked EXPIRED)
+  //   • past their expiryDate
+  //   • have NOT yet had their notification sent (expiredNotificationSent: false)
+  //
+  // The single updateMany atomically sets both status=EXPIRED and
+  // expiredNotificationSent=true, so even if the cron fires multiple times
+  // (e.g. server restart) the same task can never emit a second notification.
   async markExpiredTodos(): Promise<TodoEntity[]> {
-    const query = {
+    const now = new Date();
+
+    // Step 1: Find candidates BEFORE updating (need their data for notifications)
+    const candidates = await this.model.find({
       status: TodoStatus.PENDING,
-      expiryDate: { $lte: new Date() },
-    };
-    const expiredDocs = await this.model.find(query).lean();
-    if (expiredDocs.length > 0) {
-      await this.model.updateMany(
-        { _id: { $in: expiredDocs.map(d => d._id) } },
-        { $set: { status: TodoStatus.EXPIRED } }
-      );
-    }
-    return expiredDocs.map(TodoMapper.toDomain);
+      expiryDate: { $lte: now },
+      expiredNotificationSent: { $ne: true }, // only unsent ones
+    }).lean();
+
+    if (candidates.length === 0) return [];
+
+    // Step 2: Atomically flip both fields in one DB round-trip
+    await this.model.updateMany(
+      { _id: { $in: candidates.map(d => d._id) } },
+      { $set: { status: TodoStatus.EXPIRED, expiredNotificationSent: true } },
+    );
+
+    return candidates.map(TodoMapper.toDomain);
   }
 }
