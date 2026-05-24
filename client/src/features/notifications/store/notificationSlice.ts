@@ -45,7 +45,21 @@ const MAX_STORED = 50; // keep at most 50 most recent
 function load(): Notification[] {
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? (JSON.parse(raw) as Notification[]) : [];
+        if (!raw) return [];
+        const parsed = JSON.parse(raw) as Notification[];
+        
+        // Deduplicate existing entries
+        const seen = new Set<string>();
+        const unique: Notification[] = [];
+        for (const n of parsed) {
+            const taskId = n.metadata?.taskId as string | undefined;
+            const key = taskId ? `task-${taskId}` : `${n.type}-${n.message}`;
+            if (!seen.has(key)) {
+                seen.add(key);
+                unique.push(n);
+            }
+        }
+        return unique;
     } catch {
         return [];
     }
@@ -70,6 +84,20 @@ const notificationSlice = createSlice({
     initialState,
     reducers: {
         addNotification: (state, action: PayloadAction<Omit<Notification, 'id' | 'timestamp' | 'isRead'>>) => {
+            // Deduplicate new entries
+            const isDuplicate = state.notifications.some(n => {
+                const actionTaskId = action.payload.metadata?.taskId as string | undefined;
+                const nTaskId = n.metadata?.taskId as string | undefined;
+                if (actionTaskId && nTaskId && actionTaskId === nTaskId) {
+                    return true;
+                }
+                return n.type === action.payload.type && n.message === action.payload.message;
+            });
+
+            if (isDuplicate) {
+                return;
+            }
+
             const notification: Notification = {
                 ...action.payload,
                 id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,

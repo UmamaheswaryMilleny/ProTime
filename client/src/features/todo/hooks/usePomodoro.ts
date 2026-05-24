@@ -12,6 +12,7 @@ import {
 } from '../store/pomodoroSlice';
 import type { TodoItem } from '../types/todo.types';
 import { socketService } from '../../../shared/services/socketService';
+import toast from 'react-hot-toast';
 
 export const usePomodoro = () => {
     const dispatch = useDispatch<AppDispatch>();
@@ -35,6 +36,17 @@ export const usePomodoro = () => {
     };
 
     const start = (task: TodoItem, duration: number, conversationId?: string) => {
+        // Guard against starting if a local storage TodoPage timer is running
+        const localActiveTaskId = localStorage.getItem('pomodoro_activeTaskId');
+        if (localActiveTaskId) {
+            const isLocalRunning = localStorage.getItem(`pomodoro_${localActiveTaskId}_isRunning`) === 'true';
+            if (isLocalRunning) {
+                const localTitle = localStorage.getItem('pomodoro_activeTaskTitle') || 'another task';
+                toast.error(`A Pomodoro is already running for "${localTitle}". Stop it to start a new one.`);
+                return;
+            }
+        }
+
         dispatch(startPomodoro({ 
             task, 
             duration, 
