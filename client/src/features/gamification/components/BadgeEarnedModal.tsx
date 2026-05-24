@@ -27,56 +27,46 @@ export const BadgeEarnedModal: React.FC = () => {
 
     return (
         <AnimatePresence>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
                 <motion.div 
-                    initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                    animate={{ scale: 1, opacity: 1, y: 0 }}
-                    exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="relative w-full max-w-md bg-zinc-900 border border-yellow-500/30 rounded-3xl p-8 shadow-[0_0_50px_rgba(234,179,8,0.2)] overflow-hidden"
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    exit={{ scale: 0.95, opacity: 0 }}
+                    className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-2xl p-6 shadow-2xl overflow-hidden"
                 >
-                    {/* Background Glows */}
-                    <div className="absolute -top-24 -left-24 w-48 h-48 bg-yellow-500/10 rounded-full blur-3xl" />
-                    <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl" />
-
                     <button 
                         onClick={handleClose}
-                        className="absolute top-4 right-4 p-2 text-zinc-500 hover:text-white transition-colors"
+                        className="absolute top-4 right-4 p-1.5 text-zinc-500 hover:text-white hover:bg-white/5 rounded-lg transition-colors"
                     >
-                        <X size={20} />
+                        <X size={16} />
                     </button>
 
-                    <div className="relative z-10 flex flex-col items-center text-center">
-                        <motion.div 
-                            initial={{ rotate: -10, scale: 0.5 }}
-                            animate={{ rotate: 0, scale: 1 }}
-                            transition={{ type: "spring", damping: 12 }}
-                            className="w-32 h-32 mb-6 rounded-3xl bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 flex items-center justify-center shadow-2xl shadow-yellow-500/40 relative group"
-                        >
-                            <Trophy size={64} className="text-zinc-900 drop-shadow-lg" />
-                            <motion.div 
-                                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 1, 0.5] }}
-                                transition={{ repeat: Infinity, duration: 2 }}
-                                className="absolute -inset-4 border-2 border-yellow-500/30 rounded-[40px]"
-                            />
-                        </motion.div>
-
-                        <div className="flex items-center gap-2 mb-2">
-                            <Sparkles size={16} className="text-yellow-500 animate-pulse" />
-                            <span className="text-yellow-500 font-bold text-sm tracking-widest uppercase">New Achievement</span>
-                            <Sparkles size={16} className="text-yellow-500 animate-pulse" />
+                    <div className="flex flex-col items-center text-center pt-2">
+                        {/* Elegant Trophy Circle */}
+                        <div className="w-20 h-20 mb-5 rounded-full bg-yellow-500/10 border border-yellow-500/20 flex items-center justify-center shadow-lg shadow-yellow-500/5">
+                            <Trophy size={36} className="text-yellow-500" />
                         </div>
 
-                        <h2 className="text-3xl font-black text-white mb-3">
+                        {/* Minimal Achievement Pill */}
+                        <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 text-yellow-500 rounded-full text-xs font-semibold tracking-wider uppercase mb-3">
+                            <Sparkles size={12} className="animate-pulse" />
+                            New Achievement
+                        </div>
+
+                        {/* Title */}
+                        <h2 className="text-2xl font-bold text-white mb-2 tracking-tight">
                             {currentBadge.name}
                         </h2>
 
-                        <p className="text-zinc-400 text-lg mb-8 leading-relaxed">
+                        {/* Description */}
+                        <p className="text-zinc-400 text-sm mb-6 max-w-[280px] leading-relaxed">
                             {currentBadge.description}
                         </p>
 
+                        {/* Clean Action Button */}
                         <button 
                             onClick={handleClose}
-                            className="w-full py-4 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-zinc-900 font-black rounded-2xl transition-all active:scale-[0.98] shadow-lg shadow-yellow-500/20 uppercase tracking-widest text-sm"
+                            className="w-full py-3 bg-yellow-500 hover:bg-yellow-400 text-zinc-950 font-semibold rounded-xl transition-all active:scale-[0.98] text-sm tracking-wide"
                         >
                             That's Awesome!
                         </button>
