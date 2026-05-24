@@ -99,4 +99,17 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
       }
     }).exec();
   }
+
+  async countJoinedOrHostedInMonth(userId: string, startDate: Date, endDate: Date): Promise<number> {
+    return this.model.countDocuments({
+      $or: [
+        { hostId: userId },
+        { participantIds: userId }
+      ],
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).exec();
+  }
 }

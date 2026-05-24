@@ -8,4 +8,10 @@ export interface TodoListResponseDTO {
   progress: number; // 0–100, calculated as Math.round((completed / totalTasks) * 100)
   todayXp: number; //XP earned today for the daily cap progress bar
   dailyXpCap: number; // always 50, frontend uses this to render bar
+  pagination?: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    limit: number;
+  };
 }

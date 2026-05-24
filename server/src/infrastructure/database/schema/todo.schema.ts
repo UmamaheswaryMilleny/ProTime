@@ -100,6 +100,13 @@ export const TodoSchema = new Schema(
       type: Date,
       default: null,
     },
+
+    // ─── Dedup guard: ensures the expiry notification is sent exactly once ────
+    expiredNotificationSent: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
   },
   {
     timestamps: true,
