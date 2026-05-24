@@ -59,14 +59,6 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
     if (!updated) throw new TodoNotFoundError();
     await this.gamificationRepository.markPomodoroUsedToday(userId)
 
-    if (meetsMinimum) {
-      this.notificationService.notifyUser(userId, {
-        type: NotificationType.TASK_COMPLETED,
-        title: 'Pomodoro Completed!',
-        message: `Great job! You've successfully finished your pomodoro for "${todo.title}".`,
-      });
-    }
-
     return TodoMapper.toResponse(updated);
   }
 }

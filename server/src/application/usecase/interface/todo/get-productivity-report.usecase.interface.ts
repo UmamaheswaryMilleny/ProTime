@@ -1,4 +1,4 @@
-export type ReportRange = '7days' | '14days' | '30days' | '90days' | 'custom';
+export type ReportRange = '7days' | '14days' | '30days' | '90days' | 'custom' | 'all';
 
 export interface CustomDateRange {
   startDate: string; // ISO date string YYYY-MM-DD
@@ -15,6 +15,7 @@ export interface ProductivitySummary {
   tasksWithPomodoro:    number;
   tasksWithoutPomodoro: number;
   totalFocusMinutes:    number;
+  roomsJoined:          number;
 }
 
 export interface XpTrendPoint {

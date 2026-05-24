@@ -15,17 +15,28 @@ export class ExpireTodosUsecase implements IExpireTodosUsecase {
 
   async execute(): Promise<void> {
     const expiredTodos = await this.todoRepository.markExpiredTodos();
-    
-    // Notify users for each expired task
-    // We can group by userId to avoid spamming multiple notifications, 
-    // but the user's request "if a task expire show notification" suggests per-task notification might be okay.
-    // For now, let's notify for each.
+
+    if (expiredTodos.length === 0) return;
+
+    // Group by userId — one notification per user, no matter how many tasks expired
+    const byUser = new Map<string, string[]>();
     for (const todo of expiredTodos) {
-      this.notificationService.notifyUser(todo.userId, {
+      const existing = byUser.get(todo.userId) ?? [];
+      existing.push(todo.title);
+      byUser.set(todo.userId, existing);
+    }
+
+    for (const [userId, titles] of byUser.entries()) {
+      const isSingle = titles.length === 1;
+      const message = isSingle
+        ? `"${titles[0]}" has expired without being completed.`
+        : `${titles.length} tasks have expired: ${titles.map(t => `"${t}"`).join(', ')}.`;
+
+      this.notificationService.notifyUser(userId, {
         type: NotificationType.TASK_EXPIRED,
         title: 'Task Expired',
-        message: `Your task "${todo.title}" has expired.`,
-        metadata: { todoId: todo.id }
+        message,
+        metadata: { count: titles.length },
       });
     }
   }

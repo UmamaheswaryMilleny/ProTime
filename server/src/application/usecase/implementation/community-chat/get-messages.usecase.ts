@@ -23,11 +23,20 @@ export class GetMessagesUsecase implements IGetMessagesUsecase {
     // 1. Parse cursor — before is ISO string from client
     const before = dto.before ? new Date(dto.before) : undefined; //undefined → get latest messages
 
+    let since: Date | undefined;
+    if (userId) {
+      const user = await this.userRepo.findById(userId);
+      if (user) {
+        since = user.createdAt;
+      }
+    }
+
     // 2. Fetch limit+1 to detect hasMore without extra countDocuments call
     const raw = await this.communityRepo.findMessages({
       //Fetches one extra message than requested. This is a trick to check if more messages exist without running a separate `countDocuments` query:
       limit: dto.limit + 1,
       before,
+      since,
     });
 
     // 3. Detect if more messages exist
