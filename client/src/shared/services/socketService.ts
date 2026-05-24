@@ -70,11 +70,14 @@ class SocketService {
             store.dispatch(addNotification(notification));
             
             // Show toast for immediate feedback (plain string to avoid JSX in .ts file)
-            const { title, message } = notification;
-            toast(`${title}: ${message}`, {
-                duration: 5000,
-                position: 'top-right',
-            });
+            // Suppress if this is a Pomodoro completion event (since we show a modal)
+            if (!notification.metadata?.isPomodoro) {
+                const { title, message } = notification;
+                toast(`${title}: ${message}`, {
+                    duration: 5000,
+                    position: 'top-right',
+                });
+            }
         });
 
         // ──────────────────────────────────────────────────────────────────────

@@ -171,6 +171,12 @@ export const chatApi = {
     );
     return response.data;
   },
+  getCurrentSessionState: async (conversationId: string) => {
+    const response = await ProTimeBackend.get<{ success: boolean; data: { active: any; planned: any } }>(
+      API_ROUTES.CHAT_BUDDY_SESSION_CURRENT(conversationId)
+    );
+    return response.data;
+  },
   deleteChat: async (conversationId: string) => {
     const response = await ProTimeBackend.delete<{ success: boolean; data: any }>(
       API_ROUTES.CHAT_DELETE(conversationId)

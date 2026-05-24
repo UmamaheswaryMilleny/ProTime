@@ -92,9 +92,10 @@ export const DayDetailPanel: React.FC<DayDetailPanelProps> = ({
                                   <span className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider
                                     ${session.status === 'ACTIVE' ? 'bg-green-500/20 text-green-400' :
                                       session.status === 'COMPLETED' ? 'bg-[blueviolet]/20 text-[blueviolet]' :
+                                      session.status === 'MISSED' ? 'bg-red-500/20 text-red-400' :
                                       'bg-zinc-800 text-zinc-400'}
                                   `}>
-                                    {session.status}
+                                    {session.status === 'MISSED' ? 'EXPIRED' : session.status}
                                   </span>
                                   <div className="flex items-center gap-1 text-xs text-zinc-400 font-medium">
                                     <Clock size={12} className="text-zinc-500" />
