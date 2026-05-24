@@ -12,8 +12,21 @@ import { useWindowSize } from 'react-use';
 
 export const LeaderboardPage: React.FC = () => {
   const { user } = useAppSelector((state) => state.auth);
-  const [timeRange, setTimeRange] = useState<'today' | 'weekly' | 'monthly' | 'allTime'>('allTime');
-  const [filterType, setFilterType] = useState<'global' | 'friends'>('global');
+  
+  const [timeRange, setTimeRange] = useState<'today' | 'weekly' | 'monthly' | 'allTime'>(() => {
+    return (localStorage.getItem('leaderboard_timeRange') as any) || 'allTime';
+  });
+  const [filterType, setFilterType] = useState<'global' | 'friends'>(() => {
+    return (localStorage.getItem('leaderboard_filterType') as any) || 'global';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('leaderboard_timeRange', timeRange);
+  }, [timeRange]);
+
+  useEffect(() => {
+    localStorage.setItem('leaderboard_filterType', filterType);
+  }, [filterType]);
   
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [userRank, setUserRank] = useState<number>(0);
