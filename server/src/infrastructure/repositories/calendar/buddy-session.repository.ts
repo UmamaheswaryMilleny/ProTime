@@ -58,6 +58,17 @@ export class BuddySessionRepository
     return docs.map(d => BuddySessionInfraMapper.toDomain(d as BuddySessionDocument));
   }
 
+  // ACTIVE sessions where startedAt < cutoffTime — used by cron to auto-complete
+  async findActiveSessionsBefore(
+    cutoffTime: Date,
+  ): Promise<BuddySessionEntity[]> {
+    const docs = await BuddySessionModel.find({
+      status:    SessionStatus.ACTIVE,
+      startedAt: { $lt: cutoffTime },
+    }).lean();
+    return docs.map(d => BuddySessionInfraMapper.toDomain(d as BuddySessionDocument));
+  }
+
   async updateStatus(
     id:     string,
     status: SessionStatus,

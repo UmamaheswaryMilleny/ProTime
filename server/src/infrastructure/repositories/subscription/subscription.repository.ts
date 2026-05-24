@@ -71,6 +71,55 @@ export class SubscriptionRepository
     return SubscriptionInfraMapper.toDomain(doc as SubscriptionDocument);
   }
 
+  // ─── Atomic AI usage increment ────────────────────────────────────────────
+  // Performs a single, atomic findOneAndUpdate that:
+  //   1. Resets the counter if 30 days have passed since lastAiUsageReset (monthly window)
+  //   2. Only increments if currentUsage < limit
+  // If the limit is already hit, returns null (no update applied).
+  async atomicIncrementAiUsage(
+    userId: string,
+    limit: number,
+  ): Promise<SubscriptionEntity | null> {
+    const now = new Date();
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Step 1 — reset counter if stale (more than 30 days since last reset)
+    await SubscriptionModel.updateOne(
+      {
+        userId: userObjectId,
+        lastAiUsageReset: { $lt: thirtyDaysAgo },
+      },
+      {
+        $set: { aiUsageCount: 0, lastAiUsageReset: now },
+      },
+    );
+
+    // Step 2 — atomically increment ONLY if count < limit
+    const doc = await SubscriptionModel.findOneAndUpdate(
+      {
+        userId: userObjectId,
+        aiUsageCount: { $lt: limit },
+      },
+      { $inc: { aiUsageCount: 1 } },
+      { new: true },
+    ).lean();
+
+    if (!doc) return null; // limit already reached — no update was applied
+    return SubscriptionInfraMapper.toDomain(doc as SubscriptionDocument);
+  }
+
+  // ─── Rollback AI usage on AI service failure ──────────────────────────────
+  // Decrements aiUsageCount by 1, floored at 0 (using $max).
+  // Called when the AI service throws after a token was already incremented.
+  async decrementAiUsage(userId: string): Promise<void> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    await SubscriptionModel.updateOne(
+      { userId: userObjectId, aiUsageCount: { $gt: 0 } },
+      { $inc: { aiUsageCount: -1 } },
+    );
+  }
+
   // ─── Expiry batch job ─────────────────────────────────────────────────────
   // Finds all subscriptions where period has ended but status not yet EXPIRED
   // Called by cron job to batch-downgrade lapsed subscriptions to FREE
