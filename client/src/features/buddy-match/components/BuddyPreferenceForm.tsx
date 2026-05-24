@@ -15,6 +15,7 @@ import {
 import { ChevronDown, ShieldCheck, Search } from 'lucide-react';
 import { ALL_COUNTRIES, ALL_LANGUAGES } from '../../../shared/constants/locations';
 import toast from 'react-hot-toast';
+import { userApi } from '../../user/user-service';
 
 interface BuddyPreferenceFormProps {
   initialData: BuddyPreference | null;
@@ -54,6 +55,44 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
   });
 
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [goalDomainMap, setGoalDomainMap] = useState<Record<string, string[]>>(STUDY_GOAL_DOMAIN_MAP);
+
+  useEffect(() => {
+    const loadSkills = async () => {
+      try {
+        const skills = await userApi.getActiveSkillsService();
+        if (skills && Array.isArray(skills)) {
+          const map: Record<string, string[]> = {};
+          
+          Object.values(StudyGoal).forEach(goal => {
+            map[goal] = [];
+          });
+          
+          skills.forEach(skill => {
+            if (skill.category && skill.name && skill.isActive) {
+              if (!map[skill.category]) {
+                map[skill.category] = [];
+              }
+              if (!map[skill.category].includes(skill.name)) {
+                map[skill.category].push(skill.name);
+              }
+            }
+          });
+          
+          Object.keys(STUDY_GOAL_DOMAIN_MAP).forEach(goal => {
+            if (!map[goal] || map[goal].length === 0) {
+              map[goal] = STUDY_GOAL_DOMAIN_MAP[goal as StudyGoal] || [];
+            }
+          });
+          
+          setGoalDomainMap(map);
+        }
+      } catch (err) {
+        console.error('Failed to load active skills for buddy matching', err);
+      }
+    };
+    loadSkills();
+  }, []);
 
   useEffect(() => {
     if (initialData) {
@@ -69,8 +108,8 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
     
     // Auto-reset subjectDomain if studyGoal changes
     if (key === 'studyGoal') {
-      const validDomains = STUDY_GOAL_DOMAIN_MAP[value as StudyGoal];
-      newData.subjectDomain = validDomains[0]; // Reset to first valid option
+      const validDomains = goalDomainMap[value] || STUDY_GOAL_DOMAIN_MAP[value as StudyGoal] || [];
+      newData.subjectDomain = validDomains[0] || ''; // Reset to first valid option
     }
     
     setFormData(newData);
@@ -209,7 +248,7 @@ export const BuddyPreferenceForm: React.FC<BuddyPreferenceFormProps> = ({
 
 
   const renderAdvancedFields = () => {
-    const validDomains = STUDY_GOAL_DOMAIN_MAP[formData.studyGoal as StudyGoal] || [SubjectDomain.OTHERS];
+    const validDomains = goalDomainMap[formData.studyGoal] || STUDY_GOAL_DOMAIN_MAP[formData.studyGoal as StudyGoal] || [SubjectDomain.OTHERS];
     
     return (
       <div className="space-y-4">

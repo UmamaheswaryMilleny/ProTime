@@ -166,7 +166,7 @@ export interface BuddyProfile {
   studyLanguage: string;
   frequency: StudyFrequency;
   lastActiveAt?: string;
-  subjectDomain?: SubjectDomain;
+  subjectDomain?: SubjectDomain | string;
   availability?: Availability;
   sessionDuration?: SessionDuration;
   focusLevel?: FocusLevel;
@@ -185,7 +185,7 @@ export interface BuddyPreference {
   studyLanguage: string;
   frequency: StudyFrequency;
   isVisible: boolean;
-  subjectDomain?: SubjectDomain;
+  subjectDomain?: SubjectDomain | string;
   availability?: Availability;
   sessionDuration?: SessionDuration;
   focusLevel?: FocusLevel;
@@ -200,7 +200,7 @@ export interface SaveBuddyPreferenceRequest {
   studyLanguage: string;
   frequency: StudyFrequency;
   isVisible: boolean;
-  subjectDomain?: SubjectDomain;
+  subjectDomain?: SubjectDomain | string;
   availability?: Availability;
   sessionDuration?: SessionDuration;
   focusLevel?: FocusLevel;
