@@ -25,7 +25,11 @@ import { ROUTES } from '../../../shared/constants/constants.routes';
 import type { BuddyProfile, BuddyConnection } from '../types/buddy.types';
 import { buddyService } from '../services/buddy.service';
 import { chatApi } from '../../chat/api/chatApi';
+import { setConversations } from '../../chat/store/chatSlice';
+import { socketService } from '../../../shared/services/socketService';
 import { toast } from 'react-hot-toast';
+import { ConversationSidebar } from '../../chat/components/ConversationSidebar';
+import { MessageWindow } from '../../chat/components/MessageWindow';
 
 export const FindBuddyPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -42,16 +46,20 @@ export const FindBuddyPage: React.FC = () => {
   } = useAppSelector((state) => state.buddy);
   const totalMatches = useAppSelector(state => state.buddy.totalMatches);
   const isPremium = useAppSelector((state) => state.auth.user?.isPremium || false);
+  const { conversations } = useAppSelector((state) => state.chat);
+
+  const unreadMessagesCount = conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0);
 
   const getTabFromPath = (path: string, search: string) => {
     const params = new URLSearchParams(search);
     if (params.get('tab') === 'blocked') return 'blocked';
+    if (params.get('tab') === 'messages') return 'messages';
     if (path === ROUTES.DASHBOARD_BUDDY_REQUESTS) return 'requests';
     if (path === ROUTES.DASHBOARD_MY_BUDDIES) return 'mybuddy';
     return 'find';
   };
 
-  const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked'>(() =>
+  const [activeTab, setActiveTab] = useState<'find' | 'requests' | 'mybuddy' | 'blocked' | 'messages'>(() =>
     getTabFromPath(location.pathname, location.search)
   );
   const [searchQuery, setSearchQuery] = useState('');
@@ -63,6 +71,15 @@ export const FindBuddyPage: React.FC = () => {
   const [unblockingIds, setUnblockingIds] = useState<Record<string, boolean>>({});
   const itemsPerPage = 10;
 
+  // Sidebar minimize state and selected conversation state for Messages tab
+  const [isSidebarMinimized, setIsSidebarMinimized] = useState(() => localStorage.getItem('chat_sidebar_minimized') === 'true');
+  const queryParams = new URLSearchParams(location.search);
+  const selectedConvId = queryParams.get('convId') || undefined;
+
+  useEffect(() => {
+    localStorage.setItem('chat_sidebar_minimized', isSidebarMinimized.toString());
+  }, [isSidebarMinimized]);
+
   // For editing preferences in sidebar locally before applying
   const [editPrefs, setEditPrefs] = useState<any>(null);
   const [preferencesReady, setPreferencesReady] = useState(false);
@@ -73,6 +90,22 @@ export const FindBuddyPage: React.FC = () => {
     dispatch(fetchPendingRequests());
     dispatch(fetchSentRequests());
     loadBlockedUsers();
+
+    const fetchConvs = async () => {
+      try {
+        const res = await chatApi.getConversations();
+        if (res.success) {
+          dispatch(setConversations(res.data));
+          const allIds = res.data.map(c => c.id);
+          if (allIds.length > 0) {
+            socketService.emit('join:conversations', allIds);
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load conversations on mount in FindBuddyPage:', err);
+      }
+    };
+    fetchConvs();
 
     // Sync isPremium in case the JWT is stale after a recent payment
     subscriptionService.getSubscription()
@@ -268,6 +301,50 @@ export const FindBuddyPage: React.FC = () => {
     }
   };
 
+  if (activeTab === 'messages') {
+    return (
+      <div className="flex h-[calc(100vh-32px)] sm:h-[calc(100vh-48px)] lg:h-[calc(100vh-64px)] w-full bg-zinc-900/50 rounded-2xl border border-white/5 overflow-hidden">
+        <div className={`transition-all duration-300 border-r border-white/5 ${selectedConvId ? 'hidden md:block' : 'block'} w-full flex-shrink-0 ${isSidebarMinimized ? 'md:w-24' : 'md:w-1/3 max-w-sm'}`}>
+          <ConversationSidebar 
+            isMinimized={isSidebarMinimized} 
+            onToggle={() => setIsSidebarMinimized(!isSidebarMinimized)} 
+            activeConversationId={selectedConvId}
+            onSelectConversation={(id) => navigate(`/dashboard/find-buddy?tab=messages&convId=${id}`)}
+            onBack={() => navigate('/dashboard/find-buddy')}
+          />
+        </div>
+
+        {/* Message window */}
+        <div className={`flex-1 flex flex-col ${!selectedConvId ? 'hidden md:flex' : 'flex'} h-full bg-transparent`}>
+          {selectedConvId ? (
+            <div className="flex flex-col flex-1 h-full relative">
+              {/* Mobile Back Button wrapper */}
+              <div className="md:hidden flex items-center px-6 py-2 bg-zinc-900/40 border-b border-white/5 gap-2">
+                <button
+                  onClick={() => navigate('/dashboard/find-buddy?tab=messages')}
+                  className="py-1 px-3 bg-zinc-800 border border-white/10 rounded-full text-zinc-400 hover:text-white flex items-center gap-1 text-xs font-bold transition-all hover:bg-zinc-700"
+                >
+                  <ArrowRight size={12} className="rotate-180" />
+                  Back to Messages
+                </button>
+              </div>
+              <div className="flex-1 min-h-0 flex flex-col">
+                <MessageWindow conversationId={selectedConvId} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-gray-500 space-y-4">
+              <svg className="w-16 h-16 text-gray-300 dark:text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+              <p>Select a conversation to start chatting</p>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black text-white p-6 pb-24 lg:p-12 lg:pb-12">
       <div className="mb-10">
@@ -284,8 +361,10 @@ export const FindBuddyPage: React.FC = () => {
                 if (tab === 'find') navigate(ROUTES.DASHBOARD_FIND_BUDDY);
                 else if (tab === 'requests') navigate(ROUTES.DASHBOARD_BUDDY_REQUESTS);
                 else if (tab === 'mybuddy') navigate(ROUTES.DASHBOARD_MY_BUDDIES);
+                else if (tab === 'messages') navigate(`${ROUTES.DASHBOARD_FIND_BUDDY}?tab=messages`);
               }}
               requestCount={pendingRequests.length}
+              unreadMessagesCount={unreadMessagesCount}
             />
             {/* Blocked tab */}
             <button
@@ -545,6 +624,7 @@ export const FindBuddyPage: React.FC = () => {
                   )}
                 </div>
               )}
+
 
               {activeTab === 'blocked' && (
                 <div className="space-y-3">
