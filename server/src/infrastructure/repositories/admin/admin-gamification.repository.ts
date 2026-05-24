@@ -246,6 +246,10 @@ export class AdminGamificationRepository implements IAdminGamificationRepository
       description: b.description,
       iconUrl: b.iconUrl,
       category: b.category,
+      conditionType: b.conditionType,
+      conditionValue: b.conditionValue,
+      xpReward: b.xpReward ?? 50,
+      premiumRequired: b.premiumRequired ?? false,
       criteriaUrl: b.conditionType + ' ' + b.conditionValue, // Simplified criteria
       usersEarned: statsMap.get(b._id.toString()) || 0,
       isActive: b.isActive

@@ -13,6 +13,9 @@ import type { SessionScheduleRequestResponseDTO } from '../../../dto/calendar/re
 import { ConversationNotFoundError } from '../../../../domain/errors/chat.errors';
 import { ScheduleConfirmStatus } from '../../../../domain/enums/calendar.enums';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
+import type { IDirectMessageRepository } from '../../../../domain/repositories/chat/direct-message.repository.interface';
+import { MessageType, MessageStatus } from '../../../../domain/enums/chat.enums';
+import { ChatMapper } from '../../../mapper/chat.mapper';
 
 @injectable()
 export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
@@ -34,6 +37,9 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
 
     @inject('INotificationService')
     private readonly notificationService: INotificationService,
+
+    @inject('IDirectMessageRepository')
+    private readonly messageRepo: IDirectMessageRepository,
   ) {}
 
   async execute(
@@ -63,19 +69,40 @@ export class ProposeNextSessionUsecase implements IProposeNextSessionUsecase {
     });
 
     const proposer = await this.userRepo.findById(userId);
+    const proposerName = proposer?.fullName ?? 'A Buddy';
+
     const response = CalendarMapper.scheduleRequestToResponse(
       request,
-      proposer?.fullName ?? 'Unknown',
+      proposerName,
     );
 
     this.socketService.emitToUser(participantId, 'schedule:proposed', response);
+
+    // Save and broadcast system message to chat
+    const systemMessage = await this.messageRepo.save({
+      conversationId,
+      senderId: null,
+      content: `${proposerName} proposed a new study session`,
+      messageType: MessageType.SYSTEM,
+      status: MessageStatus.DELIVERED,
+    });
+
+    await this.conversationRepo.updateLastMessage(
+      conversationId,
+      systemMessage.createdAt,
+      null as any,
+    );
+
+    const msgResponse = ChatMapper.messageToResponse(systemMessage, null);
+    this.socketService.emitToUser(userId, 'chat:message', msgResponse);
+    this.socketService.emitToUser(participantId, 'chat:message', msgResponse);
 
     // Also send in-app notification for the bell icon
     try {
       this.notificationService.notifyUser(participantId, {
         type: NotificationType.SCHEDULE_REQUESTED,
         title: '📅 New Study Schedule Request',
-        message: `${proposer?.fullName ?? 'A Buddy'} proposed a study session.`,
+        message: `${proposerName} proposed a study session.`,
         metadata: { requestId: request.id, conversationId }
       });
     } catch (err: unknown) {

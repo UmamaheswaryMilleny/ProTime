@@ -4,6 +4,7 @@ import type { ITodoRepository }           from '../../../../domain/repositories/
 import type { IGamificationRepository }   from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IUserBadgeRepository }       from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
+import type { IStudyRoomRepository }      from '../../../../domain/repositories/study-room/study-room.repository.interface';
 
 import { TodoStatus, TodoPriority }  from '../../../../domain/enums/todo.enums';
 import type {
@@ -47,16 +48,42 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
 
     @inject('IBadgeDefinitionRepository')
     private readonly badgeDefinitionRepository: IBadgeDefinitionRepository,
+
+    @inject('IStudyRoomRepository')
+    private readonly studyRoomRepository: IStudyRoomRepository,
   ) {}
 
   async execute(userId: string, range: ReportRange, month?: string): Promise<ProductivityReportDTO> {
+    const allTodos = await this.todoRepository.findByUserId(userId, 'all');
+
     let since: Date;
     let until: Date;
     let dayKeys: string[] = [];
     const isCalendarMonth = month && /^\d{4}-\d{2}$/.test(month);
+    const isMonthRange = month && /^\d{4}-\d{2}_\d{4}-\d{2}$/.test(month);
 
-    if (isCalendarMonth) {
-      const parts = month.split('-');
+    if (isMonthRange) {
+      const parts = month!.split('_');
+      const startStr = parts[0] || '';
+      const endStr = parts[1] || '';
+      const startParts = startStr.split('-').map(Number);
+      const endParts = endStr.split('-').map(Number);
+
+      const startYear = startParts[0] || 2026;
+      const startMonthVal = startParts[1] || 1;
+      const endYear = endParts[0] || 2026;
+      const endMonthVal = endParts[1] || 12;
+
+      since = new Date(Date.UTC(startYear, startMonthVal - 1, 1, 0, 0, 0, 0));
+      until = new Date(Date.UTC(endYear, endMonthVal, 0, 23, 59, 59, 999));
+
+      const temp = new Date(since);
+      while (temp <= until) {
+        dayKeys.push(toDateKey(temp));
+        temp.setUTCDate(temp.getUTCDate() + 1);
+      }
+    } else if (isCalendarMonth) {
+      const parts = month!.split('-');
       const year = Number(parts[0]);
       const monthIndex = Number(parts[1]) - 1;
       since = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0, 0));
@@ -66,6 +93,25 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
       for (let d = 1; d <= totalDays; d++) {
         const date = new Date(Date.UTC(year, monthIndex, d));
         dayKeys.push(toDateKey(date));
+      }
+    } else if (range === 'all') {
+      let earliestDate = new Date();
+      if (allTodos.length > 0) {
+        allTodos.forEach(t => {
+          const d = new Date(t.completedAt ?? t.updatedAt ?? t.createdAt);
+          if (d < earliestDate) earliestDate = d;
+        });
+      } else {
+        earliestDate = new Date(Date.now() - 30 * 86_400_000);
+      }
+      since = new Date(earliestDate);
+      since.setUTCHours(0, 0, 0, 0);
+      until = new Date();
+
+      const temp = new Date(since);
+      while (temp <= until) {
+        dayKeys.push(toDateKey(temp));
+        temp.setUTCDate(temp.getUTCDate() + 1);
       }
     } else {
       let days = 7;
@@ -86,11 +132,11 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     }
 
     // ── 1. Fetch raw data in parallel ─────────────────────────────────────────
-    const [allTodos, gamification, userBadges, allBadgeDefs] = await Promise.all([
-      this.todoRepository.findByUserId(userId, 'all'),
+    const [gamification, userBadges, allBadgeDefs, roomsJoined] = await Promise.all([
       this.gamificationRepository.findByUserId(userId),
       this.userBadgeRepository.findAllByUserId(userId),
       this.badgeDefinitionRepository.findAllActive(),
+      this.studyRoomRepository.countJoinedOrHostedInMonth(userId, since, until),
     ]);
 
     // ── 2. Filter todos to date range ──────────────────────────────────────────
@@ -98,11 +144,10 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     const rangedTodos = allTodos.filter(t => {
       const ref = t.completedAt ?? t.updatedAt ?? t.createdAt;
       const refDate = new Date(ref);
-      return isCalendarMonth ? (refDate >= since && refDate <= until) : (refDate >= since);
+      return (isCalendarMonth || isMonthRange) ? (refDate >= since && refDate <= until) : (refDate >= since);
     });
 
     const completedTodos = rangedTodos.filter(t => t.status === TodoStatus.COMPLETED);
-    const expiredTodos   = rangedTodos.filter(t => t.status === TodoStatus.EXPIRED);
 
     // ── 3. Summary ────────────────────────────────────────────────────────────
     const tasksWithPomodoro    = completedTodos.filter(t => t.pomodoroCompleted).length;
@@ -164,7 +209,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     }));
 
     // ── 7. Task table ─────────────────────────────────────────────────────────
-    const tasks: ReportTaskItem[] = [...completedTodos, ...expiredTodos]
+    const tasks: ReportTaskItem[] = completedTodos
       .sort((a, b) => {
         const aDate = new Date(a.completedAt ?? a.updatedAt ?? a.createdAt).getTime();
         const bDate = new Date(b.completedAt ?? b.updatedAt ?? b.createdAt).getTime();
@@ -200,7 +245,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
       currentStreak: 0,
       longestStreak: 0,
       currentLevel:  1,
-      currentTitle:  'Beginner',
+      currentTitle:  'Beginner - Starting Point',
     };
 
     return {
@@ -214,6 +259,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         tasksWithPomodoro,
         tasksWithoutPomodoro,
         totalFocusMinutes,
+        roomsJoined,
       },
       xpTrend,
       taskByPriority,

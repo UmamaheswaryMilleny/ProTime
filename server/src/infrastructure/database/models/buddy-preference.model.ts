@@ -21,7 +21,7 @@ export interface BuddyPreferenceDocument extends Document {
   isVisible:       boolean;
   lastActiveAt:    Date | null;
   // premium fields — null when not set
-  subjectDomain:   SubjectDomain | null;
+  subjectDomain:   string | null;
   availability:    Availability | null;
   sessionDuration: SessionDuration | null;
   focusLevel:      FocusLevel | null;

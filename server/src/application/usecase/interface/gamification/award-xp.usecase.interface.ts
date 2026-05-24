@@ -9,5 +9,6 @@ export interface IAwardXpUsecase {
         isPremium: boolean;
         source: XpSource;
         todoId?: string;  
+        suppressNotification?: boolean;
     }): Promise<AwardXpResponseDTO>;
 }

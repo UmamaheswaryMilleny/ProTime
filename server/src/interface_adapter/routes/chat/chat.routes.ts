@@ -99,6 +99,12 @@ const sessionCtrl        = container.resolve(ChatSessionController);
       asyncHandler(sessionCtrl.endSession.bind(sessionCtrl)),
     );
 
+    // GET /api/v1/chat/:conversationId/buddy-session/current
+    this.router.get(
+      '/:conversationId/buddy-session/current',
+      asyncHandler(sessionCtrl.getCurrentSessionState.bind(sessionCtrl)),
+    );
+
     // POST /api/v1/chat/:conversationId/buddy-session/propose
     this.router.post(
       '/:conversationId/buddy-session/propose',

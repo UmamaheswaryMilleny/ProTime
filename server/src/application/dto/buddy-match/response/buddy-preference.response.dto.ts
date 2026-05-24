@@ -14,7 +14,7 @@ export interface BuddyPreferenceResponseDTO {
   isVisible:     boolean;
   lastActiveAt?: Date;
   // premium fields
-  subjectDomain?:   SubjectDomain;
+  subjectDomain?:   string;
   availability?:    Availability;
   sessionDuration?: SessionDuration;
   focusLevel?:      FocusLevel;

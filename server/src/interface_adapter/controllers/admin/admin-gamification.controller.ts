@@ -6,8 +6,12 @@ import type {
   IGetGamificationUserDetailUsecase, 
   IGetGamificationLeaderboardUsecase, 
   IGetBadgesGridUsecase, 
-  IToggleBadgeUsecase 
+  IToggleBadgeUsecase,
+  ICreateBadgeUsecase,
+  IUpdateBadgeUsecase,
+  IDeleteBadgeUsecase
 } from '../../../application/usecase/interface/admin/admin-gamification.usecases.interface';
+import type { ICloudinaryService } from '../../../application/service_interface/cloudinary.service.interface';
 
 @injectable()
 export class AdminGamificationController {
@@ -17,7 +21,11 @@ export class AdminGamificationController {
     @inject('IGetGamificationUserDetailUsecase') private getUserDetailUsecase: IGetGamificationUserDetailUsecase,
     @inject('IGetGamificationLeaderboardUsecase') private getLeaderboardUsecase: IGetGamificationLeaderboardUsecase,
     @inject('IGetBadgesGridUsecase') private getBadgesGridUsecase: IGetBadgesGridUsecase,
-    @inject('IToggleBadgeUsecase') private toggleBadgeUsecase: IToggleBadgeUsecase
+    @inject('IToggleBadgeUsecase') private toggleBadgeUsecase: IToggleBadgeUsecase,
+    @inject('ICreateBadgeUsecase') private createBadgeUsecase: ICreateBadgeUsecase,
+    @inject('IUpdateBadgeUsecase') private updateBadgeUsecase: IUpdateBadgeUsecase,
+    @inject('IDeleteBadgeUsecase') private deleteBadgeUsecase: IDeleteBadgeUsecase,
+    @inject('ICloudinaryService') private readonly cloudinaryService: ICloudinaryService
   ) {}
 
   async getOverview(req: Request, res: Response) {
@@ -68,5 +76,62 @@ export class AdminGamificationController {
     const badgeId = req.params.badgeId as string;
     await this.toggleBadgeUsecase.execute(badgeId);
     res.status(200).json({ success: true, message: 'Badge status toggled' });
+  }
+
+  async createBadge(req: Request, res: Response) {
+    let iconUrl = req.body.iconUrl;
+    if (req.file) {
+      const { url } = await this.cloudinaryService.uploadImage(
+        req.file.buffer,
+        'protime/badges',
+        `badge_${Date.now()}`,
+        req.file.mimetype,
+      );
+      iconUrl = url;
+    }
+
+    const payload = {
+      ...req.body,
+      iconUrl,
+      conditionValue: req.body.conditionValue ? Number(req.body.conditionValue) : undefined,
+      xpReward: req.body.xpReward ? Number(req.body.xpReward) : undefined,
+      premiumRequired: req.body.premiumRequired === 'true' || req.body.premiumRequired === true,
+      isActive: req.body.isActive === 'true' || req.body.isActive === true,
+    };
+
+    const data = await this.createBadgeUsecase.execute(payload);
+    res.status(201).json({ success: true, data });
+  }
+
+  async updateBadge(req: Request, res: Response) {
+    const badgeId = req.params.badgeId as string;
+    let iconUrl = req.body.iconUrl;
+    if (req.file) {
+      const { url } = await this.cloudinaryService.uploadImage(
+        req.file.buffer,
+        'protime/badges',
+        `badge_${Date.now()}`,
+        req.file.mimetype,
+      );
+      iconUrl = url;
+    }
+
+    const payload = {
+      ...req.body,
+      iconUrl,
+      conditionValue: req.body.conditionValue ? Number(req.body.conditionValue) : undefined,
+      xpReward: req.body.xpReward ? Number(req.body.xpReward) : undefined,
+      premiumRequired: req.body.premiumRequired === 'true' || req.body.premiumRequired === true,
+      isActive: req.body.isActive === 'true' || req.body.isActive === true,
+    };
+
+    const data = await this.updateBadgeUsecase.execute(badgeId, payload);
+    res.status(200).json({ success: true, data });
+  }
+
+  async deleteBadge(req: Request, res: Response) {
+    const badgeId = req.params.badgeId as string;
+    await this.deleteBadgeUsecase.execute(badgeId);
+    res.status(200).json({ success: true, message: 'Badge deleted successfully' });
   }
 }

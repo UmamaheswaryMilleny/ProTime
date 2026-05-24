@@ -17,6 +17,7 @@ import { AdminDashboardController } from "../../controllers/admin/admin-dashboar
 import { AdminMeetingController }  from '../../controllers/admin/admin-meeting.controller';
 import { AdminGamificationController } from '../../controllers/admin/admin-gamification.controller';
 import { AdminSkillController } from '../../controllers/admin/admin-skill.controller';
+import { uploadMiddleware } from "../../middlewares/upload.middleware";
 
 @injectable()
 export class AdminRoutes extends BaseRoute {
@@ -132,6 +133,20 @@ export class AdminRoutes extends BaseRoute {
       ROUTES.ADMIN.GAMIFICATION_BADGES,
       asyncHandler(gamificationCtrl.getBadgesGrid.bind(gamificationCtrl)),
     );
+    this.router.post(
+      ROUTES.ADMIN.GAMIFICATION_BADGES,
+      uploadMiddleware.single('icon'),
+      asyncHandler(gamificationCtrl.createBadge.bind(gamificationCtrl)),
+    );
+    this.router.put(
+      ROUTES.ADMIN.GAMIFICATION_BADGE_BY_ID,
+      uploadMiddleware.single('icon'),
+      asyncHandler(gamificationCtrl.updateBadge.bind(gamificationCtrl)),
+    );
+    this.router.delete(
+      ROUTES.ADMIN.GAMIFICATION_BADGE_BY_ID,
+      asyncHandler(gamificationCtrl.deleteBadge.bind(gamificationCtrl)),
+    );
     this.router.patch(
       ROUTES.ADMIN.GAMIFICATION_BADGE_TOGGLE,
       asyncHandler(gamificationCtrl.toggleBadge.bind(gamificationCtrl)),
@@ -141,6 +156,10 @@ export class AdminRoutes extends BaseRoute {
     this.router.get(
       ROUTES.ADMIN.SKILLS,
       asyncHandler(skillCtrl.getSkills.bind(skillCtrl)),
+    );
+    this.router.post(
+      ROUTES.ADMIN.SKILL_SEED_DEFAULTS,
+      asyncHandler(skillCtrl.seedDefaultSkills.bind(skillCtrl)),
     );
     this.router.post(
       ROUTES.ADMIN.SKILLS,

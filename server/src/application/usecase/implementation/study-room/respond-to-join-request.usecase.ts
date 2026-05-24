@@ -24,9 +24,18 @@ export class RespondToJoinRequestUsecase implements IRespondToJoinRequestUsecase
     const room = await this.studyRoomRepo.findById(request.roomId);
     if (!room) throw new RoomNotFoundError();
 
-    if (room.hostId !== hostId) throw new UnauthorizedRoomActionError();
+    const isHost = room.hostId === hostId;
+    const isInvitee = request.userId === hostId;
 
-    if (request.status !== JoinRequestStatus.PENDING) {
+    if (!isHost && !isInvitee) {
+      throw new UnauthorizedRoomActionError();
+    }
+
+    // Host responds to PENDING join requests. Invitee responds to INVITED requests.
+    if (isHost && request.status !== JoinRequestStatus.PENDING) {
+      throw new JoinRequestAlreadyRespondedError();
+    }
+    if (isInvitee && request.status !== JoinRequestStatus.INVITED) {
       throw new JoinRequestAlreadyRespondedError();
     }
 
@@ -41,7 +50,10 @@ export class RespondToJoinRequestUsecase implements IRespondToJoinRequestUsecase
         this.socketService.emitToRoom(request.roomId, 'room:user-joined', { userId: request.userId, roomId: request.roomId });
       }
     } else {
-      this.socketService.emitToUser(request.userId, 'room:request-rejected', { roomId: request.roomId });
+      // Only emit rejection notice to the user if the host rejected it
+      if (isHost) {
+        this.socketService.emitToUser(request.userId, 'room:request-rejected', { roomId: request.roomId });
+      }
     }
 
     const updatedRequest = await this.joinRequestRepo.updateStatus(requestId, newStatus, respondedAt);

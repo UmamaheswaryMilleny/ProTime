@@ -20,6 +20,10 @@ export interface IBuddySessionRepository
     cutoffTime: Date,
   ): Promise<BuddySessionEntity[]>;
 
+  findActiveSessionsBefore(
+    cutoffTime: Date,
+  ): Promise<BuddySessionEntity[]>;
+
   updateStatus(
     id:     string,
     status: BuddySessionEntity['status'],

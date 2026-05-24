@@ -7,6 +7,7 @@ import type { BuddyPreferenceResponseDTO } from '../../../dto/buddy-match/respon
 import { STUDY_GOAL_DOMAIN_MAP } from '../../../../domain/enums/buddy.enums';
 import { InvalidSubjectDomainError } from '../../../../domain/errors/buddy.errors';
 import { BuddyMapper } from '../../../mapper/buddy.mapper';
+import { SkillModel } from '../../../../infrastructure/database/models/skill.model';
 
 @injectable()
 export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
@@ -29,8 +30,15 @@ export class SaveBuddyPreferenceUsecase implements ISaveBuddyPreferenceUsecase {
 
     if (isPremium && dto.subjectDomain) {
       const validDomains = STUDY_GOAL_DOMAIN_MAP[dto.studyGoal];
-      if (!validDomains.includes(dto.subjectDomain)) {
-        throw new InvalidSubjectDomainError();
+      if (!validDomains.includes(dto.subjectDomain as any)) {
+        const skillExists = await SkillModel.exists({
+          category: dto.studyGoal,
+          name: dto.subjectDomain,
+          isActive: true
+        });
+        if (!skillExists) {
+          throw new InvalidSubjectDomainError();
+        }
       }
     }
 

@@ -22,7 +22,10 @@ import {
   GetGamificationUserDetailUsecase,
   GetGamificationLeaderboardUsecase,
   GetBadgesGridUsecase,
-  ToggleBadgeUsecase
+  ToggleBadgeUsecase,
+  CreateBadgeUsecase,
+  UpdateBadgeUsecase,
+  DeleteBadgeUsecase
 } from '../../application/usecase/implementation/admin/admin-gamification.usecases';
 import type {
   IGetGamificationOverviewUsecase,
@@ -30,7 +33,10 @@ import type {
   IGetGamificationUserDetailUsecase,
   IGetGamificationLeaderboardUsecase,
   IGetBadgesGridUsecase,
-  IToggleBadgeUsecase
+  IToggleBadgeUsecase,
+  ICreateBadgeUsecase,
+  IUpdateBadgeUsecase,
+  IDeleteBadgeUsecase
 } from '../../application/usecase/interface/admin/admin-gamification.usecases.interface';
 
 // Use case interfaces
@@ -184,6 +190,7 @@ import type { IMarkMissedSessionsUsecase }         from '../../application/useca
 import type { IExpireScheduleRequestsUsecase }     from '../../application/usecase/interface/calendar/expire-schedule-requests.usecase.interface';
 import type { IGetPendingScheduleRequestsUsecase } from '../../application/usecase/interface/calendar/get-pending-schedule-requests.usecase.interface';
 import type { ICreateSoloEventUsecase }            from '../../application/usecase/interface/calendar/create-solo-event.usecase.interface';
+import type { IGetCurrentSessionStateUsecase }     from '../../application/usecase/interface/calendar/get-current-session-state.usecase.interface';
 import { StartSessionUsecase } from '../../application/usecase/implementation/calendar/start-session.usecase';
 import { EndSessionUsecase } from '../../application/usecase/implementation/calendar/end-session.usecase';
 import { SaveSessionNotesUsecase } from '../../application/usecase/implementation/calendar/save-session-notes.usecase';
@@ -196,6 +203,7 @@ import { ExpireScheduleRequestsUsecase } from '../../application/usecase/impleme
 import { GetPendingScheduleRequestsUsecase } from '../../application/usecase/implementation/calendar/get-pending-schedule-requests.usecase';
 import { ProposeRecurringSessionUsecase } from '../../application/usecase/implementation/calendar/propose-recurring-session.usecase';
 import { CreateSoloEventUsecase }         from '../../application/usecase/implementation/calendar/create-solo-event.usecase';
+import { GetCurrentSessionStateUsecase }  from '../../application/usecase/implementation/calendar/get-current-session-state.usecase';
 
 // study-rooms
 import type { ICreateRoomUsecase } from '../../application/usecase/interface/study-room/create-room.usecase.interface';
@@ -286,6 +294,9 @@ export class UsecaseRegistry {
     container.register<IGetGamificationLeaderboardUsecase>('IGetGamificationLeaderboardUsecase', { useClass: GetGamificationLeaderboardUsecase });
     container.register<IGetBadgesGridUsecase>('IGetBadgesGridUsecase', { useClass: GetBadgesGridUsecase });
     container.register<IToggleBadgeUsecase>('IToggleBadgeUsecase', { useClass: ToggleBadgeUsecase });
+    container.register<ICreateBadgeUsecase>('ICreateBadgeUsecase', { useClass: CreateBadgeUsecase });
+    container.register<IUpdateBadgeUsecase>('IUpdateBadgeUsecase', { useClass: UpdateBadgeUsecase });
+    container.register<IDeleteBadgeUsecase>('IDeleteBadgeUsecase', { useClass: DeleteBadgeUsecase });
 
     // todo
     container.register<ICreateTodoUsecase>('ICreateTodoUsecase', {
@@ -468,6 +479,7 @@ container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass:
     container.register<IExpireScheduleRequestsUsecase>    ('IExpireScheduleRequestsUsecase',    { useClass: ExpireScheduleRequestsUsecase });
     container.register<IGetPendingScheduleRequestsUsecase>('IGetPendingScheduleRequestsUsecase',{ useClass: GetPendingScheduleRequestsUsecase });
     container.register<ICreateSoloEventUsecase>           ('ICreateSoloEventUsecase',           { useClass: CreateSoloEventUsecase });
+    container.register<IGetCurrentSessionStateUsecase>     ('IGetCurrentSessionStateUsecase',     { useClass: GetCurrentSessionStateUsecase });
 
     // study-rooms
     container.register<ICreateRoomUsecase>('ICreateRoomUsecase', { useClass: CreateRoomUsecase });

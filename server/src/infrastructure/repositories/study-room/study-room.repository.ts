@@ -22,8 +22,8 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
     } else if (params.excludeEnded) {
       // Explore tab: exclude ENDED rooms AND stale WAITING rooms whose session
       // time has already passed (startTime + 4 h buffer, or endTime < now).
-      const now = new Date();
-      const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
+      const nowStr = new Date().toISOString();
+      const fourHoursAgoStr = new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString();
 
       query.$or = [
         // Always include LIVE sessions
@@ -33,11 +33,19 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
           status: RoomStatus.WAITING,
           $or: [
             // Has explicit end time still in the future
-            { endTime: { $gt: now } },
+            { endTime: { $gt: nowStr } },
             // Has start time that was within the last 4 hours (grace window), no endTime
-            { startTime: { $gt: fourHoursAgo }, endTime: { $exists: false } },
-            // Immediate rooms (no startTime set) — always show
+            {
+              startTime: { $gt: fourHoursAgoStr },
+              $or: [
+                { endTime: { $exists: false } },
+                { endTime: null }
+              ]
+            },
+            // Immediate rooms (no startTime set or set to 'IMMEDIATE') — always show
+            { startTime: 'IMMEDIATE' },
             { startTime: { $exists: false } },
+            { startTime: null }
           ],
         },
       ];
@@ -93,6 +101,19 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
   async countCreatedByHostInMonth(hostId: string, startDate: Date, endDate: Date): Promise<number> {
     return this.model.countDocuments({
       hostId,
+      createdAt: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    }).exec();
+  }
+
+  async countJoinedOrHostedInMonth(userId: string, startDate: Date, endDate: Date): Promise<number> {
+    return this.model.countDocuments({
+      $or: [
+        { hostId: userId },
+        { participantIds: userId }
+      ],
       createdAt: {
         $gte: startDate,
         $lte: endDate
