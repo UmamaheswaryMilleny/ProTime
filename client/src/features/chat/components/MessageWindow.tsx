@@ -45,6 +45,11 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   const [isShareTodoOpen, setIsShareTodoOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
+
+  // Scheduled / Active Session States
+  const [activeSession, setActiveSession] = useState<any>(null);
+  const [plannedSession, setPlannedSession] = useState<any>(null);
+  const [sessionActionLoading, setSessionActionLoading] = useState(false);
   
   // Persist AI drawer state across refreshes
   const [isAiMode, setIsAiMode] = useState(() => localStorage.getItem(`chat_ai_mode_${conversationId}`) === 'true');
@@ -112,10 +117,23 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
   } = usePomodoro();
 
   const handleStartTodoPomodoro = (todo: TodoItem) => {
+    // 1. Check if running in Redux for a DIFFERENT task
     if (activeTask?.id && isTodoRunning && activeTask.id !== todo.id) {
-      toast.error('A Pomodoro is already running. Finish it first.');
+      toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
       return;
     }
+
+    // 2. Check if running in TodoPage local storage
+    const localActiveTaskId = localStorage.getItem('pomodoro_activeTaskId');
+    if (localActiveTaskId) {
+      const isLocalRunning = localStorage.getItem(`pomodoro_${localActiveTaskId}_isRunning`) === 'true';
+      if (isLocalRunning) {
+        const localTitle = localStorage.getItem('pomodoro_activeTaskTitle') || 'another task';
+        toast.error(`A Pomodoro is already running for "${localTitle}". Stop it to start a new one.`);
+        return;
+      }
+    }
+
     startTodoTimer(todo, 25 * 60, conversationId);
     setIsTodoPomodoroModalOpen(true);
   };
@@ -186,6 +204,77 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     messagesEndRef.current?.scrollIntoView({ behavior });
   };
 
+  const fetchSessionState = useCallback(async () => {
+    try {
+      const res = await chatApi.getCurrentSessionState(conversationId);
+      if (res.success) {
+        setActiveSession(res.data.active);
+        setPlannedSession(res.data.planned);
+      }
+    } catch (err) {
+      console.error('Failed to fetch session state:', err);
+    }
+  }, [conversationId]);
+
+  const handleStartSession = async () => {
+    setSessionActionLoading(true);
+    try {
+      const res = await chatApi.startBuddySession(conversationId);
+      if (res.success) {
+        setActiveSession(res.data);
+        setPlannedSession(null);
+        toast.success('Study session started!');
+      }
+    } catch (err: any) {
+      const backendMessage = err?.response?.data?.message;
+      toast.error(backendMessage || 'Failed to start session');
+    } finally {
+      setSessionActionLoading(false);
+    }
+  };
+
+  const handleEndSession = async () => {
+    setSessionActionLoading(true);
+    try {
+      const res = await chatApi.endBuddySession(conversationId);
+      if (res.success) {
+        setActiveSession(null);
+        toast.success('Study session ended');
+        fetchSessionState();
+      }
+    } catch (err: any) {
+      const backendMessage = err?.response?.data?.message;
+      toast.error(backendMessage || 'Failed to end session');
+    } finally {
+      setSessionActionLoading(false);
+    }
+  };
+
+  const handleEndSessionConfirmation = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="text-sm font-medium text-zinc-900 text-center">Are you sure you want to end this study session?</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1 text-xs font-semibold text-zinc-600 hover:text-zinc-800 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={async () => {
+              toast.dismiss(t.id);
+              await handleEndSession();
+            }}
+            className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
+          >
+            End
+          </button>
+        </div>
+      </div>
+    ), { duration: 5000, position: 'top-center' });
+  };
+
   const loadMessages = useCallback(async (isInitial = true) => {
     setLoading(true);
     try {
@@ -225,13 +314,14 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
 
   useEffect(() => {
     loadMessages(true);
+    fetchSessionState();
     dispatch(fetchPendingRequests() as any);
 
     socketService.emit('chat:enter', conversationId);
     return () => {
       socketService.emit('chat:leave', conversationId);
     };
-  }, [conversationId]);
+  }, [conversationId, loadMessages, fetchSessionState, dispatch]);
 
   useEffect(() => {
     const handleMessage = (msg: DirectMessageResponseDTO) => {
@@ -253,14 +343,34 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       }
     };
 
+    const handleSessionStarted = (session: any) => {
+      if (session.conversationId === conversationId) {
+        setActiveSession(session);
+        setPlannedSession(null);
+        toast.success('Study session started!');
+      }
+    };
+
+    const handleSessionEnded = (session: any) => {
+      if (session.conversationId === conversationId) {
+        setActiveSession(null);
+        toast.success('Study session ended');
+        fetchSessionState();
+      }
+    };
+
     socketService.on('chat:message', handleMessage);
     socketService.on('chat:message-read', handleMessageRead);
+    socketService.on('session:started', handleSessionStarted);
+    socketService.on('session:ended', handleSessionEnded);
 
     return () => {
       socketService.off('chat:message', handleMessage);
       socketService.off('chat:message-read', handleMessageRead);
+      socketService.off('session:started', handleSessionStarted);
+      socketService.off('session:ended', handleSessionEnded);
     };
-  }, [conversationId, userId, dispatch]);
+  }, [conversationId, userId, dispatch, fetchSessionState]);
 
   const handleSend = async (content: string, attachment?: { fileUrl: string; fileName: string; fileSize: number; fileType: string; messageType: 'IMAGE' | 'FILE' }) => {
     // ─── Fix 3: guard before sending — userId must be available ─────────────
@@ -343,7 +453,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
 
   return (
     <div className="flex h-full w-full bg-transparent overflow-hidden relative">
-      <div className="flex flex-col flex-1 h-full min-w-0">
+      <div className="flex flex-col flex-1 h-full min-w-0 min-h-0">
         <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between">
           <div className="flex items-center">
             <div className="w-10 h-10 rounded-full flex items-center justify-center bg-[blueviolet]/10 text-[blueviolet] font-bold text-lg mr-3">
@@ -467,7 +577,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                       onClick={() => {
                         toast((t) => (
                           <div className="flex flex-col gap-3 p-1">
-                            <p className="text-sm font-medium text-zinc-900">Are you sure you want to delete all messages?</p>
+                            <p className="text-sm font-medium text-zinc-900">Are you sure you want to clear all messages?</p>
                             <div className="flex gap-2 justify-end">
                               <button
                                 onClick={() => toast.dismiss(t.id)}
@@ -483,16 +593,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                                     if (res.success) {
                                       setMessages([]);
                                       setIsSettingsOpen(false);
-                                      toast.success("Chat history deleted", { id: 'delete-success' });
+                                      toast.success("Chat history cleared", { id: 'delete-success' });
                                     }
                                   } catch (err: any) {
                                     const backendMessage = err?.response?.data?.message;
-                                    toast.error(backendMessage || "Failed to delete chat history");
+                                    toast.error(backendMessage || "Failed to clear chat history");
                                   }
                                 }}
                                 className="px-3 py-1 text-xs font-semibold bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors shadow-sm"
                               >
-                                Delete
+                                Clear
                               </button>
                             </div>
                           </div>
@@ -503,7 +613,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      <span>Delete Chat</span>
+                      <span>Clear Chat</span>
                     </button>
                   </div>
                 </div>
@@ -511,39 +621,114 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
             </div>
           </div>
         </div>
+        
+        {/* Study Session Banners (Pinned below header, outside scroll container) */}
+        {(activeSession || plannedSession || relevantRequest) && (
+          <div className="px-6 pt-4 pb-2 space-y-3 shrink-0 border-b border-white/5 bg-zinc-950/20">
+            {activeSession && (
+              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+                <div>
+                  <h4 className="text-sm font-bold text-emerald-400 mb-1 flex items-center gap-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+                    Active Study Session
+                  </h4>
+                  <p className="text-sm text-zinc-300">
+                    You are currently in an active study session with {otherUser?.fullName}.
+                  </p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    disabled={sessionActionLoading}
+                    onClick={handleEndSessionConfirmation}
+                    className="w-full sm:w-auto px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                  >
+                    {sessionActionLoading ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      'End Session'
+                    )}
+                  </button>
+                </div>
+              </div>
+            )}
 
-      <div
-        className="flex-1 overflow-y-auto p-4 sm:p-6 relative"
-        ref={scrollContainerRef}
-      >
-        {relevantRequest && (
-          <div className="mb-4 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <h4 className="text-sm font-bold text-indigo-400 mb-1 flex items-center gap-2">
-                <Calendar className="w-4 h-4" />
-                Schedule Request
-              </h4>
-              <p className="text-sm text-zinc-300">
-                {relevantRequest.proposerName} wants to schedule session(s) starting <span className="font-semibold text-white">{new Date(relevantRequest.scheduledAt).toLocaleString()}</span>
-                {relevantRequest.recurringDates && relevantRequest.recurringDates.length > 1 && ` for ${relevantRequest.recurringDates.length} days.`}
-              </p>
-            </div>
-            <div className="flex gap-2 w-full sm:w-auto">
-              <button
-                onClick={() => handleRespondSchedule(relevantRequest.id, 'CONFIRMED')}
-                className="flex-1 sm:flex-none px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
-              >
-                <Check className="w-4 h-4" /> Accept
-              </button>
-              <button
-                onClick={() => handleRespondSchedule(relevantRequest.id, 'REJECTED')}
-                className="flex-1 sm:flex-none px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
-              >
-                <CloseIcon className="w-4 h-4" /> Decline
-              </button>
-            </div>
+            {!activeSession && plannedSession && (() => {
+              const scheduledDate = new Date(plannedSession.scheduledAt);
+              const diffMs = scheduledDate.getTime() - Date.now();
+              const diffMins = diffMs / 60000;
+              const isStartable = diffMins <= 15;
+              const isProposer = plannedSession.initiatorId === userId;
+
+              if (!isStartable) return null;
+
+              return (
+                <div className="p-4 rounded-2xl bg-[blueviolet]/10 border border-[blueviolet]/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in fade-in duration-300">
+                  <div>
+                    <h4 className="text-sm font-bold text-[blueviolet] mb-1 flex items-center gap-2">
+                      <Calendar className="w-4 h-4" />
+                      Upcoming Scheduled Session
+                    </h4>
+                    <p className="text-sm text-zinc-300">
+                      {isProposer
+                        ? `Your scheduled session is ready to start! (Scheduled for ${scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`
+                        : `Waiting for ${otherUser?.fullName || 'buddy'} to start the scheduled session. (Scheduled for ${scheduledDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })})`}
+                    </p>
+                  </div>
+                  <div className="flex gap-2 w-full sm:w-auto">
+                    <button
+                      disabled={sessionActionLoading || !isProposer}
+                      onClick={handleStartSession}
+                      className="w-full sm:w-auto px-5 py-2.5 bg-[blueviolet] hover:bg-[blueviolet]/80 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-[blueviolet]/20 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {sessionActionLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Play className="w-4 h-4 fill-current" />
+                          {isProposer ? 'Start Session' : 'Waiting for Buddy'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {relevantRequest && (
+              <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div>
+                  <h4 className="text-sm font-bold text-indigo-400 mb-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Schedule Request
+                  </h4>
+                  <p className="text-sm text-zinc-300">
+                    {relevantRequest.proposerName} wants to schedule session(s) starting <span className="font-semibold text-white">{new Date(relevantRequest.scheduledAt).toLocaleString()}</span>
+                    {relevantRequest.recurringDates && relevantRequest.recurringDates.length > 1 && ` for ${relevantRequest.recurringDates.length} days.`}
+                  </p>
+                </div>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => handleRespondSchedule(relevantRequest.id, 'CONFIRMED')}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-indigo-500 hover:bg-indigo-600 text-white rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    <Check className="w-4 h-4" /> Accept
+                  </button>
+                  <button
+                    onClick={() => handleRespondSchedule(relevantRequest.id, 'REJECTED')}
+                    className="flex-1 sm:flex-none px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2"
+                  >
+                    <CloseIcon className="w-4 h-4" /> Decline
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+      <div
+        className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 relative"
+        ref={scrollContainerRef}
+      >
 
         {hasMore && (
           <div className="flex justify-center mb-4">
@@ -714,7 +899,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
           </div>
 
           {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 custom-scrollbar space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 custom-scrollbar space-y-4">
             {aiMessages.length === 0 && (
               <div className="flex flex-col gap-1.5 items-start">
                 <div className="bg-zinc-800/80 border border-white/5 rounded-2xl p-3 text-xs text-zinc-300 leading-relaxed rounded-bl-none shadow-lg">

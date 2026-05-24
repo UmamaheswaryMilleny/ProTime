@@ -3,6 +3,8 @@ import { Sparkles, Loader2, Send, Trash2, Zap, AlertCircle } from "lucide-react"
 import { useProBuddyChat } from "../hooks/useProBuddyChat";
 import { ProBuddyMessage, ProBuddyLoading } from "../components/ProBuddyMessage";
 import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { ROUTES } from "../../../shared/constants/constants.routes";
 
 export const ProBuddyPage: React.FC = () => {
   const { 
@@ -62,7 +64,7 @@ export const ProBuddyPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <div className="flex flex-col items-end mr-2">
             <div className="flex items-center gap-2 mb-1">
-              <span className="hidden xs:inline-block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Daily Usage</span>
+              <span className="hidden xs:inline-block text-[10px] font-bold text-zinc-500 uppercase tracking-widest">{isPremium ? 'Daily Usage' : 'Monthly Usage'}</span>
               <span className={`text-xs font-mono font-bold ${isLimitReached ? 'text-red-400' : 'text-[blueviolet]'}`}>
                 {usage.count}/{usage.limit}
               </span>
@@ -78,7 +80,46 @@ export const ProBuddyPage: React.FC = () => {
           </div>
 
           <button 
-            onClick={clearChat}
+            onClick={() => {
+              toast((t) => (
+                <div className="flex flex-col gap-3 p-1">
+                  <p className="text-sm font-semibold text-white">
+                    Are you sure you want to clear your chat history?
+                  </p>
+                  <p className="text-xs text-zinc-400">
+                    This action cannot be undone and will permanently delete all messages with ProBuddy.
+                  </p>
+                  <div className="flex gap-2 justify-end mt-1">
+                    <button 
+                      className="px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 text-xs font-bold rounded-xl transition-colors border border-white/5"
+                      onClick={() => toast.dismiss(t.id)}
+                    >
+                      No, Cancel
+                    </button>
+                    <button 
+                      className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-xl transition-colors shadow-lg shadow-red-500/10"
+                      onClick={() => {
+                        toast.dismiss(t.id);
+                        clearChat();
+                      }}
+                    >
+                      Yes, Clear
+                    </button>
+                  </div>
+                </div>
+              ), {
+                duration: Infinity,
+                position: 'top-center',
+                style: {
+                  background: '#18181B', // zinc-900
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  color: '#fff',
+                  borderRadius: '20px',
+                  padding: '16px',
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.5)',
+                }
+              });
+            }}
             className="p-2 sm:p-2.5 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-all border border-white/5 shadow-sm group"
             title="Clear Chat"
           >
@@ -87,7 +128,7 @@ export const ProBuddyPage: React.FC = () => {
           
           {!isPremium && (
             <button 
-              onClick={() => navigate('/subscription')}
+              onClick={() => navigate(ROUTES.DASHBOARD_SUBSCRIPTION)}
               className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white text-xs font-bold shadow-lg shadow-amber-500/20 hover:scale-105 transition-all group active:scale-95"
             >
               <Zap className="w-3 h-3 fill-current" />
@@ -153,12 +194,14 @@ export const ProBuddyPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <div className={`w-2 h-2 rounded-full animate-pulse ${isLimitReached ? 'bg-red-500' : 'bg-emerald-500'}`} />
                 <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
-                  {isLimitReached ? 'Daily Limit Reached' : `${Math.max(0, usage.limit - usage.count)} messages remaining today`}
+                  {isLimitReached
+                    ? isPremium ? 'Daily Limit Reached' : 'Monthly Limit Reached'
+                    : `${Math.max(0, usage.limit - usage.count)} messages remaining ${isPremium ? 'today' : 'this month'}`}
                 </span>
               </div>
               {isLimitReached && !isPremium && (
                 <button 
-                  onClick={() => navigate('/subscription')}
+                  onClick={() => navigate(ROUTES.DASHBOARD_SUBSCRIPTION)}
                   className="text-[10px] font-bold text-amber-500 hover:text-amber-400 transition-colors uppercase tracking-widest flex items-center gap-1 group"
                 >
                   Upgrade to Premium <Zap className="w-2.5 h-2.5 fill-current group-hover:scale-110 transition-transform" />
@@ -172,7 +215,7 @@ export const ProBuddyPage: React.FC = () => {
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  placeholder={isLimitReached ? "Out of messages for today..." : "Ask ProBuddy anything..."}
+                  placeholder={isLimitReached ? (isPremium ? 'Out of messages for today...' : 'Out of messages for this month...') : 'Ask ProBuddy anything...'}
                   disabled={loading || isLimitReached}
                   className="w-full bg-zinc-800/50 text-white text-sm rounded-2xl px-4 py-3 sm:py-4 pr-12 focus:outline-none focus:ring-2 focus:ring-[blueviolet]/50 focus:bg-zinc-800 transition-all resize-none max-h-32 border border-white/10 group-hover:border-white/20 disabled:opacity-30 disabled:bg-zinc-900/50 disabled:grayscale transition-all"
                   rows={1}

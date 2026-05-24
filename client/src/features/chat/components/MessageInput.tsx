@@ -19,7 +19,11 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (!document.body.contains(target)) {
+        return; // Ignore clicks on detached elements
+      }
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(target)) {
         setShowEmojiPicker(false);
       }
     };
@@ -113,9 +117,9 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
         </div>
       )}
 
-      <div className="flex items-end space-x-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 relative overflow-hidden">
+      <div className="flex items-end space-x-2 bg-gray-50 dark:bg-gray-800 rounded-2xl p-2 border border-gray-200 dark:border-gray-700 relative">
         {isUploading && (
-          <div className="absolute inset-x-0 inset-y-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[1px] flex items-center justify-center z-20 animate-in fade-in duration-200">
+          <div className="absolute inset-x-0 inset-y-0 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-[1px] flex items-center justify-center z-20 animate-in fade-in duration-200 rounded-2xl">
             <div className="flex items-center gap-2 px-3 py-1.5 bg-[blueviolet] text-white rounded-full text-xs font-bold shadow-xl">
               <Loader2 size={12} className="animate-spin" />
               <span>Uploading attachment...</span>
@@ -161,11 +165,13 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
           </button>
           
           {showEmojiPicker && (
-            <div className="absolute bottom-12 right-0 z-50">
+            <div className="absolute bottom-12 right-0 z-50 w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]">
               <EmojiPicker
                 onEmojiClick={handleEmojiClick}
                 theme={Theme.DARK}
                 lazyLoadEmojis={true}
+                width="100%"
+                height={350}
               />
             </div>
           )}
