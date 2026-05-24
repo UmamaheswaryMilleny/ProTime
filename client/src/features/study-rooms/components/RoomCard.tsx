@@ -26,13 +26,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
   
   const isPast = room.endTime 
     ? new Date(room.endTime) < new Date() 
-    : (room.startTime ? new Date(room.startTime).getTime() + (4 * 60 * 60 * 1000) < Date.now() : false);
+    : (room.startTime && room.startTime !== 'IMMEDIATE' ? new Date(room.startTime).getTime() + (4 * 60 * 60 * 1000) < Date.now() : false);
   const isExpired = isEnded || (isPast && !isLive);
 
   const handleAction = () => {
     if (isExpired) return;
     if (isMember) {
-      if (!isLive && !hasAlreadyStarted) return;
       navigate(ROUTES.DASHBOARD_STUDY_ROOMS + `/${room.id}`);
       return;
     }
@@ -105,7 +104,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
         {room.levelRequired && (
           <p className="text-[11px] text-zinc-500">Level required : {room.levelRequired}</p>
         )}
-        {room.startTime && (
+        {room.startTime && room.startTime !== 'IMMEDIATE' && (
           <p className="text-[11px] text-[blueviolet] font-medium flex items-center gap-1">
             <Clock size={10} />
             Starts: {new Date(room.startTime).toLocaleString([], { 
@@ -142,14 +141,12 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
       {/* Action Button */}
       <button
         onClick={handleAction}
-        disabled={isJoining || (isExpired) || (isFull && !isMember) || (isMember && isWaiting && !hasAlreadyStarted)}
+        disabled={isJoining || isExpired || (isFull && !isMember)}
         className={`mt-1 w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${
           isExpired
             ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5'
             : isMember
-            ? (isWaiting && !hasAlreadyStarted)
-              ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed border border-white/5'
-              : 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80 shadow-lg shadow-[blueviolet]/20'
+            ? 'bg-[blueviolet] text-white hover:bg-[blueviolet]/80 shadow-lg shadow-[blueviolet]/20'
             : (room.type === 'PUBLIC' || isInvited)
             ? isFull
               ? 'bg-zinc-800 text-zinc-400 cursor-not-allowed'
@@ -162,9 +159,7 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
           : isExpired
           ? 'Expired'
           : isMember
-          ? (isWaiting && !hasAlreadyStarted)
-            ? 'Joined Room' 
-            : 'Enter Room'
+          ? 'Enter Room'
           : (room.type === 'PUBLIC' || isInvited)
           ? isFull
             ? 'Full'

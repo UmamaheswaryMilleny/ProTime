@@ -36,6 +36,12 @@ export interface TodoListResponse {
     progress: number;
     todayXp: number;
     dailyXpCap: number;
+    pagination?: {
+        totalItems: number;
+        totalPages: number;
+        currentPage: number;
+        limit: number;
+    };
 }
 
 export interface CreateTodoDTO {

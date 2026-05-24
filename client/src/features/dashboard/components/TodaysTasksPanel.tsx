@@ -4,6 +4,7 @@ import { Play, ToggleRight, Calendar, Users, MonitorPlay, Bot } from 'lucide-rea
 import { useTodo } from '../../todo/hooks/useTodo';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 
 export const TodaysTasksPanel: React.FC = () => {
     const { todos, isLoading, dailyXp, toggleTodo } = useTodo();
@@ -111,7 +112,39 @@ export const TodaysTasksPanel: React.FC = () => {
                                 <div className="flex items-center gap-3 sm:ml-auto w-full sm:w-auto">
                                     {task.status === 'PENDING' && (
                                         <button
-                                            onClick={() => toggleTodo(task.id)}
+                                            onClick={() => {
+                                                if (task.pomodoroEnabled) {
+                                                    navigate(ROUTES.DASHBOARD_TODO_LIST);
+                                                } else {
+                                                    toast((t) => (
+                                                        <div className="flex flex-col gap-3 p-1">
+                                                            <p className="text-sm font-medium text-zinc-800">
+                                                                Are you sure you want to complete this task? This action cannot be undone.
+                                                            </p>
+                                                            <div className="flex gap-2 justify-end">
+                                                                <button 
+                                                                    className="px-3 py-1.5 bg-zinc-200 hover:bg-zinc-300 text-zinc-800 text-xs font-semibold rounded-md transition-colors"
+                                                                    onClick={() => toast.dismiss(t.id)}
+                                                                >
+                                                                    No, Cancel
+                                                                </button>
+                                                                <button 
+                                                                    className="px-3 py-1.5 bg-[blueviolet] hover:bg-[#7c2ae8] text-white text-xs font-semibold rounded-md transition-colors"
+                                                                    onClick={() => {
+                                                                        toast.dismiss(t.id);
+                                                                        toggleTodo(task.id);
+                                                                    }}
+                                                                >
+                                                                    Yes, Complete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    ), {
+                                                        duration: Infinity,
+                                                        position: 'top-center',
+                                                    });
+                                                }
+                                            }}
                                             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm font-medium flex-1 sm:flex-auto justify-center"
                                         >
                                             <Play size={16} />
@@ -154,7 +187,7 @@ export const TodaysTasksPanel: React.FC = () => {
 
                 <div className="space-y-4 flex flex-col h-full">
                     <button
-                        onClick={() => navigate(ROUTES.DASHBOARD_TODO_LIST)}
+                        onClick={() => navigate(ROUTES.DASHBOARD_CALENDAR)}
                         className="w-full flex items-center gap-4 p-4 rounded-xl bg-zinc-900 border border-zinc-800 hover:border-zinc-700 hover:bg-[#1F1F23] transition-all group text-left"
                     >
                         <div className="p-2.5 rounded-lg bg-zinc-800 text-[#2563EB] group-hover:scale-110 group-hover:bg-[#2563EB] group-hover:text-white transition-all">

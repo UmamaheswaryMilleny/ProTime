@@ -6,11 +6,14 @@ import {
   useGamificationBadges,
   useToggleBadgeStatus,
   useGamificationUserDetail,
-  gamificationKeys
+  gamificationKeys,
+  useCreateBadge,
+  useUpdateBadge,
+  useDeleteBadge
 } from '../api/useAdminGamification';
 import {
   Gamepad2, Users, Trophy, BarChart3, Star, Zap, Search, Calendar, X,
-  ChevronLeft, ChevronRight, AlertCircle, Crown
+  ChevronLeft, ChevronRight, AlertCircle, Crown, Plus, Edit2, Trash2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQueryClient } from '@tanstack/react-query';
@@ -529,20 +532,167 @@ const UserDetailPanel = ({ userId, onClose }: { userId: string, onClose: () => v
 };
 
 // ─── Badges Tab ───────────────────────────────────────────────────────────────
+const BADGE_CATEGORIES = ['TASK', 'STREAK', 'BUDDY', 'ROOM'];
+const BADGE_CONDITION_TYPES = [
+  'HIGH_TASK_COUNT',
+  'MEDIUM_TASK_COUNT',
+  'LOW_TASK_COUNT',
+  'STREAK_DAYS',
+  'BUDDY_MATCHES',
+  'ROOMS_ATTENDED'
+];
+
+const DEFAULT_FORM = {
+  key: '',
+  name: '',
+  description: '',
+  iconUrl: '',
+  category: 'TASK',
+  conditionType: 'HIGH_TASK_COUNT',
+  conditionValue: 1,
+  xpReward: 50,
+  premiumRequired: false,
+  isActive: true
+};
+
 const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
+  const createBadgeMutation = useCreateBadge();
+  const updateBadgeMutation = useUpdateBadge();
+  const deleteBadgeMutation = useDeleteBadge();
+
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedBadge, setSelectedBadge] = useState<any>(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  const [formData, setFormData] = useState(DEFAULT_FORM);
+  const [selectedIconFile, setSelectedIconFile] = useState<File | null>(null);
+
   if (isLoading) return (
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => <div key={i} className="h-14 bg-zinc-800/40 rounded-xl animate-pulse" />)}
     </div>
   );
 
+  const handleOpenAdd = () => {
+    setFormData(DEFAULT_FORM);
+    setSelectedIconFile(null);
+    setIsAddModalOpen(true);
+  };
+
+  const handleOpenEdit = (badge: any) => {
+    setSelectedBadge(badge);
+    setFormData({
+      key: badge.key || '',
+      name: badge.name || '',
+      description: badge.description || '',
+      iconUrl: badge.iconUrl || '',
+      category: badge.category || 'TASK',
+      conditionType: badge.conditionType || 'HIGH_TASK_COUNT',
+      conditionValue: badge.conditionValue || 1,
+      xpReward: badge.xpReward ?? 50,
+      premiumRequired: !!badge.premiumRequired,
+      isActive: badge.isActive !== false
+    });
+    setSelectedIconFile(null);
+    setIsEditModalOpen(true);
+  };
+
+  const handleCreateBadge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name.trim()) return toast.error('Badge name is required');
+    if (!formData.key.trim()) return toast.error('Badge key is required');
+
+    const keyRegex = /^[A-Z0-9_]+$/;
+    if (!keyRegex.test(formData.key)) {
+      return toast.error('Badge key must be uppercase alphanumeric characters and underscores only (e.g. TASK_WARRIOR)');
+    }
+
+    try {
+      setSubmitting(true);
+
+      const body = new FormData();
+      Object.entries(formData).forEach(([k, v]) => {
+        body.append(k, String(v));
+      });
+      if (selectedIconFile) {
+        body.append('icon', selectedIconFile);
+      }
+
+      await createBadgeMutation.mutateAsync(body);
+      toast.success('Badge created successfully');
+      setIsAddModalOpen(false);
+      setSelectedIconFile(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to create badge');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateBadge = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedBadge) return;
+    if (!formData.name.trim()) return toast.error('Badge name is required');
+    if (!formData.key.trim()) return toast.error('Badge key is required');
+
+    const keyRegex = /^[A-Z0-9_]+$/;
+    if (!keyRegex.test(formData.key)) {
+      return toast.error('Badge key must be uppercase alphanumeric characters and underscores only (e.g. TASK_WARRIOR)');
+    }
+
+    try {
+      setSubmitting(true);
+
+      const body = new FormData();
+      Object.entries(formData).forEach(([k, v]) => {
+        body.append(k, String(v));
+      });
+      if (selectedIconFile) {
+        body.append('icon', selectedIconFile);
+      }
+
+      await updateBadgeMutation.mutateAsync({
+        badgeId: selectedBadge.id || selectedBadge._id,
+        badgeData: body
+      });
+      toast.success('Badge updated successfully');
+      setIsEditModalOpen(false);
+      setSelectedBadge(null);
+      setSelectedIconFile(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update badge');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDeleteBadge = async (badgeId: string) => {
+    if (!window.confirm('Are you sure you want to delete this badge definition permanently?')) return;
+    try {
+      await deleteBadgeMutation.mutateAsync(badgeId);
+      toast.success('Badge deleted successfully');
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to delete badge');
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Section A: Badge Definitions */}
       <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-white mb-1">Badge Definitions</h2>
-          <p className="text-xs text-zinc-400">Manage platform badge availability. Criteria logic is enforced server-side.</p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold text-white mb-1">Badge Definitions</h2>
+            <p className="text-xs text-zinc-400">Manage platform badge availability. Criteria logic is enforced server-side.</p>
+          </div>
+          <button
+            onClick={handleOpenAdd}
+            className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#2563EB]/25 self-start sm:self-auto cursor-pointer"
+          >
+            <Plus size={16} />
+            <span className="text-sm font-semibold">Add New Badge</span>
+          </button>
         </div>
 
         <div className="bg-[#18181B] border border-zinc-800/60 rounded-2xl overflow-hidden shadow-lg">
@@ -559,9 +709,11 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                     <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
                     <th className="px-6 py-4 font-semibold">Badge</th>
                     <th className="px-6 py-4 font-semibold">Description / Criteria</th>
+                    <th className="px-6 py-4 font-semibold text-center">Reward</th>
+                    <th className="px-6 py-4 font-semibold text-center">Access</th>
                     <th className="px-6 py-4 font-semibold text-center">Earned By</th>
                     <th className="px-6 py-4 font-semibold text-center">Status</th>
-                    <th className="px-6 py-4 font-semibold w-32">Action</th>
+                    <th className="px-6 py-4 font-semibold w-48 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-zinc-800/60">
@@ -578,6 +730,18 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                         <div className="text-sm text-zinc-300 mb-1">{badge.description}</div>
                         <div className="text-xs text-zinc-500 inline-block bg-zinc-800 px-2 py-0.5 rounded">{badge.criteriaUrl}</div>
                       </td>
+                      <td className="px-6 py-4 text-center text-xs font-semibold text-emerald-400">
+                        {badge.xpReward} XP
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${
+                          badge.premiumRequired
+                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                            : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50'
+                        }`}>
+                          {badge.premiumRequired ? 'Premium' : 'All'}
+                        </span>
+                      </td>
                       <td className="px-6 py-4 text-center">
                         <span className="font-semibold text-white">{(badge.usersEarned || 0).toLocaleString()}</span>
                         <span className="text-zinc-600 text-xs ml-1">users</span>
@@ -591,18 +755,34 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                           {badge.isActive ? 'Active' : 'Deactivated'}
                         </span>
                       </td>
-                      <td className="px-6 py-4">
-                        <button
-                          onClick={() => onToggleBadge(badge.id)}
-                          disabled={isToggling}
-                          className={`w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
-                            badge.isActive
-                              ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                              : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
-                          }`}
-                        >
-                          {badge.isActive ? 'Deactivate' : 'Activate'}
-                        </button>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => onToggleBadge(badge.id)}
+                            disabled={isToggling}
+                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
+                              badge.isActive
+                                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                                : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
+                            }`}
+                          >
+                            {badge.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+                          <button
+                            onClick={() => handleOpenEdit(badge)}
+                            className="p-1.5 bg-zinc-800 hover:bg-[#2563EB]/20 border border-zinc-700 hover:border-[#2563EB]/40 rounded-lg text-zinc-300 hover:text-[#2563EB] transition-all cursor-pointer"
+                            title="Edit Badge"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteBadge(badge.id)}
+                            className="p-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 hover:border-red-500/30 rounded-lg text-zinc-300 hover:text-red-400 transition-all cursor-pointer"
+                            title="Delete Badge"
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -638,6 +818,393 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
           )}
         </div>
       </div>
+
+      {/* Add Badge Modal */}
+      {isAddModalOpen && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#0D0D10] border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800/80">
+              <div className="flex items-center gap-2">
+                <Trophy className="text-[#2563EB]" size={20} />
+                <h2 className="text-lg font-bold text-white">Add New Badge</h2>
+              </div>
+              <button
+                onClick={() => setIsAddModalOpen(false)}
+                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white outline-none cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleCreateBadge} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Badge Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Task Warrior"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Badge Key (Unique ID)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. TASK_WARRIOR"
+                  value={formData.key}
+                  onChange={(e) => setFormData({ ...formData, key: e.target.value.toUpperCase() })}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                />
+                <span className="text-[10px] text-zinc-500">Only uppercase alphanumeric and underscores. Cannot be changed later.</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Description</label>
+                <textarea
+                  placeholder="Brief description of what triggers this badge..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all resize-none h-20"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-[#2563EB] transition-all cursor-pointer"
+                >
+                  {BADGE_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Condition Type</label>
+                <select
+                  value={formData.conditionType}
+                  onChange={(e) => setFormData({ ...formData, conditionType: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-[#2563EB] transition-all cursor-pointer"
+                >
+                  {BADGE_CONDITION_TYPES.map(type => (
+                    <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Threshold Value</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.conditionValue}
+                    onChange={(e) => setFormData({ ...formData, conditionValue: parseInt(e.target.value) || 1 })}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">XP Reward</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.xpReward}
+                    onChange={(e) => setFormData({ ...formData, xpReward: parseInt(e.target.value) || 0 })}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">Badge Icon</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
+                    {selectedIconFile ? (
+                      <img src={URL.createObjectURL(selectedIconFile)} alt="Preview" className="w-full h-full object-cover" />
+                    ) : formData.iconUrl ? (
+                      <img src={formData.iconUrl} alt="Icon" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] text-zinc-600">No Icon</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="inline-flex items-center justify-center px-4 py-2.5 bg-zinc-800 hover:bg-zinc-750 text-white rounded-xl text-xs font-medium cursor-pointer transition-all border border-zinc-800 outline-none">
+                      <span>Choose Icon Image</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 2 * 1024 * 1024) {
+                              toast.error('File size must be less than 2MB');
+                              return;
+                            }
+                            setSelectedIconFile(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {selectedIconFile && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedIconFile(null)}
+                        className="ml-3 text-[11px] text-red-400 hover:text-red-300 font-medium underline underline-offset-2"
+                      >
+                        Remove
+                      </button>
+                    )}
+                    <p className="text-[9px] text-zinc-500 mt-1">JPEG, PNG, or WEBP. Max 2MB.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-6 pt-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.premiumRequired}
+                    onChange={(e) => setFormData({ ...formData, premiumRequired: e.target.checked })}
+                    className="rounded bg-zinc-900 border-zinc-800 text-[#2563EB] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Premium Required</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="rounded bg-zinc-900 border-zinc-800 text-[#2563EB] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Is Active</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800/80">
+                <button
+                  type="button"
+                  onClick={() => setIsAddModalOpen(false)}
+                  className="px-4 py-2 bg-zinc-800/60 hover:bg-zinc-850 text-zinc-300 font-medium rounded-xl transition-all text-sm outline-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium rounded-xl transition-all text-sm outline-none shadow-lg shadow-[#2563EB]/25 cursor-pointer"
+                >
+                  {submitting ? 'Adding...' : 'Add Badge'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Badge Modal */}
+      {isEditModalOpen && selectedBadge && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 backdrop-blur-sm">
+          <div className="bg-[#0D0D10] border border-zinc-800 rounded-2xl w-full max-w-md overflow-hidden shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between p-5 border-b border-zinc-800/80">
+              <div className="flex items-center gap-2">
+                <Trophy className="text-[#2563EB]" size={20} />
+                <h2 className="text-lg font-bold text-white">Edit Badge</h2>
+              </div>
+              <button
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setSelectedBadge(null);
+                }}
+                className="p-1.5 hover:bg-zinc-800 rounded-lg transition-colors text-zinc-400 hover:text-white outline-none cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={handleUpdateBadge} className="p-5 space-y-4 max-h-[75vh] overflow-y-auto custom-scrollbar">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Badge Name</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Task Warrior"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Badge Key (Unique ID)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. TASK_WARRIOR"
+                  value={formData.key}
+                  disabled
+                  className="w-full bg-zinc-900/50 border border-zinc-800 rounded-xl px-4 py-2.5 text-zinc-500 outline-none cursor-not-allowed opacity-50"
+                />
+                <span className="text-[10px] text-zinc-550">The unique identifier cannot be modified.</span>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Description</label>
+                <textarea
+                  placeholder="Brief description of what triggers this badge..."
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  required
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all resize-none h-20"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Category</label>
+                <select
+                  value={formData.category}
+                  onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-[#2563EB] transition-all cursor-pointer"
+                >
+                  {BADGE_CATEGORIES.map(cat => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Condition Type</label>
+                <select
+                  value={formData.conditionType}
+                  onChange={(e) => setFormData({ ...formData, conditionType: e.target.value })}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white outline-none focus:ring-2 focus:ring-[#2563EB] transition-all cursor-pointer"
+                >
+                  {BADGE_CONDITION_TYPES.map(type => (
+                    <option key={type} value={type}>{type.replace(/_/g, ' ')}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">Threshold Value</label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={formData.conditionValue}
+                    onChange={(e) => setFormData({ ...formData, conditionValue: parseInt(e.target.value) || 1 })}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider">XP Reward</label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={formData.xpReward}
+                    onChange={(e) => setFormData({ ...formData, xpReward: parseInt(e.target.value) || 0 })}
+                    required
+                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-2.5 text-white placeholder-zinc-500 outline-none focus:ring-2 focus:ring-[#2563EB] transition-all"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-zinc-400 uppercase tracking-wider block">Badge Icon</label>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center overflow-hidden shrink-0">
+                    {selectedIconFile ? (
+                      <img src={URL.createObjectURL(selectedIconFile)} alt="Preview" className="w-full h-full object-cover" />
+                    ) : formData.iconUrl ? (
+                      <img src={formData.iconUrl} alt="Icon" className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-[10px] text-zinc-600">No Icon</span>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <label className="inline-flex items-center justify-center px-4 py-2.5 bg-zinc-800 hover:bg-zinc-750 text-white rounded-xl text-xs font-medium cursor-pointer transition-all border border-zinc-800 outline-none">
+                      <span>Choose Icon Image</span>
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            if (file.size > 2 * 1024 * 1024) {
+                              toast.error('File size must be less than 2MB');
+                              return;
+                            }
+                            setSelectedIconFile(file);
+                          }
+                        }}
+                      />
+                    </label>
+                    {selectedIconFile && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedIconFile(null)}
+                        className="ml-3 text-[11px] text-red-400 hover:text-red-300 font-medium underline underline-offset-2"
+                      >
+                        Remove
+                      </button>
+                    )}
+                    <p className="text-[9px] text-zinc-500 mt-1">JPEG, PNG, or WEBP. Max 2MB.</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-6 pt-2">
+                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.premiumRequired}
+                    onChange={(e) => setFormData({ ...formData, premiumRequired: e.target.checked })}
+                    className="rounded bg-zinc-900 border-zinc-800 text-[#2563EB] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Premium Required</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm text-zinc-300 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="rounded bg-zinc-900 border-zinc-800 text-[#2563EB] focus:ring-0 w-4 h-4 cursor-pointer"
+                  />
+                  <span>Is Active</span>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-zinc-800/80">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsEditModalOpen(false);
+                    setSelectedBadge(null);
+                  }}
+                  className="px-4 py-2 bg-zinc-800/60 hover:bg-zinc-850 text-zinc-300 font-medium rounded-xl transition-all text-sm outline-none cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="px-5 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-medium rounded-xl transition-all text-sm outline-none shadow-lg shadow-[#2563EB]/25 cursor-pointer"
+                >
+                  {submitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

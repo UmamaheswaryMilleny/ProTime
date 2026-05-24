@@ -94,10 +94,12 @@ export const API_ROUTES = {
   ADMIN_GAMIFICATION_USER_DETAIL: (userId: string) => `/admin/gamification/users/${userId}`,
   ADMIN_GAMIFICATION_LEADERBOARD: "/admin/gamification/leaderboard",
   ADMIN_GAMIFICATION_BADGES: "/admin/gamification/badges",
+  ADMIN_GAMIFICATION_BADGE_BY_ID: (badgeId: string) => `/admin/gamification/badges/${badgeId}`,
   ADMIN_GAMIFICATION_BADGE_TOGGLE: (badgeId: string) => `/admin/gamification/badges/${badgeId}/toggle`,
   ADMIN_SKILLS: "/admin/skills",
   ADMIN_SKILL_BY_ID: (id: string) => `/admin/skills/${id}`,
   ADMIN_SKILL_TOGGLE: (id: string) => `/admin/skills/${id}/toggle`,
+  ADMIN_SKILL_SEED_DEFAULTS: "/admin/skills/seed-defaults",
 
   // ─── Buddy ────────────────────────────────────────────────────────────────
   BUDDY_PREFERENCE:       "/buddy/preference",
@@ -122,6 +124,7 @@ export const API_ROUTES = {
   
   CHAT_BUDDY_SESSION_START: (conversationId: string) => `/chat/${conversationId}/buddy-session/start`,
   CHAT_BUDDY_SESSION_END:   (conversationId: string) => `/chat/${conversationId}/buddy-session/end`,
+  CHAT_BUDDY_SESSION_CURRENT: (conversationId: string) => `/chat/${conversationId}/buddy-session/current`,
   CHAT_BUDDY_SESSION_PROPOSE: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose`,
   CHAT_BUDDY_SESSION_PROPOSE_RECURRING: (conversationId: string) => `/chat/${conversationId}/buddy-session/propose-recurring`,
   CHAT_UPLOAD:        "/chat/upload",

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { proBuddyApi } from '../api/proBuddyApi';
 import { subscriptionService } from '../../dashboard/api/subscription-service';
 import { useAppSelector } from '../../../store/hooks';
@@ -12,10 +12,13 @@ export interface Message {
 
 export const useProBuddyChat = (chatId: string = 'default') => {
   const [messages, setMessages] = useState<Message[]>([]);
+  // Guard: don't write to storage until the initial load has completed
+  const hasLoaded = React.useRef(false);
 
-  // Load from session storage when chatId mounts or changes
+  // Load from localStorage when chatId mounts or changes
   useEffect(() => {
-    const saved = sessionStorage.getItem(`probuddy_messages_${chatId}`);
+    hasLoaded.current = false;
+    const saved = localStorage.getItem(`probuddy_messages_${chatId}`);
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
@@ -30,25 +33,29 @@ export const useProBuddyChat = (chatId: string = 'default') => {
     } else {
       setMessages([]);
     }
+    hasLoaded.current = true;
   }, [chatId]);
+
+
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [usage, setUsage] = useState<{ count: number; limit: number }>({
     count: 0,
-    limit: 20,
+    limit: 30,
   });
   const user = useAppSelector((state) => state.auth.user);
 
-  // Persist messages to sessionStorage
+  // Persist messages to localStorage (only after initial load to avoid overwriting saved data)
   useEffect(() => {
-    sessionStorage.setItem(`probuddy_messages_${chatId}`, JSON.stringify(messages));
+    if (!hasLoaded.current) return;
+    localStorage.setItem(`probuddy_messages_${chatId}`, JSON.stringify(messages));
   }, [messages, chatId]);
 
   const fetchUsage = useCallback(async () => {
     try {
       const sub = await subscriptionService.getSubscription();
-      const limit = sub.isPremium ? 100 : 20;
+      const limit = sub.isPremium ? 100 : 30;
       setUsage({ count: sub.aiUsageCount || 0, limit });
     } catch (err) {
       console.error('Failed to fetch AI usage', err);
@@ -102,7 +109,7 @@ export const useProBuddyChat = (chatId: string = 'default') => {
 
   const clearChat = useCallback(() => {
     setMessages([]);
-    sessionStorage.removeItem(`probuddy_messages_${chatId}`);
+    localStorage.removeItem(`probuddy_messages_${chatId}`);
   }, [chatId]);
 
   return {

@@ -43,12 +43,24 @@ export const ScheduleRecurringSessionModal: React.FC<ScheduleRecurringSessionMod
   const [noOfSessions, setNoOfSessions] = useState(2);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const durationMinutes = useMemo(() => toMinutes(endTime) - toMinutes(startTime), [startTime, endTime]);
+  const isOvernight = useMemo(() => toMinutes(endTime) < toMinutes(startTime), [startTime, endTime]);
+
+  const durationMinutes = useMemo(() => {
+    const start = toMinutes(startTime);
+    const end = toMinutes(endTime);
+    if (end < start) {
+      // Overnight session: end time is on the next day
+      return (24 * 60 - start) + end;
+    }
+    return end - start;
+  }, [startTime, endTime]);
 
   const timeError = useMemo(() => {
-    if (durationMinutes <= 0) return 'End time must be after start time';
+    if (toMinutes(endTime) === toMinutes(startTime)) {
+      return 'Session duration cannot be zero';
+    }
     if (durationMinutes < 30) return 'Session duration must be at least 30 minutes';
-    if (durationMinutes > 360) return 'Session duration cannot exceed 6 hours';
+    if (durationMinutes > 720) return 'Session duration cannot exceed 12 hours';
 
     // ─── New: Past Time Validation ──────────────────────────────────
     const now = new Date();
@@ -66,7 +78,7 @@ export const ScheduleRecurringSessionModal: React.FC<ScheduleRecurringSessionMod
     // ────────────────────────────────────────────────────────────────
 
     return null;
-  }, [durationMinutes, selectedDays, startTime]);
+  }, [durationMinutes, selectedDays, startTime, endTime]);
 
   const isValid = selectedDays.length > 0 && !timeError;
 
@@ -232,52 +244,98 @@ export const ScheduleRecurringSessionModal: React.FC<ScheduleRecurringSessionMod
 
             {/* Time error */}
             {timeError && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400">
-                <AlertCircle size={12} />
-                {timeError}
+              <div className="mt-2 flex items-center gap-1.5 text-xs text-red-400 bg-red-500/10 border border-red-500/20 px-3 py-2 rounded-xl">
+                <AlertCircle size={14} className="shrink-0 text-red-400" />
+                <span>{timeError}</span>
               </div>
             )}
 
-            {/* Duration auto-calc */}
+            {/* Duration & Overnight previews */}
             {!timeError && durationMinutes > 0 && (
-              <div className="mt-2 flex items-center gap-1.5 text-xs text-emerald-400">
-                <Clock size={12} />
-                Session Duration: {formatDuration(durationMinutes)}
+              <div className="mt-2 space-y-2">
+                {isOvernight ? (
+                  <div className="flex items-start gap-2 text-xs text-amber-400 bg-amber-500/10 border border-amber-500/20 px-3 py-2 rounded-xl">
+                    <AlertCircle size={14} className="shrink-0 text-amber-400 mt-0.5" />
+                    <div className="flex flex-col">
+                      <span className="font-semibold">Session continues into next day</span>
+                      <span className="text-zinc-400 mt-0.5">Duration: {formatDuration(durationMinutes)}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-3 py-2 rounded-xl">
+                    <Clock size={14} className="shrink-0 text-emerald-400" />
+                    <span>Session Duration: {formatDuration(durationMinutes)}</span>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
           {/* Schedule Preview */}
           {isValid && (
-            <div className="rounded-xl border border-[blueviolet]/30 bg-[blueviolet]/5 p-4 space-y-2">
-              <label className="text-xs font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
-                <CheckCircle2 size={12} className="text-[blueviolet]" />
-                Schedule Preview
+            <div className="rounded-xl border border-[blueviolet]/30 bg-[blueviolet]/5 p-4 space-y-3">
+              <label className="text-xs font-bold text-zinc-300 uppercase tracking-widest flex items-center justify-between gap-1.5">
+                <span className="flex items-center gap-1.5">
+                  <CheckCircle2 size={12} className="text-[blueviolet]" />
+                  Schedule Preview
+                </span>
+                {isOvernight && (
+                  <span className="text-[10px] font-extrabold uppercase bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full border border-amber-500/30">
+                    Overnight
+                  </span>
+                )}
               </label>
-              <div className="space-y-1.5 text-sm">
+              
+              <div className="space-y-2.5 text-sm">
                 <div className="flex gap-2 items-start">
                   <Calendar size={14} className="text-zinc-400 mt-0.5 shrink-0" />
-                  <span className="text-zinc-200">
+                  <div className="flex-1">
+                    <span className="text-zinc-300 text-xs block mb-1">Active Days</span>
                     <span className="font-semibold text-white">
                       {selectedDays.map(d => DAY_SHORT[d]).join(', ')}
                     </span>
-                  </span>
+                  </div>
                 </div>
-                <div className="flex gap-2 items-center">
-                  <Clock size={14} className="text-zinc-400 shrink-0" />
-                  <span className="text-zinc-200">
-                    {formatTime(startTime)} – {formatTime(endTime)}{' '}
-                    <span className="text-zinc-400">({formatDuration(durationMinutes)})</span>
-                  </span>
+
+                <div className="flex gap-2 items-start">
+                  <Clock size={14} className="text-zinc-400 mt-0.5 shrink-0" />
+                  <div className="flex-1">
+                    <span className="text-zinc-300 text-xs block mb-1">Time & Duration</span>
+                    <div className="text-zinc-200 font-medium">
+                      {formatTime(startTime)} – {formatTime(endTime)}{' '}
+                      <span className="text-zinc-400 font-normal">({formatDuration(durationMinutes)})</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex gap-2 items-center">
+
+                {/* Day Crossing Schedule Preview */}
+                {selectedDays.length > 0 && (
+                  <div className="bg-zinc-950/40 rounded-lg p-2.5 space-y-1.5 border border-white/5">
+                    <span className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider block">Session Day Breakdown</span>
+                    {selectedDays.map(day => {
+                      const startDayShort = DAY_SHORT[day];
+                      const endDay = isOvernight ? DAYS[(DAYS.indexOf(day) + 1) % 7] : day;
+                      const endDayShort = DAY_SHORT[endDay];
+                      return (
+                        <div key={day} className="flex justify-between text-xs text-zinc-300 font-mono">
+                          <span>Starts: <span className="text-white font-medium">{startDayShort} {formatTime(startTime)}</span></span>
+                          <span className="text-zinc-500">→</span>
+                          <span>Ends: <span className="text-white font-medium">{endDayShort} {formatTime(endTime)}</span></span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                <div className="flex gap-2 items-center text-zinc-300">
                   <RotateCcw size={14} className="text-zinc-400 shrink-0" />
-                  <span className="text-zinc-200">
+                  <span>
                     <span className="font-semibold text-white">{noOfSessions}</span> total session{noOfSessions !== 1 ? 's' : ''}
                   </span>
                 </div>
+
                 {startDateDisplay && (
-                  <div className="flex gap-2 items-center text-[blueviolet] font-medium pt-1">
+                  <div className="flex gap-2 items-center text-[blueviolet] font-medium pt-1 border-t border-white/5">
                     <CheckCircle2 size={14} className="shrink-0" />
                     <span>Starts from: {startDateDisplay}</span>
                   </div>
