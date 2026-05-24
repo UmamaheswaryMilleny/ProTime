@@ -30,6 +30,22 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
     >>
   ): Promise<SubscriptionEntity | null>;
 
+  /**
+   * Atomically increments aiUsageCount by 1 ONLY IF current count < limit.
+   * Also resets the counter if 30 days have passed since lastAiUsageReset.
+   * Returns the updated entity on success, or null if the limit was already reached.
+   */
+  atomicIncrementAiUsage(
+    userId: string,
+    limit: number,
+  ): Promise<SubscriptionEntity | null>;
+
+  /**
+   * Decrements aiUsageCount by 1 (min 0). Called to roll back a token
+   * that was incremented before an AI call that subsequently failed.
+   */
+  decrementAiUsage(userId: string): Promise<void>;
+
   // Returns all PREMIUM/CANCELLED subscriptions where currentPeriodEnd < now
   // Used by cron job to batch-downgrade to FREE
   findExpiredSubscriptions(): Promise<SubscriptionEntity[]>;
