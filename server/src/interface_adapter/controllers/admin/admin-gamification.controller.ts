@@ -6,7 +6,10 @@ import type {
   IGetGamificationUserDetailUsecase, 
   IGetGamificationLeaderboardUsecase, 
   IGetBadgesGridUsecase, 
-  IToggleBadgeUsecase 
+  IToggleBadgeUsecase,
+  ICreateBadgeUsecase,
+  IUpdateBadgeUsecase,
+  IDeleteBadgeUsecase
 } from '../../../application/usecase/interface/admin/admin-gamification.usecases.interface';
 
 @injectable()
@@ -17,7 +20,10 @@ export class AdminGamificationController {
     @inject('IGetGamificationUserDetailUsecase') private getUserDetailUsecase: IGetGamificationUserDetailUsecase,
     @inject('IGetGamificationLeaderboardUsecase') private getLeaderboardUsecase: IGetGamificationLeaderboardUsecase,
     @inject('IGetBadgesGridUsecase') private getBadgesGridUsecase: IGetBadgesGridUsecase,
-    @inject('IToggleBadgeUsecase') private toggleBadgeUsecase: IToggleBadgeUsecase
+    @inject('IToggleBadgeUsecase') private toggleBadgeUsecase: IToggleBadgeUsecase,
+    @inject('ICreateBadgeUsecase') private createBadgeUsecase: ICreateBadgeUsecase,
+    @inject('IUpdateBadgeUsecase') private updateBadgeUsecase: IUpdateBadgeUsecase,
+    @inject('IDeleteBadgeUsecase') private deleteBadgeUsecase: IDeleteBadgeUsecase
   ) {}
 
   async getOverview(req: Request, res: Response) {
@@ -68,5 +74,22 @@ export class AdminGamificationController {
     const badgeId = req.params.badgeId as string;
     await this.toggleBadgeUsecase.execute(badgeId);
     res.status(200).json({ success: true, message: 'Badge status toggled' });
+  }
+
+  async createBadge(req: Request, res: Response) {
+    const data = await this.createBadgeUsecase.execute(req.body);
+    res.status(201).json({ success: true, data });
+  }
+
+  async updateBadge(req: Request, res: Response) {
+    const badgeId = req.params.badgeId as string;
+    const data = await this.updateBadgeUsecase.execute(badgeId, req.body);
+    res.status(200).json({ success: true, data });
+  }
+
+  async deleteBadge(req: Request, res: Response) {
+    const badgeId = req.params.badgeId as string;
+    await this.deleteBadgeUsecase.execute(badgeId);
+    res.status(200).json({ success: true, message: 'Badge deleted successfully' });
   }
 }

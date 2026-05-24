@@ -68,13 +68,16 @@ export class TodoController implements ITodoController {
       }
 
       const rawFilter = req.query.filter;
- const filter: 'all' | 'pending' | 'completed' | 'expired' =
-  rawFilter === 'pending' ? 'pending'
-  : rawFilter === 'completed' ? 'completed'
-  : rawFilter === 'expired' ? 'expired'
-  : 'all';
+      const filter: 'all' | 'pending' | 'completed' | 'expired' =
+        rawFilter === 'pending' ? 'pending'
+        : rawFilter === 'completed' ? 'completed'
+        : rawFilter === 'expired' ? 'expired'
+        : 'all';
 
-      const result = await this.getTodosUsecase.execute(req.user.id, filter);
+      const page = req.query.page ? parseInt(req.query.page as string, 10) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+
+      const result = await this.getTodosUsecase.execute(req.user.id, filter, page, limit);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.FETCHED, result);
     } catch (error: unknown) {

@@ -8,6 +8,7 @@ import type { IProposeNextSessionUsecase }         from '../../../application/us
 import type { IProposeRecurringSessionUsecase }    from '../../../application/usecase/interface/calendar/propose-recurring-session.usecase.interface';
 import type { IRespondToScheduleRequestUsecase }   from '../../../application/usecase/interface/calendar/respond-to-schedule-request.usecase.interface';
 import type { ISaveSessionNotesUsecase }           from '../../../application/usecase/interface/calendar/save-session-notes.usecase.interface';
+import type { IGetCurrentSessionStateUsecase }     from '../../../application/usecase/interface/calendar/get-current-session-state.usecase.interface';
 import type { CustomRequest }                      from '../../middlewares/auth.middleware';
 import type { ProposeNextSessionRequestDTO }       from '../../../application/dto/calendar/request/propose-next-session.request.dto';
 import type { ProposeRecurringSessionRequestDTO }  from '../../../application/dto/calendar/request/propose-recurring-session.request.dto';
@@ -36,6 +37,9 @@ export class ChatSessionController implements IChatSessionController {
 
     @inject('ISaveSessionNotesUsecase')
     private readonly saveSessionNotesUsecase: ISaveSessionNotesUsecase,
+
+    @inject('IGetCurrentSessionStateUsecase')
+    private readonly getCurrentSessionStateUsecase: IGetCurrentSessionStateUsecase,
   ) {}
 
   // ─── POST /api/v1/chat/:conversationId/session/start ─────────────────────
@@ -65,6 +69,21 @@ export class ChatSessionController implements IChatSessionController {
       const conversationId = req.params.conversationId as string;
       const result         = await this.endSessionUsecase.execute(userId, conversationId);
       ResponseHelper.success(res, HTTP_STATUS.OK, 'Session ended successfully', result);
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
+
+  // ─── GET /api/v1/chat/:conversationId/buddy-session/current ─────────────────────
+  async getCurrentSessionState(
+    req: CustomRequest,
+    res: Response,
+    next: NextFunction,
+  ): Promise<void> {
+    try {
+      const conversationId = req.params.conversationId as string;
+      const result         = await this.getCurrentSessionStateUsecase.execute(conversationId);
+      ResponseHelper.success(res, HTTP_STATUS.OK, 'Current session state retrieved successfully', result);
     } catch (error: unknown) {
       next(error);
     }
