@@ -1,12 +1,16 @@
 import { inject, injectable } from 'tsyringe';
 import type { IAdminGamificationRepository } from '../../../../domain/repositories/admin/admin-gamification.repository.interface';
+import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type {
   IGetGamificationOverviewUsecase,
   IGetUsersProgressUsecase,
   IGetGamificationUserDetailUsecase,
   IGetGamificationLeaderboardUsecase,
   IGetBadgesGridUsecase,
-  IToggleBadgeUsecase
+  IToggleBadgeUsecase,
+  ICreateBadgeUsecase,
+  IUpdateBadgeUsecase,
+  IDeleteBadgeUsecase
 } from '../../interface/admin/admin-gamification.usecases.interface';
 
 @injectable()
@@ -44,3 +48,22 @@ export class ToggleBadgeUsecase implements IToggleBadgeUsecase {
   constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
   async execute(badgeId: string) { return this.repo.toggleBadgeActivation(badgeId); }
 }
+
+@injectable()
+export class CreateBadgeUsecase implements ICreateBadgeUsecase {
+  constructor(@inject('IBadgeDefinitionRepository') private badgeRepo: IBadgeDefinitionRepository) {}
+  async execute(data: any) { return this.badgeRepo.save(data); }
+}
+
+@injectable()
+export class UpdateBadgeUsecase implements IUpdateBadgeUsecase {
+  constructor(@inject('IBadgeDefinitionRepository') private badgeRepo: IBadgeDefinitionRepository) {}
+  async execute(badgeId: string, data: any) { return this.badgeRepo.updateById(badgeId, data); }
+}
+
+@injectable()
+export class DeleteBadgeUsecase implements IDeleteBadgeUsecase {
+  constructor(@inject('IBadgeDefinitionRepository') private badgeRepo: IBadgeDefinitionRepository) {}
+  async execute(badgeId: string) { return this.badgeRepo.deleteById(badgeId); }
+}
+

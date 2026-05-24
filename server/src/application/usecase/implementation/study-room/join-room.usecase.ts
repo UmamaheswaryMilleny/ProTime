@@ -48,6 +48,12 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
       if (userRequest.status === JoinRequestStatus.INVITED) {
         await this.joinRequestRepo.updateStatus(userRequest.id!, JoinRequestStatus.ACCEPTED, new Date());
       }
+    } else if (room.hostId !== userId) {
+      // For PUBLIC rooms, if there is a pending request or invitation, mark it as ACCEPTED when they join
+      const userRequest = await this.joinRequestRepo.findExistingRequest(roomId, userId);
+      if (userRequest && (userRequest.status === JoinRequestStatus.INVITED || userRequest.status === JoinRequestStatus.PENDING)) {
+        await this.joinRequestRepo.updateStatus(userRequest.id!, JoinRequestStatus.ACCEPTED, new Date());
+      }
     }
 
     const updatedRoom = await this.studyRoomRepo.addParticipant(roomId, userId);

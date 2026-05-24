@@ -21,3 +21,16 @@ export interface IGetBadgesGridUsecase {
 export interface IToggleBadgeUsecase {
   execute(badgeId: string): Promise<void>;
 }
+
+export interface ICreateBadgeUsecase {
+  execute(data: any): Promise<any>;
+}
+
+export interface IUpdateBadgeUsecase {
+  execute(badgeId: string, data: any): Promise<any>;
+}
+
+export interface IDeleteBadgeUsecase {
+  execute(badgeId: string): Promise<void>;
+}
+

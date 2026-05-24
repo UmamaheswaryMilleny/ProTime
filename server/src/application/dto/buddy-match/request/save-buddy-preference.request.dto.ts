@@ -41,8 +41,8 @@ export class SaveBuddyPreferenceRequestDTO {
 
   // ─── Premium fields — ignored for free users in the usecase ───────────────
   @IsOptional()
-  @IsEnum(SubjectDomain)
-  subjectDomain?: SubjectDomain;
+  @IsString()
+  subjectDomain?: string;
 
   @IsOptional()
   @IsEnum(Availability)

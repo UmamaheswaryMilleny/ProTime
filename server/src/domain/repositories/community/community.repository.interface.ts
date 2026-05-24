@@ -8,6 +8,7 @@ export interface ICommunityMessageRepository
   findMessages(params: {
     limit: number;
     before?: Date;
+    since?: Date;
   }): Promise<CommunityChatEntity[]>;
 
   // Rolling 30-day count — free user quota check on every send

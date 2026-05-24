@@ -18,6 +18,9 @@ import {
 import { ConversationNotFoundError } from '../../../../domain/errors/chat.errors';
 import { SessionStatus, CalendarEventType, ScheduleConfirmStatus } from '../../../../domain/enums/calendar.enums';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
+import type { IDirectMessageRepository } from '../../../../domain/repositories/chat/direct-message.repository.interface';
+import { MessageType, MessageStatus } from '../../../../domain/enums/chat.enums';
+import { ChatMapper } from '../../../mapper/chat.mapper';
 
 @injectable()
 export class RespondToScheduleRequestUsecase implements IRespondToScheduleRequestUsecase {
@@ -42,6 +45,9 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
 
     @inject('INotificationService')
     private readonly notificationService: INotificationService,
+
+    @inject('IDirectMessageRepository')
+    private readonly messageRepo: IDirectMessageRepository,
   ) {}
 
   async execute(
@@ -159,12 +165,33 @@ export class RespondToScheduleRequestUsecase implements IRespondToScheduleReques
     );
 
     this.socketService.emitToUser(request.proposedBy, 'schedule:confirmed', response);
+
+    const acceptorName = proposedToUser?.fullName ?? 'Buddy';
+
+    // Save and broadcast system message to chat
+    const systemMessage = await this.messageRepo.save({
+      conversationId,
+      senderId: null,
+      content: `${acceptorName} accepted the study schedule request!`,
+      messageType: MessageType.SYSTEM,
+      status: MessageStatus.DELIVERED,
+    });
+
+    await this.conversationRepo.updateLastMessage(
+      conversationId,
+      systemMessage.createdAt,
+      null as any,
+    );
+
+    const msgResponse = ChatMapper.messageToResponse(systemMessage, null);
+    this.socketService.emitToUser(request.proposedBy, 'chat:message', msgResponse);
+    this.socketService.emitToUser(request.proposedTo, 'chat:message', msgResponse);
     
     // Dispatch the notification for schedule acceptance via NotificationService
     this.notificationService.notifyUser(request.proposedBy, {
       type: NotificationType.SCHEDULE_ACCEPTED,
       title: '📅 Schedule Accepted',
-      message: `${proposedToUser?.fullName ?? 'Your buddy'} accepted your study schedule request!`,
+      message: `${acceptorName} accepted your study schedule request!`,
       metadata: { requestId: request.id, conversationId }
     });
 

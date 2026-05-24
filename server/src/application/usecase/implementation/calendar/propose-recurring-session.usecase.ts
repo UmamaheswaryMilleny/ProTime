@@ -11,6 +11,9 @@ import type { SessionScheduleRequestResponseDTO } from '../../../dto/calendar/re
 import { ConversationNotFoundError } from '../../../../domain/errors/chat.errors';
 import { ScheduleConfirmStatus } from '../../../../domain/enums/calendar.enums';
 import { CalendarMapper } from '../../../mapper/calendar.mapper';
+import type { IDirectMessageRepository } from '../../../../domain/repositories/chat/direct-message.repository.interface';
+import { MessageType, MessageStatus } from '../../../../domain/enums/chat.enums';
+import { ChatMapper } from '../../../mapper/chat.mapper';
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -31,6 +34,9 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
 
     @inject('INotificationService')
     private readonly notificationService: INotificationService,
+
+    @inject('IDirectMessageRepository')
+    private readonly messageRepo: IDirectMessageRepository,
   ) {}
 
   async execute(
@@ -45,19 +51,24 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
       ? conversation.user2Id
       : conversation.user1Id;
 
-    // Calculate duration — validate end > start
+    // Calculate duration — support overnight sessions (crosses midnight)
     const [startH = 0, startM = 0] = dto.startTime.split(':').map(Number);
     const [endH = 0, endM = 0]     = dto.endTime.split(':').map(Number);
 
     const startMinutes = startH * 60 + startM;
     const endMinutes   = endH   * 60 + endM;
-    const durationMinutes = endMinutes - startMinutes;
+    
+    let durationMinutes = endMinutes - startMinutes;
+    if (endMinutes < startMinutes) {
+      // Overnight session crossing midnight
+      durationMinutes = (24 * 60 - startMinutes) + endMinutes;
+    }
 
     if (durationMinutes < 30) {
       throw new Error('Session duration must be at least 30 minutes');
     }
-    if (durationMinutes > 360) {
-      throw new Error('Session duration cannot exceed 6 hours');
+    if (durationMinutes > 720) {
+      throw new Error('Session duration cannot exceed 12 hours');
     }
 
     let recurringDates: Date[] = [];
@@ -96,18 +107,39 @@ export class ProposeRecurringSessionUsecase implements IProposeRecurringSessionU
     });
 
     const proposer = await this.userRepo.findById(userId);
+    const proposerName = proposer?.fullName ?? 'A Buddy';
+
     const response = CalendarMapper.scheduleRequestToResponse(
       request,
-      proposer?.fullName ?? 'Unknown',
+      proposerName,
     );
 
     this.socketService.emitToUser(participantId, 'schedule:proposed', response);
+
+    // Save and broadcast system message to chat
+    const systemMessage = await this.messageRepo.save({
+      conversationId,
+      senderId: null,
+      content: `${proposerName} proposed a recurring study schedule (${dto.noOfSessions} sessions)`,
+      messageType: MessageType.SYSTEM,
+      status: MessageStatus.DELIVERED,
+    });
+
+    await this.conversationRepo.updateLastMessage(
+      conversationId,
+      systemMessage.createdAt,
+      null as any,
+    );
+
+    const msgResponse = ChatMapper.messageToResponse(systemMessage, null);
+    this.socketService.emitToUser(userId, 'chat:message', msgResponse);
+    this.socketService.emitToUser(participantId, 'chat:message', msgResponse);
 
     // Also send in-app notification for the bell icon
     this.notificationService.notifyUser(participantId, {
       type: NotificationType.SCHEDULE_REQUESTED,
       title: '📅 New Study Schedule Request',
-      message: `${proposer?.fullName ?? 'A Buddy'} proposed a ${dto.noOfSessions}-session study schedule.`,
+      message: `${proposerName} proposed a ${dto.noOfSessions}-session study schedule.`,
       metadata: { requestId: request.id, conversationId }
     });
 

@@ -14,7 +14,7 @@ export interface BuddyProfileResponseDTO {
   studyLanguage: string;
   frequency:     StudyFrequency;
   lastActiveAt?: Date;
-  subjectDomain?:   SubjectDomain;
+  subjectDomain?:   string;
   availability?:    Availability;
   sessionDuration?: SessionDuration;
   focusLevel?:      FocusLevel;

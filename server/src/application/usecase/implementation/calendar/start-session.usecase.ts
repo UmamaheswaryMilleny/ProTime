@@ -67,35 +67,58 @@ export class StartSessionUsecase implements IStartSessionUsecase {
     const date      = startedAt.toISOString().split('T')[0];
     const startTime = startedAt.toTimeString().slice(0, 5);
 
-    const session = await this.sessionRepo.save({
-      conversationId,
-      buddyConnectionId: conversation.buddyConnectionId,
-      initiatorId,
-      participantId,
-      status:    SessionStatus.ACTIVE,
-      startedAt,
-      roomId:            randomUUID(),
-    });
+    // Look for the earliest upcoming PLANNED session for this conversation
+    const conversationSessions = await this.sessionRepo.findByConversationId(conversationId);
+    const planned = conversationSessions
+      .filter(s => s.status === SessionStatus.PLANNED)
+      .sort((a, b) => {
+        const timeA = a.scheduledAt ? new Date(a.scheduledAt).getTime() : 0;
+        const timeB = b.scheduledAt ? new Date(b.scheduledAt).getTime() : 0;
+        return timeA - timeB;
+      })[0];
 
-    // Each user sees the OTHER person's name as title
-    await Promise.all([
-      this.calendarRepo.save({
-        userId:    initiatorId,
-        type:      CalendarEventType.SESSION,
-        date,
-        startTime,
-        title:     `Session with ${participantName}`,
-        sessionId: session.id,
-      }),
-      this.calendarRepo.save({
-        userId:    participantId,
-        type:      CalendarEventType.SESSION,
-        date,
-        startTime,
-        title:     `Session with ${initiatorName}`,
-        sessionId: session.id,
-      }),
-    ]);
+    let session;
+    if (planned) {
+      // Transition existing planned session to ACTIVE
+      const updated = await this.sessionRepo.updateStatus(planned.id!, SessionStatus.ACTIVE, {
+        startedAt,
+      });
+      if (!updated) {
+        throw new Error('Failed to activate planned study session');
+      }
+      session = updated;
+    } else {
+      // Ad-hoc session creation
+      session = await this.sessionRepo.save({
+        conversationId,
+        buddyConnectionId: conversation.buddyConnectionId,
+        initiatorId,
+        participantId,
+        status:    SessionStatus.ACTIVE,
+        startedAt,
+        roomId:            randomUUID(),
+      });
+
+      // Each user sees the OTHER person's name as title for ad-hoc sessions
+      await Promise.all([
+        this.calendarRepo.save({
+          userId:    initiatorId,
+          type:      CalendarEventType.SESSION,
+          date,
+          startTime,
+          title:     `Session with ${participantName}`,
+          sessionId: session.id,
+        }),
+        this.calendarRepo.save({
+          userId:    participantId,
+          type:      CalendarEventType.SESSION,
+          date,
+          startTime,
+          title:     `Session with ${initiatorName}`,
+          sessionId: session.id,
+        }),
+      ]);
+    }
 
     const response = CalendarMapper.sessionToResponse(session);
 

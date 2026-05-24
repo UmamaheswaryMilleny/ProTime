@@ -7,6 +7,8 @@ export interface ITodoRepository extends IBaseRepository<TodoEntity> {
   findByUserId(
     userId: string,
     filter?: 'all' | 'pending' | 'completed' | 'expired',
+    page?: number,
+    limit?: number,
   ): Promise<TodoEntity[]>;
 
 
