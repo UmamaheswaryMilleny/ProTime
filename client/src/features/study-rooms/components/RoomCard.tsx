@@ -20,9 +20,9 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
   const isMember = isHost || isParticipant;
   const isFull = room.participantIds.length >= room.maxParticipants;
   const isLive = room.status === 'LIVE';
-  const isWaiting = room.status === 'WAITING';
+  // const isWaiting = room.status === 'WAITING';
   const isEnded = room.status === 'ENDED';
-  const hasAlreadyStarted = !room.startTime || room.startTime === 'IMMEDIATE' || new Date(room.startTime) <= new Date();
+  // const hasAlreadyStarted = !room.startTime || room.startTime === 'IMMEDIATE' || new Date(room.startTime) <= new Date();
   
   const isPast = room.endTime 
     ? new Date(room.endTime) < new Date() 

@@ -11,25 +11,45 @@ import { fetchPreferences, savePreferences } from '../../buddy-match/store/buddy
 import { BuddyPreferenceForm } from '../../buddy-match/components/BuddyPreferenceForm';
 import { useGamification } from '../../gamification/hooks/useGamification';
 
-interface Badge { key: string; name: string; color: string; icon: string; criteria: string; reward: string; }
+interface Badge {
+  key: string;
+  name: string;
+  description: string;
+  iconUrl: string | null;
+  xpReward: number;
+  premiumRequired: boolean;
+  category: string;
+}
 
-const badges: Badge[] = [
-  { key: 'HIGH_ACHIEVER', name: 'High Achiever', color: 'bg-green-500', icon: '🍃', criteria: 'Complete 1 High-Priority task', reward: '+50 XP' },
-  { key: 'MEDIUM_MASTER', name: 'Medium Master', color: 'bg-yellow-500', icon: '💪', criteria: 'Complete 1 Medium-Priority task', reward: '+50 XP' },
-  { key: 'STEADY_STARTER', name: 'Steady Starter', color: 'bg-teal-500', icon: '🌱', criteria: 'Complete 1 Low-Priority task', reward: '+50 XP' },
-  { key: 'FOCUS_BUILDER', name: 'Focus Builder', color: 'bg-rose-400', icon: '⭐', criteria: 'Complete a 7-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { key: 'CONSISTENCY_CHAMP', name: 'Consistency Champ', color: 'bg-red-500', icon: '❤️', criteria: 'Complete a 10-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { key: 'DISCIPLINE_HERO', name: 'Discipline Hero', color: 'bg-blue-500', icon: '🛡️', criteria: 'Complete a 16-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { key: 'PERSISTENCE_PRO', name: 'Persistence Pro', color: 'bg-orange-800', icon: '🏋️', criteria: 'Complete a 28-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { key: 'REAL_WARRIOR', name: 'Real Warrior', color: 'bg-orange-500', icon: '⚙️', criteria: 'Complete a 52-day streak (1 todo + Pomodoro daily)', reward: '+50 XP' },
-  { key: 'BUDDY_BEGINNER', name: 'Buddy Beginner', color: 'bg-yellow-600', icon: '🤝', criteria: 'Match with 2 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { key: 'BUDDY_BUILDER', name: 'Buddy Builder', color: 'bg-orange-400', icon: '☀️', criteria: 'Match with 5 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { key: 'BUDDY_MASTER', name: 'Buddy Master', color: 'bg-purple-600', icon: '🌊', criteria: 'Match with 10 buddies — min 4⭐ rating, 1 hour session each', reward: '+50 XP' },
-  { key: 'ROOM_EXPLORER', name: 'Room Explorer', color: 'bg-blue-600', icon: '📍', criteria: 'Attend 2 group study rooms for min 1 hour each', reward: '+50 XP' },
-  { key: 'ROOM_REGULAR', name: 'Room Regular', color: 'bg-sky-400', icon: '🏠', criteria: 'Attend 5 group study rooms for min 1 hour each', reward: '+50 XP' },
-  { key: 'ROOM_LEADER', name: 'Room Leader', color: 'bg-pink-500', icon: '🎯', criteria: 'Attend 10 group study rooms for min 1 hour each', reward: '+50 XP' },
-];
+const getBadgeColor = (category: string) => {
+  switch (category?.toUpperCase()) {
+    case 'TASK':
+      return 'bg-emerald-600';
+    case 'STREAK':
+      return 'bg-rose-600';
+    case 'BUDDY':
+      return 'bg-indigo-600';
+    case 'ROOM':
+      return 'bg-violet-600';
+    default:
+      return 'bg-zinc-700';
+  }
+};
 
+const getBadgeFallbackIcon = (category: string) => {
+  switch (category?.toUpperCase()) {
+    case 'TASK':
+      return '🎯';
+    case 'STREAK':
+      return '🔥';
+    case 'BUDDY':
+      return '🤝';
+    case 'ROOM':
+      return '🏠';
+    default:
+      return '🏆';
+  }
+};
 
 // ─── Module-level guard ─────────────────────────────────────────────────────
 // Persists across remounts so the IP lookup fires at most once per session
@@ -59,7 +79,7 @@ export const ProfilePage: React.FC = () => {
 
   const [isLanguageDropdownOpen, setIsLanguageDropdownOpen] = React.useState(false);
   const [languageSearch, setLanguageSearch] = React.useState('');
-  
+
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = React.useState(false);
   const [countrySearch, setCountrySearch] = React.useState('');
 
@@ -81,7 +101,7 @@ export const ProfilePage: React.FC = () => {
 
   React.useEffect(() => {
     dispatch(fetchPreferences());
-    
+
     // Fetch active skills catalog
     userApi.getActiveSkillsService()
       .then(res => {
@@ -509,11 +529,11 @@ export const ProfilePage: React.FC = () => {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Skills Autocomplete / Tag Input */}
                 <div className="space-y-1.5 mt-4 relative">
                   <label className="text-sm text-zinc-400 font-medium">My Skills & Expertise</label>
-                  
+
                   {/* Selected Tags Display */}
                   <div className="flex flex-wrap gap-2 p-3 bg-zinc-800 rounded-xl min-h-[46px] border border-white/5">
                     {selectedSkills.length > 0 ? (
@@ -560,7 +580,7 @@ export const ProfilePage: React.FC = () => {
                         onFocus={() => setIsSkillDropdownOpen(true)}
                         className="w-full bg-zinc-800/60 border border-white/5 rounded-lg px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#8A2BE2] outline-none"
                       />
-                      
+
                       {isSkillDropdownOpen && (
                         <>
                           <div className="fixed inset-0 z-40" onClick={() => setIsSkillDropdownOpen(false)} />
@@ -697,7 +717,7 @@ export const ProfilePage: React.FC = () => {
 
           {/* Actions */}
           <div className="space-y-3">
-            <button 
+            <button
               onClick={() => setShowPreviewModal(true)}
               className="w-full bg-[#8A2BE2] hover:bg-[#7c2ae8] text-white font-medium py-3 rounded-full transition-all flex items-center justify-center gap-2 text-sm shadow-lg shadow-[#8A2BE2]/20"
             >
@@ -721,19 +741,29 @@ export const ProfilePage: React.FC = () => {
             </div>
             <div className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {badges.map((badge, index) => {
+                {(gamification?.activeBadges || []).map((badge, index) => {
                   const isEarned = gamification?.earnedBadges.some(b => b.badgeKey === badge.key);
+                  const badgeColor = getBadgeColor(badge.category);
                   return (
                     <button
                       key={index}
                       onClick={() => setSelectedBadge(badge)}
-                      className={`p-3 rounded-xl flex items-center gap-2 shadow-lg hover:scale-105 transition-transform text-left w-full ${
-                        isEarned 
-                          ? `${badge.color} text-white` 
+                      className={`p-3 rounded-xl flex items-center gap-2 shadow-lg hover:scale-105 transition-transform text-left w-full ${isEarned
+                          ? `${badgeColor} text-white`
                           : 'bg-zinc-800/40 text-zinc-500 border border-zinc-700/50 hover:bg-zinc-800/60'
-                      }`}
+                        }`}
                     >
-                      <span className={`text-lg ${isEarned ? '' : 'grayscale opacity-50'}`}>{badge.icon}</span>
+                      {badge.iconUrl ? (
+                        <img 
+                          src={badge.iconUrl} 
+                          alt={badge.name} 
+                          className={`w-6 h-6 object-contain ${isEarned ? '' : 'grayscale opacity-50'}`} 
+                        />
+                      ) : (
+                        <span className={`text-lg ${isEarned ? '' : 'grayscale opacity-50'}`}>
+                          {getBadgeFallbackIcon(badge.category)}
+                        </span>
+                      )}
                       <div className="flex flex-col">
                         <span className={`text-xs font-bold leading-tight ${isEarned ? 'text-white' : 'text-zinc-400'}`}>
                           {badge.name}
@@ -750,14 +780,26 @@ export const ProfilePage: React.FC = () => {
           </div>
           {selectedBadge && (() => {
             const isEarned = gamification?.earnedBadges.some(b => b.badgeKey === selectedBadge.key);
+            const badgeColor = getBadgeColor(selectedBadge.category);
             return (
               <div className="absolute inset-0 flex items-center justify-center z-[60] bg-black/40 backdrop-blur-sm">
-                <div className={`relative rounded-2xl p-6 w-80 shadow-2xl ${
-                  isEarned ? `${selectedBadge.color} text-white` : 'bg-zinc-800 border border-zinc-700/80 text-zinc-300'
-                }`}>
+                <div className={`relative rounded-2xl p-6 w-80 shadow-2xl ${isEarned ? `${badgeColor} text-white` : 'bg-zinc-800 border border-zinc-700/80 text-zinc-300'
+                  }`}>
                   <button onClick={(e) => { e.stopPropagation(); setSelectedBadge(null); }} className="absolute top-2 right-2 p-1 bg-black/20 rounded-full hover:bg-black/40 text-white transition-colors"><X size={16} /></button>
                   <div className="text-center mb-6">
-                    <div className={`text-4xl mb-2 ${isEarned ? '' : 'grayscale opacity-50'}`}>{selectedBadge.icon}</div>
+                    <div className="flex justify-center mb-2">
+                      {selectedBadge.iconUrl ? (
+                        <img 
+                          src={selectedBadge.iconUrl} 
+                          alt={selectedBadge.name} 
+                          className={`w-12 h-12 object-contain ${isEarned ? '' : 'grayscale opacity-50'}`} 
+                        />
+                      ) : (
+                        <div className={`text-4xl ${isEarned ? '' : 'grayscale opacity-50'}`}>
+                          {getBadgeFallbackIcon(selectedBadge.category)}
+                        </div>
+                      )}
+                    </div>
                     <h3 className="text-xl font-bold text-white">Badge Details</h3>
                   </div>
                   <div className="space-y-4">
@@ -767,7 +809,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
                     <div className={`flex justify-between items-start border-b pb-2 ${isEarned ? 'border-white/20' : 'border-zinc-700'}`}>
                       <span className="text-xs font-medium opacity-90">Criteria</span>
-                      <span className="text-sm font-bold text-right max-w-[60%] text-white">{selectedBadge.criteria}</span>
+                      <span className="text-sm font-bold text-right max-w-[60%] text-white">{selectedBadge.description}</span>
                     </div>
                     <div className={`flex justify-between items-start border-b pb-2 ${isEarned ? 'border-white/20' : 'border-zinc-700'}`}>
                       <span className="text-xs font-medium opacity-90">Status</span>
@@ -777,7 +819,7 @@ export const ProfilePage: React.FC = () => {
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-xs font-medium opacity-90">Reward</span>
-                      <span className="text-sm font-bold text-white">{selectedBadge.reward}</span>
+                      <span className="text-sm font-bold text-white">+{selectedBadge.xpReward} XP</span>
                     </div>
                   </div>
                 </div>
@@ -798,8 +840,8 @@ export const ProfilePage: React.FC = () => {
             <p className="text-zinc-500 text-sm">Fine-tune your study goals to find the perfect study partner.</p>
           </div>
         </div>
-        
-        <BuddyPreferenceForm 
+
+        <BuddyPreferenceForm
           initialData={preferences}
           isPremium={user?.isPremium || false}
           onSave={handleSaveBuddyPreferences}
@@ -814,8 +856,8 @@ export const ProfilePage: React.FC = () => {
           <div className="bg-zinc-900 border border-white/5 rounded-[32px] w-full max-w-md overflow-hidden relative z-10 shadow-2xl animate-in fade-in zoom-in-95 duration-300">
             {/* Header Cover banner */}
             <div className="h-28 bg-gradient-to-br from-[blueviolet] to-[#4b0082] relative">
-              <button 
-                onClick={() => setShowPreviewModal(false)} 
+              <button
+                onClick={() => setShowPreviewModal(false)}
                 className="absolute top-4 right-4 w-8 h-8 bg-black/20 hover:bg-black/40 rounded-full text-white transition-all backdrop-blur-md flex items-center justify-center border border-white/10"
               >
                 <X size={16} />
@@ -825,9 +867,9 @@ export const ProfilePage: React.FC = () => {
             {/* Profile Info */}
             <div className="px-6 pb-8 -mt-12 relative text-center sm:text-left">
               <div className="relative inline-block mb-4">
-                <img 
-                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`} 
-                  alt={user?.fullName || 'User'} 
+                <img
+                  src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`}
+                  alt={user?.fullName || 'User'}
                   className="w-24 h-24 rounded-full border-4 border-zinc-900 object-cover shadow-2xl"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
@@ -843,7 +885,7 @@ export const ProfilePage: React.FC = () => {
                   <span className="inline-block self-center sm:self-auto bg-[blueviolet]/10 text-[blueviolet] text-[9px] font-bold px-2 py-0.5 rounded-lg border border-[blueviolet]/20">YOU</span>
                 </div>
                 <p className="text-zinc-500 text-sm font-medium">@{user?.username || (user?.email ? user.email.split('@')[0] : '')}</p>
-                
+
                 <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1.5 mt-2 text-zinc-400 text-sm">
                   {user?.country && (
                     <span className="flex items-center gap-1.5">
@@ -920,7 +962,7 @@ export const ProfilePage: React.FC = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={() => setShowPreviewModal(false)}
                 className="w-full bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold py-3 rounded-xl transition-all shadow-xl shadow-[blueviolet]/20 text-xs uppercase tracking-wider active:scale-95"
               >
