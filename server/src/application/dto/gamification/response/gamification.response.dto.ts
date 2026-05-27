@@ -1,5 +1,6 @@
 import { UserBadgeResponseDTO } from './user-badge.response.dto.js';
 import { LevelTitle } from '../../../../domain/enums/gamification.enums.js';
+import { BadgeDefinitionResponseDTO } from './badge-definition.response.dto.js';
 
 
 export interface GamificationResponseDTO {
@@ -28,7 +29,7 @@ export interface GamificationResponseDTO {
 
   earnedBadges: UserBadgeResponseDTO[];
   totalBadgeCount: number;
-
+  activeBadges: BadgeDefinitionResponseDTO[];
   createdAt: string;
   updatedAt: string;
 }
