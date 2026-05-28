@@ -76,3 +76,44 @@ export const useToggleBadgeStatus = () => {
     },
   });
 };
+
+export const useCreateBadge = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (badgeData: any) => {
+      const { data } = await ProTimeBackend.post(API_ROUTES.ADMIN_GAMIFICATION_BADGES, badgeData);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.badges() });
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.overview() });
+    },
+  });
+};
+
+export const useUpdateBadge = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ badgeId, badgeData }: { badgeId: string; badgeData: any }) => {
+      const { data } = await ProTimeBackend.put(API_ROUTES.ADMIN_GAMIFICATION_BADGE_BY_ID(badgeId), badgeData);
+      return data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.badges() });
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.overview() });
+    },
+  });
+};
+
+export const useDeleteBadge = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (badgeId: string) => {
+      await ProTimeBackend.delete(API_ROUTES.ADMIN_GAMIFICATION_BADGE_BY_ID(badgeId));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.badges() });
+      queryClient.invalidateQueries({ queryKey: gamificationKeys.overview() });
+    },
+  });
+};

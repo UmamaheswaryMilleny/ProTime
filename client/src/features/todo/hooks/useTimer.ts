@@ -1,11 +1,11 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import toast from 'react-hot-toast';
 import type { TodoItem } from '../types/todo.types';
 
 interface UseTimerProps {
     task?: TodoItem | null;
     timerKey?: string; // Key to persist state
-    onComplete?: () => void;
+    onComplete?: (totalPausedSeconds: number) => void;
 }
 
 export type TimerPhase = 'FOCUS' | 'BREAK';
@@ -15,6 +15,8 @@ export interface PhaseConfig {
 }
 
 export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
+
+    const lastProcessedPhaseIndex = useRef<number | null>(null);
 
     const [isSmartBreaksEnabled] = useState<boolean>(() => {
         if (!timerKey) return task?.smartBreaks ?? true;
@@ -89,6 +91,7 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
 
     // 3. Sync state when task/timerKey changes
     useEffect(() => {
+        lastProcessedPhaseIndex.current = null;
         // If we have a timer key but NO task yet, we are likely waiting for data during refresh.
         // DO NOT reset state to 0/false here, otherwise the timer stops on refresh.
         if (!timerKey) {
@@ -202,6 +205,10 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
                 });
             }, 1000);
         } else if (isRunning && timeRemaining === 0) {
+            if (lastProcessedPhaseIndex.current === currentPhaseIndex) {
+                return;
+            }
+            lastProcessedPhaseIndex.current = currentPhaseIndex;
 
             queueMicrotask(() => setIsRunning(false));
 
@@ -228,7 +235,7 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
 
                 setTimeout(() => setIsRunning(true), 200);
             } else {
-                onComplete?.();
+                onComplete?.(totalPausedSeconds);
             }
         }
         return () => window.clearInterval(interval);
@@ -241,6 +248,7 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
         setIsRunning(false);
         setCurrentPhaseIndex(0);
         setTimeRemaining(phaseSequence[0].duration);
+        lastProcessedPhaseIndex.current = null;
         if (timerKey) {
             localStorage.removeItem(`${timerKey}_phaseIndex`);
             localStorage.removeItem(`${timerKey}_timeRemaining`);
@@ -251,6 +259,7 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
     const skipBreak = useCallback(() => {
         if (phaseSequence[currentPhaseIndex]?.phase === 'BREAK') {
             setIsRunning(false);
+            lastProcessedPhaseIndex.current = null;
             setTimeRemaining(0); // Trigger transition on next render
             setTimeout(() => setIsRunning(true), 100);
         }

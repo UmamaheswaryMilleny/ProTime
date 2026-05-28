@@ -8,6 +8,16 @@ export interface UserBadge {
     earnedAt: string;
 }
 
+export interface BadgeDefinition {
+    key: string;
+    name: string;
+    description: string;
+    iconUrl: string | null;
+    xpReward: number;
+    premiumRequired: boolean;
+    category: string;
+}
+
 export interface GamificationData {
     userId: string;
     totalXp: number;
@@ -25,6 +35,7 @@ export interface GamificationData {
     dailyChatMessageCount: number;
     earnedBadges: UserBadge[];
     totalBadgeCount: number;
+    activeBadges: BadgeDefinition[];
     createdAt: string;
     updatedAt: string;
 }
