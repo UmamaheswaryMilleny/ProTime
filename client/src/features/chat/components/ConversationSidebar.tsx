@@ -6,18 +6,29 @@ import { chatApi } from '../api/chatApi';
 import { setConversations } from '../store/chatSlice';
 import { formatRelativeTime } from '../utils/dateUtils';
 import { socketService } from '../../../shared/services/socketService';
-import { PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { PanelLeftClose, PanelLeftOpen, ArrowLeft } from 'lucide-react';
 
 interface ConversationSidebarProps {
   isMinimized?: boolean;
   onToggle?: () => void;
+  activeConversationId?: string;
+  onSelectConversation?: (id: string) => void;
+  onBack?: () => void;
 }
 
-export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isMinimized = false, onToggle }) => {
+export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ 
+  isMinimized = false, 
+  onToggle,
+  activeConversationId,
+  onSelectConversation,
+  onBack
+}) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { conversationId } = useParams<{ conversationId?: string }>();
   const { conversations, onlineUsers } = useSelector((state: RootState) => state.chat);
+
+  const currentConversationId = activeConversationId !== undefined ? activeConversationId : conversationId;
 
   useEffect(() => {
     const fetchConversations = async () => {
@@ -47,12 +58,35 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isMini
 
   return (
     <div className={`flex flex-col h-full bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 transition-all duration-300 ${isMinimized ? 'w-24' : 'w-full'}`}>
-      <div className={`p-4 border-b border-gray-200 dark:border-gray-800 flex items-center ${isMinimized ? 'justify-center' : 'justify-between'}`}>
-        {!isMinimized && <h2 className="text-xl font-bold text-gray-800 dark:text-white">Messages</h2>}
+      <div className={`p-4 border-b border-gray-200 dark:border-gray-800 flex items-center ${isMinimized ? 'justify-center flex-col gap-3' : 'justify-between gap-3'}`}>
+        {!isMinimized ? (
+          <div className="flex items-center gap-2">
+            {onBack && (
+              <button
+                onClick={onBack}
+                className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors flex items-center justify-center"
+                title="Back to Find Buddy"
+              >
+                <ArrowLeft size={20} />
+              </button>
+            )}
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white">Messages</h2>
+          </div>
+        ) : (
+          onBack && (
+            <button
+              onClick={onBack}
+              className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors flex items-center justify-center"
+              title="Back to Find Buddy"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          )
+        )}
         {onToggle && (
           <button
             onClick={onToggle}
-            className="p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
+            className="hidden md:block p-1.5 text-gray-400 hover:text-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
             title={isMinimized ? "Expand Sidebar" : "Collapse Sidebar"}
           >
             {isMinimized ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
@@ -69,14 +103,18 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isMini
         ) : (
           <ul className="divide-y divide-gray-100 dark:divide-gray-800 w-full overflow-hidden block">
             {sortedConversations.map((conv) => {
-              const isActive = conv.id === conversationId;
+              const isActive = conv.id === currentConversationId;
               const { otherUser } = conv;
               const isOnline = onlineUsers[otherUser.userId];
               const initials = otherUser.fullName.charAt(0).toUpperCase();
 
               let previewText = '';
               if (conv.lastMessageContent) {
-                 const prefix = conv.lastMessageBy === otherUser.userId ? `${otherUser.fullName.split(' ')[0]}: ` : 'You: ';
+                 const prefix = !conv.lastMessageBy
+                   ? ''
+                   : conv.lastMessageBy === otherUser.userId
+                     ? `${otherUser.fullName.split(' ')[0]}: `
+                     : 'You: ';
                  previewText = `${prefix}${conv.lastMessageContent}`;
               } else if (conv.lastMessageBy) {
                  previewText = conv.lastMessageBy === otherUser.userId
@@ -87,7 +125,13 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({ isMini
               return (
                 <li
                   key={conv.id}
-                  onClick={() => navigate(`/dashboard/chat/${conv.id}`)}
+                  onClick={() => {
+                    if (onSelectConversation) {
+                      onSelectConversation(conv.id);
+                    } else {
+                      navigate(`/dashboard/chat/${conv.id}`);
+                    }
+                  }}
                   className={`flex items-center p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors ${
                     isActive ? 'bg-indigo-50 dark:bg-gray-800 border-l-4 border-indigo-500' : 'border-l-4 border-transparent'
                   } ${isMinimized ? 'justify-center px-2' : ''}`}
