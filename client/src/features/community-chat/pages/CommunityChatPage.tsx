@@ -19,7 +19,11 @@ export const CommunityChatPage: React.FC = () => {
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
-            if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+            const target = event.target as Node;
+            if (!document.body.contains(target)) {
+                return; // Ignore clicks on detached elements
+            }
+            if (emojiPickerRef.current && !emojiPickerRef.current.contains(target)) {
                 setShowEmojiPicker(false);
             }
         };
@@ -167,11 +171,13 @@ export const CommunityChatPage: React.FC = () => {
                         </button>
                         
                         {showEmojiPicker && (
-                            <div className="absolute bottom-12 right-0 z-50">
+                            <div className="absolute bottom-12 -right-10 sm:right-0 z-50 w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)] animate-in fade-in slide-in-from-bottom-2 duration-200">
                                 <EmojiPicker
                                     onEmojiClick={handleEmojiClick}
                                     theme={Theme.DARK}
                                     lazyLoadEmojis={true}
+                                    width="100%"
+                                    height={350}
                                 />
                             </div>
                         )}
