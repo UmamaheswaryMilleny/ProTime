@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, ChevronDown, CheckCircle, XCircle } from 'lucide-react';
 
 export interface TaskRecord {
@@ -18,8 +18,23 @@ interface ReportTaskTableProps {
 
 export const ReportTaskTable: React.FC<ReportTaskTableProps> = ({ tasks }) => {
     const [filterPriority, setFilterPriority] = useState<string>('All');
+    const [page, setPage] = useState<number>(1);
+    
+    // Reset page to 1 when filters or tasks list changes
+    useEffect(() => {
+        setPage(1);
+    }, [filterPriority, tasks]);
     
     const filteredTasks = tasks.filter(t => filterPriority === 'All' || t.priority === filterPriority);
+
+    const itemsPerPage = 5;
+    const totalItems = filteredTasks.length;
+    const totalPages = Math.ceil(totalItems / itemsPerPage);
+    
+    const paginatedTasks = filteredTasks.slice(
+        (page - 1) * itemsPerPage,
+        page * itemsPerPage
+    );
 
     return (
         <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm mb-8">
@@ -62,13 +77,13 @@ export const ReportTaskTable: React.FC<ReportTaskTableProps> = ({ tasks }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {filteredTasks.length === 0 ? (
+                        {paginatedTasks.length === 0 ? (
                             <tr>
                                 <td colSpan={6} className="text-center py-8 text-zinc-500">
                                     No tasks found for this filter.
                                 </td>
                             </tr>
-                        ) : filteredTasks.map(task => (
+                        ) : paginatedTasks.map(task => (
                             <tr key={task.id} className="border-b border-white/5 last:border-0 hover:bg-white/[0.02] transition-colors">
                                 <td className="py-3 px-4 text-white text-sm max-w-[200px] truncate">{task.name}</td>
                                 <td className="py-3 px-4">
@@ -99,6 +114,44 @@ export const ReportTaskTable: React.FC<ReportTaskTableProps> = ({ tasks }) => {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mt-6 pt-6 border-t border-white/5">
+                    <div className="text-sm text-zinc-400">
+                        Showing <span className="font-semibold text-white">{Math.min(totalItems, (page - 1) * itemsPerPage + 1)}</span> to{' '}
+                        <span className="font-semibold text-white">{Math.min(totalItems, page * itemsPerPage)}</span> of{' '}
+                        <span className="font-semibold text-white">{totalItems}</span> tasks
+                    </div>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setPage(prev => Math.max(1, prev - 1))}
+                            disabled={page === 1}
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                                page === 1
+                                    ? 'bg-zinc-900/50 border-white/5 text-zinc-600 cursor-not-allowed'
+                                    : 'bg-zinc-800 border-white/10 text-white hover:bg-zinc-700 hover:border-white/20 cursor-pointer'
+                            }`}
+                        >
+                            ← Prev
+                        </button>
+                        <span className="text-xs text-zinc-500">
+                            Page <span className="text-white font-semibold">{page}</span> / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setPage(prev => Math.min(totalPages, prev + 1))}
+                            disabled={page === totalPages}
+                            className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                                page === totalPages
+                                    ? 'bg-zinc-900/50 border-white/5 text-zinc-600 cursor-not-allowed'
+                                    : 'bg-zinc-800 border-white/10 text-white hover:bg-zinc-700 hover:border-white/20 cursor-pointer'
+                            }`}
+                        >
+                            Next →
+                        </button>
+                    </div>
+                </div>
+            )}
 
         </div>
     );

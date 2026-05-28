@@ -11,6 +11,7 @@ import {
     ChevronRight,
     Trophy as TrophyIcon,
     Search,
+    X,
 } from 'lucide-react';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
@@ -21,9 +22,11 @@ import { NotificationBell } from './NotificationBell';
 interface SidebarProps {
     isCollapsed: boolean;
     toggleSidebar: () => void;
+    isMobileOpen: boolean;
+    closeMobileSidebar: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar, isMobileOpen, closeMobileSidebar }) => {
     const location = useLocation();
     const [hoveredItem, setHoveredItem] = React.useState<{ label: string; top: number } | null>(null);
     const { user } = useAppSelector((state) => state.auth);
@@ -65,9 +68,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
 
     return (
         <aside
-            // ✅ was "flex flex-col hidden lg:flex" — standalone `flex` and `hidden` conflict at base level
-            //    causing sidebar to never hide on mobile. Fix: remove standalone `flex`, keep "hidden lg:flex"
-            className={`bg-zinc-900 border-r border-white/10 h-screen fixed left-0 top-0 hidden lg:flex flex-col transition-all duration-300 z-40 ${isCollapsed ? 'w-20' : 'w-64'}`}
+            className={`bg-zinc-900 border-r border-white/10 h-screen fixed left-0 top-0 z-40 flex flex-col transition-all duration-300 lg:translate-x-0
+                ${isMobileOpen ? 'translate-x-0' : '-translate-x-full'} 
+                ${isCollapsed ? 'lg:w-20' : 'lg:w-64'} 
+                w-64`}
         >
             {/* Logo & Top Actions */}
             <div className={`p-6 border-b border-white/10 flex items-center ${isCollapsed ? 'justify-center flex-col gap-4' : 'justify-between'}`}>
@@ -84,12 +88,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                 )}
 
                 <div className={`flex items-center gap-2 ${isCollapsed ? 'flex-col' : ''}`}>
-                    <NotificationBell />
+                    <div className="hidden lg:block">
+                        <NotificationBell />
+                    </div>
                     <button
                         onClick={toggleSidebar}
-                        className="p-2 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="hidden lg:block p-2 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
                     >
                         {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
+                    </button>
+                    <button
+                        onClick={closeMobileSidebar}
+                        className="block lg:hidden p-2 rounded-xl bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 transition-colors"
+                    >
+                        <X size={16} />
                     </button>
                 </div>
             </div>
@@ -101,6 +113,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isCollapsed, toggleSidebar }) 
                         key={item.label}
                         to={item.path}
                         end={item.end}
+                        onClick={closeMobileSidebar}
                         onMouseEnter={(e) => {
                             if (isCollapsed) {
                                 const rect = e.currentTarget.getBoundingClientRect();

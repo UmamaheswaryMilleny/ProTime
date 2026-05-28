@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Download, Lock, Calendar as CalendarIcon, Loader2 } from 'lucide-react';
+import { Download, Lock, Calendar as CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppSelector } from '../../../store/hooks';
 
@@ -86,7 +86,7 @@ export const ReportsPage: React.FC = () => {
     const { user }             = useAppSelector(state => state.auth);
     const [loading, setLoading]       = useState(true);
     const [exporting, setExporting]   = useState(false);
-    const [selection, setSelection]   = useState<string>('7days');
+    const [filterType, setFilterType] = useState<'overall' | 'month-range'>('overall');
     const [reportData, setReportData] = useState<ProductivityReportData | null>(null);
     const [error, setError]           = useState<string | null>(null);
 
@@ -96,7 +96,7 @@ export const ReportsPage: React.FC = () => {
     const getRecentMonths = useCallback(() => {
         const months = [];
         const now = new Date();
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < 12; i++) {
             const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
             const year = d.getFullYear();
             const monthVal = String(d.getMonth() + 1).padStart(2, '0');
@@ -107,35 +107,32 @@ export const ReportsPage: React.FC = () => {
         return months;
     }, []);
 
-    // ── Derive selection parameters ───────────────────────────────────────────
-    const isMonth = /^\d{4}-\d{2}$/.test(selection);
-    const month = isMonth ? selection : undefined;
+    const recentMonths = getRecentMonths();
+    const [startMonth, setStartMonth] = useState<string>(recentMonths[Math.min(3, recentMonths.length - 1)]?.value || '');
+    const [endMonth, setEndMonth] = useState<string>(recentMonths[0]?.value || '');
 
     // ── Format period nicely for UI, CSV & PDF ────────────────────────────────
-    const getDisplayPeriod = useCallback((sel: string) => {
-        if (/^\d{4}-\d{2}$/.test(sel)) {
-            const [year, mStr] = sel.split('-').map(Number);
-            const d = new Date(Date.UTC(year, mStr - 1, 1));
+    const getDisplayPeriod = useCallback(() => {
+        if (filterType === 'overall') {
+            return 'Overall Progress';
+        }
+        
+        const formatMonthName = (mStr: string) => {
+            if (!mStr) return '';
+            const [year, m] = mStr.split('-').map(Number);
+            const d = new Date(Date.UTC(year, m - 1, 1));
             return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
-        }
-        switch (sel) {
-            case '7days': return 'Last 7 Days';
-            case '14days': return 'Last 14 Days';
-            case '30days': return 'Last 30 Days';
-            case '90days': return 'Last 90 Days';
-            default: return sel;
-        }
-    }, []);
+        };
+        
+        return `${formatMonthName(startMonth)} to ${formatMonthName(endMonth)}`;
+    }, [filterType, startMonth, endMonth]);
 
     // ── Fetch real data ──────────────────────────────────────────────────────
-    const fetchReport = useCallback(async (sel: string) => {
+    const fetchReport = useCallback(async (range: string, month?: string) => {
         setLoading(true);
         setError(null);
         try {
-            const isSelMonth = /^\d{4}-\d{2}$/.test(sel);
-            const r = isSelMonth ? 'custom' : sel;
-            const m = isSelMonth ? sel : undefined;
-            const data = await reportsService.getProductivityReport(r, m);
+            const data = await reportsService.getProductivityReport(range, month);
             setReportData(data);
         } catch {
             setError('Failed to load your report. Please try again.');
@@ -146,8 +143,28 @@ export const ReportsPage: React.FC = () => {
     }, []);
 
     useEffect(() => {
-        fetchReport(selection);
-    }, [selection, fetchReport]);
+        if (filterType === 'overall') {
+            fetchReport('all');
+        } else {
+            fetchReport('custom', `${startMonth}_${endMonth}`);
+        }
+    }, [filterType, startMonth, endMonth, fetchReport]);
+
+    const handleStartMonthChange = (val: string) => {
+        setLoading(true);
+        setStartMonth(val);
+        if (val > endMonth) {
+            setEndMonth(val);
+        }
+    };
+
+    const handleEndMonthChange = (val: string) => {
+        setLoading(true);
+        setEndMonth(val);
+        if (val < startMonth) {
+            setStartMonth(val);
+        }
+    };
 
     // ── Export handlers ───────────────────────────────────────────────────────
     const handleExportCsv = async () => {
@@ -157,14 +174,13 @@ export const ReportsPage: React.FC = () => {
         const toastId = toast.loading('Generating your CSV report…');
         setExporting(true);
         try {
-            const isSelMonth = /^\d{4}-\d{2}$/.test(selection);
-            const r = isSelMonth ? 'custom' : selection;
-            const m = isSelMonth ? selection : undefined;
+            const r = filterType === 'overall' ? 'all' : 'custom';
+            const m = filterType === 'month-range' ? `${startMonth}_${endMonth}` : undefined;
             const blob     = await reportsService.exportReportCsv(r, m);
             const url      = URL.createObjectURL(blob);
             const link     = document.createElement('a');
             link.href      = url;
-            const filenameRange = m ? m : selection;
+            const filenameRange = m ? m : r;
             link.download  = `protime-report-${filenameRange}-${new Date().toISOString().slice(0, 10)}.csv`;
             document.body.appendChild(link);
             link.click();
@@ -190,7 +206,7 @@ export const ReportsPage: React.FC = () => {
             doc.text('ProTime Productivity Report', 14, 22);
             doc.setFontSize(12);
             doc.setTextColor(100);
-            const displayPeriod = getDisplayPeriod(selection);
+            const displayPeriod = getDisplayPeriod();
             doc.text(`Period: ${displayPeriod} | Exported: ${new Date().toLocaleDateString()}`, 14, 30);
 
             // Summary Info
@@ -221,14 +237,16 @@ export const ReportsPage: React.FC = () => {
             doc.setFontSize(14);
             doc.text('Task Log', 14, (doc as any).lastAutoTable.finalY + 15);
             
-            const taskData = reportData.tasks.map(t => [
-                t.name.length > 30 ? t.name.substring(0, 30) + '...' : t.name,
-                t.priority,
-                t.status,
-                t.pomodoroUsed ? 'Yes' : 'No',
-                t.xpEarned.toString(),
-                t.date
-            ]);
+            const taskData = reportData.tasks
+                .filter(t => t.status === 'Completed')
+                .map(t => [
+                    t.name.length > 30 ? t.name.substring(0, 30) + '...' : t.name,
+                    t.priority,
+                    t.status,
+                    t.pomodoroUsed ? 'Yes' : 'No',
+                    t.xpEarned.toString(),
+                    t.date
+                ]);
 
             autoTable(doc, {
                 startY: (doc as any).lastAutoTable.finalY + 20,
@@ -238,7 +256,7 @@ export const ReportsPage: React.FC = () => {
                 headStyles: { fillColor: [40, 40, 40] }
             });
 
-            const filenameRange = month ? month : selection;
+            const filenameRange = filterType === 'month-range' ? `${startMonth}_${endMonth}` : 'overall';
             doc.save(`protime-report-${filenameRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
             toast.success('PDF downloaded successfully! 🎉', { id: toastId });
         } catch (err) {
@@ -251,16 +269,18 @@ export const ReportsPage: React.FC = () => {
     const summary   = reportData?.summary;
     const focusStr  = formatFocusTime(summary?.totalFocusMinutes ?? 0);
 
-    const tasks: TaskRecord[] = (reportData?.tasks ?? []).map(t => ({
-        id:           t.id,
-        name:         t.name,
-        priority:     t.priority,
-        completed:    t.completed,
-        pomodoroUsed: t.pomodoroUsed,
-        xpEarned:     t.xpEarned,
-        status:       t.status,
-        date:         t.date,
-    }));
+    const tasks: TaskRecord[] = (reportData?.tasks ?? [])
+        .filter(t => t.status === 'Completed')
+        .map(t => ({
+            id:           t.id,
+            name:         t.name,
+            priority:     t.priority,
+            completed:    t.completed,
+            pomodoroUsed: t.pomodoroUsed,
+            xpEarned:     t.xpEarned,
+            status:       t.status,
+            date:         t.date,
+        }));
 
     const badges = (reportData?.badges ?? []).map(b => ({
         id:       b.id,
@@ -275,7 +295,7 @@ export const ReportsPage: React.FC = () => {
         <div className="p-6 md:p-8 min-h-screen bg-zinc-950 max-w-7xl mx-auto">
 
             {/* ── Header ─────────────────────────────────────────────────── */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+            <div className="flex flex-col xl:flex-row xl:flex-wrap xl:items-center justify-between gap-6 mb-8">
                 <div>
                     <h1 className="text-3xl font-bold text-white mb-2 tracking-tight">
                         Your Productivity Report
@@ -283,36 +303,66 @@ export const ReportsPage: React.FC = () => {
                     <p className="text-zinc-400">Track your progress, consistency, and performance</p>
                 </div>
 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row flex-wrap items-start md:items-center gap-4 w-full xl:w-auto">
                     {/* Date Range Selector */}
-                    <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
-                        <CalendarIcon size={16} className="text-zinc-500 absolute left-3" />
-                        <select
-                            value={selection}
-                            onChange={(e) => {
-                                setLoading(true);
-                                setSelection(e.target.value);
-                            }}
-                            className="bg-transparent text-white text-sm outline-none pl-9 pr-8 py-2 appearance-none cursor-pointer"
-                        >
-                            <optgroup label="Rolling Periods" className="bg-zinc-900 text-white">
-                                <option value="7days" className="bg-zinc-900 text-white">Last 7 Days</option>
-                                <option value="14days" className="bg-zinc-900 text-white">Last 14 Days</option>
-                                <option value="30days" className="bg-zinc-900 text-white">Last 30 Days</option>
-                                <option value="90days" className="bg-zinc-900 text-white">Last 90 Days</option>
-                            </optgroup>
-                            <optgroup label="Monthly Progress Reports" className="bg-zinc-900 text-white">
-                                {getRecentMonths().map(m => (
-                                    <option key={m.value} value={m.value} className="bg-zinc-900 text-white">
-                                        {m.label}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        </select>
+                    <div className="flex flex-wrap items-center gap-3 bg-zinc-900/50 p-2 rounded-2xl border border-white/5 w-full md:w-auto">
+                        {/* Selector for overall vs custom range */}
+                        <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
+                            <CalendarIcon size={16} className="text-zinc-500 absolute left-3" />
+                            <select
+                                value={filterType}
+                                onChange={(e) => {
+                                    setLoading(true);
+                                    setFilterType(e.target.value as 'overall' | 'month-range');
+                                }}
+                                className="bg-transparent text-white text-sm outline-none pl-9 pr-8 py-2 appearance-none cursor-pointer"
+                            >
+                                <option value="overall" className="bg-zinc-900 text-white">Overall Progress</option>
+                                <option value="month-range" className="bg-zinc-900 text-white">Month to Month</option>
+                            </select>
+                            <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
+                        </div>
+
+                        {/* Dropdowns for Month Range */}
+                        {filterType === 'month-range' && (
+                            <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                                <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
+                                    <span className="text-xs text-zinc-500 absolute left-3">From:</span>
+                                    <select
+                                        value={startMonth}
+                                        onChange={(e) => handleStartMonthChange(e.target.value)}
+                                        className="bg-transparent text-white text-sm outline-none pl-14 pr-8 py-2 appearance-none cursor-pointer"
+                                    >
+                                        {recentMonths.map(m => (
+                                            <option key={m.value} value={m.value} className="bg-zinc-900 text-white">
+                                                {m.label.replace(' (Current Month)', '')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
+                                </div>
+
+                                <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
+                                    <span className="text-xs text-zinc-500 absolute left-3">To:</span>
+                                    <select
+                                        value={endMonth}
+                                        onChange={(e) => handleEndMonthChange(e.target.value)}
+                                        className="bg-transparent text-white text-sm outline-none pl-10 pr-8 py-2 appearance-none cursor-pointer"
+                                    >
+                                        {recentMonths.map(m => (
+                                            <option key={m.value} value={m.value} className="bg-zinc-900 text-white">
+                                                {m.label.replace(' (Current Month)', '')}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Export Buttons — Premium only */}
-                    <div className="relative flex items-center gap-2 group">
+                    <div className="relative flex items-center gap-2 group w-full md:w-auto justify-end md:justify-start">
                         <button
                             disabled={!isPremium || exporting}
                             onClick={handleExportCsv}
@@ -372,7 +422,7 @@ export const ReportsPage: React.FC = () => {
                     <p className="text-red-400 font-semibold text-lg mb-2">Failed to Load Report</p>
                     <p className="text-zinc-400 text-sm mb-4">{error}</p>
                     <button
-                        onClick={() => fetchReport(selection)}
+                        onClick={() => fetchReport(filterType === 'overall' ? 'all' : 'custom', filterType === 'month-range' ? `${startMonth}_${endMonth}` : undefined)}
                         className="px-4 py-2 bg-[blueviolet] text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
                     >
                         Retry

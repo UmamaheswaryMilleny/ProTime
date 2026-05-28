@@ -36,9 +36,9 @@ export const ReportCharts: React.FC<ReportChartsProps> = ({ xpData, taskData, he
 
     return (
         <div className="flex flex-col gap-6 mb-8">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
                 {/* XP Progress Chart */}
-                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm">
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm min-w-0">
                     <h3 className="text-white font-semibold mb-6 flex items-center gap-2">
                         XP Progress (7 Days)
                         <span className="text-xs font-normal text-zinc-500 ml-auto bg-zinc-800 px-2 py-1 rounded">Daily Cap: 50 XP</span>
@@ -58,7 +58,7 @@ export const ReportCharts: React.FC<ReportChartsProps> = ({ xpData, taskData, he
                 </div>
 
                 {/* Task Completion Chart */}
-                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm">
+                <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm min-w-0">
                     <h3 className="text-white font-semibold mb-6">Task Completion (By Priority)</h3>
                     <div className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
