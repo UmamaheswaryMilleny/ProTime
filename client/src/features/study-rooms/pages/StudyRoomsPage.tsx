@@ -107,7 +107,7 @@ export const StudyRoomsPage: React.FC = () => {
     // WAITING rooms whose session time has definitively passed
     const isPast = room.endTime
       ? new Date(room.endTime) < new Date()
-      : room.startTime
+      : (room.startTime && room.startTime !== 'IMMEDIATE')
         ? new Date(room.startTime).getTime() + 4 * 60 * 60 * 1000 < now
         : false;
     return !isPast;

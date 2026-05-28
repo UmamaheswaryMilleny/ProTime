@@ -4,6 +4,7 @@ import { Play, Bot, Loader2, Zap } from 'lucide-react';
 import { useProBuddyChat } from '../../chat/hooks/useProBuddyChat';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { ROUTES } from '../../../shared/constants/constants.routes';
 
 interface RoomSidebarProps {
   isHost: boolean;
@@ -170,12 +171,14 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost: _isHost, isAiM
             {/* Usage status for drawers */}
             <div className="flex items-center justify-between px-0.5 mt-0.5">
                <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest">
-                 {isAiLimitReached ? 'Daily Limit Reached' : `${Math.max(0, aiUsage.limit - aiUsage.count)} messages left`}
+                 {isAiLimitReached
+                   ? (isUserPremium ? 'Daily Limit Reached' : 'Monthly Limit Reached')
+                   : `${Math.max(0, aiUsage.limit - aiUsage.count)} messages left`}
                </span>
                {isAiLimitReached && !isUserPremium && (
                  <button 
                   onClick={() => {
-                    navigate('/subscription');
+                    navigate(ROUTES.DASHBOARD_SUBSCRIPTION);
                     toast.error("Upgrade to Premium for more!");
                   }}
                   className="text-[9px] font-bold text-amber-500 hover:text-amber-400 flex items-center gap-0.5 uppercase tracking-widest"
@@ -229,7 +232,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost: _isHost, isAiM
                 type="text"
                 value={aiMessage}
                 onChange={(e) => setAiMessage(e.target.value)}
-                placeholder={isAiLimitReached ? "Daily limit reached..." : "Ask ProBuddy anything..."}
+                placeholder={isAiLimitReached ? (isUserPremium ? 'Daily limit reached...' : 'Monthly limit reached...') : 'Ask ProBuddy anything...'}
                 disabled={loading || isAiLimitReached}
                 className="w-full bg-zinc-800 border border-white/10 rounded-xl py-2.5 pl-3.5 pr-10 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-all border-b-2 border-b-[blueviolet]/30 disabled:opacity-30 disabled:grayscale"
               />
@@ -248,7 +251,7 @@ export const RoomSidebar: React.FC<RoomSidebarProps> = ({ isHost: _isHost, isAiM
             {!isAiLimitReached ? (
               <p className="text-[9px] text-zinc-500 mt-2 text-center italic opacity-60">AI responses are fast & helpful!</p>
             ) : (
-              <p className="text-[9px] text-red-500/60 mt-2 text-center font-bold">Daily limit reached. Come back tomorrow!</p>
+              <p className="text-[9px] text-red-500/60 mt-2 text-center font-bold">{isUserPremium ? 'Daily limit reached. Come back tomorrow!' : 'Monthly limit reached. Resets next month!'}</p>
             )}
           </form>
         </div>
