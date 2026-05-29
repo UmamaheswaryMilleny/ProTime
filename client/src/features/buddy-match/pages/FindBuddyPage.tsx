@@ -503,86 +503,117 @@ export const FindBuddyPage: React.FC = () => {
                 </div>
               )}
 
-              {activeTab === 'find' && totalMatches > itemsPerPage && (
-                <div className="mt-12 flex flex-col items-center gap-6">
-                  {/* Pagination Buttons */}
-                  <div className="flex items-center gap-2 p-1.5 bg-[#18181B] border border-white/5 rounded-2xl">
-                    <button
-                      onClick={() => {
-                        const prev = Math.max(1, currentPage - 1);
-                        setCurrentPage(prev);
-                        dispatch(fetchMatches({ page: prev, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      disabled={currentPage === 1 || loading.matches}
-                      className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
-                    >
-                      <ArrowRight size={18} className="rotate-180" />
-                    </button>
+              {activeTab === 'find' && totalMatches > itemsPerPage && (() => {
+                const totalPages = Math.ceil(totalMatches / itemsPerPage);
+                
+                // Helper to generate the array of pages to show
+                const getPageNumbers = () => {
+                  const pages: (number | string)[] = [];
+                  const delta = 1; // Number of pages to show before and after current page
 
-                    {Array.from({ length: Math.min(5, Math.ceil(totalMatches / itemsPerPage)) }, (_, i) => {
-                      // Simple pagination window: logic to show current +/- 2 pages could be added here
-                      const pageNum = i + 1;
-                      return (
-                        <button
-                          key={pageNum}
-                          onClick={() => {
-                            setCurrentPage(pageNum);
-                            dispatch(fetchMatches({ page: pageNum, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
-                            window.scrollTo({ top: 0, behavior: 'smooth' });
-                          }}
-                          disabled={loading.matches}
-                          className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
-                            currentPage === pageNum 
-                              ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20' 
-                              : 'text-zinc-500 hover:text-white hover:bg-white/5'
-                          }`}
-                        >
-                          {pageNum}
-                        </button>
-                      );
-                    })}
+                  // Always include page 1
+                  pages.push(1);
 
-                    {Math.ceil(totalMatches / itemsPerPage) > 5 && <span className="text-zinc-600 px-2 font-bold">...</span>}
-                    
-                    {Math.ceil(totalMatches / itemsPerPage) > 5 && (
-                       <button
-                       onClick={() => {
-                         const last = Math.ceil(totalMatches / itemsPerPage);
-                         setCurrentPage(last);
-                         dispatch(fetchMatches({ page: last, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
-                         window.scrollTo({ top: 0, behavior: 'smooth' });
-                       }}
-                       disabled={loading.matches}
-                       className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
-                         currentPage === Math.ceil(totalMatches / itemsPerPage)
-                           ? 'bg-[blueviolet] text-white' 
-                           : 'text-zinc-500 hover:text-white hover:bg-white/5'
-                       }`}
-                     >
-                       {Math.ceil(totalMatches / itemsPerPage)}
-                     </button>
-                    )}
+                  let rangeStart = Math.max(2, currentPage - delta);
+                  let rangeEnd = Math.min(totalPages - 1, currentPage + delta);
 
-                    <button
-                      onClick={() => {
-                        const next = Math.min(Math.ceil(totalMatches / itemsPerPage), currentPage + 1);
-                        setCurrentPage(next);
-                        dispatch(fetchMatches({ page: next, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                      }}
-                      disabled={currentPage === Math.ceil(totalMatches / itemsPerPage) || loading.matches}
-                      className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
-                    >
-                      <ArrowRight size={18} />
-                    </button>
+                  // Adjust range if current page is near the start or end
+                  if (currentPage <= 2) {
+                    rangeEnd = Math.min(totalPages - 1, 4);
+                  }
+                  if (currentPage >= totalPages - 1) {
+                    rangeStart = Math.max(2, totalPages - 3);
+                  }
+
+                  if (rangeStart > 2) {
+                    pages.push('...');
+                  }
+
+                  for (let i = rangeStart; i <= rangeEnd; i++) {
+                    pages.push(i);
+                  }
+
+                  if (rangeEnd < totalPages - 1) {
+                    pages.push('...');
+                  }
+
+                  // Always include the last page if there's more than 1 page
+                  if (totalPages > 1) {
+                    pages.push(totalPages);
+                  }
+
+                  return pages;
+                };
+
+                const pageNumbers = getPageNumbers();
+
+                return (
+                  <div className="mt-12 flex flex-col items-center gap-6">
+                    {/* Pagination Buttons */}
+                    <div className="flex items-center gap-2 p-1.5 bg-[#18181B] border border-white/5 rounded-2xl">
+                      <button
+                        onClick={() => {
+                          const prev = Math.max(1, currentPage - 1);
+                          setCurrentPage(prev);
+                          dispatch(fetchMatches({ page: prev, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === 1 || loading.matches}
+                        className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
+                      >
+                        <ArrowRight size={18} className="rotate-180" />
+                      </button>
+
+                      {pageNumbers.map((pageNum, idx) => {
+                        if (pageNum === '...') {
+                          return (
+                            <span key={`dots-${idx}`} className="text-zinc-600 px-2 font-bold select-none">
+                              ...
+                            </span>
+                          );
+                        }
+                        
+                        const isCurrent = currentPage === pageNum;
+                        return (
+                          <button
+                            key={pageNum}
+                            onClick={() => {
+                              setCurrentPage(pageNum as number);
+                              dispatch(fetchMatches({ page: pageNum as number, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                              window.scrollTo({ top: 0, behavior: 'smooth' });
+                            }}
+                            disabled={loading.matches}
+                            className={`w-10 h-10 rounded-xl text-xs font-bold transition-all ${
+                              isCurrent
+                                ? 'bg-[blueviolet] text-white shadow-lg shadow-[blueviolet]/20'
+                                : 'text-zinc-500 hover:text-white hover:bg-white/5'
+                            }`}
+                          >
+                            {pageNum}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        onClick={() => {
+                          const next = Math.min(totalPages, currentPage + 1);
+                          setCurrentPage(next);
+                          dispatch(fetchMatches({ page: next, limit: itemsPerPage, search: searchQuery, global: isGlobal }));
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentPage === totalPages || loading.matches}
+                        className="p-2 rounded-xl text-zinc-400 hover:text-white hover:bg-white/5 disabled:opacity-30 transition-all"
+                      >
+                        <ArrowRight size={18} />
+                      </button>
+                    </div>
+
+                    <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
+                      Page {currentPage} of {totalPages}
+                    </p>
                   </div>
-                  
-                  <p className="text-[10px] font-bold text-zinc-600 uppercase tracking-widest">
-                    Page {currentPage} of {Math.ceil(totalMatches / itemsPerPage)}
-                  </p>
-                </div>
-              )}
+                );
+              })()}
 
               {activeTab === 'requests' && (
                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">

@@ -9,6 +9,7 @@ import { AxiosError } from 'axios';
 import { signinSchema, type SigninFormData } from '../validation/signin.schema';
 import { loginAPI } from '../services/auth-service';
 import { loginUser, updateUser } from '../store/authSlice';
+import { loadForUser } from '../../notifications/store/notificationSlice';
 import { userApi } from '../../user/user-service';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 
@@ -55,6 +56,9 @@ export const useSignin = () => {
         accessToken,
         isPremium: !!isPremium,
       }));
+
+      // 2. Load this user's scoped notifications (prevents bleed-over from previous account)
+      dispatch(loadForUser(id));
 
       // 2. Fetch profile to get fullName + profileImage — fire and forget on error
       //    Don't block navigation if profile fetch fails

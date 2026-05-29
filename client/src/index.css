@@ -32,6 +32,11 @@ div.S9gUrf-YoZ4jf {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
 /* Sidebar Custom Scrollbar */
 .custom-scrollbar {
   scrollbar-width: thin;

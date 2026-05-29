@@ -5,6 +5,7 @@ import { AxiosError } from 'axios';
 
 import { googleAuthAPI } from '../services/auth-service';
 import { loginUser } from '../store/authSlice';
+import { loadForUser } from '../../notifications/store/notificationSlice';
 import { ROUTES } from '../../../shared/constants/constants.routes';
 
 export const useGoogleAuth = () => {
@@ -46,6 +47,9 @@ export const useGoogleAuth = () => {
         accessToken,
         isPremium: !!isPremium,
       }));
+
+      // Load this user's scoped notifications (prevents bleed-over from previous account)
+      dispatch(loadForUser(id));
 
       toast.success('Welcome to ProTime!');
 

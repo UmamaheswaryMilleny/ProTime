@@ -115,11 +115,11 @@ export const AdminUsersPage: React.FC = () => {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-6xl mx-auto space-y-4 sm:space-y-6">
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-white">User Management</h1>
-                <p className="text-[#A1A1AA] text-sm mt-1">{total} users registered on ProTime.</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">User Management</h1>
+                <p className="text-[#A1A1AA] text-xs sm:text-sm mt-1">{total} users registered on ProTime.</p>
             </div>
 
             {/* Filters */}
@@ -188,7 +188,7 @@ export const AdminUsersPage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Table */}
+            {/* Table / Cards */}
             <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden">
                 {isLoading ? (
                     <div className="flex items-center justify-center py-20">
@@ -200,83 +200,137 @@ export const AdminUsersPage: React.FC = () => {
                         <p className="font-medium">No users found</p>
                     </div>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-[#27272A] text-[#A1A1AA] text-left">
-                                    <th className="px-4 py-4 font-semibold w-12 text-center">#</th>
-                                    <th className="px-6 py-4 font-semibold">User</th>
-                                    <th className="px-6 py-4 font-semibold">Role</th>
-                                    <th className="px-6 py-4 font-semibold">Subscription</th>
-                                    <th className="px-6 py-4 font-semibold">Joined</th>
-                                    <th className="px-6 py-4 font-semibold">Status</th>
-                                    <th className="px-6 py-4 font-semibold">Details</th>
-                                    <th className="px-6 py-4 font-semibold text-right">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {displayedUsers.map((user, i) => (
-                                    <tr key={user.id} className={`border-t border-[#27272A] hover:bg-[#1F1F23] transition-colors ${i === 0 ? 'border-t-0' : ''}`}>
-                                        <td className="px-4 py-4 text-center">
-                                            <span className="text-xs font-mono font-bold text-zinc-500">{(page - 1) * limit + i + 1}</span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <p className="font-semibold text-white">{user.fullName}</p>
-                                            <p className="text-[#A1A1AA] text-xs mt-0.5">{user.email}</p>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${user.role === 'ADMIN' ? 'bg-[#2563EB]/10 text-[#2563EB]' : 'bg-zinc-800 text-zinc-400'}`}>
-                                                {user.role}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${(user.subscription ?? 'free') === 'premium'
-                                                ? 'bg-amber-500/15 text-amber-400'
-                                                : 'bg-zinc-800 text-zinc-400'
-                                                }`}>
-                                                {(user.subscription ?? 'free') === 'premium' ? 'Premium' : 'Free'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-[#A1A1AA]">
+                    <>
+                        {/* ── Mobile card list (hidden sm+) ── */}
+                        <div className="sm:hidden divide-y divide-[#27272A]">
+                            {displayedUsers.map((user) => (
+                                <div key={user.id} className="p-4 space-y-3">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="min-w-0">
+                                            <p className="font-semibold text-white text-sm truncate">{user.fullName}</p>
+                                            <p className="text-[#A1A1AA] text-xs mt-0.5 truncate">{user.email}</p>
+                                        </div>
+                                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full shrink-0 ${user.isBlocked ? 'bg-red-500/10 text-red-400' : 'bg-[#22C55E]/10 text-[#22C55E]'}`}>
+                                            {user.isBlocked ? 'Blocked' : 'Active'}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${user.role === 'ADMIN' ? 'bg-[#2563EB]/10 text-[#2563EB]' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            {user.role}
+                                        </span>
+                                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${(user.subscription ?? 'free') === 'premium' ? 'bg-amber-500/15 text-amber-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                                            {(user.subscription ?? 'free') === 'premium' ? 'Premium' : 'Free'}
+                                        </span>
+                                        <span className="text-xs text-zinc-500 ml-auto">
                                             {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${user.isBlocked ? 'bg-red-500/10 text-red-400' : 'bg-[#22C55E]/10 text-[#22C55E]'
-                                                }`}>
-                                                {user.isBlocked ? 'Blocked' : 'Active'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <button
-                                                onClick={() => setSelectedUser(user)}
-                                                className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
-                                            >
-                                                <Eye size={13} /> View Details
-                                            </button>
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            <button
-                                                onClick={() => openConfirm(user)}
-                                                disabled={!!actionLoading}
-                                                className={`inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50 ${user.isBlocked
-                                                    ? 'bg-[#22C55E] text-white hover:bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
-                                                    : 'bg-[#9e1910] text-white hover:bg-[#b81f15] shadow-[0_0_12px_rgba(158,25,16,0.3)]'
-                                                    }`}
-                                            >
-                                                {actionLoading === user.id ? (
-                                                    <Loader size={12} className="animate-spin" />
-                                                ) : user.isBlocked ? (
-                                                    <><ShieldOff size={13} /> Unblock</>
-                                                ) : (
-                                                    <><Shield size={13} /> Block</>
-                                                )}
-                                            </button>
-                                        </td>
+                                        </span>
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <button
+                                            onClick={() => setSelectedUser(user)}
+                                            className="flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
+                                        >
+                                            <Eye size={13} /> View Details
+                                        </button>
+                                        <button
+                                            onClick={() => openConfirm(user)}
+                                            disabled={!!actionLoading}
+                                            className={`flex-1 inline-flex items-center justify-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg transition-all disabled:opacity-50 ${user.isBlocked
+                                                ? 'bg-[#22C55E] text-white hover:bg-green-400'
+                                                : 'bg-[#9e1910] text-white hover:bg-[#b81f15]'
+                                            }`}
+                                        >
+                                            {actionLoading === user.id ? (
+                                                <Loader size={12} className="animate-spin" />
+                                            ) : user.isBlocked ? (
+                                                <><ShieldOff size={13} /> Unblock</>
+                                            ) : (
+                                                <><Shield size={13} /> Block</>
+                                            )}
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* ── Desktop table (hidden on mobile) ── */}
+                        <div className="hidden sm:block overflow-x-auto">
+                            <table className="w-full text-sm">
+                                <thead>
+                                    <tr className="border-b border-[#27272A] text-[#A1A1AA] text-left">
+                                        <th className="px-4 py-4 font-semibold w-12 text-center">#</th>
+                                        <th className="px-6 py-4 font-semibold">User</th>
+                                        <th className="px-6 py-4 font-semibold">Role</th>
+                                        <th className="px-6 py-4 font-semibold">Subscription</th>
+                                        <th className="px-6 py-4 font-semibold">Joined</th>
+                                        <th className="px-6 py-4 font-semibold">Status</th>
+                                        <th className="px-6 py-4 font-semibold">Details</th>
+                                        <th className="px-6 py-4 font-semibold text-right">Action</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {displayedUsers.map((user, i) => (
+                                        <tr key={user.id} className={`border-t border-[#27272A] hover:bg-[#1F1F23] transition-colors ${i === 0 ? 'border-t-0' : ''}`}>
+                                            <td className="px-4 py-4 text-center">
+                                                <span className="text-xs font-mono font-bold text-zinc-500">{(page - 1) * limit + i + 1}</span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <p className="font-semibold text-white">{user.fullName}</p>
+                                                <p className="text-[#A1A1AA] text-xs mt-0.5">{user.email}</p>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${user.role === 'ADMIN' ? 'bg-[#2563EB]/10 text-[#2563EB]' : 'bg-zinc-800 text-zinc-400'}`}>
+                                                    {user.role}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${(user.subscription ?? 'free') === 'premium'
+                                                    ? 'bg-amber-500/15 text-amber-400'
+                                                    : 'bg-zinc-800 text-zinc-400'
+                                                    }`}>
+                                                    {(user.subscription ?? 'free') === 'premium' ? 'Premium' : 'Free'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-[#A1A1AA]">
+                                                {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${user.isBlocked ? 'bg-red-500/10 text-red-400' : 'bg-[#22C55E]/10 text-[#22C55E]'}`}>
+                                                    {user.isBlocked ? 'Blocked' : 'Active'}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <button
+                                                    onClick={() => setSelectedUser(user)}
+                                                    className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
+                                                >
+                                                    <Eye size={13} /> View Details
+                                                </button>
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <button
+                                                    onClick={() => openConfirm(user)}
+                                                    disabled={!!actionLoading}
+                                                    className={`inline-flex items-center gap-1.5 text-xs font-bold px-4 py-2 rounded-lg transition-all active:scale-95 disabled:opacity-50 ${user.isBlocked
+                                                        ? 'bg-[#22C55E] text-white hover:bg-green-400 shadow-[0_0_12px_rgba(34,197,94,0.3)]'
+                                                        : 'bg-[#9e1910] text-white hover:bg-[#b81f15] shadow-[0_0_12px_rgba(158,25,16,0.3)]'
+                                                        }`}
+                                                >
+                                                    {actionLoading === user.id ? (
+                                                        <Loader size={12} className="animate-spin" />
+                                                    ) : user.isBlocked ? (
+                                                        <><ShieldOff size={13} /> Unblock</>
+                                                    ) : (
+                                                        <><Shield size={13} /> Block</>
+                                                    )}
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
             </div>
 

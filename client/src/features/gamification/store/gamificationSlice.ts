@@ -52,6 +52,7 @@ const gamificationSlice = createSlice({
                 state.data = { ...state.data, ...action.payload };
             }
         },
+        resetGamification: () => initialState,
     },
     extraReducers: (builder) => {
         builder
@@ -70,5 +71,5 @@ const gamificationSlice = createSlice({
     },
 });
 
-export const { addBadgeNotification, clearBadgeNotification, updateGamificationLocal } = gamificationSlice.actions;
+export const { addBadgeNotification, clearBadgeNotification, updateGamificationLocal, resetGamification } = gamificationSlice.actions;
 export default gamificationSlice.reducer;

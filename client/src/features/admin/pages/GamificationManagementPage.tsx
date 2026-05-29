@@ -57,34 +57,35 @@ export const GamificationManagementPage: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white mb-2 flex items-center gap-3">
-          <Gamepad2 className="text-[#2563EB]" /> Gamification Management
+        <h1 className="text-lg sm:text-2xl font-bold text-white mb-1 flex items-center gap-2">
+          <Gamepad2 className="text-[#2563EB]" size={20} /> Gamification Management
         </h1>
-        <p className="text-[#A1A1AA] text-sm">
+        <p className="text-[#A1A1AA] text-xs sm:text-sm">
           Overview of user XP, levels, badges, and streaks across the platform.
         </p>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-4 border-b border-zinc-800 pb-px">
+      {/* Tabs — scrollable on mobile */}
+      <div className="flex gap-1 sm:gap-4 border-b border-zinc-800 pb-px overflow-x-auto scrollbar-none">
         {[
           { id: 'overview', label: 'Overview', icon: BarChart3 },
-          { id: 'users', label: 'Users Progress', icon: Users },
+          { id: 'users', label: 'Users', icon: Users },
           { id: 'badges', label: 'Badges', icon: Trophy },
           { id: 'leaderboard', label: 'Leaderboard', icon: Star },
         ].map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id as any)}
-            className={`flex items-center gap-2 px-4 py-3 border-b-2 text-sm font-medium transition-all ${activeTab === tab.id
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-3 border-b-2 text-xs sm:text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+              activeTab === tab.id
                 ? 'border-[#2563EB] text-[#2563EB]'
                 : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
-              }`}
+            }`}
           >
-            <tab.icon size={16} />
+            <tab.icon size={14} />
             {tab.label}
           </button>
         ))}
@@ -139,7 +140,7 @@ export const GamificationManagementPage: React.FC = () => {
             <motion.div
               initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 bottom-0 w-[450px] bg-[#0D0D10] border-l border-zinc-800 z-50 overflow-y-auto flex flex-col shadow-2xl"
+              className="fixed top-0 right-0 bottom-0 w-full sm:w-[450px] bg-[#0D0D10] border-l border-zinc-800 z-50 overflow-y-auto flex flex-col shadow-2xl"
             >
               <UserDetailPanel userId={selectedUserId} onClose={() => setSelectedUserId(null)} />
             </motion.div>
@@ -702,93 +703,163 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
               <p className="text-zinc-500 text-sm">No badge definitions found. Add badges in the database.</p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm text-zinc-400">
-                <thead className="bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60 text-xs uppercase">
-                  <tr>
-                    <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
-                    <th className="px-6 py-4 font-semibold">Badge</th>
-                    <th className="px-6 py-4 font-semibold">Description / Criteria</th>
-                    <th className="px-6 py-4 font-semibold text-center">Reward</th>
-                    <th className="px-6 py-4 font-semibold text-center">Access</th>
-                    <th className="px-6 py-4 font-semibold text-center">Earned By</th>
-                    <th className="px-6 py-4 font-semibold text-center">Status</th>
-                    <th className="px-6 py-4 font-semibold w-48 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-800/60">
-                  {data.badges.map((badge: any) => (
-                    <tr key={badge.id} className="hover:bg-zinc-800/30 transition-colors">
-                      <td className="px-6 py-4 text-center text-2xl">
-                        {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-6 h-6 inline-block rounded" /> : '🏆'}
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="font-semibold text-white">{badge.name}</div>
-                        <div className="text-[10px] text-zinc-500 font-mono mt-0.5 bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded">{badge.key}</div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-zinc-300 mb-1">{badge.description}</div>
-                        <div className="text-xs text-zinc-500 inline-block bg-zinc-800 px-2 py-0.5 rounded">{badge.criteriaUrl}</div>
-                      </td>
-                      <td className="px-6 py-4 text-center text-xs font-semibold text-emerald-400">
-                        {badge.xpReward} XP
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${
-                          badge.premiumRequired
-                            ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
-                            : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50'
-                        }`}>
-                          {badge.premiumRequired ? 'Premium' : 'All'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className="font-semibold text-white">{(badge.usersEarned || 0).toLocaleString()}</span>
-                        <span className="text-zinc-600 text-xs ml-1">users</span>
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
+            <>
+              {/* ── Mobile card list (hidden sm+) ── */}
+              <div className="sm:hidden divide-y divide-zinc-800/60">
+                {data.badges.map((badge: any) => (
+                  <div key={badge.id} className="p-4 space-y-3">
+                    {/* Top row: icon + name + status */}
+                    <div className="flex items-start gap-3">
+                      <div className="text-2xl shrink-0">
+                        {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-8 h-8 rounded" /> : '🏆'}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-white text-sm truncate">{badge.name}</p>
+                        <p className="text-[10px] text-zinc-500 font-mono bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded mt-0.5">{badge.key}</p>
+                      </div>
+                      <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${
+                        badge.isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                          : 'bg-red-500/10 text-red-400 border-red-500/20'
+                      }`}>
+                        {badge.isActive ? 'Active' : 'Off'}
+                      </span>
+                    </div>
+                    {/* Description */}
+                    {badge.description && (
+                      <p className="text-xs text-zinc-400 leading-relaxed">{badge.description}</p>
+                    )}
+                    {/* Meta row */}
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-xs font-semibold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">{badge.xpReward} XP</span>
+                      <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
+                        badge.premiumRequired
+                          ? 'bg-amber-500/10 text-amber-400 border-amber-500/20'
+                          : 'bg-zinc-800 text-zinc-400 border-zinc-700/50'
+                      }`}>
+                        {badge.premiumRequired ? 'Premium' : 'All users'}
+                      </span>
+                      <span className="text-xs text-zinc-500 ml-auto">{(badge.usersEarned || 0).toLocaleString()} earned</span>
+                    </div>
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onToggleBadge(badge.id)}
+                        disabled={isToggling}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
                           badge.isActive
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                            : 'bg-red-500/10 text-red-400 border-red-500/20'
-                        }`}>
-                          {badge.isActive ? 'Active' : 'Deactivated'}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          <button
-                            onClick={() => onToggleBadge(badge.id)}
-                            disabled={isToggling}
-                            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
-                              badge.isActive
-                                ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
-                                : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
-                            }`}
-                          >
-                            {badge.isActive ? 'Deactivate' : 'Activate'}
-                          </button>
-                          <button
-                            onClick={() => handleOpenEdit(badge)}
-                            className="p-1.5 bg-zinc-800 hover:bg-[#2563EB]/20 border border-zinc-700 hover:border-[#2563EB]/40 rounded-lg text-zinc-300 hover:text-[#2563EB] transition-all cursor-pointer"
-                            title="Edit Badge"
-                          >
-                            <Edit2 size={13} />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteBadge(badge.id)}
-                            className="p-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 hover:border-red-500/30 rounded-lg text-zinc-300 hover:text-red-400 transition-all cursor-pointer"
-                            title="Delete Badge"
-                          >
-                            <Trash2 size={13} />
-                          </button>
-                        </div>
-                      </td>
+                            ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'
+                            : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
+                        }`}
+                      >
+                        {badge.isActive ? 'Deactivate' : 'Activate'}
+                      </button>
+                      <button
+                        onClick={() => handleOpenEdit(badge)}
+                        className="px-3 py-1.5 bg-zinc-800 hover:bg-[#2563EB]/20 border border-zinc-700 rounded-lg text-zinc-300 hover:text-[#2563EB] transition-all text-xs font-semibold"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteBadge(badge.id)}
+                        className="px-3 py-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 rounded-lg text-zinc-300 hover:text-red-400 transition-all text-xs font-semibold"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Desktop table (hidden on mobile) ── */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-left text-sm text-zinc-400">
+                  <thead className="bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60 text-xs uppercase">
+                    <tr>
+                      <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
+                      <th className="px-6 py-4 font-semibold">Badge</th>
+                      <th className="px-6 py-4 font-semibold">Description / Criteria</th>
+                      <th className="px-6 py-4 font-semibold text-center">Reward</th>
+                      <th className="px-6 py-4 font-semibold text-center">Access</th>
+                      <th className="px-6 py-4 font-semibold text-center">Earned By</th>
+                      <th className="px-6 py-4 font-semibold text-center">Status</th>
+                      <th className="px-6 py-4 font-semibold w-48 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody className="divide-y divide-zinc-800/60">
+                    {data.badges.map((badge: any) => (
+                      <tr key={badge.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 text-center text-2xl">
+                          {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-6 h-6 inline-block rounded" /> : '🏆'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="font-semibold text-white">{badge.name}</div>
+                          <div className="text-[10px] text-zinc-500 font-mono mt-0.5 bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded">{badge.key}</div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="text-sm text-zinc-300 mb-1">{badge.description}</div>
+                          <div className="text-xs text-zinc-500 inline-block bg-zinc-800 px-2 py-0.5 rounded">{badge.criteriaUrl}</div>
+                        </td>
+                        <td className="px-6 py-4 text-center text-xs font-semibold text-emerald-400">
+                          {badge.xpReward} XP
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded ${
+                            badge.premiumRequired
+                              ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20'
+                              : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50'
+                          }`}>
+                            {badge.premiumRequired ? 'Premium' : 'All'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className="font-semibold text-white">{(badge.usersEarned || 0).toLocaleString()}</span>
+                          <span className="text-zinc-600 text-xs ml-1">users</span>
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <span className={`px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider rounded-full border ${
+                            badge.isActive
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
+                              : 'bg-red-500/10 text-red-400 border-red-500/20'
+                          }`}>
+                            {badge.isActive ? 'Active' : 'Deactivated'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => onToggleBadge(badge.id)}
+                              disabled={isToggling}
+                              className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-colors disabled:opacity-50 ${
+                                badge.isActive
+                                  ? 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white'
+                                  : 'bg-[#2563EB]/20 text-[#2563EB] hover:bg-[#2563EB]/40'
+                              }`}
+                            >
+                              {badge.isActive ? 'Deactivate' : 'Activate'}
+                            </button>
+                            <button
+                              onClick={() => handleOpenEdit(badge)}
+                              className="p-1.5 bg-zinc-800 hover:bg-[#2563EB]/20 border border-zinc-700 hover:border-[#2563EB]/40 rounded-lg text-zinc-300 hover:text-[#2563EB] transition-all cursor-pointer"
+                              title="Edit Badge"
+                            >
+                              <Edit2 size={13} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBadge(badge.id)}
+                              className="p-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 hover:border-red-500/30 rounded-lg text-zinc-300 hover:text-red-400 transition-all cursor-pointer"
+                              title="Delete Badge"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -129,12 +129,12 @@ export const AdminDashboardPage: React.FC = () => {
     ];
 
     return (
-        <div className="max-w-7xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-4 sm:space-y-6">
 
             {/* Header */}
             <div>
-                <h1 className="text-2xl font-bold text-white">ProTime Admin Overview</h1>
-                <p className="text-[#A1A1AA] text-sm mt-1">Real-time platform analytics and insights.</p>
+                <h1 className="text-xl sm:text-2xl font-bold text-white">ProTime Admin Overview</h1>
+                <p className="text-[#A1A1AA] text-xs sm:text-sm mt-1">Real-time platform analytics and insights.</p>
             </div>
 
             {/* Stats Row */}

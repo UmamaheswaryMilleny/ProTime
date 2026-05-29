@@ -3,6 +3,9 @@ import { HelpCircle, LogOut, User as UserIcon } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { logoutUser } from '../../auth/store/authSlice';
+import { clearForLogout } from '../../notifications/store/notificationSlice';
+import { resetGamification } from '../../gamification/store/gamificationSlice';
+import { useQueryClient } from '@tanstack/react-query';
 import { ProTimeBackend } from '../../../api/instance';
 import { ROUTES, API_ROUTES } from '../../../shared/constants/constants.routes';
 import { socketService } from '../../../shared/services/socketService';
@@ -14,6 +17,7 @@ export const DashboardHeader: React.FC = () => {
   const { gamification, isLoading: isGamificationLoading } = useGamification();
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -38,8 +42,11 @@ export const DashboardHeader: React.FC = () => {
       // Backend logout failed (token already expired, network error, etc.)
       // Still clear local state — user should always be able to log out
     } finally {
-      socketService.disconnect(); // Close socket cleanly on logout
-      dispatch(logoutUser());
+      socketService.disconnect();   // Close socket cleanly on logout
+      dispatch(clearForLogout());   // Clear notification state (not storage — scoped per user)
+      dispatch(resetGamification()); // Clear XP / level / badge state
+      queryClient.clear();          // Purge all React Query cache
+      dispatch(logoutUser());       // Clear auth state + localStorage
       navigate(ROUTES.LOGIN);
     }
   };
