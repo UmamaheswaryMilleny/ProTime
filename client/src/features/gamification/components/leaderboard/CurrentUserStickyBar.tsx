@@ -18,10 +18,21 @@ export const CurrentUserStickyBar: React.FC<CurrentUserStickyBarProps> = ({ user
         <div className="flex items-center gap-4 w-full sm:w-auto">
           <div className="w-12 h-12 rounded-full border-2 border-[blueviolet] overflow-hidden bg-zinc-800 flex items-center justify-center shrink-0">
             {userEntry.avatar ? (
-              <img src={userEntry.avatar} alt="You" className="w-full h-full object-cover" />
-            ) : (
-              <span className="text-lg font-bold text-[blueviolet]">Y</span>
-            )}
+              <img 
+                src={userEntry.avatar} 
+                alt="You" 
+                className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                  img.nextElementSibling?.classList.remove('hidden');
+                }}
+              />
+            ) : null}
+            <span className={`text-lg font-bold text-[blueviolet] ${userEntry.avatar ? 'hidden' : ''}`}>
+              Y
+            </span>
           </div>
           
           <div className="flex flex-col">

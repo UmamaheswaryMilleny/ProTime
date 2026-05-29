@@ -1,9 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
-import { Smile, Send, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon, UserMinus, Plus, UserPlus } from 'lucide-react';
+import { Smile, Send, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon, UserMinus, Plus, UserPlus, ListTodo, Pause, Play } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endRoom, leaveRoom, startRoom, kickUser, inviteToRoom } from '../store/studyRoomSlice';
-import { pausePomodoro, resumePomodoro } from '../../todo/store/pomodoroSlice';
+import { pausePomodoro, resumePomodoro, startPomodoro, stopPomodoro, updateTime, setPhase } from '../../todo/store/pomodoroSlice';
+import type { TimerPhase } from '../../todo/store/pomodoroSlice';
+import { socketService } from '../../../shared/services/socketService';
+import { todoService } from '../../todo/services/todo.service';
 import { ReportModal } from '../../chat/components/ReportModal';
 import { ReportContext } from '../../chat/api/chatApi';
 import type { RoomMessageDTO } from '../api/studyRoomApi';
@@ -12,6 +15,8 @@ import { ROUTES } from '../../../shared/constants/constants.routes';
 import toast from 'react-hot-toast';
 import { buddyService } from '../../buddy-match/services/buddy.service';
 import type { BuddyConnection } from '../../buddy-match/types/buddy.types';
+import { ShareTodoModal } from '../../chat/components/ShareTodoModal';
+import type { TodoItem } from '../../todo/types/todo.types';
 
 interface RoomChatWindowProps {
   roomId: string;
@@ -24,7 +29,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const navigate = useNavigate();
   const { activeRoom, messages, isSending, pendingRequests, isInGroupCall } = useAppSelector(s => s.studyRoom);
   const { user } = useAppSelector(s => s.auth);
-  const { activeTask, isRunning, timeRemaining } = useAppSelector(s => s.pomodoro);
+  const { activeTask, isRunning, timeRemaining, phase } = useAppSelector(s => s.pomodoro);
 
 
   const [content, setContent] = useState('');
@@ -45,6 +50,37 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const [isLoadingBuddies, setIsLoadingBuddies] = useState(false);
   const [inviteSearch, setInviteSearch] = useState('');
   const [invitingIds, setInvitingIds] = useState<string[]>([]);
+
+  const [isShareTodoOpen, setIsShareTodoOpen] = useState(false);
+  const [pomodoroOffer, setPomodoroOffer] = useState<{
+    task: TodoItem;
+    duration: number;
+    startedByName: string;
+  } | null>(null);
+
+  const [lateJoinOffer, setLateJoinOffer] = useState<{
+    task: TodoItem;
+    timeRemaining: number;
+    phase: TimerPhase;
+  } | null>(null);
+
+  const [statsSummary, setStatsSummary] = useState<{
+    participantsCount: number;
+    tasksCompletedCount: number;
+    pomodorosEarnedCount: number;
+  } | null>(null);
+
+  const [hasAcceptedFocusSession, setHasAcceptedFocusSession] = useState(false);
+  const [acceptedTaskIds, setAcceptedTaskIds] = useState<string[]>([]);
+  const [ignoredTaskIds, setIgnoredTaskIds] = useState<string[]>([]);
+  const acceptedTaskIdsRef = useRef<string[]>([]);
+  const ignoredTaskIdsRef = useRef<string[]>([]);
+  acceptedTaskIdsRef.current = acceptedTaskIds;
+  ignoredTaskIdsRef.current = ignoredTaskIds;
+  const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null);
+  const [sessionExtensionSeconds, setSessionExtensionSeconds] = useState(0);
+  const sessionEndPromptShownRef = useRef(false);
+  const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -67,6 +103,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const isHost = activeRoom?.hostId === user?.id;
   const participantCount = activeRoom ? activeRoom.participantIds.length : 0;
   const reportableParticipants = activeRoom?.participants?.filter(p => p.id !== user?.id) || [];
+  const isExpired = activeRoom?.status === 'WAITING' && activeRoom?.endTime && new Date(activeRoom.endTime) < currentTime;
+  const isRoomEnded = activeRoom?.status === 'ENDED' || isExpired;
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -79,6 +117,335 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       dispatch(fetchPendingRequests(roomId));
     }
   }, [isHost, roomId, dispatch]);
+
+  const handleAcceptFocusSession = (offer: { task: TodoItem, duration: number }) => {
+    dispatch(startPomodoro({
+      task: offer.task,
+      duration: offer.duration,
+      phase: 'FOCUS',
+      isSmartBreaksEnabled: true,
+    }));
+    setHasAcceptedFocusSession(true);
+    socketService.emit('room:pomodoro:accept', { roomId });
+    setPomodoroOffer(null);
+  };
+
+  const handleIgnoreFocusSession = () => {
+    setPomodoroOffer(null);
+  };
+
+  const handleJoinLateFocusSession = (offer: { task: TodoItem, timeRemaining: number }) => {
+    dispatch(startPomodoro({
+      task: offer.task,
+      duration: offer.timeRemaining,
+      phase: 'FOCUS',
+      isSmartBreaksEnabled: true,
+    }));
+    setHasAcceptedFocusSession(true);
+    socketService.emit('room:pomodoro:accept', { roomId });
+    setLateJoinOffer(null);
+  };
+
+  const handleSkipLateFocusSession = () => {
+    setLateJoinOffer(null);
+  };
+
+  // Socket Listeners for Room Pomodoro Synchronization
+  useEffect(() => {
+    const handleRoomPomodoroStart = (payload: { task: TodoItem, duration: number, startedBy: string, startedByName: string, phase?: TimerPhase }) => {
+      if (payload.startedBy !== user?.id) {
+        if (payload.phase === 'BREAK' || payload.task.title.includes('Group Break:')) {
+          if (hasAcceptedFocusSession) {
+            dispatch(startPomodoro({
+              task: payload.task,
+              duration: payload.duration,
+              phase: 'BREAK',
+              isSmartBreaksEnabled: true,
+            }));
+            toast.success('Focus session complete! Entering 5-minute group break. ☕');
+            setHasAcceptedFocusSession(false);
+          }
+        } else {
+          const taskId = payload.task.id;
+          if (acceptedTaskIdsRef.current.includes(taskId)) {
+            // User pre-accepted this task card — auto-start timer silently
+            dispatch(startPomodoro({
+              task: payload.task,
+              duration: payload.duration,
+              phase: 'FOCUS',
+              isSmartBreaksEnabled: true,
+            }));
+            setHasAcceptedFocusSession(true);
+            socketService.emit('room:pomodoro:accept', { roomId });
+            toast.success(`🎯 Timer started for "${payload.task.title}"!`);
+          } else if (ignoredTaskIdsRef.current.includes(taskId)) {
+            // User ignored this task — do nothing
+          } else {
+            // No pre-decision — show invitation modal as fallback
+            setPomodoroOffer({
+              task: payload.task,
+              duration: payload.duration,
+              startedByName: payload.startedByName
+            });
+          }
+        }
+      }
+    };
+
+    const handleRoomPomodoroPause = () => {
+      if (!isHost && activeTask) {
+        dispatch(pausePomodoro());
+      }
+    };
+
+    const handleRoomPomodoroResume = () => {
+      if (!isHost && activeTask) {
+        dispatch(resumePomodoro());
+      }
+    };
+
+    const handleRoomPomodoroStop = () => {
+      if (!isHost && activeTask) {
+        dispatch(stopPomodoro());
+      }
+    };
+
+    const handleRoomPomodoroTick = (payload: { timeRemaining: number, phase: TimerPhase }) => {
+      if (!isHost && activeTask) {
+        if (Math.abs(timeRemaining - payload.timeRemaining) > 2) {
+          dispatch(updateTime(payload.timeRemaining));
+        }
+        if (phase !== payload.phase) {
+          dispatch(setPhase({ phase: payload.phase, duration: payload.timeRemaining }));
+        }
+      }
+    };
+
+    const handleRoomPomodoroRequestStatus = (payload: { requesterId: string }) => {
+      if (isHost && activeTask) {
+        socketService.emit('room:pomodoro:status-response', {
+          targetSocketId: payload.requesterId,
+          task: activeTask,
+          timeRemaining,
+          isRunning,
+          phase
+        });
+      }
+    };
+
+    const handleRoomPomodoroStatusResponse = (payload: { task: TodoItem, timeRemaining: number, isRunning: boolean, phase: TimerPhase, isAccepted?: boolean }) => {
+      if (!isHost && !activeTask && payload.timeRemaining > 0 && payload.phase === 'FOCUS') {
+        setLateJoinOffer({
+          task: payload.task,
+          timeRemaining: payload.timeRemaining,
+          phase: payload.phase
+        });
+      }
+    };
+
+    const handleRoomPomodoroSummary = (payload: { participantsCount: number, tasksCompletedCount: number, pomodorosEarnedCount: number }) => {
+      setStatsSummary(payload);
+    };
+
+    socketService.on('room:pomodoro:start', handleRoomPomodoroStart);
+    socketService.on('room:pomodoro:pause', handleRoomPomodoroPause);
+    socketService.on('room:pomodoro:resume', handleRoomPomodoroResume);
+    socketService.on('room:pomodoro:stop', handleRoomPomodoroStop);
+    socketService.on('room:pomodoro:tick', handleRoomPomodoroTick);
+    socketService.on('room:pomodoro:request-status', handleRoomPomodoroRequestStatus);
+    socketService.on('room:pomodoro:status-response', handleRoomPomodoroStatusResponse);
+    socketService.on('room:pomodoro:summary', handleRoomPomodoroSummary);
+
+    if (!isHost && roomId) {
+      const t = setTimeout(() => {
+        socketService.emit('room:pomodoro:request-status', { roomId });
+      }, 500);
+      return () => {
+        clearTimeout(t);
+        socketService.off('room:pomodoro:start', handleRoomPomodoroStart);
+        socketService.off('room:pomodoro:pause', handleRoomPomodoroPause);
+        socketService.off('room:pomodoro:resume', handleRoomPomodoroResume);
+        socketService.off('room:pomodoro:stop', handleRoomPomodoroStop);
+        socketService.off('room:pomodoro:tick', handleRoomPomodoroTick);
+        socketService.off('room:pomodoro:request-status', handleRoomPomodoroRequestStatus);
+        socketService.off('room:pomodoro:status-response', handleRoomPomodoroStatusResponse);
+        socketService.off('room:pomodoro:summary', handleRoomPomodoroSummary);
+      };
+    }
+
+    return () => {
+      socketService.off('room:pomodoro:start', handleRoomPomodoroStart);
+      socketService.off('room:pomodoro:pause', handleRoomPomodoroPause);
+      socketService.off('room:pomodoro:resume', handleRoomPomodoroResume);
+      socketService.off('room:pomodoro:stop', handleRoomPomodoroStop);
+      socketService.off('room:pomodoro:tick', handleRoomPomodoroTick);
+      socketService.off('room:pomodoro:request-status', handleRoomPomodoroRequestStatus);
+      socketService.off('room:pomodoro:status-response', handleRoomPomodoroStatusResponse);
+      socketService.off('room:pomodoro:summary', handleRoomPomodoroSummary);
+    };
+  }, [roomId, isHost, activeTask, isRunning, timeRemaining, phase, dispatch, user?.id, hasAcceptedFocusSession]);
+
+  // Host: Emit time remaining tick every 5 seconds to room
+  useEffect(() => {
+    if (isHost && activeTask && isRunning && timeRemaining % 5 === 0) {
+      socketService.emit('room:pomodoro:tick', {
+        roomId,
+        timeRemaining,
+        phase
+      });
+    }
+  }, [isHost, activeTask, isRunning, timeRemaining, phase, roomId]);
+
+  // Host: Auto-start a 5 minute break session when Focus timer reaches 0
+  useEffect(() => {
+    if (isHost && activeTask && isRunning && timeRemaining === 0 && phase === 'FOCUS') {
+      const t = setTimeout(() => {
+        const breakTask: TodoItem = {
+          id: `study-room-break-${roomId}-${Date.now()}`,
+          title: `Group Break: 5 Min`,
+          description: 'Study room group session break timer',
+          status: 'IN_PROGRESS',
+          priority: 'LOW',
+          estimatedPomodoros: 1,
+          completedPomodoros: 0,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        } as any;
+        dispatch(startPomodoro({
+          task: breakTask,
+          duration: 5 * 60,
+          phase: 'BREAK',
+          isSmartBreaksEnabled: true,
+        }));
+        socketService.emit('room:pomodoro:start', {
+          roomId,
+          task: breakTask,
+          duration: 5 * 60,
+          phase: 'BREAK',
+          startedByName: user?.fullName || 'Host'
+        });
+      }, 1500);
+      return () => clearTimeout(t);
+    }
+  }, [isHost, activeTask, isRunning, timeRemaining, phase, roomId, dispatch, user?.fullName]);
+
+  // Participant: Emit completion stats when timer finishes at 0
+  useEffect(() => {
+    if (!isHost && activeTask && isRunning && timeRemaining === 0 && phase === 'FOCUS' && hasAcceptedFocusSession) {
+      socketService.emit('room:pomodoro:finish-timer', { roomId });
+      socketService.emit('room:pomodoro:complete-task', { roomId });
+      setHasAcceptedFocusSession(false);
+    }
+  }, [isHost, activeTask, isRunning, timeRemaining, phase, roomId, hasAcceptedFocusSession]);
+
+  // 30 Minutes general study session timer countdown (starts when room status becomes LIVE)
+  useEffect(() => {
+    if (activeRoom?.status !== 'LIVE' || !activeRoom?.updatedAt) {
+      setSessionTimeRemaining(null);
+      return;
+    }
+
+    const calculateTimeRemaining = () => {
+      const updatedAtTime = new Date(activeRoom.updatedAt).getTime();
+      const elapsedSeconds = Math.floor((Date.now() - updatedAtTime) / 1000);
+      const remaining = Math.max(0, 30 * 60 + sessionExtensionSeconds - elapsedSeconds);
+      return remaining;
+    };
+
+    // Reset prompt flag whenever extension changes
+    sessionEndPromptShownRef.current = false;
+
+    // Set initial remaining time
+    setSessionTimeRemaining(calculateTimeRemaining());
+
+    const interval = setInterval(() => {
+      const remaining = calculateTimeRemaining();
+      setSessionTimeRemaining(remaining);
+
+      if (remaining <= 0 && !sessionEndPromptShownRef.current) {
+        clearInterval(interval);
+        sessionEndPromptShownRef.current = true;
+
+        if (isHost) {
+          // Show persistent decision prompt for host
+          toast(
+            (t) => (
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">⏰</span>
+                  <div>
+                    <p className="text-sm font-bold text-zinc-100">30-minute session is over!</p>
+                    <p className="text-xs text-zinc-400 mt-0.5">What would you like to do next?</p>
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-1">
+                  <button
+                    className="flex-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                    onClick={async () => {
+                      toast.dismiss(t.id);
+                      try {
+                        await dispatch(endRoom(roomId)).unwrap();
+                        navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+                      } catch (e: any) {
+                        toast.error(e || 'Failed to end room');
+                      }
+                    }}
+                  >
+                    End Session
+                  </button>
+                  <button
+                    className="flex-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[blueviolet] text-white hover:bg-[blueviolet]/80 transition-colors"
+                    onClick={() => {
+                      toast.dismiss(t.id);
+                      setSessionExtensionSeconds(prev => prev + 30 * 60);
+                      socketService.emit('room:session:extended', { roomId });
+                      toast.success('Session extended by 30 minutes! ⏰');
+                    }}
+                  >
+                    Continue (+30 min)
+                  </button>
+                </div>
+              </div>
+            ),
+            {
+              duration: Infinity,
+              id: 'session-end-prompt',
+              style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+            }
+          );
+        } else {
+          toast('⏰ Session time is up — waiting for host to decide…', {
+            duration: 10000,
+            style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+          });
+        }
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [activeRoom?.status, activeRoom?.updatedAt, sessionExtensionSeconds, isHost, dispatch, roomId, navigate]);
+
+  // Sync session extension to all participants
+  useEffect(() => {
+    const handleSessionExtended = () => {
+      if (!isHost) {
+        setSessionExtensionSeconds(prev => prev + 30 * 60);
+        toast.success('Host extended the session by 30 minutes! ⏰', {
+          style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
+        });
+      }
+    };
+    socketService.on('room:session:extended', handleSessionExtended);
+    return () => socketService.off('room:session:extended', handleSessionExtended);
+  }, [isHost]);
+
+  // Keep track of current time to dynamically determine room expiration
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 10000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (showInviteModal) {
@@ -134,15 +501,64 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     dispatch(startGroupCall(roomId));
   };
 
-  const handleEndRoom = async () => {
-    if (!window.confirm('Are you sure you want to end this room for everyone?')) return;
-    await dispatch(endRoom(roomId));
-    navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+  const handleEndRoom = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-semibold text-zinc-100">Are you sure you want to end this room for everyone?</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await dispatch(endRoom(roomId)).unwrap();
+                navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+              } catch (e: any) {
+                toast.error(e || 'Failed to end room');
+              }
+            }}
+          >
+            End Room
+          </button>
+        </div>
+      </div>
+    ), { duration: 6000, style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } });
   };
 
-  const handleLeave = async () => {
-    await dispatch(leaveRoom(roomId));
-    navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+  const handleLeave = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-semibold text-zinc-100">Are you sure you want to leave this study room?</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            onClick={async () => {
+              toast.dismiss(t.id);
+              try {
+                await dispatch(leaveRoom(roomId)).unwrap();
+                navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
+              } catch (e: any) {
+                toast.error(e || 'Failed to leave room');
+              }
+            }}
+          >
+            Leave
+          </button>
+        </div>
+      </div>
+    ), { duration: 6000, style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } });
   };
 
   const handleRespondRequest = async (requestId: string, action: 'ACCEPTED' | 'REJECTED') => {
@@ -153,10 +569,97 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const handleStartRoom = async () => {
     try {
       await dispatch(startRoom(roomId)).unwrap();
-      toast.success('Session started! Everyone has been notified.');
+      toast.success('Session Started! Room is now active.');
     } catch (e: any) {
       toast.error(e || 'Failed to start session');
     }
+  };
+
+  const handleStartFocusSession = () => {
+    const groupStudyTask = {
+      id: `study-room-${roomId}-${Date.now()}`,
+      title: `Group Study: ${activeRoom?.name}`,
+      description: 'Study room group session timer',
+      status: 'IN_PROGRESS',
+      priority: 'MEDIUM',
+      estimatedPomodoros: 1,
+      completedPomodoros: 0,
+    } as any;
+    dispatch(startPomodoro({ task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', isSmartBreaksEnabled: true }));
+    socketService.emit('room:pomodoro:start', { roomId, task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', startedByName: user?.fullName || 'Host' });
+    toast.success('Focus session started! Participants have been invited.');
+  };
+
+  const handleCopyTask = async (todo: TodoItem) => {
+    try {
+      await todoService.addTodo({
+        title: todo.title,
+        description: todo.description,
+        priority: todo.priority,
+        estimatedTime: todo.estimatedTime,
+        pomodoroEnabled: todo.pomodoroEnabled,
+      });
+      toast.success('Task copied and added to your To-Do list! 🎯');
+    } catch (e) {
+      toast.error('Failed to copy task');
+    }
+  };
+
+  const handleAcceptSharedTask = (taskId: string, taskTitle: string) => {
+    setAcceptedTaskIds(prev => prev.includes(taskId) ? prev : [...prev, taskId]);
+    setIgnoredTaskIds(prev => prev.filter(id => id !== taskId));
+    toast.success('Task accepted! Timer will auto-start when host begins. 🎯');
+    // Broadcast acceptance to room chat
+    const payload = JSON.stringify({ taskId, taskTitle, userName: user?.fullName || 'A participant' });
+    dispatch(sendRoomMessage({ roomId, content: `[TASK_ACCEPTED]${payload}[/TASK_ACCEPTED]` }));
+  };
+
+  const handleIgnoreSharedTask = (taskId: string) => {
+    setIgnoredTaskIds(prev => prev.includes(taskId) ? prev : [...prev, taskId]);
+    setAcceptedTaskIds(prev => prev.filter(id => id !== taskId));
+  };
+
+  const handlePausePomodoro = () => {
+    dispatch(pausePomodoro());
+    socketService.emit('room:pomodoro:pause', { roomId });
+  };
+
+  const handleResumePomodoro = () => {
+    dispatch(resumePomodoro());
+    socketService.emit('room:pomodoro:resume', { roomId });
+  };
+
+  const handleStopPomodoro = () => {
+    toast((t) => (
+      <div className="flex flex-col gap-3">
+        <p className="text-sm font-semibold text-zinc-100">Stop the Pomodoro timer for the entire room?</p>
+        <div className="flex justify-end gap-2 mt-1">
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-zinc-800 text-zinc-300 hover:text-white transition-colors"
+            onClick={() => toast.dismiss(t.id)}
+          >
+            Cancel
+          </button>
+          <button
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+            onClick={() => {
+              toast.dismiss(t.id);
+              dispatch(stopPomodoro());
+              socketService.emit('room:pomodoro:stop', { roomId });
+            }}
+          >
+            Stop Timer
+          </button>
+        </div>
+      </div>
+    ), { duration: 6000, style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' } });
+  };
+
+  const handleShareTodos = (todos: TodoItem[]) => {
+    const payload = JSON.stringify(todos);
+    const messageContent = `[TODO_SHARE_DATA]${payload}[/TODO_SHARE_DATA]`;
+    dispatch(sendRoomMessage({ roomId, content: messageContent }));
+    setIsShareTodoOpen(false);
   };
 
   const formatTime = (seconds: number) => {
@@ -198,6 +701,12 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           </button>
           
           <span className="text-sm font-semibold text-zinc-200 truncate max-w-[120px]">{activeRoom?.name}</span>
+          {sessionTimeRemaining !== null && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[11px] font-semibold font-mono whitespace-nowrap animate-pulse">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+              <span>Session: {formatTime(sessionTimeRemaining)}</span>
+            </div>
+          )}
 
           {/* Participants Overlay */}
           {showParticipants && (
@@ -233,6 +742,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                           src={activeRoom.hostAvatar}
                           alt="Host"
                           className="w-full h-full object-cover"
+                          referrerPolicy="no-referrer"
                           onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
                         />
                       ) : null}
@@ -256,6 +766,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                             src={p.avatar}
                             alt={p.name}
                             className="w-full h-full object-cover"
+                            referrerPolicy="no-referrer"
                             onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
                           />
                         ) : null}
@@ -322,12 +833,28 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           {activeTask && (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-zinc-800 border border-white/10">
               <span className="text-amber-400 font-mono text-sm font-bold">{formatTime(timeRemaining)}</span>
-              <button
-                onClick={() => isRunning ? dispatch(pausePomodoro()) : dispatch(resumePomodoro())}
-                className="p-1 rounded bg-[blueviolet]/20 text-[blueviolet] hover:bg-[blueviolet]/30 transition-colors"
-              >
-                <Timer size={14} />
-              </button>
+              {isHost && (
+                <>
+                  <button
+                    onClick={() => isRunning ? handlePausePomodoro() : handleResumePomodoro()}
+                    className={`p-1 rounded transition-colors ${
+                      isRunning
+                        ? 'bg-amber-500/20 text-amber-400 hover:bg-amber-500/30'
+                        : 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                    }`}
+                    title={isRunning ? 'Pause' : 'Resume'}
+                  >
+                    {isRunning ? <Pause size={14} /> : <Play size={14} />}
+                  </button>
+                  <button
+                    onClick={handleStopPomodoro}
+                    className="p-1.5 rounded bg-red-500/20 text-red-500 hover:bg-red-500/30 transition-colors"
+                    title="Stop Timer"
+                  >
+                    <X size={14} />
+                  </button>
+                </>
+              )}
             </div>
           )}
 
@@ -344,21 +871,35 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             <Bot size={16} />
           </button>
 
+          {/* Share To-Do List (Host Only) */}
+          {isHost && activeRoom?.status === 'LIVE' && (
+            <button
+              onClick={() => setIsShareTodoOpen(true)}
+              className="p-2 rounded-xl border bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border-white/10 transition-colors"
+              title="Share To-Do List"
+            >
+              <ListTodo size={16} />
+            </button>
+          )}
+
           {/* Video Call */}
           <button
             onClick={handleVideoCall}
-            className={`flex items-center gap-2 px-3 py-2 rounded-xl text-sm font-medium transition-all border ${
-              isInGroupCall
-                ? 'bg-green-500/20 text-green-400 border-green-500/30'
-                : 'bg-zinc-800 text-zinc-300 hover:text-white border-white/10 hover:bg-zinc-700'
+            disabled={isRoomEnded}
+            className={`p-2 rounded-xl transition-colors border ${
+              isRoomEnded
+                ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border-white/5'
+                : isInGroupCall
+                ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20'
+                : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border-white/10'
             }`}
+            title={isRoomEnded ? "Session ended" : "Video Call"}
           >
-            <Video size={14} />
-            <span>Video Call</span>
+            <Video size={16} />
           </button>
 
           {/* Start Session Button (Host Only, when WAITING) */}
-          {isHost && activeRoom?.status === 'WAITING' && (
+          {isHost && activeRoom?.status === 'WAITING' && !isExpired && (
             <button
               onClick={handleStartRoom}
               className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[blueviolet] text-white text-sm font-bold hover:bg-[blueviolet]/80 transition-all shadow-lg shadow-[blueviolet]/20 border border-[blueviolet]/20 animate-pulse hover:animate-none"
@@ -432,6 +973,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                                     src={participant.avatar}
                                     className="w-full h-full object-cover"
                                     alt={participant.name}
+                                    referrerPolicy="no-referrer"
                                     onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
                                   />
                                 ) : null}
@@ -494,6 +1036,141 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
 
         {messages.map((msg: RoomMessageDTO, idx) => {
           const isMe = msg.senderId === user?.id;
+
+          if (msg.content && msg.content.startsWith('[TODO_SHARE_DATA]') && msg.content.endsWith('[/TODO_SHARE_DATA]')) {
+            const jsonStr = msg.content.replace('[TODO_SHARE_DATA]', '').replace('[/TODO_SHARE_DATA]', '');
+            try {
+              const todos = JSON.parse(jsonStr) as TodoItem[];
+              return (
+                <div key={msg.id || idx} className={`flex flex-col mb-3 ${isMe ? 'items-end' : 'items-start'} w-full`}>
+                  {!isMe && (
+                    <span className="text-[10px] text-zinc-500 mb-1 px-1">{msg.senderName || 'Unknown'}</span>
+                  )}
+                  <div className="flex flex-col w-full max-w-[85%] sm:max-w-[75%] gap-2 mt-1">
+                    <div className={`text-xs text-zinc-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}`}>
+                      {isMe ? 'You shared a To-Do list:' : `${msg.senderName || 'Unknown'} shared a To-Do list:`}
+                    </div>
+                    {todos.map(todo => {
+                      const priorityColor = todo.priority === 'HIGH' ? 'text-red-500 bg-red-500/10 border-red-500/20' : todo.priority === 'MEDIUM' ? 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' : 'text-green-500 bg-green-500/10 border-green-500/20';
+                      return (
+                        <div key={todo.id} className="bg-zinc-900 border border-white/10 p-4 rounded-2xl flex flex-col gap-3 shadow-lg hover:bg-zinc-800/80 transition-colors w-full text-left">
+                          <div className="flex justify-between items-start gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h4 className="text-sm font-bold text-white truncate">{todo.title}</h4>
+                              {todo.description && <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{todo.description}</p>}
+                            </div>
+                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border whitespace-nowrap ${priorityColor}`}>{todo.priority}</span>
+                          </div>
+                          
+                          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-medium pt-1">
+                            <span>{todo.estimatedTime} Min</span>
+                            <span>{todo.pomodoroEnabled ? 'Pomodoro' : 'Standard'}</span>
+                            <span className="bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20">
+                              {todo.priority === 'HIGH' ? '5XP' : todo.priority === 'MEDIUM' ? '3XP' : '2XP'}
+                            </span>
+                          </div>
+
+                          <div className="border-t border-white/5 pt-3 flex items-center justify-end gap-2">
+                            {!isMe && (
+                              <>
+                                {acceptedTaskIds.includes(todo.id) ? (
+                                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 text-xs font-semibold border border-green-500/20">
+                                    <Check size={12} />
+                                    Accepted
+                                  </span>
+                                ) : ignoredTaskIds.includes(todo.id) ? (
+                                  <span className="text-[10px] text-zinc-500 font-medium italic px-2">Ignored</span>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => handleIgnoreSharedTask(todo.id)}
+                                      className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-400 hover:text-white font-semibold text-xs transition-colors"
+                                    >
+                                      Ignore
+                                    </button>
+                                    <button
+                                      onClick={() => handleAcceptSharedTask(todo.id, todo.title)}
+                                      className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-[blueviolet] hover:bg-[blueviolet]/80 text-white font-semibold text-xs transition-all shadow-lg shadow-[blueviolet]/20"
+                                    >
+                                      <Check size={12} />
+                                      Accept
+                                    </button>
+                                  </>
+                                )}
+                              </>
+                            )}
+                            {todo.pomodoroEnabled && isHost && (
+                              <button 
+                                onClick={() => {
+                                  if (activeTask?.id && isRunning && activeTask.id !== todo.id) {
+                                    toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
+                                    return;
+                                  }
+                                  dispatch(startPomodoro({
+                                    task: todo,
+                                    duration: (todo.estimatedTime || 25) * 60,
+                                    phase: 'FOCUS',
+                                    isSmartBreaksEnabled: true,
+                                  }));
+                                  socketService.emit('room:pomodoro:start', {
+                                    roomId,
+                                    task: todo,
+                                    duration: (todo.estimatedTime || 25) * 60,
+                                    phase: 'FOCUS',
+                                    startedByName: user?.fullName || 'Host'
+                                  });
+                                  toast.success('Group Pomodoro started for shared task!');
+                                }}
+                                className={`${
+                                  activeTask?.id === todo.id
+                                    ? (isRunning 
+                                        ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[#22c55e]/20' 
+                                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20')
+                                    : 'bg-[blueviolet] hover:bg-[#7c2ae8] text-white shadow-[blueviolet]/20'
+                                } text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg`}
+                              >
+                                {activeTask?.id === todo.id 
+                                  ? (isRunning ? 'Started' : 'Paused') 
+                                  : 'Start Timer'}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <span className="text-[10px] text-zinc-600 mt-1 px-1">
+                    {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}
+                  </span>
+                </div>
+              );
+            } catch (e) {
+              console.error('Failed to parse shared todos', e);
+            }
+          }
+
+          // Task Accepted notification
+          if (msg.content && msg.content.startsWith('[TASK_ACCEPTED]') && msg.content.endsWith('[/TASK_ACCEPTED]')) {
+            const jsonStr = msg.content.replace('[TASK_ACCEPTED]', '').replace('[/TASK_ACCEPTED]', '');
+            try {
+              const data = JSON.parse(jsonStr) as { taskId: string; taskTitle: string; userName: string };
+              return (
+                <div key={msg.id || idx} className="flex justify-center py-1">
+                  <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-medium max-w-[90%]">
+                    <Check size={11} className="flex-shrink-0" />
+                    <span className="truncate">
+                      <span className="font-semibold">{data.userName}</span>
+                      {' '}accepted{' '}
+                      <span className="font-semibold">&ldquo;{data.taskTitle}&rdquo;</span>
+                    </span>
+                  </div>
+                </div>
+              );
+            } catch (e) {
+              // ignore parse errors
+            }
+          }
+
           return (
             <div key={msg.id || idx} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
               {!isMe && (
@@ -553,94 +1230,106 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
         <div ref={scrollRef} />
       </div>
 
-      {/* Input Area */}
-      <div className="p-4 border-t border-white/10 bg-zinc-900/80 flex-shrink-0">
-        {file && (
-          <div className="mb-3 flex items-center justify-between p-2.5 rounded-xl bg-[blueviolet]/5 border border-[blueviolet]/10 animate-in slide-in-from-bottom-2 duration-200">
-            <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2 rounded-lg bg-[blueviolet]/10 text-[blueviolet]">
-                {file.type.startsWith('image/') ? <ImageIcon size={16} /> : <FileText size={16} />}
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-medium text-zinc-200 truncate">{file.name}</p>
-                <p className="text-[10px] text-zinc-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-              </div>
-            </div>
-            <button 
-              onClick={() => setFile(null)}
-              className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
-            >
-              <X size={14} />
-            </button>
+      {/* Input Area / Expiry notice */}
+      {isRoomEnded ? (
+        <div className="p-5 border-t border-white/10 bg-zinc-900/90 text-center flex flex-col items-center justify-center gap-2 flex-shrink-0">
+          <AlertTriangle size={24} className="text-red-400 animate-bounce" />
+          <div className="text-sm font-bold text-zinc-200">
+            This study session has ended or expired.
           </div>
-        )}
+          <div className="text-xs text-zinc-500">
+            You cannot send messages or start calls in an ended or expired room.
+          </div>
+        </div>
+      ) : (
+        <div className="p-4 border-t border-white/10 bg-zinc-900/80 flex-shrink-0">
+          {file && (
+            <div className="mb-3 flex items-center justify-between p-2.5 rounded-xl bg-[blueviolet]/5 border border-[blueviolet]/10 animate-in slide-in-from-bottom-2 duration-200">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="p-2 rounded-lg bg-[blueviolet]/10 text-[blueviolet]">
+                  {file.type.startsWith('image/') ? <ImageIcon size={16} /> : <FileText size={16} />}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-medium text-zinc-200 truncate">{file.name}</p>
+                  <p className="text-[10px] text-zinc-500">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setFile(null)}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          )}
 
-        <form onSubmit={handleSend} className="flex items-center gap-2">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              value={content}
-              onChange={e => setContent(e.target.value)}
-              placeholder={file ? "Add a caption..." : "Type any message and send..."}
-              className="w-full bg-zinc-800 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-colors"
-            />
-            
-            <div className="absolute right-12 top-1/2 -translate-y-1/2" ref={emojiPickerRef}>
+          <form onSubmit={handleSend} className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                value={content}
+                onChange={e => setContent(e.target.value)}
+                placeholder={file ? "Add a caption..." : "Type any message and send..."}
+                className="w-full bg-zinc-800 border border-white/10 rounded-xl py-3 pl-4 pr-12 text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-[blueviolet]/50 transition-colors"
+              />
+              
+              <div className="absolute right-12 top-1/2 -translate-y-1/2" ref={emojiPickerRef}>
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className={`p-2 rounded-lg transition-colors ${
+                    showEmojiPicker ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                  }`}
+                  title="Add Emoji"
+                >
+                  <Smile size={18} />
+                </button>
+                {showEmojiPicker && (
+                  <div className="absolute bottom-12 right-0 z-50 w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]">
+                    <EmojiPicker
+                      onEmojiClick={handleEmojiClick}
+                      theme={Theme.DARK}
+                      lazyLoadEmojis={true}
+                      width="100%"
+                      height={350}
+                    />
+                  </div>
+                )}
+              </div>
+
               <button
                 type="button"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                className={`p-2 rounded-lg transition-colors ${
-                  showEmojiPicker ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
+                onClick={() => fileInputRef.current?.click()}
+                className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                  file ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
                 }`}
-                title="Add Emoji"
+                title="Attach File"
               >
-                <Smile size={18} />
+                <Paperclip size={18} />
               </button>
-              {showEmojiPicker && (
-                <div className="absolute bottom-12 right-0 z-50 w-[320px] sm:w-[350px] max-w-[calc(100vw-32px)]">
-                  <EmojiPicker
-                    onEmojiClick={handleEmojiClick}
-                    theme={Theme.DARK}
-                    lazyLoadEmojis={true}
-                    width="100%"
-                    height={350}
-                  />
-                </div>
-              )}
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                onChange={handleFileChange}
+                accept="image/*,.pdf,.doc,.docx,.txt"
+              />
             </div>
 
             <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              className={`absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-                file ? 'text-[blueviolet] bg-[blueviolet]/10' : 'text-zinc-500 hover:text-zinc-300 hover:bg-white/5'
-              }`}
-              title="Attach File"
+              type="submit"
+              disabled={(!content.trim() && !file) || isSending}
+              className="p-3 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[blueviolet]/20"
             >
-              <Paperclip size={18} />
+              {isSending ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Send size={16} />
+              )}
             </button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              className="hidden" 
-              onChange={handleFileChange}
-              accept="image/*,.pdf,.doc,.docx,.txt"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={(!content.trim() && !file) || isSending}
-            className="p-3 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/80 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-lg shadow-[blueviolet]/20"
-          >
-            {isSending ? (
-              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Send size={16} />
-            )}
-          </button>
-        </form>
-      </div>
+          </form>
+        </div>
+      )}
 
       {/* Click outside settings & participants */}
       {(showSettings || showParticipants) && (
@@ -740,6 +1429,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                               src={b.profileImage || b.avatar}
                               className="w-full h-full object-cover"
                               alt={b.fullName}
+                              referrerPolicy="no-referrer"
                               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
                             />
                           ) : null}
@@ -769,6 +1459,145 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 });
               })()}
             </div>
+          </div>
+        </div>
+      )}
+
+      <ShareTodoModal
+        isOpen={isShareTodoOpen}
+        onClose={() => setIsShareTodoOpen(false)}
+        onShare={handleShareTodos}
+      />
+
+      {/* Focus Session Invitation Modal */}
+      {pomodoroOffer && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[50] animate-in fade-in duration-200">
+          <div className="bg-zinc-900/90 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200 relative">
+            <div className="absolute top-4 right-4">
+              <button 
+                onClick={handleIgnoreFocusSession}
+                className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="w-16 h-16 rounded-full bg-[blueviolet]/10 text-[blueviolet] flex items-center justify-center mx-auto mb-4 border border-[blueviolet]/20 animate-bounce">
+              <Timer size={32} />
+            </div>
+            
+            <h3 className="text-lg font-bold text-zinc-100 mb-2">Focus Session Invited!</h3>
+            <p className="text-xs text-zinc-400 mb-6">
+              Host <span className="text-[blueviolet] font-bold">{pomodoroOffer.startedByName}</span> has started a 25-minute group study focus session for:
+              <br />
+              <strong className="text-zinc-200 mt-2 block bg-zinc-800/50 py-2 px-3 rounded-lg border border-white/5 font-semibold text-sm">
+                {pomodoroOffer.task.title}
+              </strong>
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleIgnoreFocusSession}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-300 font-semibold text-xs transition-colors"
+              >
+                Ignore
+              </button>
+              <button
+                onClick={() => handleAcceptFocusSession(pomodoroOffer)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-semibold text-xs shadow-lg shadow-[blueviolet]/20 border border-[blueviolet]/20 transition-all"
+              >
+                Accept & Join
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Late Join Invitation Modal */}
+      {lateJoinOffer && (
+        <div className="absolute inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-[50] animate-in fade-in duration-200">
+          <div className="bg-zinc-900/90 border border-white/10 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200 relative">
+            <div className="absolute top-4 right-4">
+              <button 
+                onClick={handleSkipLateFocusSession}
+                className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="w-16 h-16 rounded-full bg-amber-500/10 text-amber-500 flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+              <Timer size={32} />
+            </div>
+            
+            <h3 className="text-lg font-bold text-zinc-100 mb-2">Focus Session in Progress!</h3>
+            <p className="text-xs text-zinc-400 mb-6">
+              A group focus session is currently active. You can join now with the remaining time:
+              <br />
+              <strong className="text-amber-400 mt-2 block bg-zinc-800/50 py-2 px-3 rounded-lg border border-white/5 font-mono font-bold text-lg">
+                {formatTime(lateJoinOffer.timeRemaining)}
+              </strong>
+            </p>
+            
+            <div className="flex gap-3">
+              <button
+                onClick={handleSkipLateFocusSession}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-300 font-semibold text-xs transition-colors"
+              >
+                Skip
+              </button>
+              <button
+                onClick={() => handleJoinLateFocusSession(lateJoinOffer)}
+                className="flex-1 py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-lg shadow-amber-500/20 border border-amber-500/20 transition-all"
+              >
+                Join Session
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Focus Session Statistics Summary Modal */}
+      {statsSummary && (
+        <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 z-[50] animate-in fade-in duration-200">
+          <div className="bg-zinc-900/95 border border-[blueviolet]/30 rounded-2xl w-full max-w-sm overflow-hidden flex flex-col shadow-2xl p-6 text-center animate-in zoom-in-95 duration-200 relative">
+            <div className="absolute top-4 right-4">
+              <button 
+                onClick={() => setStatsSummary(null)}
+                className="p-1 rounded-lg text-zinc-500 hover:text-white hover:bg-white/5 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            
+            <div className="w-16 h-16 rounded-full bg-green-500/10 text-green-500 flex items-center justify-center mx-auto mb-4 border border-green-500/20">
+              <UserCheck size={32} />
+            </div>
+            
+            <h3 className="text-xl font-extrabold text-white mb-1">Focus Session Summary</h3>
+            <p className="text-xs text-zinc-400 mb-6">Great job team! Here is what we accomplished:</p>
+            
+            <div className="grid grid-cols-3 gap-3 mb-6">
+              <div className="bg-zinc-800/50 border border-white/5 rounded-xl p-3 flex flex-col items-center">
+                <span className="text-xs text-zinc-500 font-semibold mb-1">Joined</span>
+                <span className="text-lg font-bold text-white">{statsSummary.participantsCount}</span>
+              </div>
+              <div className="bg-zinc-800/50 border border-white/5 rounded-xl p-3 flex flex-col items-center">
+                <span className="text-xs text-zinc-500 font-semibold mb-1">Completed</span>
+                <span className="text-lg font-bold text-[blueviolet]">{statsSummary.tasksCompletedCount}</span>
+              </div>
+              <div className="bg-zinc-800/50 border border-white/5 rounded-xl p-3 flex flex-col items-center">
+                <span className="text-xs text-zinc-500 font-semibold mb-1">Pomodoros</span>
+                <span className="text-lg font-bold text-amber-500">{statsSummary.pomodorosEarnedCount}</span>
+              </div>
+            </div>
+            
+            <button
+              onClick={() => setStatsSummary(null)}
+              className="w-full py-2.5 px-4 rounded-xl bg-[blueviolet] hover:bg-[#7c2ae8] text-white font-bold text-xs shadow-lg shadow-[blueviolet]/20 border border-[blueviolet]/20 transition-all"
+            >
+              Awesome!
+            </button>
           </div>
         </div>
       )}

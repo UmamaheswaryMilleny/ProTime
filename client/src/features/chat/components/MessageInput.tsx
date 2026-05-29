@@ -2,6 +2,7 @@ import React, { useState, type KeyboardEvent, useRef, useEffect } from 'react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import { Smile, Paperclip, X, FileIcon, ImageIcon, Loader2 } from 'lucide-react';
 import { chatApi } from '../api/chatApi';
+import toast from 'react-hot-toast';
 
 interface MessageInputProps {
   onSend: (content: string, attachment?: { fileUrl: string; fileName: string; fileSize: number; fileType: string; messageType: 'IMAGE' | 'FILE' }) => void;
@@ -52,7 +53,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
 
     // Check file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
-      alert('File size exceeds 5MB limit');
+      toast.error('File size exceeds 5MB limit');
       return;
     }
 
@@ -71,7 +72,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({ onSend, disabled }) 
       });
     } catch (error) {
       console.error('Upload failed:', error);
-      alert('Failed to upload file. Please try again.');
+      toast.error('Failed to upload file. Please try again.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';

@@ -51,10 +51,21 @@ export const LeaderboardList: React.FC<LeaderboardListProps> = ({ users, current
               <div className="relative shrink-0">
                 <div className={`w-9 h-9 sm:w-12 sm:h-12 rounded-full border-2 overflow-hidden flex items-center justify-center ${isCurrentUser ? 'border-[blueviolet] shadow-[0_0_10px_rgba(138,43,226,0.8)]' : 'border-zinc-600 bg-zinc-900'}`}>
                   {user.avatar ? (
-                    <img src={user.avatar} alt={user.username} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-sm sm:text-lg font-bold text-slate-300">{user.username.charAt(0).toUpperCase()}</span>
-                  )}
+                    <img 
+                      src={user.avatar} 
+                      alt={user.username} 
+                      className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const img = e.target as HTMLImageElement;
+                        img.style.display = 'none';
+                        img.nextElementSibling?.classList.remove('hidden');
+                      }}
+                    />
+                  ) : null}
+                  <span className={`text-sm sm:text-lg font-bold text-slate-300 ${user.avatar ? 'hidden' : ''}`}>
+                    {user.username.charAt(0).toUpperCase()}
+                  </span>
                 </div>
               </div>
 

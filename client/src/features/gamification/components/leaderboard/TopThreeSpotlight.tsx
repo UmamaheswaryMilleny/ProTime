@@ -23,10 +23,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
             <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-300 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-spin" style={{ animationDuration: '4s' }}></div>
             <div className="relative w-20 h-20 md:w-28 md:h-28 rounded-full border-4 border-yellow-400 overflow-hidden bg-zinc-900 flex items-center justify-center shadow-[0_0_40px_rgba(250,204,21,0.4)]">
               {rank1.avatar ? (
-                <img src={rank1.avatar} alt={rank1.username} className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-2xl md:text-4xl font-bold text-yellow-400">{rank1.username.charAt(0).toUpperCase()}</span>
-              )}
+                <img 
+                  src={rank1.avatar} 
+                  alt={rank1.username} 
+                  className="w-full h-full object-cover"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    img.nextElementSibling?.classList.remove('hidden');
+                  }}
+                />
+              ) : null}
+              <span className={`text-2xl md:text-4xl font-bold text-yellow-400 ${rank1.avatar ? 'hidden' : ''}`}>
+                {rank1.username.charAt(0).toUpperCase()}
+              </span>
             </div>
             <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-br from-yellow-300 to-yellow-600 text-yellow-950 font-black w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-sm md:text-lg shadow-[0_0_15px_rgba(250,204,21,0.6)] border-2 md:border-4 border-zinc-900">
               1
@@ -54,10 +65,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
             <div className="relative group">
               <div className="w-14 h-14 rounded-full border-3 border-slate-300 overflow-hidden bg-zinc-800 flex items-center justify-center shadow-[0_0_15px_rgba(148,163,184,0.3)]">
                 {rank2.avatar ? (
-                  <img src={rank2.avatar} alt={rank2.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xl font-bold text-slate-300">{rank2.username.charAt(0).toUpperCase()}</span>
-                )}
+                  <img 
+                    src={rank2.avatar} 
+                    alt={rank2.username} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      img.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`text-xl font-bold text-slate-300 ${rank2.avatar ? 'hidden' : ''}`}>
+                  {rank2.username.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-br from-slate-200 to-slate-400 text-slate-900 font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md border-2 border-zinc-900">
                 2
@@ -82,10 +104,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
             <div className="relative group">
               <div className="w-14 h-14 rounded-full border-3 border-amber-700 overflow-hidden bg-zinc-800 flex items-center justify-center shadow-[0_0_15px_rgba(180,83,9,0.3)]">
                 {rank3.avatar ? (
-                  <img src={rank3.avatar} alt={rank3.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-xl font-bold text-amber-700">{rank3.username.charAt(0).toUpperCase()}</span>
-                )}
+                  <img 
+                    src={rank3.avatar} 
+                    alt={rank3.username} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      img.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`text-xl font-bold text-amber-700 ${rank3.avatar ? 'hidden' : ''}`}>
+                  {rank3.username.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 bg-gradient-to-br from-amber-600 to-amber-800 text-amber-100 font-bold w-5 h-5 rounded-full flex items-center justify-center text-xs shadow-md border-2 border-zinc-900">
                 3
@@ -113,10 +146,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
             <div className="relative group">
               <div className="w-20 h-20 rounded-full border-4 border-slate-300 overflow-hidden bg-zinc-800 flex items-center justify-center shadow-[0_0_20px_rgba(148,163,184,0.3)] group-hover:shadow-[0_0_30px_rgba(148,163,184,0.6)] transition-all">
                 {rank2.avatar ? (
-                  <img src={rank2.avatar} alt={rank2.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-bold text-slate-300">{rank2.username.charAt(0).toUpperCase()}</span>
-                )}
+                  <img 
+                    src={rank2.avatar} 
+                    alt={rank2.username} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      img.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`text-2xl font-bold text-slate-300 ${rank2.avatar ? 'hidden' : ''}`}>
+                  {rank2.username.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-br from-slate-200 to-slate-400 text-slate-900 font-bold w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-md border-2 border-zinc-900">
                 2
@@ -143,10 +187,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
               <div className="absolute -inset-1 bg-gradient-to-r from-yellow-300 via-yellow-500 to-yellow-300 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-spin" style={{ animationDuration: '4s' }}></div>
               <div className="relative w-28 h-28 rounded-full border-4 border-yellow-400 overflow-hidden bg-zinc-900 flex items-center justify-center shadow-[0_0_40px_rgba(250,204,21,0.4)]">
                 {rank1.avatar ? (
-                  <img src={rank1.avatar} alt={rank1.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-4xl font-bold text-yellow-400">{rank1.username.charAt(0).toUpperCase()}</span>
-                )}
+                  <img 
+                    src={rank1.avatar} 
+                    alt={rank1.username} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      img.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`text-4xl font-bold text-yellow-400 ${rank1.avatar ? 'hidden' : ''}`}>
+                  {rank1.username.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-gradient-to-br from-yellow-300 to-yellow-600 text-yellow-950 font-black w-8 h-8 rounded-full flex items-center justify-center text-lg shadow-[0_0_15px_rgba(250,204,21,0.6)] border-4 border-zinc-900">
                 1
@@ -172,10 +227,21 @@ export const TopThreeSpotlight: React.FC<TopThreeSpotlightProps> = ({ topUsers }
             <div className="relative group">
               <div className="w-20 h-20 rounded-full border-4 border-amber-700 overflow-hidden bg-zinc-800 flex items-center justify-center shadow-[0_0_20px_rgba(180,83,9,0.3)] group-hover:shadow-[0_0_30px_rgba(180,83,9,0.6)] transition-all">
                 {rank3.avatar ? (
-                  <img src={rank3.avatar} alt={rank3.username} className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-bold text-amber-700">{rank3.username.charAt(0).toUpperCase()}</span>
-                )}
+                  <img 
+                    src={rank3.avatar} 
+                    alt={rank3.username} 
+                    className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const img = e.target as HTMLImageElement;
+                      img.style.display = 'none';
+                      img.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <span className={`text-2xl font-bold text-amber-700 ${rank3.avatar ? 'hidden' : ''}`}>
+                  {rank3.username.charAt(0).toUpperCase()}
+                </span>
               </div>
               <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-gradient-to-br from-amber-600 to-amber-800 text-amber-100 font-bold w-6 h-6 rounded-full flex items-center justify-center text-sm shadow-md border-2 border-zinc-900">
                 3

@@ -34,7 +34,7 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onSub
   const [startTime, setStartTime] = useState(getCurrentTime());
   const [endTime, setEndTime] = useState(() => {
     const now = new Date();
-    now.setHours(now.getHours() + 1);
+    now.setMinutes(now.getMinutes() + 30);
     return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
   });
   const [buddies, setBuddies] = useState<ConversationResponseDTO[]>([]);
@@ -100,10 +100,10 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onSub
       const endDateTime = new Date(`${startDate}T${endTime}:00`);
       
       const diffMs = endDateTime.getTime() - startDateTime.getTime();
-      const diffHours = diffMs / (1000 * 60 * 60);
+      const diffMinutes = diffMs / (1000 * 60);
 
-      if (diffHours < 1) {
-        e.endTime = 'Study session must be at least 1 hour long';
+      if (diffMinutes < 30) {
+        e.endTime = 'Study session must be at least 30 minutes long';
       }
     }
 

@@ -140,6 +140,32 @@ export class App {
       }
     });
 
+    interface RoomPomodoro {
+      roomId: string;
+      task: any;
+      duration: number;
+      phase: 'FOCUS' | 'BREAK';
+      status: 'running' | 'paused' | 'stopped';
+      startedAt: number;
+      pausedAt: number | null;
+      totalPausedMs: number;
+      acceptedUserIds: Set<string>;
+      completedUserIds: Set<string>;
+      finishedUserIds: Set<string>;
+    }
+
+    const roomPomodoros = new Map<string, RoomPomodoro>();
+
+    function getRoomPomodoroTimeRemaining(pomo: RoomPomodoro): number {
+      if (pomo.status === 'stopped') return 0;
+      if (pomo.status === 'paused') {
+        const elapsedMs = (pomo.pausedAt || Date.now()) - pomo.startedAt - pomo.totalPausedMs;
+        return Math.max(0, pomo.duration - Math.floor(elapsedMs / 1000));
+      }
+      const elapsedMs = Date.now() - pomo.startedAt - pomo.totalPausedMs;
+      return Math.max(0, pomo.duration - Math.floor(elapsedMs / 1000));
+    }
+
     const socketService = new SocketIOService(this.io);
     container.register('ISocketService', { useValue: socketService });
 
@@ -366,6 +392,116 @@ export class App {
           const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:sync', { ...data, type: 'TICK' });
         } catch (_err) { /* Silent for high-frequency events */ }
+      });
+
+      // ─── Study Room Shared Pomodoro Signaling ─────────────────────────────
+      
+      socket.on('room:pomodoro:start', (data: { roomId: string, task: any, duration: number, phase?: 'FOCUS' | 'BREAK', startedByName: string }) => {
+        const phase = data.phase || 'FOCUS';
+        roomPomodoros.set(data.roomId, {
+          roomId: data.roomId,
+          task: data.task,
+          duration: data.duration,
+          phase,
+          status: 'running',
+          startedAt: Date.now(),
+          pausedAt: null,
+          totalPausedMs: 0,
+          acceptedUserIds: new Set([userId]),
+          completedUserIds: new Set(),
+          finishedUserIds: new Set()
+        });
+        
+        socket.to(`room:${data.roomId}`).emit('room:pomodoro:start', {
+          roomId: data.roomId,
+          task: data.task,
+          duration: data.duration,
+          phase,
+          startedBy: userId,
+          startedByName: data.startedByName
+        });
+      });
+
+      socket.on('room:pomodoro:pause', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo && pomo.status === 'running') {
+          pomo.status = 'paused';
+          pomo.pausedAt = Date.now();
+          socket.to(`room:${data.roomId}`).emit('room:pomodoro:pause', { roomId: data.roomId });
+        }
+      });
+
+      socket.on('room:pomodoro:resume', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo && pomo.status === 'paused') {
+          pomo.status = 'running';
+          pomo.totalPausedMs += Date.now() - (pomo.pausedAt || Date.now());
+          pomo.pausedAt = null;
+          socket.to(`room:${data.roomId}`).emit('room:pomodoro:resume', { roomId: data.roomId });
+        }
+      });
+
+      socket.on('room:pomodoro:stop', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo) {
+          // If it was a focus session, broadcast statistics summary to the room
+          if (pomo.phase === 'FOCUS') {
+            socketService.emitToRoom(data.roomId, 'room:pomodoro:summary', {
+              roomId: data.roomId,
+              participantsCount: pomo.acceptedUserIds.size,
+              tasksCompletedCount: pomo.completedUserIds.size,
+              pomodorosEarnedCount: pomo.finishedUserIds.size
+            });
+          }
+          roomPomodoros.delete(data.roomId);
+          socket.to(`room:${data.roomId}`).emit('room:pomodoro:stop', { roomId: data.roomId });
+        }
+      });
+
+      socket.on('room:pomodoro:accept', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo) {
+          pomo.acceptedUserIds.add(userId);
+          socket.to(`room:${data.roomId}`).emit('room:pomodoro:participant-joined', { roomId: data.roomId, userId });
+        }
+      });
+
+      socket.on('room:pomodoro:complete-task', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo) {
+          pomo.completedUserIds.add(userId);
+        }
+      });
+
+      socket.on('room:pomodoro:finish-timer', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo) {
+          pomo.finishedUserIds.add(userId);
+        }
+      });
+
+      socket.on('room:pomodoro:request-status', (data: { roomId: string }) => {
+        const pomo = roomPomodoros.get(data.roomId);
+        if (pomo) {
+          const timeRemaining = getRoomPomodoroTimeRemaining(pomo);
+          if (timeRemaining > 0) {
+            socket.emit('room:pomodoro:status-response', {
+              task: pomo.task,
+              timeRemaining,
+              isRunning: pomo.status === 'running',
+              phase: pomo.phase,
+              acceptedCount: pomo.acceptedUserIds.size,
+              isAccepted: pomo.acceptedUserIds.has(userId)
+            });
+          }
+        }
+      });
+
+      // ─── Study Room Session Extension ─────────────────────────────────────
+      socket.on('room:session:extended', (data: { roomId: string }) => {
+        // Relay extension event to all other members of the room
+        socket.to(`room:${data.roomId}`).emit('room:session:extended', { roomId: data.roomId });
+        logger.info(`[Socket] Session extended in room ${data.roomId} by user ${userId}`);
       });
     });
   }

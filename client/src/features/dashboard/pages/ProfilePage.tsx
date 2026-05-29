@@ -286,6 +286,7 @@ export const ProfilePage: React.FC = () => {
                 src={user.profileImage}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                referrerPolicy="no-referrer"
                 onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
               />
             ) : null}
@@ -358,6 +359,7 @@ export const ProfilePage: React.FC = () => {
                       src={user.profileImage}
                       alt="Profile"
                       className="w-full h-full object-cover"
+                      referrerPolicy="no-referrer"
                       onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden'); }}
                     />
                   ) : null}
@@ -871,6 +873,7 @@ export const ProfilePage: React.FC = () => {
                   src={user?.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`}
                   alt={user?.fullName || 'User'}
                   className="w-24 h-24 rounded-full border-4 border-zinc-900 object-cover shadow-2xl"
+                  referrerPolicy="no-referrer"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
                     img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.fullName || '')}&background=8A2BE2&color=fff`;

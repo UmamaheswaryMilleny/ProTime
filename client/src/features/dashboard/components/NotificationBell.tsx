@@ -30,6 +30,7 @@ const TYPE_CONFIG: Record<NotificationType, { emoji: string; color: string; bg: 
     missed_call:      { emoji: '📹', color: 'text-rose-400',   bg: 'bg-rose-500/10',   border: 'border-rose-500/20' },
     study_room_invite:{ emoji: '📚', color: 'text-[blueviolet]', bg: 'bg-[blueviolet]/10', border: 'border-[blueviolet]/20' },
     study_room_request:{ emoji: '🙋', color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
+    study_room_start:  { emoji: '🚀', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' },
     subscription_expiring: { emoji: '⚠️', color: 'text-amber-400',  bg: 'bg-amber-500/10',  border: 'border-amber-500/20' },
     subscription_expired:  { emoji: '❌', color: 'text-red-400',    bg: 'bg-red-500/10',    border: 'border-red-500/20' },
     subscription_cancelled:{ emoji: '💎', color: 'text-zinc-400',   bg: 'bg-zinc-500/10',   border: 'border-zinc-500/20' },
@@ -97,7 +98,7 @@ export const NotificationBell: React.FC = () => {
         if (!n.isRead) dispatch(markAsRead(n.id));
 
         // Navigation logic based on type
-        if (n.type === 'study_room_invite' || n.type === 'study_room_request') {
+        if (n.type === 'study_room_invite' || n.type === 'study_room_request' || n.type === 'study_room_start') {
             navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
             setIsOpen(false);
         } else if (n.type === 'buddy_request' || n.type === 'buddy_accepted') {
@@ -169,7 +170,12 @@ export const NotificationBell: React.FC = () => {
                             </div>
                         ) : (
                             notifications.map((n) => {
-                                const cfg = TYPE_CONFIG[n.type];
+                                const cfg = TYPE_CONFIG[n.type] || {
+                                    emoji: '🔔',
+                                    color: 'text-zinc-400',
+                                    bg: 'bg-zinc-500/10',
+                                    border: 'border-zinc-500/20'
+                                };
                                 return (
                                     <div
                                         key={n.id}

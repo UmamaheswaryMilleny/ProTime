@@ -26,6 +26,10 @@ export class GetRoomsUsecase implements IGetRoomsUsecase {
 
     const roomResponses: StudyRoomResponseDTO[] = await Promise.all(
       rooms.map(async (room) => {
+        if (room.status === RoomStatus.WAITING && room.endTime && new Date(room.endTime) < new Date()) {
+          room.status = RoomStatus.ENDED;
+          await this.studyRoomRepo.updateStatus(room.id!, RoomStatus.ENDED);
+        }
         const hostUser = await this.userRepo.findById(room.hostId);
         return {
           id: room.id!,

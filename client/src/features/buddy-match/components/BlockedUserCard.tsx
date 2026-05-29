@@ -27,6 +27,7 @@ export const BlockedUserCard: React.FC<BlockedUserCardProps> = ({
             src={avatar}
             alt={displayName}
             className="w-12 h-12 rounded-full object-cover border border-white/10"
+            referrerPolicy="no-referrer"
             onError={(e) => {
               const img = e.target as HTMLImageElement;
               img.style.display = 'none';

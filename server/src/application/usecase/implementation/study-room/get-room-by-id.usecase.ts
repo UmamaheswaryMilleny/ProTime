@@ -19,6 +19,11 @@ export class GetRoomByIdUsecase implements IGetRoomByIdUsecase {
     const room = await this.studyRoomRepo.findById(roomId);
     if (!room) throw new RoomNotFoundError();
 
+    if (room.status === RoomStatus.WAITING && room.endTime && new Date(room.endTime) < new Date()) {
+      room.status = RoomStatus.ENDED;
+      await this.studyRoomRepo.updateStatus(room.id!, RoomStatus.ENDED);
+    }
+
     const hostUser = await this.userRepo.findById(room.hostId);
     const hostProfile = await this.profileRepo.findByUserId(room.hostId);
     const participantProfiles = await this.profileRepo.findByUserIds(room.participantIds);

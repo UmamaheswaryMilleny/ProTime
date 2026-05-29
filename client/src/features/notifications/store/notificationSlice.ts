@@ -17,6 +17,7 @@ export type NotificationType =
     | 'missed_call'
     | 'study_room_invite'
     | 'study_room_request'
+    | 'study_room_start'
     | 'subscription_expiring'
     | 'subscription_expired'
     | 'subscription_cancelled'

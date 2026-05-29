@@ -28,6 +28,7 @@ export const BuddyCard: React.FC<BuddyCardProps> = ({
                 src={buddy.profileImage || buddy.avatar} 
                 alt={buddy.fullName || 'User'} 
                 className="w-14 h-14 rounded-full object-cover ring-2 ring-[blueviolet]/20"
+                referrerPolicy="no-referrer"
                 onError={(e) => {
                   const img = e.target as HTMLImageElement;
                   img.style.display = 'none';

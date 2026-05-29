@@ -41,14 +41,21 @@ export const useStudyRoomSocket = (roomId: string | null) => {
       dispatch(fetchRoomById(payload.roomId));
     };
 
+    const handleRoomStarted = (payload: { roomId: string, updatedAt: string }) => {
+      dispatch(fetchRoomById(payload.roomId));
+      toast.success('Study session has started! 🚀');
+    };
+
     socketService.on('room:new-message', handleNewMessage);
     socketService.on('room:user-kicked', handleUserKicked);
     socketService.on('room:user-joined', handleUserJoined);
+    socketService.on('room:started', handleRoomStarted);
 
     return () => {
       socketService.off('room:new-message', handleNewMessage);
       socketService.off('room:user-kicked', handleUserKicked);
       socketService.off('room:user-joined', handleUserJoined);
+      socketService.off('room:started', handleRoomStarted);
       socketService.emit('leave:room', roomId);
       joinedRef.current = false;
     };

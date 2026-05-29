@@ -23,6 +23,11 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
     const room = await this.studyRoomRepo.findById(roomId);
     if (!room) throw new RoomNotFoundError();
 
+    if (room.status === RoomStatus.WAITING && room.endTime && new Date(room.endTime) < new Date()) {
+      room.status = RoomStatus.ENDED;
+      await this.studyRoomRepo.updateStatus(room.id!, RoomStatus.ENDED);
+    }
+
     if (room.status === RoomStatus.ENDED) throw new RoomNotLiveError();
     if (room.participantIds.includes(userId)) throw new RoomAlreadyJoinedError();
     if (room.participantIds.length >= room.maxParticipants) throw new RoomFullError();

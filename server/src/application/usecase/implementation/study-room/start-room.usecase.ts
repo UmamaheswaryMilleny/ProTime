@@ -8,6 +8,7 @@ import type { IProfileRepository } from "../../../../domain/repositories/profile
 import { RoomNotFoundError, UnauthorizedRoomActionError } from "../../../../domain/errors/study-room.errors";
 import type { INotificationService } from "../../../service_interface/notification-service.interface";
 import { NotificationType } from "../../../service_interface/notification-service.interface";
+import type { ISocketService } from "../../../service_interface/socket-service.interface";
 
 @injectable()
 export class StartRoomUsecase implements IStartRoomUsecase {
@@ -16,6 +17,7 @@ export class StartRoomUsecase implements IStartRoomUsecase {
     @inject('IUserRepository') private userRepo: IUserRepository,
     @inject('IProfileRepository') private profileRepo: IProfileRepository,
     @inject('INotificationService') private notificationService: INotificationService,
+    @inject('ISocketService') private socketService: ISocketService,
   ) {}
 
   async execute(hostId: string, roomId: string): Promise<StudyRoomResponseDTO> {
@@ -32,6 +34,14 @@ export class StartRoomUsecase implements IStartRoomUsecase {
 
     const updatedRoom = await this.studyRoomRepo.updateStatus(roomId, RoomStatus.LIVE);
     if (!updatedRoom) throw new RoomNotFoundError();
+
+    // Broadcast room start status to all socket connections in the room
+    if (this.socketService.emitToRoom) {
+      this.socketService.emitToRoom(roomId, 'room:started', {
+        roomId,
+        updatedAt: updatedRoom.updatedAt?.toISOString() || new Date().toISOString()
+      });
+    }
 
     // Notify all participants (except the host)
     const hostUser = await this.userRepo.findById(hostId);

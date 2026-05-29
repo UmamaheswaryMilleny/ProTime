@@ -48,6 +48,7 @@ export const UserInfoModal: React.FC<UserInfoModalProps> = ({
                     src={avatarUrl} 
                     alt={buddy.fullName} 
                     className="w-24 h-24 rounded-full border-4 border-zinc-900 object-cover shadow-2xl"
+                    referrerPolicy="no-referrer"
                 />
                 <div className="absolute bottom-1 right-1 w-4 h-4 bg-green-500 border-2 border-zinc-900 rounded-full" />
             </div>
