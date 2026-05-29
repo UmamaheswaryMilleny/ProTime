@@ -59,7 +59,6 @@ export const BuddyPreferenceSchema = new Schema(
     // Premium fields — all optional, default null
     subjectDomain: {
       type: String,
-      enum: [...Object.values(SubjectDomain), null],
       default: null,
     },
 

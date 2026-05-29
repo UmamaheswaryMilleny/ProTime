@@ -25,7 +25,7 @@ export interface BuddyPreferenceEntity {
 
   //Premium fields  
 
-  subjectDomain?: SubjectDomain;
+  subjectDomain?: string;
   availability?: Availability;
   sessionDuration?: SessionDuration;
   focusLevel?: FocusLevel;

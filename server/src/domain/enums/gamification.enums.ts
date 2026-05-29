@@ -1,13 +1,26 @@
 // Free users can see titles but levels 7+ are shown as locked
 export enum LevelTitle {
-  EARLY_BIRD = 'Early Bird', // Level 0 — before first XP
-  BEGINNER = 'Beginner', // Level 1–3
-  LEARNER = 'Learner', // Level 4–6   ← free users max visible title
-  EXPLORER = 'Explorer', // Level 7–9   locaked for free users
-  ACHIEVER = 'Achiever', // Level 10–12 loacked for free users
-  EXPERT = 'Expert', // Level 13–15      locaked for free users
-  PRODIGY = 'Prodigy', // Level 16–18    locked for free users
-  MASTER = 'Master', // Level 19–20      locked for free users
+  EARLY_BIRD = 'Early Bird',
+  LEVEL_1 = 'Beginner - Starting Point',
+  LEVEL_2 = 'Beginner - Getting Started',
+  LEVEL_3 = 'Beginner - First Steps',
+  LEVEL_4 = 'Learner - Curious Mind',
+  LEVEL_5 = 'Learner - Knowledge Seeker',
+  LEVEL_6 = 'Learner - Quick Study',
+  LEVEL_7 = 'Explorer - Path Finder',
+  LEVEL_8 = 'Explorer - Adventurer',
+  LEVEL_9 = 'Explorer - Trail Blazer',
+  LEVEL_10 = 'Achiever - Goal Crusher',
+  LEVEL_11 = 'Achiever - Consistent Performer',
+  LEVEL_12 = 'Achiever - Momentum Builder',
+  LEVEL_13 = 'Expert - Skilled Worker',
+  LEVEL_14 = 'Expert - Deep Thinker',
+  LEVEL_15 = 'Expert - Precision Master',
+  LEVEL_16 = 'Prodigy - Elite Focus',
+  LEVEL_17 = 'Prodigy - Peak Performer',
+  LEVEL_18 = 'Prodigy - Limit Breaker',
+  LEVEL_19 = 'Master - Focus Legend',
+  LEVEL_20 = 'Master - Time Master',
 }
 
 
@@ -64,14 +77,30 @@ export const MAX_LEVEL = 20;
 
 // Used by gamification usecase after every XP award.
 export function getTitleForLevel(level: number): LevelTitle {
-  if (level === 0) return LevelTitle.EARLY_BIRD;
-  if (level >= 1 && level <= 3) return LevelTitle.BEGINNER;
-  if (level >= 4 && level <= 6) return LevelTitle.LEARNER;
-  if (level >= 7 && level <= 9) return LevelTitle.EXPLORER;
-  if (level >= 10 && level <= 12) return LevelTitle.ACHIEVER;
-  if (level >= 13 && level <= 15) return LevelTitle.EXPERT;
-  if (level >= 16 && level <= 18) return LevelTitle.PRODIGY;
-  return LevelTitle.MASTER; // level 19–20
+  switch (level) {
+    case 0: return LevelTitle.EARLY_BIRD;
+    case 1: return LevelTitle.LEVEL_1;
+    case 2: return LevelTitle.LEVEL_2;
+    case 3: return LevelTitle.LEVEL_3;
+    case 4: return LevelTitle.LEVEL_4;
+    case 5: return LevelTitle.LEVEL_5;
+    case 6: return LevelTitle.LEVEL_6;
+    case 7: return LevelTitle.LEVEL_7;
+    case 8: return LevelTitle.LEVEL_8;
+    case 9: return LevelTitle.LEVEL_9;
+    case 10: return LevelTitle.LEVEL_10;
+    case 11: return LevelTitle.LEVEL_11;
+    case 12: return LevelTitle.LEVEL_12;
+    case 13: return LevelTitle.LEVEL_13;
+    case 14: return LevelTitle.LEVEL_14;
+    case 15: return LevelTitle.LEVEL_15;
+    case 16: return LevelTitle.LEVEL_16;
+    case 17: return LevelTitle.LEVEL_17;
+    case 18: return LevelTitle.LEVEL_18;
+    case 19: return LevelTitle.LEVEL_19;
+    case 20: return LevelTitle.LEVEL_20;
+    default: return LevelTitle.EARLY_BIRD;
+  }
 }
 
 

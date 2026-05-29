@@ -39,6 +39,7 @@ export class GamificationMapper {
     entity: UserGamificationEntity,
     earnedBadges: UserBadgeResponseDTO[],
     isPremium: boolean,
+    allDefinitions: BadgeDefinitionEntity[]
   ): GamificationResponseDTO {
     const rawLevel = entity.currentLevel;
     const currentLevel = !isPremium && rawLevel > FREE_MAX_LEVEL ? FREE_MAX_LEVEL : rawLevel;
@@ -85,7 +86,18 @@ export class GamificationMapper {
 
       earnedBadges,
       totalBadgeCount: earnedBadges.length,
-
+      activeBadges: allDefinitions.map(def => ({
+        id: def.id,
+        key: def.key,
+        name: def.name,
+        description: def.description,
+        iconUrl: def.iconUrl,
+        category: def.category,
+        conditionType: def.conditionType,
+        conditionValue: def.conditionValue,
+        xpReward: def.xpReward,
+        premiumRequired: def.premiumRequired,
+      })),
       createdAt: entity.createdAt.toISOString(),
       updatedAt: entity.updatedAt.toISOString(),
     };

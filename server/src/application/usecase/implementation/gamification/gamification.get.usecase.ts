@@ -20,7 +20,7 @@ export class GetGamificationUsecase implements IGetGamificationUsecase {
 
     @inject('IBadgeDefinitionRepository')
     private readonly badgeDefinitionRepository: IBadgeDefinitionRepository,
-  ) {}
+  ) { }
 
   async execute(
     userId: string,
@@ -40,10 +40,10 @@ export class GetGamificationUsecase implements IGetGamificationUsecase {
     );
     const lastReset = gamification.lastDailyResetDate
       ? new Date(
-          gamification.lastDailyResetDate.getFullYear(),
-          gamification.lastDailyResetDate.getMonth(),
-          gamification.lastDailyResetDate.getDate(),
-        )
+        gamification.lastDailyResetDate.getFullYear(),
+        gamification.lastDailyResetDate.getMonth(),
+        gamification.lastDailyResetDate.getDate(),
+      )
       : null;
 
     const needsReset = !lastReset || lastReset < todayDate;
@@ -64,14 +64,14 @@ export class GetGamificationUsecase implements IGetGamificationUsecase {
     const badgeDTOs = userBadges
       .map((ub) => {
         const def = definitionMap.get(ub.badgeKey);
-        if (!def) return null; 
+        if (!def) return null;
         return GamificationMapper.toBadgeResponse(ub, def);
       })
       .filter(Boolean) as ReturnType< // removes any null entries
-      typeof GamificationMapper.toBadgeResponse
-    >[];
+        typeof GamificationMapper.toBadgeResponse
+      >[];
 
     // 5. Map to response
-    return GamificationMapper.toResponse(gamification, badgeDTOs, isPremium);
+    return GamificationMapper.toResponse(gamification, badgeDTOs, isPremium, allDefinitions);
   }
 }

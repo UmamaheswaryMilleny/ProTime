@@ -54,6 +54,7 @@ export const ROUTES = {
     GAMIFICATION_USER_DETAIL: '/gamification/users/:userId',
     GAMIFICATION_LEADERBOARD: '/gamification/leaderboard',
     GAMIFICATION_BADGES: '/gamification/badges',
+    GAMIFICATION_BADGE_BY_ID: '/gamification/badges/:badgeId',
     GAMIFICATION_BADGE_TOGGLE: '/gamification/badges/:badgeId/toggle',
     DASHBOARD_STATS: '/dashboard/stats',
     MEETINGS:         '/meetings',
@@ -61,6 +62,7 @@ export const ROUTES = {
     SKILLS: '/skills',
     SKILL_BY_ID: '/skills/:skillId',
     SKILL_TOGGLE: '/skills/:skillId/toggle',
+    SKILL_SEED_DEFAULTS: '/skills/seed-defaults',
   },
 
   // User Routes

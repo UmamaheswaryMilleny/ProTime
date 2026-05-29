@@ -12,4 +12,5 @@ export interface IStudyRoomRepository extends IBaseRepository<StudyRoomEntity> {
   /** Returns all ENDED rooms whose updatedAt is older than the given date (for auto-delete cron). */
   findEndedBefore(date: Date): Promise<StudyRoomEntity[]>;
   countCreatedByHostInMonth(hostId: string, startDate: Date, endDate: Date): Promise<number>;
+  countJoinedOrHostedInMonth(userId: string, startDate: Date, endDate: Date): Promise<number>;
 }

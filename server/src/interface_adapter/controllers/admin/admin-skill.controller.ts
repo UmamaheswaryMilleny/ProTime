@@ -8,6 +8,44 @@ function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// ─── Default skill definitions (mirrors buddy.enums.ts) ─────────────────────
+const DEFAULT_SKILLS: { name: string; category: string; description: string }[] = [
+  // TECHNOLOGY
+  { name: 'Web Development',     category: 'TECHNOLOGY',        description: 'HTML, CSS, JavaScript, frameworks like React and Vue' },
+  { name: 'App Development',     category: 'TECHNOLOGY',        description: 'iOS, Android, and cross-platform mobile development' },
+  { name: 'UI/UX Design',        category: 'TECHNOLOGY',        description: 'User interface design and user experience principles' },
+  { name: 'Data Science',        category: 'TECHNOLOGY',        description: 'Data analysis, visualization, and statistical modeling' },
+  { name: 'DevOps',              category: 'TECHNOLOGY',        description: 'CI/CD pipelines, containerization, cloud infrastructure' },
+  { name: 'AI & ML',             category: 'TECHNOLOGY',        description: 'Artificial intelligence and machine learning fundamentals' },
+  { name: 'Cyber Security',      category: 'TECHNOLOGY',        description: 'Network security, ethical hacking, and security protocols' },
+  // ACADEMICS
+  { name: 'Mathematics',         category: 'ACADEMICS',         description: 'Algebra, calculus, statistics, and discrete math' },
+  { name: 'Physics',             category: 'ACADEMICS',         description: 'Classical mechanics, electromagnetism, and modern physics' },
+  { name: 'Chemistry',           category: 'ACADEMICS',         description: 'Organic, inorganic, and physical chemistry' },
+  { name: 'Biology',             category: 'ACADEMICS',         description: 'Cell biology, genetics, ecology, and physiology' },
+  { name: 'History',             category: 'ACADEMICS',         description: 'World history, civilizations, and historical analysis' },
+  // LANGUAGES
+  { name: 'French',              category: 'LANGUAGES',         description: 'French language learning from beginner to advanced' },
+  { name: 'Spanish',             category: 'LANGUAGES',         description: 'Spanish language learning from beginner to advanced' },
+  { name: 'Japanese',            category: 'LANGUAGES',         description: 'Japanese language including Hiragana, Katakana, and Kanji' },
+  { name: 'German',              category: 'LANGUAGES',         description: 'German language learning from beginner to advanced' },
+  { name: 'Arabic',              category: 'LANGUAGES',         description: 'Arabic language learning from beginner to advanced' },
+  // TEST_PREPARATION
+  { name: 'GATE',                category: 'TEST_PREPARATION',  description: 'Graduate Aptitude Test in Engineering preparation' },
+  { name: 'GRE',                 category: 'TEST_PREPARATION',  description: 'Graduate Record Examinations preparation' },
+  { name: 'IELTS',               category: 'TEST_PREPARATION',  description: 'International English Language Testing System prep' },
+  { name: 'UPSC',                category: 'TEST_PREPARATION',  description: 'Union Public Service Commission exam preparation' },
+  { name: 'CAT',                 category: 'TEST_PREPARATION',  description: 'Common Admission Test (MBA entrance) preparation' },
+  // MACHINE_LEARNING
+  { name: 'Deep Learning',       category: 'MACHINE_LEARNING',  description: 'Neural networks, CNNs, RNNs, and transformer models' },
+  { name: 'NLP',                 category: 'MACHINE_LEARNING',  description: 'Natural language processing and text analysis' },
+  { name: 'Computer Vision',     category: 'MACHINE_LEARNING',  description: 'Image recognition, object detection, and segmentation' },
+  { name: 'Reinforcement Learning', category: 'MACHINE_LEARNING', description: 'Reward-based learning, Q-learning, and policy gradients' },
+  { name: 'MLOps',               category: 'MACHINE_LEARNING',  description: 'ML pipelines, model deployment, and monitoring' },
+  // OTHER
+  { name: 'Others',              category: 'OTHER',             description: 'Any other study subject or skill not listed above' },
+];
+
 @injectable()
 export class AdminSkillController {
   
@@ -204,4 +242,39 @@ export class AdminSkillController {
       next(error);
     }
   }
+
+  // ─── POST /admin/skills/seed-defaults ──────────────────────────────────────
+  async seedDefaultSkills(req: Request, res: Response, next: NextFunction): Promise<void> {
+    try {
+      let inserted = 0;
+      let skipped = 0;
+
+      for (const skill of DEFAULT_SKILLS) {
+        const existing = await SkillModel.findOne({
+          name: { $regex: new RegExp(`^${escapeRegExp(skill.name)}$`, 'i') }
+        }).lean();
+
+        if (existing) {
+          skipped++;
+        } else {
+          await SkillModel.create({
+            name: skill.name,
+            category: skill.category,
+            description: skill.description,
+            isActive: true,
+          });
+          inserted++;
+        }
+      }
+
+      ResponseHelper.success(res, HTTP_STATUS.CREATED, `Seeded ${inserted} skills (${skipped} already existed)`, {
+        inserted,
+        skipped,
+        total: DEFAULT_SKILLS.length,
+      });
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
 }
+
