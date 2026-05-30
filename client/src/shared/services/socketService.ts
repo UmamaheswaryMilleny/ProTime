@@ -16,7 +16,7 @@ class SocketService {
             }
             return;
         }
-
+console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
         const baseUrl = import.meta.env.VITE_API_BASE_URL.replace('/api/v1', '');
         
         this.socket = io(baseUrl, {

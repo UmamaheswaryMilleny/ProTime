@@ -6,7 +6,7 @@ import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroup
 import { pausePomodoro, resumePomodoro, startPomodoro, stopPomodoro, updateTime, setPhase } from '../../todo/store/pomodoroSlice';
 import type { TimerPhase } from '../../todo/store/pomodoroSlice';
 import { socketService } from '../../../shared/services/socketService';
-import { todoService } from '../../todo/services/todo.service';
+// import { todoService } from '../../todo/services/todo.service';
 import { ReportModal } from '../../chat/components/ReportModal';
 import { ReportContext } from '../../chat/api/chatApi';
 import type { RoomMessageDTO } from '../api/studyRoomApi';
@@ -575,35 +575,35 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     }
   };
 
-  const handleStartFocusSession = () => {
-    const groupStudyTask = {
-      id: `study-room-${roomId}-${Date.now()}`,
-      title: `Group Study: ${activeRoom?.name}`,
-      description: 'Study room group session timer',
-      status: 'IN_PROGRESS',
-      priority: 'MEDIUM',
-      estimatedPomodoros: 1,
-      completedPomodoros: 0,
-    } as any;
-    dispatch(startPomodoro({ task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', isSmartBreaksEnabled: true }));
-    socketService.emit('room:pomodoro:start', { roomId, task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', startedByName: user?.fullName || 'Host' });
-    toast.success('Focus session started! Participants have been invited.');
-  };
+  // const handleStartFocusSession = () => {
+  //   const groupStudyTask = {
+  //     id: `study-room-${roomId}-${Date.now()}`,
+  //     title: `Group Study: ${activeRoom?.name}`,
+  //     description: 'Study room group session timer',
+  //     status: 'IN_PROGRESS',
+  //     priority: 'MEDIUM',
+  //     estimatedPomodoros: 1,
+  //     completedPomodoros: 0,
+  //   } as any;
+  //   dispatch(startPomodoro({ task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', isSmartBreaksEnabled: true }));
+  //   socketService.emit('room:pomodoro:start', { roomId, task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', startedByName: user?.fullName || 'Host' });
+  //   toast.success('Focus session started! Participants have been invited.');
+  // };
 
-  const handleCopyTask = async (todo: TodoItem) => {
-    try {
-      await todoService.addTodo({
-        title: todo.title,
-        description: todo.description,
-        priority: todo.priority,
-        estimatedTime: todo.estimatedTime,
-        pomodoroEnabled: todo.pomodoroEnabled,
-      });
-      toast.success('Task copied and added to your To-Do list! 🎯');
-    } catch (e) {
-      toast.error('Failed to copy task');
-    }
-  };
+  // const handleCopyTask = async (todo: TodoItem) => {
+  //   try {
+  //     await todoService.addTodo({
+  //       title: todo.title,
+  //       description: todo.description,
+  //       priority: todo.priority,
+  //       estimatedTime: todo.estimatedTime,
+  //       pomodoroEnabled: todo.pomodoroEnabled,
+  //     });
+  //     toast.success('Task copied and added to your To-Do list! 🎯');
+  //   } catch (e) {
+  //     toast.error('Failed to copy task');
+  //   }
+  // };
 
   const handleAcceptSharedTask = (taskId: string, taskTitle: string) => {
     setAcceptedTaskIds(prev => prev.includes(taskId) ? prev : [...prev, taskId]);
@@ -885,7 +885,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           {/* Video Call */}
           <button
             onClick={handleVideoCall}
-            disabled={isRoomEnded}
+            // disabled={isRoomEnded}
+            disabled={!!isRoomEnded}
             className={`p-2 rounded-xl transition-colors border ${
               isRoomEnded
                 ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border-white/5'
