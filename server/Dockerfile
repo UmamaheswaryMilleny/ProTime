@@ -4,12 +4,12 @@ WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN npm install --omit=dev
 
-COPY . .
+COPY dist ./dist
 
-RUN npm run build
+COPY .env ./
 
 EXPOSE 5000
 
-CMD ["npm", "start"]
+CMD ["node", "dist/index.js"]
