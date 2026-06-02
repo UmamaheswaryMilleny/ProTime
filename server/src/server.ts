@@ -71,7 +71,8 @@ export class App {
   private configureCors(): void {
     this.app.use(cors({ 
       origin: (origin, callback) => {
-        const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174'];
+        const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174','https://pro-time.online',
+  'https://www.pro-time.online',];
         if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
           callback(null, true);
         } else {
