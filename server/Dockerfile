@@ -8,7 +8,6 @@ RUN npm install --omit=dev
 
 COPY dist ./dist
 
-COPY .env ./
 
 EXPOSE 5000
 
