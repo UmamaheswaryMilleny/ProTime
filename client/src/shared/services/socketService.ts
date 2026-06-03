@@ -34,9 +34,10 @@ console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
         });
         this.deferredListeners = [];
 
-        this.socket.on('new_community_message', (message: CommunityMessage) => {
-            store.dispatch(addMessage(message));
-        });
+      this.socket.on('community:new-message', (message: CommunityMessage) => {
+    console.log('[Socket] Community message received', message);
+    store.dispatch(addMessage(message));
+});
 
         // ─── Notification Events ───────────────────────────────────────────────
 

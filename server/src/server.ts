@@ -1,43 +1,41 @@
-import express from "express";
-import type { Application } from "express";
+import express from 'express';
+import type { Application } from 'express';
 import http from 'http';
 import { Server as SocketIOServer } from 'socket.io';
-import cors from "cors";
-import cookieParser from "cookie-parser";
-import { container } from "tsyringe";
-import { config } from "./shared/config/index";
-import { DependencyContainer } from "./infrastructure/di/index";
-import { MongoConnect } from "./infrastructure/database/connection";
-import { connectRedis } from "./infrastructure/config/redis.config";
-import { logger } from "./infrastructure/config/logger.config";
-import { MessageType } from "./domain/enums/chat.enums";
-import { AuthRoutes } from "./interface_adapter/routes/auth/auth-routes";
-import { AdminRoutes } from "./interface_adapter/routes/admin/admin-routes";
-import { UserRoutes } from "./interface_adapter/routes/user/user-routes";
-import { ErrorMiddleware } from "./interface_adapter/middlewares/error.middleware";
-import { TodoRoutes } from "./interface_adapter/routes/todo/todo.routes";
-import { SubscriptionRoutes } from "./interface_adapter/routes/subscription/subscription.routes";
-import { GamificationRoutes } from "./interface_adapter/routes/gamification/gamification.routes";
-import { BuddyRoutes } from "./interface_adapter/routes/buddy-match/buddy.routes";
-import { UtilityRoutes } from "./interface_adapter/routes/utility/utility-routes";
-import { CommunityChatRoutes } from "./interface_adapter/routes/community-chat/community.routes";
-import { SocketIOService } from "./infrastructure/service/socket-service";
+import cors from 'cors';
+import cookieParser from 'cookie-parser';
+import { container } from 'tsyringe';
+import { config } from './shared/config/index';
+import { DependencyContainer } from './infrastructure/di/index';
+import { MongoConnect } from './infrastructure/database/connection';
+import { connectRedis } from './infrastructure/config/redis.config';
+import { logger } from './infrastructure/config/logger.config';
+import { MessageType } from './domain/enums/chat.enums';
+import { AuthRoutes } from './interface_adapter/routes/auth/auth-routes';
+import { AdminRoutes } from './interface_adapter/routes/admin/admin-routes';
+import { UserRoutes } from './interface_adapter/routes/user/user-routes';
+import { ErrorMiddleware } from './interface_adapter/middlewares/error.middleware';
+import { TodoRoutes } from './interface_adapter/routes/todo/todo.routes';
+import { SubscriptionRoutes } from './interface_adapter/routes/subscription/subscription.routes';
+import { GamificationRoutes } from './interface_adapter/routes/gamification/gamification.routes';
+import { BuddyRoutes } from './interface_adapter/routes/buddy-match/buddy.routes';
+import { UtilityRoutes } from './interface_adapter/routes/utility/utility-routes';
+import { CommunityChatRoutes } from './interface_adapter/routes/community-chat/community.routes';
+import { SocketIOService } from './infrastructure/service/socket-service';
 import { JwtTokenService } from './infrastructure/service/token-service';
-import { ROUTES } from "./shared/constants/constants.routes";
+import { ROUTES } from './shared/constants/constants.routes';
 import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
-import { ConversationModel } from "./infrastructure/database/models/conversation.model";
+import { ConversationModel } from './infrastructure/database/models/conversation.model';
 import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
-import { CalendarRoutes } from "./interface_adapter/routes/calendar/calendar.routes";
-import { StudyRoomRoutes } from "./interface_adapter/routes/study-room/study-room.routes";
-import { startMarkMissedSessionsCron } from "./infrastructure/cron/mark-missed-sessions.cron";
-import { startExpireScheduleRequestsCron } from "./infrastructure/cron/expire-schedule-requests.cron";
-import { startExpireTodosCron } from "./infrastructure/cron/expire-todos.cron";
-import { startSubscriptionNotificationsCron } from "./infrastructure/cron/subscription-notifications.cron";
-import { startExpireSubscriptionsCron } from "./infrastructure/cron/expire-subscriptions.cron";
-import { startDeleteExpiredRoomsCron } from "./infrastructure/cron/delete-expired-rooms.cron";
-import { ProBuddyRoutes } from "./interface_adapter/routes/probuddy/probuddy.routes";
-
-
+import { CalendarRoutes } from './interface_adapter/routes/calendar/calendar.routes';
+import { StudyRoomRoutes } from './interface_adapter/routes/study-room/study-room.routes';
+import { startMarkMissedSessionsCron } from './infrastructure/cron/mark-missed-sessions.cron';
+import { startExpireScheduleRequestsCron } from './infrastructure/cron/expire-schedule-requests.cron';
+import { startExpireTodosCron } from './infrastructure/cron/expire-todos.cron';
+import { startSubscriptionNotificationsCron } from './infrastructure/cron/subscription-notifications.cron';
+import { startExpireSubscriptionsCron } from './infrastructure/cron/expire-subscriptions.cron';
+import { startDeleteExpiredRoomsCron } from './infrastructure/cron/delete-expired-rooms.cron';
+import { ProBuddyRoutes } from './interface_adapter/routes/probuddy/probuddy.routes';
 
 export class App {
   private readonly app: Application;
@@ -50,8 +48,16 @@ export class App {
     this.io = new SocketIOServer(this.httpServer, {
       cors: {
         origin: (origin, callback) => {
-          const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174'];
-          if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
+          const allowed = [
+            config.client.URI,
+            'http://localhost:5173',
+            'http://localhost:5174',
+          ];
+          if (
+            !origin ||
+            allowed.includes(origin) ||
+            origin.startsWith('http://localhost:')
+          ) {
             callback(null, true);
           } else {
             callback(new Error('Not allowed by CORS'));
@@ -69,24 +75,35 @@ export class App {
   }
 
   private configureCors(): void {
-    this.app.use(cors({ 
-      origin: (origin, callback) => {
-        const allowed = [config.client.URI, 'http://localhost:5173', 'http://localhost:5174','https://pro-time.online',
-  'https://www.pro-time.online',];
-        if (!origin || allowed.includes(origin) || origin.startsWith('http://localhost:')) {
-          callback(null, true);
-        } else {
-          callback(new Error('Not allowed by CORS'));
-        }
-      }, 
-      credentials: true 
-    }));
+    this.app.use(
+      cors({
+        origin: (origin, callback) => {
+          const allowed = [
+            config.client.URI,
+            'http://localhost:5173',
+            'http://localhost:5174',
+            'https://pro-time.online',
+            'https://www.pro-time.online',
+          ];
+          if (
+            !origin ||
+            allowed.includes(origin) ||
+            origin.startsWith('http://localhost:')
+          ) {
+            callback(null, true);
+          } else {
+            callback(new Error('Not allowed by CORS'));
+          }
+        },
+        credentials: true,
+      }),
+    );
   }
 
   private configureMiddleware(): void {
     this.app.use((_req, res, next) => {
       // res.setHeader("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
-      res.setHeader("Cross-Origin-Opener-Policy", "unsafe-none");
+      res.setHeader('Cross-Origin-Opener-Policy', 'unsafe-none');
       next();
     });
     this.app.use(
@@ -109,16 +126,28 @@ export class App {
     this.app.use(ROUTES.BASE.ADMIN, container.resolve(AdminRoutes).router);
     this.app.use(ROUTES.BASE.USER, container.resolve(UserRoutes).router);
     this.app.use(ROUTES.BASE.TODO, container.resolve(TodoRoutes).router);
-    this.app.use(ROUTES.BASE.SUBSCRIPTION, container.resolve(SubscriptionRoutes).router);
-    this.app.use(ROUTES.BASE.GAMIFICATION, container.resolve(GamificationRoutes).router);
+    this.app.use(
+      ROUTES.BASE.SUBSCRIPTION,
+      container.resolve(SubscriptionRoutes).router,
+    );
+    this.app.use(
+      ROUTES.BASE.GAMIFICATION,
+      container.resolve(GamificationRoutes).router,
+    );
     this.app.use(ROUTES.BASE.BUDDY, container.resolve(BuddyRoutes).router);
     this.app.use(ROUTES.BASE.UTILITY, container.resolve(UtilityRoutes).router);
-    this.app.use(ROUTES.BASE.COMMUNITY_CHAT, container.resolve(CommunityChatRoutes).router);
+    this.app.use(
+      ROUTES.BASE.COMMUNITY_CHAT,
+      container.resolve(CommunityChatRoutes).router,
+    );
     this.app.use(ROUTES.BASE.CHAT, container.resolve(ChatRoutes).router);
-    this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router)
+    this.app.use(ROUTES.BASE.REPORTS, container.resolve(ReportRoutes).router);
     this.app.use('/api/v1/calendar', container.resolve(CalendarRoutes).router);
     this.app.use(ROUTES.BASE.ROOMS, container.resolve(StudyRoomRoutes).router);
-    this.app.use(ROUTES.BASE.PROBUDDY, container.resolve<ProBuddyRoutes>(ProBuddyRoutes).router);
+    this.app.use(
+      ROUTES.BASE.PROBUDDY,
+      container.resolve<ProBuddyRoutes>(ProBuddyRoutes).router,
+    );
   }
   private configureSocket(): void {
     const tokenService = new JwtTokenService();
@@ -160,7 +189,8 @@ export class App {
     function getRoomPomodoroTimeRemaining(pomo: RoomPomodoro): number {
       if (pomo.status === 'stopped') return 0;
       if (pomo.status === 'paused') {
-        const elapsedMs = (pomo.pausedAt || Date.now()) - pomo.startedAt - pomo.totalPausedMs;
+        const elapsedMs =
+          (pomo.pausedAt || Date.now()) - pomo.startedAt - pomo.totalPausedMs;
         return Math.max(0, pomo.duration - Math.floor(elapsedMs / 1000));
       }
       const elapsedMs = Date.now() - pomo.startedAt - pomo.totalPausedMs;
@@ -179,7 +209,7 @@ export class App {
       this.io.emit('user:online', { userId });
 
       socket.on('join:conversations', (conversationIds: string[]) => {
-        conversationIds.forEach(id => socket.join(`conversation:${id}`));
+        conversationIds.forEach((id) => socket.join(`conversation:${id}`));
       });
 
       socket.on('chat:enter', (conversationId: string) => {
@@ -208,227 +238,364 @@ export class App {
       // ─── WebRTC Signaling ─────────────────────────────────────────────────
 
       // 1. Caller sends offer → find callee and forward
-      socket.on('webrtc:offer', async (data: { conversationId: string; offer: RTCSessionDescriptionInit; callerName?: string }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
+      socket.on(
+        'webrtc:offer',
+        async (data: {
+          conversationId: string;
+          offer: RTCSessionDescriptionInit;
+          callerName?: string;
+        }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
 
-          // Determine which participant is the callee (not the caller)
-          const calleeId = conversation.user1Id.toString() === userId
-            ? conversation.user2Id.toString()
-            : conversation.user1Id.toString();
+            // Determine which participant is the callee (not the caller)
+            const calleeId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
 
-          socketService.emitToUser(calleeId, 'webrtc:offer', {
-            conversationId: data.conversationId,
-            offer: data.offer,
-            callerName: data.callerName || 'Buddy',
-          });
-        } catch (err: unknown) {
-          logger.error('[Socket] webrtc:offer relay error:', { error: err });
-        }
-      });
+            socketService.emitToUser(calleeId, 'webrtc:offer', {
+              conversationId: data.conversationId,
+              offer: data.offer,
+              callerName: data.callerName || 'Buddy',
+            });
+          } catch (err: unknown) {
+            logger.error('[Socket] webrtc:offer relay error:', { error: err });
+          }
+        },
+      );
 
       // 2. Callee sends answer → forward back to caller
-      socket.on('webrtc:answer', async (data: { conversationId: string; answer: RTCSessionDescriptionInit }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
+      socket.on(
+        'webrtc:answer',
+        async (data: {
+          conversationId: string;
+          answer: RTCSessionDescriptionInit;
+        }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
 
-          // Caller is the other participant
-          const callerId = conversation.user1Id.toString() === userId
-            ? conversation.user2Id.toString()
-            : conversation.user1Id.toString();
+            // Caller is the other participant
+            const callerId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
 
-          socketService.emitToUser(callerId, 'webrtc:answer', {
-            conversationId: data.conversationId,
-            answer: data.answer,
-          });
-        } catch (err: unknown) {
-          logger.error('[Socket] webrtc:answer relay error:', { error: err });
-        }
-      });
+            socketService.emitToUser(callerId, 'webrtc:answer', {
+              conversationId: data.conversationId,
+              answer: data.answer,
+            });
+          } catch (err: unknown) {
+            logger.error('[Socket] webrtc:answer relay error:', { error: err });
+          }
+        },
+      );
 
       // 3. ICE candidates — relay to the other participant
-      socket.on('webrtc:ice-candidate', async (data: { conversationId: string; candidate: RTCIceCandidateInit }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
+      socket.on(
+        'webrtc:ice-candidate',
+        async (data: {
+          conversationId: string;
+          candidate: RTCIceCandidateInit;
+        }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
 
-          const peerId = conversation.user1Id.toString() === userId
-            ? conversation.user2Id.toString()
-            : conversation.user1Id.toString();
+            const peerId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
 
-          socketService.emitToUser(peerId, 'webrtc:ice-candidate', {
-            conversationId: data.conversationId,
-            candidate: data.candidate,
-          });
-        } catch (err: unknown) {
-          logger.error('[Socket] webrtc:ice-candidate relay error:', { error: err });
-        }
-      });
+            socketService.emitToUser(peerId, 'webrtc:ice-candidate', {
+              conversationId: data.conversationId,
+              candidate: data.candidate,
+            });
+          } catch (err: unknown) {
+            logger.error('[Socket] webrtc:ice-candidate relay error:', {
+              error: err,
+            });
+          }
+        },
+      );
 
       // 4. Call ended — notify everyone in the conversation room
       socket.on('webrtc:call-ended', (data: { conversationId: string }) => {
-        socketService.emitToConversation(data.conversationId, 'webrtc:call-ended', {
-          conversationId: data.conversationId,
-        });
+        socketService.emitToConversation(
+          data.conversationId,
+          'webrtc:call-ended',
+          {
+            conversationId: data.conversationId,
+          },
+        );
       });
 
       // 5. Missed call — notify the callee
-      socket.on('webrtc:missed-call', async (data: { conversationId: string; callerName: string }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
+      socket.on(
+        'webrtc:missed-call',
+        async (data: { conversationId: string; callerName: string }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
 
-          const calleeId = conversation.user1Id.toString() === userId
-            ? conversation.user2Id.toString()
-            : conversation.user1Id.toString();
+            const calleeId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
 
-          socketService.emitToUser(calleeId, 'notification:new', {
-            type: 'missed_call',
-            title: 'Missed Video Call 📹',
-            message: `You missed a video call from ${data.callerName}.`,
-          });
+            socketService.emitToUser(calleeId, 'notification:new', {
+              type: 'missed_call',
+              title: 'Missed Video Call 📹',
+              message: `You missed a video call from ${data.callerName}.`,
+            });
 
-          // Insert a system message into the chat room
-          const sendDirectMessageUsecase = container.resolve<any>('ISendDirectMessageUsecase');
-          const response = await sendDirectMessageUsecase.execute(
-            userId,
-            data.conversationId,
-            {
-              content: `📹 Missed video call`,
-              messageType: MessageType.SYSTEM,
-            }
-          );
-          
-          // Emit the message back to the caller so it updates their local chat UI as well
-          socketService.emitToUser(userId, 'chat:message', response);
-        } catch (err: unknown) {
-          logger.error('[Socket] webrtc:missed-call relay error:', { error: err });
-        }
-      });
+            // Insert a system message into the chat room
+            const sendDirectMessageUsecase = container.resolve<any>(
+              'ISendDirectMessageUsecase',
+            );
+            const response = await sendDirectMessageUsecase.execute(
+              userId,
+              data.conversationId,
+              {
+                content: `📹 Missed video call`,
+                messageType: MessageType.SYSTEM,
+              },
+            );
+
+            // Emit the message back to the caller so it updates their local chat UI as well
+            socketService.emitToUser(userId, 'chat:message', response);
+          } catch (err: unknown) {
+            logger.error('[Socket] webrtc:missed-call relay error:', {
+              error: err,
+            });
+          }
+        },
+      );
 
       // ─── Group Video WebRTC Signaling ──────────────────────────────────────
 
-      socket.on('room:webrtc:offer', (data: { targetUserId: string; roomId: string; offer: RTCSessionDescriptionInit }) => {
-        socketService.emitToUser(data.targetUserId, 'room:webrtc:offer', {
-          senderId: userId,
-          roomId: data.roomId,
-          offer: data.offer,
-        });
-      });
+      socket.on(
+        'room:webrtc:offer',
+        (data: {
+          targetUserId: string;
+          roomId: string;
+          offer: RTCSessionDescriptionInit;
+        }) => {
+          socketService.emitToUser(data.targetUserId, 'room:webrtc:offer', {
+            senderId: userId,
+            roomId: data.roomId,
+            offer: data.offer,
+          });
+        },
+      );
 
-      socket.on('room:webrtc:answer', (data: { targetUserId: string; roomId: string; answer: RTCSessionDescriptionInit }) => {
-        socketService.emitToUser(data.targetUserId, 'room:webrtc:answer', {
-          senderId: userId,
-          roomId: data.roomId,
-          answer: data.answer,
-        });
-      });
+      socket.on(
+        'room:webrtc:answer',
+        (data: {
+          targetUserId: string;
+          roomId: string;
+          answer: RTCSessionDescriptionInit;
+        }) => {
+          socketService.emitToUser(data.targetUserId, 'room:webrtc:answer', {
+            senderId: userId,
+            roomId: data.roomId,
+            answer: data.answer,
+          });
+        },
+      );
 
-      socket.on('room:webrtc:ice-candidate', (data: { targetUserId: string; roomId: string; candidate: RTCIceCandidateInit }) => {
-        socketService.emitToUser(data.targetUserId, 'room:webrtc:ice-candidate', {
-          senderId: userId,
-          roomId: data.roomId,
-          candidate: data.candidate,
-        });
-      });
+      socket.on(
+        'room:webrtc:ice-candidate',
+        (data: {
+          targetUserId: string;
+          roomId: string;
+          candidate: RTCIceCandidateInit;
+        }) => {
+          socketService.emitToUser(
+            data.targetUserId,
+            'room:webrtc:ice-candidate',
+            {
+              senderId: userId,
+              roomId: data.roomId,
+              candidate: data.candidate,
+            },
+          );
+        },
+      );
 
-      socket.on('room:webrtc:camera-toggle', (data: { roomId: string; isVideoOn: boolean }) => {
-        socketService.emitToRoom(data.roomId, 'room:webrtc:camera-toggle', {
-          userId,
-          isVideoOn: data.isVideoOn
-        });
-      });
+      socket.on(
+        'room:webrtc:camera-toggle',
+        (data: { roomId: string; isVideoOn: boolean }) => {
+          socketService.emitToRoom(data.roomId, 'room:webrtc:camera-toggle', {
+            userId,
+            isVideoOn: data.isVideoOn,
+          });
+        },
+      );
 
-      socket.on('room:webrtc:mic-toggle', (data: { roomId: string; isAudioOn: boolean }) => {
-        socketService.emitToRoom(data.roomId, 'room:webrtc:mic-toggle', {
-          userId,
-          isAudioOn: data.isAudioOn
-        });
-      });
+      socket.on(
+        'room:webrtc:mic-toggle',
+        (data: { roomId: string; isAudioOn: boolean }) => {
+          socketService.emitToRoom(data.roomId, 'room:webrtc:mic-toggle', {
+            userId,
+            isAudioOn: data.isAudioOn,
+          });
+        },
+      );
 
       // ─── Pomodoro Signaling Relay ──────────────────────────────────────────
-      
-      socket.on('pomodoro:start', async (data: { conversationId: string, task: any, duration: number }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
-          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
-          socketService.emitToUser(peerId, 'pomodoro:start', { ...data, startedBy: userId });
-        } catch (err: unknown) { logger.error('[Socket] pomodoro:start relay error:', err); }
-      });
+
+      socket.on(
+        'pomodoro:start',
+        async (data: {
+          conversationId: string;
+          task: any;
+          duration: number;
+        }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
+            const peerId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
+            socketService.emitToUser(peerId, 'pomodoro:start', {
+              ...data,
+              startedBy: userId,
+            });
+          } catch (err: unknown) {
+            logger.error('[Socket] pomodoro:start relay error:', err);
+          }
+        },
+      );
 
       socket.on('pomodoro:pause', async (data: { conversationId: string }) => {
         try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          const conversation = await ConversationModel.findById(
+            data.conversationId,
+          ).lean();
           if (!conversation) return;
-          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          const peerId =
+            conversation.user1Id.toString() === userId
+              ? conversation.user2Id.toString()
+              : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:pause', data);
-        } catch (err: unknown) { logger.error('[Socket] pomodoro:pause relay error:', err); }
+        } catch (err: unknown) {
+          logger.error('[Socket] pomodoro:pause relay error:', err);
+        }
       });
 
       socket.on('pomodoro:resume', async (data: { conversationId: string }) => {
         try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          const conversation = await ConversationModel.findById(
+            data.conversationId,
+          ).lean();
           if (!conversation) return;
-          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          const peerId =
+            conversation.user1Id.toString() === userId
+              ? conversation.user2Id.toString()
+              : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:resume', data);
-        } catch (err: unknown) { logger.error('[Socket] pomodoro:resume relay error:', err); }
+        } catch (err: unknown) {
+          logger.error('[Socket] pomodoro:resume relay error:', err);
+        }
       });
 
       socket.on('pomodoro:stop', async (data: { conversationId: string }) => {
         try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
+          const conversation = await ConversationModel.findById(
+            data.conversationId,
+          ).lean();
           if (!conversation) return;
-          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
+          const peerId =
+            conversation.user1Id.toString() === userId
+              ? conversation.user2Id.toString()
+              : conversation.user1Id.toString();
           socketService.emitToUser(peerId, 'pomodoro:stop', data);
-        } catch (err: unknown) { logger.error('[Socket] pomodoro:stop relay error:', err); }
+        } catch (err: unknown) {
+          logger.error('[Socket] pomodoro:stop relay error:', err);
+        }
       });
 
-      socket.on('pomodoro:tick', async (data: { conversationId: string, timeRemaining: number }) => {
-        try {
-          const conversation = await ConversationModel.findById(data.conversationId).lean();
-          if (!conversation) return;
-          const peerId = conversation.user1Id.toString() === userId ? conversation.user2Id.toString() : conversation.user1Id.toString();
-          socketService.emitToUser(peerId, 'pomodoro:sync', { ...data, type: 'TICK' });
-        } catch (_err) { /* Silent for high-frequency events */ }
-      });
+      socket.on(
+        'pomodoro:tick',
+        async (data: { conversationId: string; timeRemaining: number }) => {
+          try {
+            const conversation = await ConversationModel.findById(
+              data.conversationId,
+            ).lean();
+            if (!conversation) return;
+            const peerId =
+              conversation.user1Id.toString() === userId
+                ? conversation.user2Id.toString()
+                : conversation.user1Id.toString();
+            socketService.emitToUser(peerId, 'pomodoro:sync', {
+              ...data,
+              type: 'TICK',
+            });
+          } catch (_err) {
+            /* Silent for high-frequency events */
+          }
+        },
+      );
 
       // ─── Study Room Shared Pomodoro Signaling ─────────────────────────────
-      
-      socket.on('room:pomodoro:start', (data: { roomId: string, task: any, duration: number, phase?: 'FOCUS' | 'BREAK', startedByName: string }) => {
-        const phase = data.phase || 'FOCUS';
-        roomPomodoros.set(data.roomId, {
-          roomId: data.roomId,
-          task: data.task,
-          duration: data.duration,
-          phase,
-          status: 'running',
-          startedAt: Date.now(),
-          pausedAt: null,
-          totalPausedMs: 0,
-          acceptedUserIds: new Set([userId]),
-          completedUserIds: new Set(),
-          finishedUserIds: new Set()
-        });
-        
-        socket.to(`room:${data.roomId}`).emit('room:pomodoro:start', {
-          roomId: data.roomId,
-          task: data.task,
-          duration: data.duration,
-          phase,
-          startedBy: userId,
-          startedByName: data.startedByName
-        });
-      });
+
+      socket.on(
+        'room:pomodoro:start',
+        (data: {
+          roomId: string;
+          task: any;
+          duration: number;
+          phase?: 'FOCUS' | 'BREAK';
+          startedByName: string;
+        }) => {
+          const phase = data.phase || 'FOCUS';
+          roomPomodoros.set(data.roomId, {
+            roomId: data.roomId,
+            task: data.task,
+            duration: data.duration,
+            phase,
+            status: 'running',
+            startedAt: Date.now(),
+            pausedAt: null,
+            totalPausedMs: 0,
+            acceptedUserIds: new Set([userId]),
+            completedUserIds: new Set(),
+            finishedUserIds: new Set(),
+          });
+
+          socket.to(`room:${data.roomId}`).emit('room:pomodoro:start', {
+            roomId: data.roomId,
+            task: data.task,
+            duration: data.duration,
+            phase,
+            startedBy: userId,
+            startedByName: data.startedByName,
+          });
+        },
+      );
 
       socket.on('room:pomodoro:pause', (data: { roomId: string }) => {
         const pomo = roomPomodoros.get(data.roomId);
         if (pomo && pomo.status === 'running') {
           pomo.status = 'paused';
           pomo.pausedAt = Date.now();
-          socket.to(`room:${data.roomId}`).emit('room:pomodoro:pause', { roomId: data.roomId });
+          socket
+            .to(`room:${data.roomId}`)
+            .emit('room:pomodoro:pause', { roomId: data.roomId });
         }
       });
 
@@ -438,7 +605,9 @@ export class App {
           pomo.status = 'running';
           pomo.totalPausedMs += Date.now() - (pomo.pausedAt || Date.now());
           pomo.pausedAt = null;
-          socket.to(`room:${data.roomId}`).emit('room:pomodoro:resume', { roomId: data.roomId });
+          socket
+            .to(`room:${data.roomId}`)
+            .emit('room:pomodoro:resume', { roomId: data.roomId });
         }
       });
 
@@ -451,11 +620,13 @@ export class App {
               roomId: data.roomId,
               participantsCount: pomo.acceptedUserIds.size,
               tasksCompletedCount: pomo.completedUserIds.size,
-              pomodorosEarnedCount: pomo.finishedUserIds.size
+              pomodorosEarnedCount: pomo.finishedUserIds.size,
             });
           }
           roomPomodoros.delete(data.roomId);
-          socket.to(`room:${data.roomId}`).emit('room:pomodoro:stop', { roomId: data.roomId });
+          socket
+            .to(`room:${data.roomId}`)
+            .emit('room:pomodoro:stop', { roomId: data.roomId });
         }
       });
 
@@ -463,7 +634,12 @@ export class App {
         const pomo = roomPomodoros.get(data.roomId);
         if (pomo) {
           pomo.acceptedUserIds.add(userId);
-          socket.to(`room:${data.roomId}`).emit('room:pomodoro:participant-joined', { roomId: data.roomId, userId });
+          socket
+            .to(`room:${data.roomId}`)
+            .emit('room:pomodoro:participant-joined', {
+              roomId: data.roomId,
+              userId,
+            });
         }
       });
 
@@ -492,7 +668,7 @@ export class App {
               isRunning: pomo.status === 'running',
               phase: pomo.phase,
               acceptedCount: pomo.acceptedUserIds.size,
-              isAccepted: pomo.acceptedUserIds.has(userId)
+              isAccepted: pomo.acceptedUserIds.has(userId),
             });
           }
         }
@@ -501,8 +677,12 @@ export class App {
       // ─── Study Room Session Extension ─────────────────────────────────────
       socket.on('room:session:extended', (data: { roomId: string }) => {
         // Relay extension event to all other members of the room
-        socket.to(`room:${data.roomId}`).emit('room:session:extended', { roomId: data.roomId });
-        logger.info(`[Socket] Session extended in room ${data.roomId} by user ${userId}`);
+        socket
+          .to(`room:${data.roomId}`)
+          .emit('room:session:extended', { roomId: data.roomId });
+        logger.info(
+          `[Socket] Session extended in room ${data.roomId} by user ${userId}`,
+        );
       });
     });
   }
@@ -523,18 +703,17 @@ export class App {
 
 // ✅ Bootstrap — controls startup order
 export const bootstrap = async (): Promise<void> => {
-  DependencyContainer.registerAll();        // 1. DI first
-  await new MongoConnect().connectDB();     // 2. MongoDB second
-  await connectRedis();                     // 3. Redis third
-  const appInstance = new App();            // 4. App last
+  DependencyContainer.registerAll(); // 1. DI first
+  await new MongoConnect().connectDB(); // 2. MongoDB second
+  await connectRedis(); // 3. Redis third
+  const appInstance = new App(); // 4. App last
   appInstance.getHttpServer().listen(config.server.port, () => {
     logger.info(`🚀 Server running on port ${config.server.port}`);
-
   });
   startMarkMissedSessionsCron();
   startExpireScheduleRequestsCron();
   startExpireTodosCron();
   startSubscriptionNotificationsCron();
   startExpireSubscriptionsCron(); // Safety net: downgrades missed-webhook expired subscriptions
-  startDeleteExpiredRoomsCron();  // Deletes ENDED study rooms after 3 days
+  startDeleteExpiredRoomsCron(); // Deletes ENDED study rooms after 3 days
 };
