@@ -4,11 +4,17 @@ import type { IExpireTodosUsecase } from '../../application/usecase/interface/to
 import { logger } from '../config/logger.config';
 
 export const startExpireTodosCron = () => {
-  // Run every minute
   cron.schedule('* * * * *', async () => {
     try {
-      const usecase = container.resolve<IExpireTodosUsecase>('IExpireTodosUsecase');
+      logger.info('[ExpireTodosCron] Running...');
+
+      const usecase = container.resolve<IExpireTodosUsecase>(
+        'IExpireTodosUsecase'
+      );
+
       await usecase.execute();
+
+      logger.info('[ExpireTodosCron] Completed');
     } catch (error: unknown) {
       logger.error('Error in ExpireTodosCron:', error);
     }

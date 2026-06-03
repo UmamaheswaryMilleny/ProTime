@@ -241,7 +241,14 @@ export const useTodo = () => {
     useEffect(() => {
         void fetchTodos();
     }, [fetchTodos]);
+// Auto-refresh todos every 30 seconds
+useEffect(() => {
+    const interval = setInterval(() => {
+        void fetchTodos();
+    }, 30000);
 
+    return () => clearInterval(interval);
+}, [fetchTodos]);
     return {
         todos,
         isLoading,
