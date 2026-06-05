@@ -8,9 +8,9 @@ import type { ReportStatus, ReportContext, ReportReason, ReportAction } from '..
 export interface ReportEntity {
   id:                  string;
   reporterId:          string;         // userId who submitted the report
-  reporter?:           { id: string; fullName: string; email: string; avatar?: string };
+  reporter?:           { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
   reportedUserId:      string;         // userId who was reported — renamed for clarity
-  reportedUser?:       { id: string; fullName: string; email: string; avatar?: string };
+  reportedUser?:       { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
   context:             ReportContext;
   reason:              ReportReason;
   additionalDetails?:  string;         // optional extra detail from reporter

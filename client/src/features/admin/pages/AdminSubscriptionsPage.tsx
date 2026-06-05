@@ -131,6 +131,21 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    const originalPeriodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString().slice(0, 10) : '';
+    const hasDateChanged = plan === 'PREMIUM' && periodEnd !== originalPeriodEnd;
+
+    // Guard: already on the Free plan
+    if (sub.plan === 'FREE' && plan === 'FREE') {
+      toast.error('User is already on the Free plan');
+      return;
+    }
+
+    // Guard: already has the same Premium status and date has not changed
+    if (sub.plan === 'PREMIUM' && plan === 'PREMIUM' && sub.status === status && !hasDateChanged) {
+      toast.error(`User is already on the Premium plan with ${status.toLowerCase()} status`);
+      return;
+    }
+
     // Guard: trying to cancel/expire something already ended
     if (isAlreadyEnded && (status === 'CANCELLED' || status === 'EXPIRED')) {
       toast(
@@ -154,8 +169,9 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
       toast.success('Subscription updated successfully');
       onSaved();
       onClose();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to update subscription');
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to update subscription');
     } finally {
       setSaving(false);
     }
@@ -350,16 +366,17 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
     e.preventDefault();
     if (!userId) { toast.error('Please select a user first'); return; }
 
-    // Guard: already active premium
-    if (isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE') {
-      toast(
-        `${selectedUserName.split(' (')[0]} is already on an active Premium plan.`,
-        {
-          icon: '⚡',
-          style: { background: '#18181B', border: '1px solid #7C3AED', color: '#C4B5FD', borderRadius: '12px' },
-          duration: 4000,
-        }
-      );
+    const userName = selectedUserName.split(' (')[0] || 'User';
+
+    // Guard: already on the Free plan
+    if (currentSub?.plan === 'FREE' && plan === 'FREE') {
+      toast.error(`${userName} is already on the Free plan`);
+      return;
+    }
+
+    // Guard: already has the same Premium status
+    if (currentSub?.plan === 'PREMIUM' && plan === 'PREMIUM' && currentSub?.status === status) {
+      toast.error(`${userName} is already on the Premium plan with ${status.toLowerCase()} status`);
       return;
     }
 
@@ -374,8 +391,9 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
       toast.success('Subscription assigned successfully');
       onSaved();
       onClose();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || 'Failed to assign subscription');
+    } catch (err) {
+      const error = err as { response?: { data?: { message?: string } } };
+      toast.error(error?.response?.data?.message || 'Failed to assign subscription');
     } finally {
       setSaving(false);
     }

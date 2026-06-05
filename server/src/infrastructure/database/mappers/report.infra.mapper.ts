@@ -15,6 +15,7 @@ export class ReportInfraMapper {
         fullName: doc.reporterId.fullName,
         email:    doc.reporterId.email,
         avatar:   doc.reporterId.avatar,
+        isBlocked: doc.reporterId.isBlocked,
       };
     }
 
@@ -25,6 +26,7 @@ export class ReportInfraMapper {
         fullName: doc.reportedUserId.fullName,
         email:    doc.reportedUserId.email,
         avatar:   doc.reportedUserId.avatar,
+        isBlocked: doc.reportedUserId.isBlocked,
       };
     }
 

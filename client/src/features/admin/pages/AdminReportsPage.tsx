@@ -10,9 +10,9 @@ import { API_ROUTES } from '../../../shared/constants/constants.routes';
 interface Report {
     id: string;
     reporterId: string;
-    reporter?: { id: string; fullName: string; email: string; avatar?: string };
+    reporter?: { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
     reportedUserId: string;
-    reportedUser?: { id: string; fullName: string; email: string; avatar?: string };
+    reportedUser?: { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
     context: ReportContext;
     reason: string;
     additionalDetails?: string;
@@ -89,8 +89,9 @@ export const AdminReportsPage: React.FC = () => {
             } else {
                 toast.error(res.message || 'Failed to resolve report');
             }
-        } catch (err: any) {
-            toast.error(err.message || 'Error resolving report');
+        } catch (err) {
+            const error = err as { message?: string };
+            toast.error(error.message || 'Error resolving report');
         } finally {
             setIsResolving(false);
         }
@@ -447,25 +448,29 @@ export const AdminReportsPage: React.FC = () => {
                                                         }
                                                     </p>
                                                     <p className="text-xs text-zinc-400 mt-0.5">
-                                                        {selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
-                                                            ? 'This user was blocked for 24 hours. The block expires automatically, or you can remove it early below.'
-                                                            : 'This user is permanently blocked. You can manually lift the block below.'
+                                                        {selectedReport.reportedUser?.isBlocked
+                                                            ? (selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                                                ? 'This user was blocked for 24 hours. The block expires automatically, or you can remove it early below.'
+                                                                : 'This user is permanently blocked. You can manually lift the block below.')
+                                                            : 'This block has been lifted or has expired. The user is currently unblocked.'
                                                         }
                                                     </p>
                                                 </div>
                                             </div>
-                                            <button
-                                                onClick={handleUnblock}
-                                                disabled={isUnblocking}
-                                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#22C55E] hover:bg-green-400 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95"
-                                            >
-                                                {isUnblocking ? (
-                                                    <Loader size={14} className="animate-spin" />
-                                                ) : (
-                                                    <ShieldOff size={14} />
-                                                )}
-                                                {isUnblocking ? 'Unblocking...' : `Unblock ${selectedReport.reportedUser?.fullName ?? 'User'}`}
-                                            </button>
+                                            {selectedReport.reportedUser?.isBlocked && (
+                                                <button
+                                                    onClick={handleUnblock}
+                                                    disabled={isUnblocking}
+                                                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#22C55E] hover:bg-green-400 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95"
+                                                >
+                                                    {isUnblocking ? (
+                                                        <Loader size={14} className="animate-spin" />
+                                                    ) : (
+                                                        <ShieldOff size={14} />
+                                                    )}
+                                                    {isUnblocking ? 'Unblocking...' : `Unblock ${selectedReport.reportedUser?.fullName ?? 'User'}`}
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>

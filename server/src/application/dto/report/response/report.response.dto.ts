@@ -3,9 +3,9 @@ import type { ReportStatus, ReportContext, ReportReason, ReportAction } from '..
 export interface ReportResponseDTO {
   id:                  string;
   reporterId:          string;
-  reporter?:           { id: string; fullName: string; email: string; avatar?: string };
+  reporter?:           { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
   reportedUserId:      string;
-  reportedUser?:       { id: string; fullName: string; email: string; avatar?: string };
+  reportedUser?:       { id: string; fullName: string; email: string; avatar?: string; isBlocked?: boolean };
   context:             ReportContext;
   reason:              ReportReason;
   additionalDetails?:  string;

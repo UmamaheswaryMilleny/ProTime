@@ -261,7 +261,7 @@ export const AdminMeetingsPage: React.FC = () => {
   const {
     sessions, total, totalPages, stats, isLoading, isClosing,
     page, limit, type, status, from, to, searchInput,
-    setPage, setLimit, setType, setStatus, setFrom, setTo, setSearchInput,
+    setPage, setLimit, setType, setStatus, setFrom, setTo, setSearchInput, clearDates,
     forceClose,
   } = useAdminMeetings();
 
@@ -407,7 +407,7 @@ export const AdminMeetingsPage: React.FC = () => {
             </div>
             {(from || to) && (
               <button
-                onClick={() => { setFrom(''); setTo(''); }}
+                onClick={clearDates}
                 title="Clear dates"
                 className="mt-5 p-2 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
               >

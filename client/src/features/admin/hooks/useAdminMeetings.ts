@@ -69,6 +69,7 @@ export function useAdminMeetings() {
   const setStatus = (v: MeetingStatus) => setSearchParams(p => { const n = new URLSearchParams(p); n.set('status', v); n.set('page', '1'); return n; });
   const setFrom   = (v: string) => setSearchParams(p => { const n = new URLSearchParams(p); if (v) n.set('from', v); else n.delete('from'); n.set('page', '1'); return n; });
   const setTo     = (v: string) => setSearchParams(p => { const n = new URLSearchParams(p); if (v) n.set('to', v); else n.delete('to'); n.set('page', '1'); return n; });
+  const clearDates = () => setSearchParams(p => { const n = new URLSearchParams(p); n.delete('from'); n.delete('to'); n.set('page', '1'); return n; });
 
   // ── Fetch ────────────────────────────────────────────────────────────────
   // NOTE: We intentionally do NOT include searchParams as a dependency here.
@@ -102,7 +103,6 @@ export function useAdminMeetings() {
     } finally {
       setIsLoading(false);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page, limit, type, status, from, to, debouncedSearch]);
 
   useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
@@ -133,7 +133,7 @@ export function useAdminMeetings() {
     // filters
     page, limit, type, status, from, to, searchInput,
     // setters
-    setPage, setLimit, setType, setStatus, setFrom, setTo, setSearchInput,
+    setPage, setLimit, setType, setStatus, setFrom, setTo, setSearchInput, clearDates,
     // actions
     forceClose, fetchMeetings,
   };

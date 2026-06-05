@@ -52,8 +52,8 @@ async findAll(params: {
       .sort({ createdAt: -1 })
       .skip((params.page - 1) * params.limit)
       .limit(params.limit)
-      .populate('reporterId', 'fullName email')
-      .populate('reportedUserId', 'fullName email')
+      .populate('reporterId', 'fullName email isBlocked')
+      .populate('reportedUserId', 'fullName email isBlocked')
       .lean(),
     ReportModel.countDocuments(query),
   ]);
@@ -65,7 +65,10 @@ async findAll(params: {
 }
   // Admin — single report detail
   async findById(id: string): Promise<ReportEntity | null> {
-    const doc = await ReportModel.findById(id).lean();
+    const doc = await ReportModel.findById(id)
+      .populate('reporterId', 'fullName email isBlocked')
+      .populate('reportedUserId', 'fullName email isBlocked')
+      .lean();
     if (!doc) return null;
     return ReportInfraMapper.toDomain(doc as ReportDocument);
   }
