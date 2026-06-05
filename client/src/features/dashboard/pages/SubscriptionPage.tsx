@@ -53,8 +53,8 @@ export const SubscriptionPage: React.FC = () => {
             try {
                 const data = await subscriptionService.getSubscription();
                 setSubscription(data);
-                if (data?.isPremium && !authUser?.isPremium) {
-                    dispatch(updateUser({ isPremium: true }));
+                if (data && data.isPremium !== authUser?.isPremium) {
+                    dispatch(updateUser({ isPremium: data.isPremium }));
                 }
             } catch (error) {
                 console.error('Failed to fetch subscription', error);

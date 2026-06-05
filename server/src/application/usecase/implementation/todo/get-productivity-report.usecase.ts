@@ -155,11 +155,16 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     }
 
     // ── 1. Fetch raw data in parallel ─────────────────────────────────────────
-    const [gamification, userBadges, allBadgeDefs, roomsJoined] = await Promise.all([
+    const midTime = since.getTime() + (until.getTime() - since.getTime()) / 2;
+    const midDate = new Date(midTime);
+
+    const [gamification, userBadges, allBadgeDefs, roomsJoined, firstHalfRooms, secondHalfRooms] = await Promise.all([
       this.gamificationRepository.findByUserId(userId),
       this.userBadgeRepository.findAllByUserId(userId),
       this.badgeDefinitionRepository.findAllActive(),
       this.studyRoomRepository.countJoinedOrHostedInMonth(userId, since, until),
+      this.studyRoomRepository.countJoinedOrHostedInMonth(userId, since, midDate),
+      this.studyRoomRepository.countJoinedOrHostedInMonth(userId, new Date(midTime + 1), until),
     ]);
 
     // ── 2. Filter todos to date range ──────────────────────────────────────────
@@ -284,6 +289,8 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         tasksWithoutPomodoro,
         totalFocusMinutes,
         roomsJoined,
+        roomsJoinedFirstHalf:  firstHalfRooms,
+        roomsJoinedSecondHalf: secondHalfRooms,
       },
       xpTrend,
       taskByPriority,

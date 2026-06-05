@@ -83,7 +83,8 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     const updated = await this.todoRepository.updateById(todoId, {
       status: TodoStatus.COMPLETED,
       completedAt: new Date(),
-      bonusXp,      // baseXp stays as set at creation
+      baseXp: Math.min(todo.baseXp, xpToAward),
+      bonusXp,      // baseXp updated based on actual xpToAward
       xpCounted,
     });
     if (!updated) throw new TodoNotFoundError();

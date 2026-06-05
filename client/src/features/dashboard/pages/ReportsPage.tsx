@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Download, Lock, Calendar as CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
+import { updateUser } from '../../auth/store/authSlice';
+import { subscriptionService } from '../api/subscription-service';
 
 // Components
 import { ReportSummaryCards }  from '../components/reports/ReportSummaryCards';
@@ -84,6 +86,7 @@ const formatFocusTime = (minutes: number): string => {
 // ─── Component ────────────────────────────────────────────────────────────────
 export const ReportsPage: React.FC = () => {
     const { user }             = useAppSelector(state => state.auth);
+    const dispatch             = useAppDispatch();
     const [loading, setLoading]       = useState(true);
     const [exporting, setExporting]   = useState(false);
     const [filterType, setFilterType] = useState<'overall' | 'date-range'>('overall');
@@ -91,6 +94,21 @@ export const ReportsPage: React.FC = () => {
     const [error, setError]           = useState<string | null>(null);
 
     const isPremium = user?.isPremium ?? false;
+
+    // Sync premium state from server to prevent stale client sessions (e.g. expired subscriptions)
+    useEffect(() => {
+        const checkPremium = async () => {
+            try {
+                const data = await subscriptionService.getSubscription();
+                if (data && data.isPremium !== user?.isPremium) {
+                    dispatch(updateUser({ isPremium: data.isPremium }));
+                }
+            } catch (error) {
+                console.error('Failed to sync premium state', error);
+            }
+        };
+        checkPremium();
+    }, [dispatch, user?.isPremium]);
 
     const [startDate, setStartDate] = useState<string>(() => {
         const d = new Date();
@@ -308,7 +326,7 @@ export const ReportsPage: React.FC = () => {
                                 className="bg-transparent text-white text-sm outline-none pl-9 pr-8 py-2 appearance-none cursor-pointer"
                             >
                                 <option value="overall" className="bg-zinc-900 text-white">Overall Progress</option>
-                                <option value="date-range" className="bg-zinc-900 text-white">Date Range</option>
+                                <option value="date-range" className="bg-zinc-900 text-white">Month to Month</option>
                             </select>
                             <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
                         </div>

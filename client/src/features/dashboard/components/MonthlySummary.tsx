@@ -1,14 +1,9 @@
 import React from 'react';
-import { FileText, Download, Lock, Loader2 } from 'lucide-react';
-import { useAppSelector } from '../../../store/hooks';
+import { FileText } from 'lucide-react';
 import { reportsService } from '../services/reports.service';
 import type { ProductivityReportData } from '../types/reports.types';
-import toast from 'react-hot-toast';
 
 export const MonthlySummary: React.FC = () => {
-    const { user } = useAppSelector((state) => state.auth);
-    const isPremium = user?.isPremium || false;
-    const [exporting, setExporting] = React.useState(false);
     const [loading, setLoading] = React.useState(true);
     const [reportData, setReportData] = React.useState<ProductivityReportData | null>(null);
 
@@ -32,29 +27,7 @@ export const MonthlySummary: React.FC = () => {
         fetchMonthlyReport();
     }, [currentMonthStr]);
 
-    const handleExport = async () => {
-        if (!isPremium || exporting) return;
 
-        const toastId = toast.loading('Generating monthly report CSV...');
-        setExporting(true);
-        try {
-            const blob = await reportsService.exportReportCsv('custom', currentMonthStr);
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `protime-monthly-summary-${currentMonthStr}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            toast.success('Report downloaded successfully! 🎉', { id: toastId });
-        } catch (error) {
-            console.error('Failed to export report CSV', error);
-            toast.error('Failed to export report. Please try again.', { id: toastId });
-        } finally {
-            setExporting(false);
-        }
-    };
 
     const calculateTrends = () => {
         if (!reportData) return { taskTrend: '+0%', pomoTrend: '+0%', xpTrend: '+0%', roomsTrend: '+0%' };
@@ -95,7 +68,16 @@ export const MonthlySummary: React.FC = () => {
         }
         const xpTrend = xpTrendVal >= 0 ? `+${xpTrendVal}%` : `${xpTrendVal}%`;
 
-        const roomsTrend = '+0%';
+        // Rooms trends
+        const firstHalfRooms = reportData.summary.roomsJoinedFirstHalf ?? 0;
+        const secondHalfRooms = reportData.summary.roomsJoinedSecondHalf ?? 0;
+        let roomsTrendVal = 0;
+        if (firstHalfRooms > 0) {
+            roomsTrendVal = Math.round(((secondHalfRooms - firstHalfRooms) / firstHalfRooms) * 100);
+        } else if (secondHalfRooms > 0) {
+            roomsTrendVal = 100;
+        }
+        const roomsTrend = roomsTrendVal >= 0 ? `+${roomsTrendVal}%` : `${roomsTrendVal}%`;
 
         return { taskTrend, pomoTrend, xpTrend, roomsTrend };
     };
@@ -192,19 +174,6 @@ export const MonthlySummary: React.FC = () => {
                     <h2 className="text-2xl font-bold text-white">Monthly Summary</h2>
                     <p className="text-sm text-[#A1A1AA] mt-1">Your performance snapshot for {displayMonthName}.</p>
                 </div>
-                <button
-                    disabled={!isPremium || exporting}
-                    onClick={handleExport}
-                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold text-sm transition-all
-                        ${isPremium
-                            ? 'bg-zinc-800 text-white hover:bg-zinc-700 active:scale-95'
-                            : 'bg-zinc-800/50 text-zinc-500 cursor-not-allowed opacity-70'}
-                    `}
-                >
-                    {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                    Export
-                    {!isPremium && <Lock size={12} className="ml-1" />}
-                </button>
             </div>
 
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
