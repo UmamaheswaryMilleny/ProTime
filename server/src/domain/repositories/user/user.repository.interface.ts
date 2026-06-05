@@ -7,6 +7,7 @@ export interface IUserRepository extends IBaseRepository<UserEntity> {
   findByGoogleID(id:string):Promise<UserEntity|null>
   updatePassword(id:string,hashedPassword:string):Promise<void>
   updateBlockStatus(id:string,isBlocked:boolean):Promise<void>
+  setTemporaryBlock(id: string, until: Date): Promise<void>
   findAllWithSearch(
     page: number,
     limit: number,

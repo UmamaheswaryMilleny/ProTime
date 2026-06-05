@@ -159,14 +159,56 @@ export const SkillManagementPage: React.FC = () => {
 
     // ─── Toggle Status ──────────────────────────────────────────────────────────
     const handleToggleStatus = async (skill: Skill) => {
-        try {
-            const response = await ProTimeBackend.patch(API_ROUTES.ADMIN_SKILL_TOGGLE(skill._id));
-            if (response.data?.success) {
-                toast.success(`Skill set to ${!skill.isActive ? 'Active' : 'Inactive'}`);
-                fetchSkills();
+        if (skill.isActive) {
+            toast((t) => (
+                <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-2">
+                        <XCircle size={16} className="text-amber-400 shrink-0" />
+                        <p className="text-sm font-semibold text-white">Deactivate "{skill.name}"?</p>
+                    </div>
+                    <p className="text-xs text-zinc-400">
+                        Are you sure you want to make this skill inactive? It will not be displayed on the user side.
+                    </p>
+                    <div className="flex gap-2 mt-1">
+                        <button
+                            className="flex-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold transition-colors cursor-pointer"
+                            onClick={async () => {
+                                toast.dismiss(t.id);
+                                try {
+                                    const response = await ProTimeBackend.patch(API_ROUTES.ADMIN_SKILL_TOGGLE(skill._id));
+                                    if (response.data?.success) {
+                                        toast.success('Skill made Inactive successfully');
+                                        fetchSkills();
+                                    }
+                                } catch (error: any) {
+                                    toast.error(error.response?.data?.message || 'Failed to toggle status');
+                                }
+                            }}
+                        >
+                            Yes, Deactivate
+                        </button>
+                        <button
+                            className="flex-1 px-3 py-1.5 rounded-lg bg-zinc-700 hover:bg-zinc-600 text-white text-xs font-bold transition-colors cursor-pointer"
+                            onClick={() => toast.dismiss(t.id)}
+                        >
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            ), {
+                duration: 10000,
+                style: { background: '#18181B', border: '1px solid rgba(255,255,255,0.08)', color: '#fff', maxWidth: '320px' }
+            });
+        } else {
+            try {
+                const response = await ProTimeBackend.patch(API_ROUTES.ADMIN_SKILL_TOGGLE(skill._id));
+                if (response.data?.success) {
+                    toast.success('Skill activated successfully');
+                    fetchSkills();
+                }
+            } catch (error: any) {
+                toast.error(error.response?.data?.message || 'Failed to toggle status');
             }
-        } catch (error: any) {
-            toast.error(error.response?.data?.message || 'Failed to toggle status');
         }
     };
 

@@ -126,8 +126,23 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
   );
   const [saving, setSaving] = useState(false);
 
+  const isAlreadyEnded = sub.status === 'CANCELLED' || sub.status === 'EXPIRED';
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Guard: trying to cancel/expire something already ended
+    if (isAlreadyEnded && (status === 'CANCELLED' || status === 'EXPIRED')) {
+      toast(
+        `This subscription is already ${sub.status.toLowerCase()}. No changes were made.`,
+        {
+          icon: '⚠️',
+          style: { background: '#18181B', border: '1px solid #3F3F46', color: '#FCD34D', borderRadius: '12px' },
+        }
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       const userId = sub.user.id;
@@ -164,6 +179,19 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
             <X size={18} />
           </button>
         </div>
+
+        {/* Already-ended warning banner */}
+        {isAlreadyEnded && (
+          <div className="mb-4 flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+            <span className="text-amber-400 text-base mt-0.5">⚠️</span>
+            <div>
+              <p className="text-xs font-bold text-amber-400">Subscription Already {sub.status === 'CANCELLED' ? 'Cancelled' : 'Expired'}</p>
+              <p className="text-[11px] text-amber-300/70 mt-0.5">
+                This subscription was already {sub.status.toLowerCase()}. You can reactivate it by switching the status to <span className="font-semibold">ACTIVE</span>.
+              </p>
+            </div>
+          </div>
+        )}
 
         <form onSubmit={handleSave} className="space-y-4">
           {/* Plan */}
@@ -251,7 +279,6 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
     </div>
   );
 };
-
 // ── Add Subscription Modal ────────────────────────────────────────────────────
 interface AddModalProps {
   onClose: () => void;
@@ -268,8 +295,13 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
   });
   const [saving, setSaving] = useState(false);
 
+  // Selected user's current subscription info
+  const [currentSub, setCurrentSub] = useState<{ plan: string; status: string } | null>(null);
+  const [subLoading, setSubLoading] = useState(false);
+
   // User search
   const [userSearch, setUserSearch] = useState('');
+  const [selectedUserName, setSelectedUserName] = useState('');
   const [userResults, setUserResults] = useState<{ id: string; fullName: string; email: string }[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
@@ -287,16 +319,50 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
       .finally(() => setSearchLoading(false));
   }, [debouncedSearch]);
 
+  // Fetch the selected user's current subscription
+  const fetchUserSub = async (uid: string) => {
+    setSubLoading(true);
+    setCurrentSub(null);
+    try {
+      const res = await ProTimeBackend.get(`${API_ROUTES.ADMIN_SUBSCRIPTIONS}?search=${uid}&limit=1`);
+      const subs: AdminSubscription[] = res.data?.data?.subscriptions ?? [];
+      const match = subs.find(s => s.userId === uid || s.user?.id === uid);
+      if (match) setCurrentSub({ plan: match.plan, status: match.status });
+    } catch {
+      // not found — that's fine
+    } finally {
+      setSubLoading(false);
+    }
+  };
+
   const selectUser = (u: { id: string; fullName: string; email: string }) => {
     setUserId(u.id);
+    setSelectedUserName(`${u.fullName} (${u.email})`);
     setUserSearch(`${u.fullName} (${u.email})`);
     setUserResults([]);
     setShowDropdown(false);
+    fetchUserSub(u.id);
   };
+
+  const isAlreadyPremium = currentSub?.plan === 'PREMIUM' && currentSub?.status === 'ACTIVE';
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) { toast.error('Please select a user first'); return; }
+
+    // Guard: already active premium
+    if (isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE') {
+      toast(
+        `${selectedUserName.split(' (')[0]} is already on an active Premium plan.`,
+        {
+          icon: '⚡',
+          style: { background: '#18181B', border: '1px solid #7C3AED', color: '#C4B5FD', borderRadius: '12px' },
+          duration: 4000,
+        }
+      );
+      return;
+    }
+
     setSaving(true);
     try {
       await ProTimeBackend.post(API_ROUTES.ADMIN_SUBSCRIPTION_ADD, {
@@ -343,11 +409,11 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
               <input
                 type="text"
                 value={userSearch}
-                onChange={e => { setUserSearch(e.target.value); setUserId(''); }}
+                onChange={e => { setUserSearch(e.target.value); setUserId(''); setCurrentSub(null); }}
                 placeholder="Type user name or email…"
                 className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl pl-8 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
               />
-              {searchLoading && <Loader size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 animate-spin" />}
+              {(searchLoading || subLoading) && <Loader size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 animate-spin" />}
             </div>
 
             {/* Dropdown */}
@@ -366,6 +432,44 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
               </div>
             )}
           </div>
+
+          {/* ── Current subscription status banner ── */}
+          {userId && !subLoading && currentSub && (
+            <div className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs ${
+              isAlreadyPremium
+                ? 'bg-purple-500/10 border-purple-500/25 text-purple-300'
+                : currentSub.status === 'CANCELLED' || currentSub.status === 'EXPIRED'
+                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
+                : 'bg-zinc-800/50 border-zinc-700 text-zinc-400'
+            }`}>
+              <span className="text-base mt-0.5 shrink-0">
+                {isAlreadyPremium ? '⚡' : currentSub.status === 'ACTIVE' ? '✅' : '⚠️'}
+              </span>
+              <div>
+                {isAlreadyPremium ? (
+                  <>
+                    <p className="font-bold text-purple-300">Already on Active Premium</p>
+                    <p className="text-purple-300/70 mt-0.5">This user already has an active Premium subscription. Reassigning will overwrite it.</p>
+                  </>
+                ) : currentSub.status === 'CANCELLED' ? (
+                  <>
+                    <p className="font-bold">Subscription Cancelled</p>
+                    <p className="text-amber-300/70 mt-0.5">This user's {currentSub.plan} plan was cancelled. Assigning a new plan will overwrite it.</p>
+                  </>
+                ) : currentSub.status === 'EXPIRED' ? (
+                  <>
+                    <p className="font-bold">Subscription Expired</p>
+                    <p className="text-amber-300/70 mt-0.5">This user's {currentSub.plan} plan has expired. You can reassign a new one.</p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-bold text-zinc-300">Current: {currentSub.plan} ({currentSub.status})</p>
+                    <p className="text-zinc-500 mt-0.5">Assigning a new plan will overwrite the existing one.</p>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Plan */}
           <div className="space-y-1.5">
@@ -431,10 +535,14 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
             </button>
             <button
               type="submit" disabled={saving || !userId}
-              className="flex-1 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-500/20"
+              className={`flex-1 py-2.5 rounded-xl disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg ${
+                isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE'
+                  ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20'
+                  : 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/20'
+              }`}
             >
               {saving ? <Loader size={14} className="animate-spin" /> : <Plus size={14} />}
-              {saving ? 'Assigning…' : 'Assign Plan'}
+              {saving ? 'Assigning…' : isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE' ? 'Overwrite Plan' : 'Assign Plan'}
             </button>
           </div>
         </form>
@@ -442,7 +550,6 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
     </div>
   );
 };
-
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const AdminSubscriptionsPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);

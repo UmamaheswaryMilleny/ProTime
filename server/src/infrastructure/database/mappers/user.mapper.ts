@@ -16,6 +16,7 @@ export class UserMapper {
       authProvider: doc.authProvider,
       isEmailVerified: doc.isEmailVerified,
       isBlocked: doc.isBlocked,
+      blockedUntil: doc.blockedUntil ?? null,
       isDeleted: doc.isDeleted,
       isPremium: doc.isPremium,
       googleId: doc.googleId,
@@ -42,6 +43,7 @@ export class UserMapper {
     if (data.isEmailVerified !== undefined)
       result.isEmailVerified = data.isEmailVerified;
     if (data.isBlocked !== undefined) result.isBlocked = data.isBlocked;
+    if ('blockedUntil' in data) result.blockedUntil = data.blockedUntil ?? null;
     if (data.isDeleted !== undefined) result.isDeleted = data.isDeleted;
     if (data.isPremium !== undefined) result.isPremium = data.isPremium;
     if (data.googleId !== undefined) result.googleId = data.googleId;

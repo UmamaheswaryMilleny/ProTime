@@ -36,6 +36,7 @@ import { startSubscriptionNotificationsCron } from './infrastructure/cron/subscr
 import { startExpireSubscriptionsCron } from './infrastructure/cron/expire-subscriptions.cron';
 import { startDeleteExpiredRoomsCron } from './infrastructure/cron/delete-expired-rooms.cron';
 import { ProBuddyRoutes } from './interface_adapter/routes/probuddy/probuddy.routes';
+import { startUnblockExpiredBlocksCron } from './infrastructure/cron/unblock-expired-blocks.cron';
 
 export class App {
   private readonly app: Application;
@@ -716,4 +717,5 @@ export const bootstrap = async (): Promise<void> => {
   startSubscriptionNotificationsCron();
   startExpireSubscriptionsCron(); // Safety net: downgrades missed-webhook expired subscriptions
   startDeleteExpiredRoomsCron(); // Deletes ENDED study rooms after 3 days
+  startUnblockExpiredBlocksCron(); // Auto-unblocks users whose 24h temporary block expired
 };

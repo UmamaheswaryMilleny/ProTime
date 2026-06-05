@@ -27,7 +27,10 @@ export class MongoProfileRepository
   async findByUserId(userId: string): Promise<ProfileEntity | null> {
     const doc = await this.model
       .findOne({ userId: new mongoose.Types.ObjectId(userId) })
-      .populate("skills")
+      .populate({
+        path: "skills",
+        match: { isActive: true }
+      })
       .exec();
     if (!doc) return null;
     return ProfileMapper.toDomain(doc);
@@ -44,7 +47,10 @@ export class MongoProfileRepository
         { $set: { ...updateData, updatedAt: new Date() } },
         { new: true },
       )
-      .populate("skills")
+      .populate({
+        path: "skills",
+        match: { isActive: true }
+      })
       .exec();
     if (!doc) return null;
     return ProfileMapper.toDomain(doc);
@@ -66,7 +72,13 @@ export class MongoProfileRepository
 
   async findByUserIds(userIds: string[]): Promise<ProfileEntity[]> {
     const objectIds = userIds.map((id) => new mongoose.Types.ObjectId(id));
-    const docs = await this.model.find({ userId: { $in: objectIds } }).populate("skills").exec();
+    const docs = await this.model
+      .find({ userId: { $in: objectIds } })
+      .populate({
+        path: "skills",
+        match: { isActive: true }
+      })
+      .exec();
     return docs.map((doc) => ProfileMapper.toDomain(doc));
   }
 }

@@ -11,6 +11,7 @@ export interface UserDocument extends Document{
     googleId?:string;
     isEmailVerified:boolean;
     isBlocked:boolean;
+    blockedUntil?: Date | null;
     isDeleted:boolean;
     isPremium:boolean;
     createdAt:Date;

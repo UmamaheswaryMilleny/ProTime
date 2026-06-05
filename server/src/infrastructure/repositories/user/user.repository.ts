@@ -58,8 +58,29 @@ export class MongoUserRepository
   }
 
   async updateBlockStatus(id: string, isBlocked: boolean): Promise<void> {
+    const update: Record<string, unknown> = {
+      isBlocked,
+      updatedAt: new Date(),
+    };
+    // Always clear the expiry when manually changing block status
+    if (!isBlocked) {
+      update.blockedUntil = null;
+    }
     const result = await this.model
-      .updateOne({ _id: id }, { $set: { isBlocked, updatedAt: new Date() } })
+      .updateOne({ _id: id }, { $set: update })
+      .exec();
+
+    if (result.matchedCount === 0) {
+      throw new Error(`User with id ${id} not found`);
+    }
+  }
+
+  async setTemporaryBlock(id: string, until: Date): Promise<void> {
+    const result = await this.model
+      .updateOne(
+        { _id: id },
+        { $set: { isBlocked: true, blockedUntil: until, updatedAt: new Date() } },
+      )
       .exec();
 
     if (result.matchedCount === 0) {

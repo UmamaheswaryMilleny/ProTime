@@ -14,9 +14,10 @@ export class BlockedUserMiddleware {
   ) {}
 
   /**
-   * checkBlockedUser — fetches user from DB and verifies they are not blocked
-   * Must be used AFTER verifyAuth (requires req.user)
-   * Admins are never blocked — skip check for ADMIN role
+   * checkBlockedUser — fetches user from DB and verifies they are not blocked.
+   * For temporary blocks: if blockedUntil has passed, auto-unblocks and lets through.
+   * Must be used AFTER verifyAuth (requires req.user).
+   * Admins are never blocked — skip check for ADMIN role.
    */
   async checkBlockedUser(
     req: CustomRequest,
@@ -59,6 +60,13 @@ export class BlockedUserMiddleware {
       }
 
       if (user.isBlocked) {
+        // If this is a temporary block that has already expired, auto-unblock
+        if (user.blockedUntil && new Date() >= user.blockedUntil) {
+          await this.userRepository.updateBlockStatus(id, false); // clears blockedUntil too
+          next();
+          return;
+        }
+
         res.status(HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: ERROR_MESSAGE.AUTHENTICATION.USER_BLOCKED,
@@ -71,4 +79,4 @@ export class BlockedUserMiddleware {
       next(error);
     }
   }
-}
+}

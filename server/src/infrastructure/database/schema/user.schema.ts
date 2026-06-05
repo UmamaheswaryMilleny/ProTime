@@ -45,6 +45,10 @@ export const UserSchema = new Schema(
       default: false,
       index: true,
     },
+    blockedUntil: {
+      type: Date,
+      default: null,
+    },
       isPremium: {
       type: Boolean,
       default: false,

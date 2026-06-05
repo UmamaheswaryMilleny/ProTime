@@ -9,6 +9,7 @@ export interface UserEntity{
     role: UserRole
     authProvider:AuthProvider
     isBlocked:boolean
+    blockedUntil?: Date | null   // null = permanent block; Date = auto-expires at this time
     isDeleted:boolean
     isPremium: boolean
     googleId?: string

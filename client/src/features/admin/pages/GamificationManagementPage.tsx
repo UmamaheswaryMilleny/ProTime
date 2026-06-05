@@ -668,14 +668,47 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
     }
   };
 
-  const handleDeleteBadge = async (badgeId: string) => {
-    if (!window.confirm('Are you sure you want to delete this badge definition permanently?')) return;
-    try {
-      await deleteBadgeMutation.mutateAsync(badgeId);
-      toast.success('Badge deleted successfully');
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to delete badge');
-    }
+  const handleDeleteBadge = (badgeId: string, badgeName: string) => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-white">Delete <span className="text-red-400">{badgeName}</span>?</p>
+          <p className="text-xs text-zinc-400">This will permanently remove the badge definition.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await deleteBadgeMutation.mutateAsync(badgeId);
+                  toast.success('Badge deleted successfully');
+                } catch (error: any) {
+                  toast.error(error.response?.data?.message || 'Failed to delete badge');
+                }
+              }}
+              className="flex-1 py-1.5 bg-red-500 hover:bg-red-400 text-white text-xs font-bold rounded-lg transition-all"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-semibold rounded-lg transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: 8000,
+        style: {
+          background: '#18181B',
+          border: '1px solid #3F3F46',
+          borderRadius: '14px',
+          padding: '16px',
+          minWidth: '260px',
+        },
+      }
+    );
   };
 
   return (
@@ -761,7 +794,7 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteBadge(badge.id)}
+                        onClick={() => handleDeleteBadge(badge.id, badge.name)}
                         className="px-3 py-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 rounded-lg text-zinc-300 hover:text-red-400 transition-all text-xs font-semibold"
                       >
                         Delete
@@ -846,7 +879,7 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                               <Edit2 size={13} />
                             </button>
                             <button
-                              onClick={() => handleDeleteBadge(badge.id)}
+                              onClick={() => handleDeleteBadge(badge.id, badge.name)}
                               className="p-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 hover:border-red-500/30 rounded-lg text-zinc-300 hover:text-red-400 transition-all cursor-pointer"
                               title="Delete Badge"
                             >

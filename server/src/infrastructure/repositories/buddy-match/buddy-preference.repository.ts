@@ -73,7 +73,7 @@ export class BuddyPreferenceRepository
         const searchRegex = { $regex: search, $options: 'i' };
         
         // Find matching skills
-        const matchingSkills = await SkillModel.find({ name: searchRegex }).select('_id').lean();
+        const matchingSkills = await SkillModel.find({ name: searchRegex, isActive: true }).select('_id').lean();
         const skillIds = matchingSkills.map(s => s._id);
 
         // Find profiles matching username, fullName, or skills

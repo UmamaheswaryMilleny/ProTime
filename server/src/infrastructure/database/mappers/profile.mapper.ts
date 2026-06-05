@@ -15,7 +15,7 @@ export class ProfileMapper {
       country: doc.country ?? undefined,
       languages: doc.languages ?? [],
       profileImage: doc.profileImage ?? undefined,
-      skills: doc.skills ?? [],
+      skills: (doc.skills ?? []).filter((s: any) => s && (typeof s !== 'object' || s.isActive !== false)),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };

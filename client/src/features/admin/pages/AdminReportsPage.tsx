@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Loader, Eye, X, UserCircle, Flag, MessageSquare, Video, Search, ChevronDown, Filter, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Loader, Eye, X, UserCircle, Flag, MessageSquare, Video, Search, ChevronDown, Filter, ChevronLeft, ChevronRight, ShieldOff, Clock, Shield } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { chatApi, ReportStatus, ReportContext, ReportAction } from '../../chat/api/chatApi';
+import { ProTimeBackend } from '../../../api/instance';
+import { API_ROUTES } from '../../../shared/constants/constants.routes';
 
 interface Report {
     id: string;
@@ -27,6 +29,7 @@ export const AdminReportsPage: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [selectedReport, setSelectedReport] = useState<Report | null>(null);
     const [isResolving, setIsResolving] = useState(false);
+    const [isUnblocking, setIsUnblocking] = useState(false);
     const [resolutionAction, setResolutionAction] = useState<ReportAction>(ReportAction.NO_ACTION);
     const [adminNote, setAdminNote] = useState('');
 
@@ -70,8 +73,8 @@ export const AdminReportsPage: React.FC = () => {
         setIsResolving(true);
         try {
             // Determine status: if NO_ACTION then DISMISSED, else RESOLVED
-            const status = resolutionAction === ReportAction.NO_ACTION 
-                ? ReportStatus.DISMISSED 
+            const status = resolutionAction === ReportAction.NO_ACTION
+                ? ReportStatus.DISMISSED
                 : ReportStatus.RESOLVED;
 
             const res = await chatApi.resolveReport(selectedReport.id, {
@@ -92,6 +95,26 @@ export const AdminReportsPage: React.FC = () => {
             setIsResolving(false);
         }
     };
+
+    const handleUnblock = async () => {
+        if (!selectedReport?.reportedUserId) return;
+        setIsUnblocking(true);
+        try {
+            await ProTimeBackend.patch(API_ROUTES.ADMIN_UNBLOCK_USER(selectedReport.reportedUserId));
+            toast.success(`${selectedReport.reportedUser?.fullName ?? 'User'} has been unblocked.`);
+            // Close modal and refresh
+            setSelectedReport(null);
+            fetchReports();
+        } catch {
+            toast.error('Failed to unblock user. Please try again.');
+        } finally {
+            setIsUnblocking(false);
+        }
+    };
+
+    // Helpers
+    const isBlockAction = (action?: ReportAction) =>
+        action === ReportAction.TEMPORARY_BLOCK || action === ReportAction.PERMANENT_BLOCK;
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -350,24 +373,26 @@ export const AdminReportsPage: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+
+                            {/* ── PENDING: Admin resolution form ── */}
                             {selectedReport.status === ReportStatus.PENDING && (
                                 <div className="pt-4 space-y-4 border-t border-[#27272A]">
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Take Action</p>
-                                        <select 
+                                        <select
                                             value={resolutionAction}
                                             onChange={(e) => setResolutionAction(e.target.value as ReportAction)}
                                             className="w-full bg-[#1F1F23] border border-[#27272A] rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-blue-500"
                                         >
                                             <option value={ReportAction.NO_ACTION}>Dismiss (No Action)</option>
                                             <option value={ReportAction.WARNING}>Issue Warning</option>
-                                            <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block</option>
+                                            <option value={ReportAction.TEMPORARY_BLOCK}>Temporary Block (24 hours)</option>
                                             <option value={ReportAction.PERMANENT_BLOCK}>Permanent Block</option>
                                         </select>
                                     </div>
                                     <div className="space-y-2">
                                         <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider">Admin Note</p>
-                                        <textarea 
+                                        <textarea
                                             value={adminNote}
                                             onChange={(e) => setAdminNote(e.target.value)}
                                             placeholder="Reason for this action..."
@@ -386,12 +411,62 @@ export const AdminReportsPage: React.FC = () => {
                                 </div>
                             )}
 
+                            {/* ── RESOLVED / DISMISSED: show action taken + optional unblock ── */}
                             {selectedReport.status !== ReportStatus.PENDING && (
-                                <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
-                                    <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Resolution Detail</p>
-                                    <p className="text-sm font-medium text-emerald-400 mb-1">Action: {selectedReport.actionTaken}</p>
-                                    {selectedReport.adminNote && (
-                                        <p className="text-sm text-zinc-400 italic">"{selectedReport.adminNote}"</p>
+                                <div className="space-y-3 pt-4 border-t border-[#27272A]">
+                                    {/* Resolution summary */}
+                                    <div className="p-4 rounded-xl bg-zinc-800/50 border border-zinc-700">
+                                        <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Resolution Detail</p>
+                                        <p className="text-sm font-medium text-emerald-400 mb-1">Action: {selectedReport.actionTaken}</p>
+                                        {selectedReport.adminNote && (
+                                            <p className="text-sm text-zinc-400 italic">"{selectedReport.adminNote}"</p>
+                                        )}
+                                    </div>
+
+                                    {/* Unblock panel — only for block actions */}
+                                    {isBlockAction(selectedReport.actionTaken) && (
+                                        <div className={`p-4 rounded-xl border ${selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                            ? 'bg-amber-500/5 border-amber-500/20'
+                                            : 'bg-red-500/5 border-red-500/20'
+                                            }`}>
+                                            <div className="flex items-start gap-3 mb-3">
+                                                <div className={`p-2 rounded-lg shrink-0 ${selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                                    ? 'bg-amber-500/15'
+                                                    : 'bg-red-500/15'
+                                                    }`}>
+                                                    {selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                                        ? <Clock size={15} className="text-amber-400" />
+                                                        : <Shield size={15} className="text-red-400" />
+                                                    }
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs font-bold text-white">
+                                                        {selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                                            ? 'Temporary Block (24 hours)'
+                                                            : 'Permanent Block'
+                                                        }
+                                                    </p>
+                                                    <p className="text-xs text-zinc-400 mt-0.5">
+                                                        {selectedReport.actionTaken === ReportAction.TEMPORARY_BLOCK
+                                                            ? 'This user was blocked for 24 hours. The block expires automatically, or you can remove it early below.'
+                                                            : 'This user is permanently blocked. You can manually lift the block below.'
+                                                        }
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={handleUnblock}
+                                                disabled={isUnblocking}
+                                                className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#22C55E] hover:bg-green-400 disabled:opacity-50 text-white text-sm font-bold transition-all shadow-lg shadow-green-500/20 active:scale-95"
+                                            >
+                                                {isUnblocking ? (
+                                                    <Loader size={14} className="animate-spin" />
+                                                ) : (
+                                                    <ShieldOff size={14} />
+                                                )}
+                                                {isUnblocking ? 'Unblocking...' : `Unblock ${selectedReport.reportedUser?.fullName ?? 'User'}`}
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             )}

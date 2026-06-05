@@ -35,15 +35,18 @@ export class ResolveReportUsecase implements IResolveReportUsecase {
 if (report.status !== ReportStatus.PENDING) {
   throw new ReportAlreadyResolvedError();
 }
-    // If action is PERMANENT_BLOCK or TEMPORARY_BLOCK — block the reported user
-    if (
-      dto.actionTaken === ReportAction.PERMANENT_BLOCK ||
-      dto.actionTaken === ReportAction.TEMPORARY_BLOCK
-    ) {
+    // ─── Apply block if warranted ──────────────────────────────────────────────
+    if (dto.actionTaken === ReportAction.TEMPORARY_BLOCK) {
+      // 24-hour temporary block — auto-expires via cron
+      const until = new Date(Date.now() + 24 * 60 * 60 * 1000);
+      await this.userRepo.setTemporaryBlock(report.reportedUserId, until);
+      // Force disconnect immediately
+      this.socketService.disconnectUser(report.reportedUserId);
+    } else if (dto.actionTaken === ReportAction.PERMANENT_BLOCK) {
+      // Permanent block — no expiry date
       await this.userRepo.updateById(report.reportedUserId, {
         isBlocked: true,
       });
-      // Force disconnect the blocked user's websocket connection immediately
       this.socketService.disconnectUser(report.reportedUserId);
     }
 

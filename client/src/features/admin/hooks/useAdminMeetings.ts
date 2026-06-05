@@ -70,19 +70,12 @@ export function useAdminMeetings() {
   const setFrom   = (v: string) => setSearchParams(p => { const n = new URLSearchParams(p); if (v) n.set('from', v); else n.delete('from'); n.set('page', '1'); return n; });
   const setTo     = (v: string) => setSearchParams(p => { const n = new URLSearchParams(p); if (v) n.set('to', v); else n.delete('to'); n.set('page', '1'); return n; });
 
-  // Keep search in URL (debounced)
-  useEffect(() => {
-    setSearchParams(p => {
-      const n = new URLSearchParams(p);
-      if (debouncedSearch.trim()) n.set('search', debouncedSearch.trim());
-      else n.delete('search');
-      n.set('page', '1');
-      return n;
-    });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch]);
-
   // ── Fetch ────────────────────────────────────────────────────────────────
+  // NOTE: We intentionally do NOT include searchParams as a dependency here.
+  // Instead we use the individual derived values (page, limit, type, status,
+  // from, to, debouncedSearch) so that:
+  //  (a) search fires only after the debounce delay, not on every keystroke
+  //  (b) clearing from/to correctly re-fetches with empty values
   const fetchMeetings = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -92,10 +85,9 @@ export function useAdminMeetings() {
         type,
         status,
       };
-      if (from) params.from = from;
-      if (to)   params.to   = to;
-      const search = searchParams.get('search');
-      if (search) params.search = search;
+      if (from)                    params.from   = from;
+      if (to)                      params.to     = to;
+      if (debouncedSearch.trim())  params.search = debouncedSearch.trim();
 
       const res = await ProTimeBackend.get(API_ROUTES.ADMIN_MEETINGS, { params });
       if (res.data.success) {
@@ -110,7 +102,8 @@ export function useAdminMeetings() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, limit, type, status, from, to, searchParams]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, limit, type, status, from, to, debouncedSearch]);
 
   useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
 
