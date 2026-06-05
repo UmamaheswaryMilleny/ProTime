@@ -52,6 +52,7 @@ export interface IBuddyConnectionRepository
       | 'ratedUserIds'
       | 'ratings'
     >>,
+    connectionId?: string,
   ): Promise<BuddyConnectionEntity | null>;
 
   // Returns all PENDING connections where this user is the requester

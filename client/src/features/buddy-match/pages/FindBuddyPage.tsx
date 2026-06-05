@@ -99,10 +99,10 @@ export const FindBuddyPage: React.FC = () => {
       });
       const lastActive = sorted[0];
       if (lastActive) {
-        navigate(`/dashboard/find-buddy?tab=messages&convId=${lastActive.id}`, { replace: true });
+        navigate(`/dashboard/find-buddy?tab=messages&convId=${lastActive.id}`, { replace: true, state: location.state });
       }
     }
-  }, [activeTab, selectedConvId, conversations, navigate]);
+  }, [activeTab, selectedConvId, conversations, navigate, location.state]);
 
   // For editing preferences in sidebar locally before applying
   const [editPrefs, setEditPrefs] = useState<any>(null);
@@ -337,7 +337,10 @@ export const FindBuddyPage: React.FC = () => {
             activeConversationId={selectedConvId}
             onSelectConversation={(id) => navigate(`${location.pathname}?tab=messages&convId=${id}`, { state: location.state })}
             onBack={() => {
-              const fallbackPath = location.state?.from || ROUTES.DASHBOARD_FIND_BUDDY;
+              const from = location.state?.from;
+              const fallbackPath = (from && !from.includes('tab=messages')) 
+                ? from 
+                : ROUTES.DASHBOARD_FIND_BUDDY;
               navigate(fallbackPath);
             }}
           />

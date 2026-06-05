@@ -56,6 +56,7 @@ export class RateBuddyUsecase implements IRateBuddyUsecase {
         ratedUserIds: newRatedUserIds,
         ratings: newRatings,
       },
+      connection.id,
     );
 
     if (!updated) {

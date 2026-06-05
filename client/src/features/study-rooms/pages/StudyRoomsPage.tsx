@@ -99,16 +99,16 @@ export const StudyRoomsPage: React.FC = () => {
 
   // In Explore tab: hide rooms that are expired (ENDED status or their session time
   // has already passed). My Rooms always shows the user's full history.
-  const now = Date.now();
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
   const displayRooms = (tab === 'MY_ROOMS' ? myRooms : rooms).filter(room => {
     if (tab === 'MY_ROOMS') return true;  // show everything in My Rooms
     if (room.status === 'ENDED') return false;
     if (room.status === 'LIVE') return true; // always show live sessions
-    // WAITING rooms whose session time has definitively passed
+    // WAITING rooms whose session time has definitively passed (with 5-min grace buffer)
     const isPast = room.endTime
-      ? new Date(room.endTime) < new Date()
+      ? new Date(room.endTime) < fiveMinutesAgo
       : (room.startTime && room.startTime !== 'IMMEDIATE')
-        ? new Date(room.startTime).getTime() + 4 * 60 * 60 * 1000 < now
+        ? new Date(room.startTime).getTime() + 4 * 60 * 60 * 1000 < fiveMinutesAgo.getTime()
         : false;
     return !isPast;
   });

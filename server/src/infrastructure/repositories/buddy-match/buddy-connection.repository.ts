@@ -120,20 +120,25 @@ export class BuddyConnectionRepository
       | 'rating' | 'totalSessionsCompleted' | 'totalSessionMinutes' | 'lastSessionAt'
       | 'ratingSum' | 'ratingCount' | 'averageRating' | 'ratedUserIds' | 'ratings'
     >>,
+    connectionId?: string,
   ): Promise<BuddyConnectionEntity | null> {
     const update = BuddyConnectionMapper.toPersistence(data);
 
-    const userObjectId = new mongoose.Types.ObjectId(userId);
-    const buddyObjectId = new mongoose.Types.ObjectId(buddyId);
+    const query: any = {};
+    if (connectionId) {
+      query._id = new mongoose.Types.ObjectId(connectionId);
+    } else {
+      const userObjectId = new mongoose.Types.ObjectId(userId);
+      const buddyObjectId = new mongoose.Types.ObjectId(buddyId);
+      query.$or = [
+        { userId: userObjectId, buddyId: buddyObjectId },
+        { userId: buddyObjectId, buddyId: userObjectId },
+      ];
+      query.status = { $in: [BuddyConnectionStatus.CONNECTED, BuddyConnectionStatus.BLOCKED] };
+    }
 
     const doc = await BuddyConnectionModel.findOneAndUpdate(
-      {
-        $or: [
-          { userId: userObjectId, buddyId: buddyObjectId },
-          { userId: buddyObjectId, buddyId: userObjectId },
-        ],
-        status: { $in: [BuddyConnectionStatus.CONNECTED, BuddyConnectionStatus.BLOCKED] },  // ← only update confirmed or blocked connections
-      },
+      query,
       { $set: update },
       { new: true },
     ).lean();

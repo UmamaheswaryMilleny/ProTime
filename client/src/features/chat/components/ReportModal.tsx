@@ -26,7 +26,6 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialCon
   const [additionalDetails, setAdditionalDetails] = useState('');
   const [screenshots, setScreenshots] = useState<File[]>([]);
   const [blockUser, setBlockUser] = useState(true);
-  const [receiveUpdates, setReceiveUpdates] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -69,7 +68,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialCon
         additionalDetails,
         screenshots: screenshotUrls,
         blockUser,
-        receiveUpdates,
+        receiveUpdates: false,
       });
       if (res.success) {
         onSuccess(blockUser);
@@ -219,20 +218,7 @@ export const ReportModal: React.FC<ReportModalProps> = ({ reportedId, initialCon
               <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">Block this user</span>
             </label>
 
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <div className="relative flex items-center justify-center w-5 h-5">
-                <input
-                  type="checkbox"
-                  checked={receiveUpdates}
-                  onChange={(e) => setReceiveUpdates(e.target.checked)}
-                  className="peer appearance-none w-5 h-5 border-2 border-zinc-600 rounded bg-transparent checked:bg-[blueviolet] checked:border-[blueviolet] transition-all cursor-pointer"
-                />
-                <svg className="absolute w-3 h-3 text-white pointer-events-none opacity-0 peer-checked:opacity-100 transition-opacity" viewBox="0 0 14 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M1 5L4.5 8.5L13 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <span className="text-sm text-zinc-300 group-hover:text-zinc-100 transition-colors">I want to receive updates about this report</span>
-            </label>
+
           </div>
         </div>
 

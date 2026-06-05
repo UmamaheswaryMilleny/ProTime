@@ -55,10 +55,38 @@ export const VideoCallOverlay: React.FC = () => {
   const pauseTodoTimer = (conversationId?: string) => pause(conversationId);
   const resetTodoTimer = () => reset();
   const handleStopTodoPomodoro = () => {
-    if (window.confirm('Are you sure you want to stop the Pomodoro timer?')) {
-      stop(activeCall?.conversationId);
-      setIsPomodoroModalOpen(false);
-    }
+    toast((t) => (
+      <div className="flex flex-col gap-3 p-1">
+        <p className="text-sm font-semibold text-white text-center">Are you sure you want to stop the Pomodoro timer?</p>
+        <div className="flex gap-2 justify-end">
+          <button
+            onClick={() => toast.dismiss(t.id)}
+            className="px-3 py-1.5 text-xs font-semibold text-zinc-400 hover:text-white transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              toast.dismiss(t.id);
+              stop(activeCall?.conversationId);
+              setIsPomodoroModalOpen(false);
+            }}
+            className="px-4 py-1.5 text-xs font-semibold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-sm cursor-pointer"
+          >
+            Stop
+          </button>
+        </div>
+      </div>
+    ), {
+      duration: 5000,
+      position: 'top-center',
+      style: {
+        background: '#2A2B36',
+        color: '#fff',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '16px',
+      }
+    });
   };
 
   const {

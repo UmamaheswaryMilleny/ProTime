@@ -24,9 +24,10 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
   const isEnded = room.status === 'ENDED';
   // const hasAlreadyStarted = !room.startTime || room.startTime === 'IMMEDIATE' || new Date(room.startTime) <= new Date();
   
+  const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
   const isPast = room.endTime 
-    ? new Date(room.endTime) < new Date() 
-    : (room.startTime && room.startTime !== 'IMMEDIATE' ? new Date(room.startTime).getTime() + (4 * 60 * 60 * 1000) < Date.now() : false);
+    ? new Date(room.endTime) < fiveMinutesAgo 
+    : (room.startTime && room.startTime !== 'IMMEDIATE' ? new Date(room.startTime).getTime() + (4 * 60 * 60 * 1000) < fiveMinutesAgo.getTime() : false);
   const isExpired = isEnded || (isPast && !isLive);
 
   const handleAction = () => {

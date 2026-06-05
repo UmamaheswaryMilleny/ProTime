@@ -12,13 +12,16 @@ interface CreateRoomModalProps {
 const MAX_PARTICIPANTS_OPTIONS = [3, 4, 5, 6, 7, 8, 9, 10];
 const LEVEL_OPTIONS = ['ANY', 'EARLY_BIRD', 'BEGINNER', 'LEARNER', 'EXPLORER', 'ACHIEVER', 'EXPERT', 'PRODIGY', 'MASTER'];
 
-// Helper: get today's date as YYYY-MM-DD
+// Helper: get today's date as YYYY-MM-DD in LOCAL time (not UTC)
 const getTodayDate = () => {
   const now = new Date();
-  return now.toISOString().split('T')[0];
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 };
 
-// Helper: get current time as HH:MM
+// Helper: get current time as HH:MM in LOCAL time
 const getCurrentTime = () => {
   const now = new Date();
   return `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
@@ -88,7 +91,9 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onSub
       const [h, m] = startTime.split(':').map(Number);
       const selectedStart = new Date();
       selectedStart.setHours(h, m, 0, 0);
-      if (selectedStart <= now) {
+      // Allow up to 2 minutes in the past as buffer for form-filling time
+      const twoMinutesAgo = new Date(now.getTime() - 2 * 60 * 1000);
+      if (selectedStart < twoMinutesAgo) {
         e.startTime = 'Time cannot be in the past';
       }
     }

@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
-import { Star, Loader } from 'lucide-react';
+import { Star, Loader, X } from 'lucide-react';
 import { buddyService } from '../../buddy-match/services/buddy.service';
+import { userApi } from '../../user/user-service';
+import { updateUser } from '../../auth/store/authSlice';
+import { useDispatch } from 'react-redux';
+import type { AppDispatch } from '../../../store/store';
 import toast from 'react-hot-toast';
 
 interface RatingModalProps {
@@ -14,6 +18,7 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   partnerName,
   onClose,
 }) => {
+  const dispatch = useDispatch<AppDispatch>();
   const [rating, setRating] = useState<number | null>(null);
   const [hoverRating, setHoverRating] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -24,6 +29,20 @@ export const RatingModal: React.FC<RatingModalProps> = ({
     try {
       await buddyService.rateBuddy(buddyConnectionId, rating);
       toast.success(`Thank you for rating ${partnerName}!`);
+
+      // Silently refresh the current user's own rating stats from the server
+      // so their profile reflects the latest averageRating and ratingCount
+      userApi.getProfileService()
+        .then(freshProfile => {
+          dispatch(updateUser({
+            averageRating: freshProfile.averageRating,
+            ratingCount: freshProfile.ratingCount,
+          }));
+        })
+        .catch(() => {
+          // Non-critical — profile will refresh next time user visits profile page
+        });
+
       onClose();
     } catch (error: any) {
       console.error('Failed to submit rating:', error);
@@ -48,6 +67,17 @@ export const RatingModal: React.FC<RatingModalProps> = ({
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center bg-black/85 backdrop-blur-sm p-4 animate-in fade-in duration-200">
       <div className="bg-zinc-900 border border-white/10 p-8 rounded-3xl shadow-2xl flex flex-col items-center max-w-md w-full relative z-[160] transition-all duration-300 transform scale-100 hover:scale-[1.01]">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          disabled={isSubmitting}
+          className="absolute top-4 right-4 text-zinc-400 hover:text-white hover:bg-white/10 p-2 rounded-full transition-all duration-200 focus:outline-none disabled:opacity-50"
+          type="button"
+          aria-label="Close rating modal"
+        >
+          <X size={20} />
+        </button>
+
         <div className="w-16 h-16 rounded-full flex items-center justify-center bg-indigo-500/10 text-indigo-400 font-semibold text-3xl mb-6 shadow-inner border border-indigo-500/20">
           ⭐
         </div>

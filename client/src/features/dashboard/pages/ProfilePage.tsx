@@ -110,6 +110,19 @@ export const ProfilePage: React.FC = () => {
       .catch(err => {
         console.error("Failed to fetch active skills", err);
       });
+
+    // Refresh profile from server to get latest averageRating and ratingCount
+    // (ratings are computed dynamically from buddy connections on the backend)
+    userApi.getProfileService()
+      .then(freshProfile => {
+        dispatch(updateUser({
+          averageRating: freshProfile.averageRating,
+          ratingCount: freshProfile.ratingCount,
+        }));
+      })
+      .catch(err => {
+        console.error("Failed to refresh profile rating stats", err);
+      });
   }, [dispatch]);
 
   React.useEffect(() => {

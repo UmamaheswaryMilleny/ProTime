@@ -26,7 +26,10 @@ export class GetRoomsUsecase implements IGetRoomsUsecase {
 
     const roomResponses: StudyRoomResponseDTO[] = await Promise.all(
       rooms.map(async (room) => {
-        if (room.status === RoomStatus.WAITING && room.endTime && new Date(room.endTime) < new Date()) {
+        // Only mark as ENDED if endTime passed more than 5 minutes ago and host never started
+        // This prevents rooms from being instantly expired due to timezone/clock differences
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        if (room.status === RoomStatus.WAITING && room.endTime && new Date(room.endTime) < fiveMinutesAgo) {
           room.status = RoomStatus.ENDED;
           await this.studyRoomRepo.updateStatus(room.id!, RoomStatus.ENDED);
         }
