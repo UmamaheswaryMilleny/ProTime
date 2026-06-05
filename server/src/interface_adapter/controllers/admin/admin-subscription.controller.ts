@@ -55,9 +55,36 @@ export class AdminSubscriptionController {
       return;
     }
 
+    const existing = await this.subscriptionRepository.findByUserId(userId);
+    const currentPlan = existing?.plan || 'FREE';
+    const currentStatus = existing?.status || 'ACTIVE';
+
+    const targetPlan = plan ? plan.toUpperCase() : currentPlan;
+    const targetStatus = status ? status.toUpperCase() : currentStatus;
+
+    let hasDateChanged = false;
+    if (currentPeriodEnd && existing?.currentPeriodEnd) {
+      const newDate = new Date(currentPeriodEnd).toISOString().slice(0, 10);
+      const oldDate = new Date(existing.currentPeriodEnd).toISOString().slice(0, 10);
+      if (newDate !== oldDate) {
+        hasDateChanged = true;
+      }
+    }
+
+    if (!hasDateChanged) {
+      if (targetPlan === 'FREE' && currentPlan === 'FREE') {
+        res.status(400).json({ success: false, message: 'User is already on the Free plan' });
+        return;
+      }
+      if (targetPlan === 'PREMIUM' && currentPlan === 'PREMIUM' && targetStatus === currentStatus) {
+        res.status(400).json({ success: false, message: `User is already on the Premium plan with ${targetStatus.toLowerCase()} status` });
+        return;
+      }
+    }
+
     const updateData: Record<string, any> = {};
-    if (plan)            updateData.plan = plan;
-    if (status)          updateData.status = status;
+    if (plan)            updateData.plan = plan.toUpperCase();
+    if (status)          updateData.status = status.toUpperCase();
     if (currentPeriodEnd) {
       updateData.currentPeriodEnd = new Date(currentPeriodEnd);
       updateData.currentPeriodStart = new Date();
@@ -82,6 +109,22 @@ export class AdminSubscriptionController {
       return;
     }
 
+    const existing = await this.subscriptionRepository.findByUserId(userId);
+    const currentPlan = existing?.plan || 'FREE';
+    const currentStatus = existing?.status || 'ACTIVE';
+
+    const targetPlan = plan.toUpperCase();
+    const targetStatus = (status || 'ACTIVE').toUpperCase();
+
+    if (targetPlan === 'FREE' && currentPlan === 'FREE') {
+      res.status(400).json({ success: false, message: 'User is already on the Free plan' });
+      return;
+    }
+    if (targetPlan === 'PREMIUM' && currentPlan === 'PREMIUM' && targetStatus === currentStatus) {
+      res.status(400).json({ success: false, message: `User is already on the Premium plan with ${targetStatus.toLowerCase()} status` });
+      return;
+    }
+
     const periodStart = new Date();
     const periodEnd   = currentPeriodEnd ? new Date(currentPeriodEnd) : (() => {
       const d = new Date();
@@ -90,8 +133,8 @@ export class AdminSubscriptionController {
     })();
 
     const subscription = await this.subscriptionRepository.updateByUserId(userId, {
-      plan,
-      status: status || 'ACTIVE',
+      plan: targetPlan,
+      status: targetStatus,
       currentPeriodStart: periodStart,
       currentPeriodEnd:   periodEnd,
     });

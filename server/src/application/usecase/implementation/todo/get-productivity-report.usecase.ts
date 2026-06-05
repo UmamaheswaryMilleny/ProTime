@@ -61,8 +61,31 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     let dayKeys: string[] = [];
     const isCalendarMonth = month && /^\d{4}-\d{2}$/.test(month);
     const isMonthRange = month && /^\d{4}-\d{2}_\d{4}-\d{2}$/.test(month);
+    const isDateRange = month && /^\d{4}-\d{2}-\d{2}_\d{4}-\d{2}-\d{2}$/.test(month);
 
-    if (isMonthRange) {
+    if (isDateRange) {
+      const parts = month!.split('_');
+      const startStr = parts[0] || '';
+      const endStr = parts[1] || '';
+      const startParts = startStr.split('-').map(Number);
+      const endParts = endStr.split('-').map(Number);
+
+      const startYear = startParts[0] || 2026;
+      const startMonthVal = startParts[1] || 1;
+      const startDayVal = startParts[2] || 1;
+      const endYear = endParts[0] || 2026;
+      const endMonthVal = endParts[1] || 12;
+      const endDayVal = endParts[2] || 31;
+
+      since = new Date(Date.UTC(startYear, startMonthVal - 1, startDayVal, 0, 0, 0, 0));
+      until = new Date(Date.UTC(endYear, endMonthVal - 1, endDayVal, 23, 59, 59, 999));
+
+      const temp = new Date(since);
+      while (temp <= until) {
+        dayKeys.push(toDateKey(temp));
+        temp.setUTCDate(temp.getUTCDate() + 1);
+      }
+    } else if (isMonthRange) {
       const parts = month!.split('_');
       const startStr = parts[0] || '';
       const endStr = parts[1] || '';
@@ -144,7 +167,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
     const rangedTodos = allTodos.filter(t => {
       const ref = t.completedAt ?? t.updatedAt ?? t.createdAt;
       const refDate = new Date(ref);
-      return (isCalendarMonth || isMonthRange) ? (refDate >= since && refDate <= until) : (refDate >= since);
+      return (isCalendarMonth || isMonthRange || isDateRange) ? (refDate >= since && refDate <= until) : (refDate >= since);
     });
 
     const completedTodos = rangedTodos.filter(t => t.status === TodoStatus.COMPLETED);
@@ -165,7 +188,8 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
       if (t.completedAt) {
         const key = toDateKey(new Date(t.completedAt));
         if (xpByDay.has(key)) {
-          xpByDay.set(key, (xpByDay.get(key) ?? 0) + (t.baseXp + t.bonusXp));
+          const earned = t.xpCounted ? (t.baseXp + t.bonusXp) : 0;
+          xpByDay.set(key, (xpByDay.get(key) ?? 0) + earned);
         }
       }
     });
@@ -250,7 +274,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
 
     return {
       summary: {
-        totalXp:              gami.totalXp,
+        totalXp:              xpTrend.reduce((sum, p) => sum + p.xp, 0),
         currentStreak:        gami.currentStreak,
         longestStreak:        gami.longestStreak,
         currentLevel:         gami.currentLevel,

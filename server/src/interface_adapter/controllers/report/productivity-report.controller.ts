@@ -5,6 +5,7 @@ import type { CustomRequest }              from '../../middlewares/auth.middlewa
 import type { IGetProductivityReportUsecase, ReportRange } from '../../../application/usecase/interface/todo/get-productivity-report.usecase.interface';
 import { ResponseHelper }  from '../../helpers/response.helper';
 import { HTTP_STATUS }     from '../../../shared/constants/constants';
+import { UserModel }       from '../../../infrastructure/database/models/user.model';
 
 @injectable()
 export class ProductivityReportController {
@@ -30,7 +31,8 @@ export class ProductivityReportController {
   async exportReport(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
     try {
       const userId = req.user!.id;
-      const isPremium = req.user!.isPremium ?? false;
+      const user = await UserModel.findById(userId).lean();
+      const isPremium = user?.isPremium ?? false;
 
       if (!isPremium) {
         res.status(HTTP_STATUS.FORBIDDEN).json({

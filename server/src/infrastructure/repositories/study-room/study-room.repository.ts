@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import { injectable } from "tsyringe";
 import { BaseRepository } from "../base.repository";
 import { StudyRoomDocument, StudyRoomModel } from "../../database/models/study-room.model";
@@ -100,7 +101,7 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
 
   async countCreatedByHostInMonth(hostId: string, startDate: Date, endDate: Date): Promise<number> {
     return this.model.countDocuments({
-      hostId,
+      hostId: new mongoose.Types.ObjectId(hostId),
       createdAt: {
         $gte: startDate,
         $lte: endDate
@@ -109,10 +110,11 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
   }
 
   async countJoinedOrHostedInMonth(userId: string, startDate: Date, endDate: Date): Promise<number> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
     return this.model.countDocuments({
       $or: [
-        { hostId: userId },
-        { participantIds: userId }
+        { hostId: userObjectId },
+        { participantIds: userObjectId }
       ],
       createdAt: {
         $gte: startDate,

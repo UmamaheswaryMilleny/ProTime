@@ -95,7 +95,10 @@ async findAll(params: {
       id,
       { $set: update },
       { new: true },
-    ).lean();
+    )
+      .populate('reporterId', 'fullName email isBlocked')
+      .populate('reportedUserId', 'fullName email isBlocked')
+      .lean();
 
     if (!doc) return null;
     return ReportInfraMapper.toDomain(doc as ReportDocument);

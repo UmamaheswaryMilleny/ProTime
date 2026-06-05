@@ -2,7 +2,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IGetLeaderboardUsecase } from '../../interface/gamification/get-leaderboard.usecase.interface.js';
 import type { IGamificationRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface.js';
 import type { LeaderboardEntry } from '../../../../domain/entities/gamification.entity.js';
-import { FREE_MAX_LEVEL, getTitleForLevel } from '../../../../domain/enums/gamification.enums';
+import { FREE_MAX_LEVEL, getTitleForLevel, LevelTitle } from '../../../../domain/enums/gamification.enums';
 
 @injectable()
 export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
@@ -19,6 +19,24 @@ export class GetLeaderboardUsecase implements IGetLeaderboardUsecase {
     isPremium?: boolean
   ): Promise<{ leaderboard: LeaderboardEntry[]; userRank: number; userEntry: LeaderboardEntry | null }> {
     
+    // Ensure user has a gamification record initialized
+    let gamificationDoc = await this.gamificationRepository.findByUserId(userId);
+    if (!gamificationDoc) {
+      await this.gamificationRepository.save({
+        userId,
+        totalXp: 0,
+        currentLevel: 0,
+        currentTitle: LevelTitle.EARLY_BIRD,
+        currentStreak: 0,
+        longestStreak: 0,
+        lastStreakDate: null,
+        dailyXpEarned: 0,
+        dailyChatMessageCount: 0,
+        todayPomodoroUsed: false,
+        lastDailyResetDate: null,
+      });
+    }
+
     // 1. Fetch Top N
     const leaderboard = await this.gamificationRepository.getLeaderboard(range, type, limit, userId);
     

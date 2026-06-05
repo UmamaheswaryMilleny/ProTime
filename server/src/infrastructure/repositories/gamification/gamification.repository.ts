@@ -188,7 +188,7 @@ export class MongoGamificationRepository implements IGamificationRepository {
         },
       },
       {
-        $sort: { [sortField]: -1, currentStreak: -1 },
+        $sort: { [sortField]: -1, currentStreak: -1, userId: 1 },
       },
       {
         $limit: limit,
@@ -244,7 +244,15 @@ export class MongoGamificationRepository implements IGamificationRepository {
     const matchConditions: any = {
       $or: [
         { [sortField]: { $gt: userValue } },
-        { [sortField]: userValue, currentStreak: { $gt: doc.currentStreak } },
+        { 
+          [sortField]: userValue, 
+          currentStreak: { $gt: doc.currentStreak } 
+        },
+        { 
+          [sortField]: userValue, 
+          currentStreak: doc.currentStreak, 
+          userId: { $lt: doc.userId } 
+        },
       ],
     };
 

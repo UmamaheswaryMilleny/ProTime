@@ -240,10 +240,14 @@ export class SubscriptionRepository
       match.status = status.toUpperCase();
     }
     if (search) {
-      match.$or = [
+      const orQueries: any[] = [
         { 'user.fullName': { $regex: search, $options: 'i' } },
         { 'user.email':    { $regex: search, $options: 'i' } },
       ];
+      if (mongoose.Types.ObjectId.isValid(search)) {
+        orQueries.push({ 'userId': new mongoose.Types.ObjectId(search) });
+      }
+      match.$or = orQueries;
     }
 
     if (Object.keys(match).length > 0) {
