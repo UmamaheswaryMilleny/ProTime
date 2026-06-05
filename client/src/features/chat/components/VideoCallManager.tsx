@@ -4,7 +4,7 @@ import type { RootState } from '../../../store/store';
 import { setIncomingCall, setActiveCall } from '../store/chatSlice';
 import { ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
-import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, PhoneOff, Loader } from 'lucide-react';
+import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, Loader, Plus } from 'lucide-react';
 import { ReportModal } from './ReportModal';
 import { ScheduleRecurringSessionModal } from './ScheduleRecurringSessionModal';
 import toast from 'react-hot-toast';
@@ -14,13 +14,15 @@ import { PomodoroMinimized } from '../../todo/components/PomodoroMinimized';
 import { PomodoroModal } from '../../todo/components/PomodoroModal';
 import { buddyService } from '../../buddy-match/services/buddy.service';
 import { RatingModal } from './RatingModal';
+import { AddTodoModal } from '../../todo/components/AddTodoModal';
+import type { CreateTodoDTO } from '../../todo/types/todo.types';
 
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
   const { incomingCall, activeCall, conversations } = useSelector((state: RootState) => state.chat);
   const currentUserFullName = useSelector((state: RootState) => state.auth.user?.fullName ?? 'Someone');
 
-  const { todos, isLoading: isTodosLoading } = useTodo();
+  const { todos, isLoading: isTodosLoading, addTodo } = useTodo();
   const {
     activeTask,
     timeRemainingFormatted,
@@ -99,10 +101,15 @@ export const VideoCallOverlay: React.FC = () => {
   // const [isNotepadOpen, setIsNotepadOpen] = useState(false);
   // const [notepadText, setNotepadText] = useState('');
   const [isTodoListOpen, setIsTodoListOpen] = useState(false);
+  const [isAddTodoModalOpen, setIsAddTodoModalOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
   const [isScheduleModalOpen, setIsScheduleModalOpen] = useState(false);
   const [ringTimeout, setRingTimeout] = useState(60);
+
+  const handleCreateTodo = async (dto: CreateTodoDTO) => {
+    return await addTodo(dto);
+  };
 
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [lastCallInfo, setLastCallInfo] = useState<{
@@ -505,17 +512,6 @@ export const VideoCallOverlay: React.FC = () => {
                   <button
                     onClick={() => {
                       setIsSettingsOpen(false);
-                      handleEndCall();
-                    }}
-                    className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
-                  >
-                    <PhoneOff className="w-4 h-4" />
-                    <span>End Call</span>
-                  </button>
-                  <div className="h-px bg-white/10 my-1" />
-                  <button
-                    onClick={() => {
-                      setIsSettingsOpen(false);
                       setIsReportModalOpen(true);
                     }}
                     className="w-full flex items-center px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors gap-3 font-medium"
@@ -616,7 +612,7 @@ export const VideoCallOverlay: React.FC = () => {
             ) : todos.length === 0 ? (
               <div className="text-center text-zinc-400 py-10">
                 <p>No tasks found.</p>
-                <p className="text-sm mt-2 opacity-70">Tasks created in your dashboard will appear here.</p>
+                <p className="text-sm mt-2 opacity-70">Create a task using the button below or in your dashboard.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -670,6 +666,16 @@ export const VideoCallOverlay: React.FC = () => {
                 })}
               </div>
             )}
+          </div>
+
+          {/* Footer */}
+          <div className="p-6 border-t border-white/10 bg-zinc-900/50 shrink-0">
+            <button
+              onClick={() => setIsAddTodoModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-zinc-800 hover:bg-zinc-700 text-white rounded-xl text-sm font-medium transition-colors border border-white/5"
+            >
+              <Plus size={18} /> Create New Task
+            </button>
           </div>
         </div>
       )}
@@ -759,6 +765,13 @@ export const VideoCallOverlay: React.FC = () => {
         onSkipBreak={skipBreak}
         isSmartBreaksEnabled={isSmartBreaksEnabled}
         totalPausedSeconds={totalPausedSeconds}
+      />
+
+      <AddTodoModal
+        isOpen={isAddTodoModalOpen}
+        onClose={() => setIsAddTodoModalOpen(false)}
+        onAdd={handleCreateTodo}
+        existingTitles={todos.filter(t => t.status !== 'EXPIRED').map(t => t.title)}
       />
     </div>
   );

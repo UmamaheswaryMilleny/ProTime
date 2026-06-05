@@ -477,7 +477,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                                         location.pathname.includes('find-buddy') ||
                                         location.pathname.includes('my-buddies') ||
                                         location.pathname.includes('buddy-requests');
-                navigate(isFindBuddyChat ? `${location.pathname}?tab=messages` : '/dashboard/chat');
+                navigate(isFindBuddyChat ? `${location.pathname}?tab=messages` : '/dashboard/chat', { state: location.state });
               }}
               className="md:hidden mr-3 p-2 text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Back to chat list"
@@ -577,18 +577,6 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                     <button
                       onClick={() => {
                         setIsActionsOpen(false);
-                        dispatch(setActiveCall({ conversationId, isCaller: true }));
-                      }}
-                      className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
-                    >
-                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                      </svg>
-                      <span>Video Call</span>
-                    </button>
-                    <button
-                      onClick={() => {
-                        setIsActionsOpen(false);
                         setIsAiMode(!isAiMode);
                       }}
                       className={`w-full flex items-center px-4 py-2.5 text-sm transition-colors gap-3 ${
@@ -601,12 +589,14 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                     <button
                       onClick={() => {
                         setIsActionsOpen(false);
-                        setIsScheduleModalOpen(true);
+                        dispatch(setActiveCall({ conversationId, isCaller: true }));
                       }}
                       className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
                     >
-                      <Calendar className="w-4 h-4 text-zinc-400" />
-                      <span>Schedule Session</span>
+                      <svg className="w-4 h-4 text-zinc-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span>Video Call</span>
                     </button>
                     <button
                       onClick={() => {

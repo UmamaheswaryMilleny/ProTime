@@ -315,10 +315,10 @@ export const FindBuddyPage: React.FC = () => {
       toast.dismiss(loadingId);
       const conv = result.data.find(c => c.buddyConnectionId === connectionId || c.otherUser.userId === buddyUserId);
       if (conv) {
-        navigate(`/dashboard/chat/${conv.id}`);
+        navigate(`/dashboard/find-buddy?tab=messages&convId=${conv.id}`, { state: { from: location.pathname + location.search } });
       } else {
         toast.error('Check your messages; chat could not be found right now.', { icon: '🥲' });
-        navigate('/dashboard/chat');
+        navigate(`/dashboard/find-buddy?tab=messages`, { state: { from: location.pathname + location.search } });
       }
     } catch (error) {
       toast.error('Failed to load chat');
@@ -335,8 +335,11 @@ export const FindBuddyPage: React.FC = () => {
             isMinimized={activeMinimized} 
             onToggle={() => setIsSidebarMinimized(!isSidebarMinimized)} 
             activeConversationId={selectedConvId}
-            onSelectConversation={(id) => navigate(`${location.pathname}?tab=messages&convId=${id}`)}
-            onBack={() => navigate(location.pathname)}
+            onSelectConversation={(id) => navigate(`${location.pathname}?tab=messages&convId=${id}`, { state: location.state })}
+            onBack={() => {
+              const fallbackPath = location.state?.from || ROUTES.DASHBOARD_FIND_BUDDY;
+              navigate(fallbackPath);
+            }}
           />
         </div>
 
@@ -377,7 +380,7 @@ export const FindBuddyPage: React.FC = () => {
                 if (tab === 'find') navigate(ROUTES.DASHBOARD_FIND_BUDDY);
                 else if (tab === 'requests') navigate(ROUTES.DASHBOARD_BUDDY_REQUESTS);
                 else if (tab === 'mybuddy') navigate(ROUTES.DASHBOARD_MY_BUDDIES);
-                else if (tab === 'messages') navigate(`${ROUTES.DASHBOARD_FIND_BUDDY}?tab=messages`);
+                else if (tab === 'messages') navigate(`${ROUTES.DASHBOARD_FIND_BUDDY}?tab=messages`, { state: { from: location.pathname + location.search } });
               }}
               requestCount={pendingRequests.length}
               unreadMessagesCount={unreadMessagesCount}

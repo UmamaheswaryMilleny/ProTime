@@ -1,3 +1,4 @@
+import { Types } from 'mongoose';
 import { injectable } from 'tsyringe';
 
 
@@ -31,7 +32,7 @@ export class MongoTodoRepository
     limit?: number
   ): Promise<TodoEntity[]> {
     const query: Record<string, unknown> = {
-      userId: userId,
+      userId: new Types.ObjectId(userId),
     };
     if (filter === 'expired') query.status = TodoStatus.EXPIRED;
     if (filter === 'pending')   query.status = TodoStatus.PENDING;
@@ -82,7 +83,7 @@ export class MongoTodoRepository
     priority: TodoPriority
   ): Promise<number> {
     return this.model.countDocuments({
-      userId: userId,
+      userId: new Types.ObjectId(userId),
       priority,
       status: TodoStatus.COMPLETED,
     });

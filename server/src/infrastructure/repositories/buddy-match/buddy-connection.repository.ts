@@ -132,7 +132,7 @@ export class BuddyConnectionRepository
           { userId: userObjectId, buddyId: buddyObjectId },
           { userId: buddyObjectId, buddyId: userObjectId },
         ],
-        status: BuddyConnectionStatus.CONNECTED,  // ← only update confirmed connections
+        status: { $in: [BuddyConnectionStatus.CONNECTED, BuddyConnectionStatus.BLOCKED] },  // ← only update confirmed or blocked connections
       },
       { $set: update },
       { new: true },

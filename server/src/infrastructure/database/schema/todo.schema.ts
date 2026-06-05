@@ -4,7 +4,7 @@ import { PomodoroStatus, TodoPriority, TodoStatus } from "../../../domain/enums/
 export const TodoSchema = new Schema(
   {
     userId: {
-      type: Types.ObjectId,
+      type: Schema.Types.ObjectId,
       ref: "User",
       required: true,
       index: true,
@@ -90,7 +90,7 @@ export const TodoSchema = new Schema(
       default: false,
     },
     sharedWith: {
-      type: [Types.ObjectId],
+      type: [Schema.Types.ObjectId],
       ref: "User",
       default: [],
     },

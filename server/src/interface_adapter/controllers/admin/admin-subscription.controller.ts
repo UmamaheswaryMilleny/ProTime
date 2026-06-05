@@ -4,6 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import type { IGetSubscriptionStatsUsecase } from '../../../application/usecase/interface/subscription/get-subscription-stats.usecase.interface';
 import type { IGetSubscriptionsAdminUsecase } from '../../../application/usecase/interface/subscription/get-subscriptions-admin.usecase.interface';
 import type { ISubscriptionRepository } from '../../../domain/repositories/subscription/subscription.repository.interface';
+import type { IUserRepository } from '../../../domain/repositories/user/user.repository.interface';
 import { ResponseHelper } from '../../helpers/response.helper';
 import { HTTP_STATUS } from '../../../shared/constants/constants';
 
@@ -18,6 +19,9 @@ export class AdminSubscriptionController {
 
     @inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
+
+    @inject('IUserRepository')
+    private readonly userRepository: IUserRepository,
   ) {}
 
   async getStats(req: Request, res: Response): Promise<void> {
@@ -92,6 +96,11 @@ export class AdminSubscriptionController {
 
     const updated = await this.subscriptionRepository.updateByUserId(userId, updateData);
 
+    if (updated) {
+      const isPremiumUser = updated.plan === 'PREMIUM' && (updated.status === 'ACTIVE' || updated.status === 'CANCELLED');
+      await this.userRepository.updateById(userId, { isPremium: isPremiumUser });
+    }
+
     ResponseHelper.success(
       res,
       HTTP_STATUS.OK,
@@ -138,6 +147,11 @@ export class AdminSubscriptionController {
       currentPeriodStart: periodStart,
       currentPeriodEnd:   periodEnd,
     });
+
+    if (subscription) {
+      const isPremiumUser = subscription.plan === 'PREMIUM' && (subscription.status === 'ACTIVE' || subscription.status === 'CANCELLED');
+      await this.userRepository.updateById(userId, { isPremium: isPremiumUser });
+    }
 
     ResponseHelper.success(
       res,
