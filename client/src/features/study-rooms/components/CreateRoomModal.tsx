@@ -103,12 +103,17 @@ export const CreateRoomModal: React.FC<CreateRoomModalProps> = ({ onClose, onSub
     } else {
       const startDateTime = new Date(`${startDate}T${startTime}:00`);
       const endDateTime = new Date(`${startDate}T${endTime}:00`);
-      
-      const diffMs = endDateTime.getTime() - startDateTime.getTime();
-      const diffMinutes = diffMs / (1000 * 60);
+      const nowMs = Date.now();
 
-      if (diffMinutes < 30) {
-        e.endTime = 'Study session must be at least 30 minutes long';
+      // End time must not already be in the past
+      if (endDateTime.getTime() <= nowMs) {
+        e.endTime = 'End time must be in the future';
+      } else {
+        const diffMs = endDateTime.getTime() - startDateTime.getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+        if (diffMinutes < 30) {
+          e.endTime = 'Study session must be at least 30 minutes long';
+        }
       }
     }
 

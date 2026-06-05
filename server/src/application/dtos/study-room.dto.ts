@@ -77,6 +77,7 @@ export interface StudyRoomResponseDTO {
   participants?: { id: string; name: string; avatar?: string }[];
   createdAt: string;
   updatedAt: string;
+  sessionStartedAt?: string;
 }
 
 export interface RoomJoinRequestResponseDTO {

@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 import { socketService } from '../../../shared/services/socketService';
 import { useAppDispatch } from '../../../store/hooks';
 import { addIncomingMessage, fetchRoomById, leaveRoom } from '../store/studyRoomSlice';
@@ -12,16 +12,16 @@ export const useStudyRoomSocket = (roomId: string | null) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const { user } = useAppSelector(s => s.auth);
-  const joinedRef = useRef(false);
 
   useEffect(() => {
     if (!roomId) return;
 
-    // Join the socket room
-    if (!joinedRef.current) {
+    const joinRoom = () => {
       socketService.emit('join:room', roomId);
-      joinedRef.current = true;
-    }
+    };
+
+    joinRoom();
+    socketService.on('connect', joinRoom);
 
     const handleNewMessage = (message: RoomMessageDTO) => {
       dispatch(addIncomingMessage(message));
@@ -52,12 +52,12 @@ export const useStudyRoomSocket = (roomId: string | null) => {
     socketService.on('room:started', handleRoomStarted);
 
     return () => {
+      socketService.off('connect', joinRoom);
       socketService.off('room:new-message', handleNewMessage);
       socketService.off('room:user-kicked', handleUserKicked);
       socketService.off('room:user-joined', handleUserJoined);
       socketService.off('room:started', handleRoomStarted);
       socketService.emit('leave:room', roomId);
-      joinedRef.current = false;
     };
-  }, [roomId, dispatch]);
+  }, [roomId, dispatch, user?.id]);
 };

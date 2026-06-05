@@ -186,6 +186,7 @@ export class App {
     }
 
     const roomPomodoros = new Map<string, RoomPomodoro>();
+    const activeVideoCalls = new Map<string, Set<string>>(); // roomId -> Set of userIds currently in the call
 
     function getRoomPomodoroTimeRemaining(pomo: RoomPomodoro): number {
       if (pomo.status === 'stopped') return 0;
@@ -433,6 +434,95 @@ export class App {
           );
         },
       );
+
+      socket.on('room:video:start', async (data: { roomId: string }) => {
+        activeVideoCalls.set(data.roomId, new Set([userId]));
+        socketService.emitToRoom(data.roomId, 'room:video:started', {
+          roomId: data.roomId,
+          hostId: userId,
+        });
+        logger.info(`[Socket] Video call started in room ${data.roomId} by host ${userId}`);
+
+        try {
+          const sendStudyRoomMessageUsecase = container.resolve<any>(
+            'ISendStudyRoomMessageUsecase',
+          );
+          await sendStudyRoomMessageUsecase.execute(userId, data.roomId, {
+            content: '📹 Started a video call',
+          });
+        } catch (err) {
+          logger.error('[Socket] Failed to save video started system message:', err);
+        }
+      });
+
+      socket.on('room:video:end', async (data: { roomId: string }) => {
+        activeVideoCalls.delete(data.roomId);
+        socketService.emitToRoom(data.roomId, 'room:video:ended', {
+          roomId: data.roomId,
+        });
+        logger.info(`[Socket] Video call ended in room ${data.roomId}`);
+
+        try {
+          const sendStudyRoomMessageUsecase = container.resolve<any>(
+            'ISendStudyRoomMessageUsecase',
+          );
+          await sendStudyRoomMessageUsecase.execute(userId, data.roomId, {
+            content: '📹 Ended the video call',
+          });
+        } catch (err) {
+          logger.error('[Socket] Failed to save video ended system message:', err);
+        }
+      });
+
+      socket.on('room:video:request-status', (data: { roomId: string }) => {
+        const participants = activeVideoCalls.get(data.roomId);
+        const isActive = !!participants && participants.size > 0;
+        socket.emit('room:video:status-response', {
+          roomId: data.roomId,
+          isActive,
+          participants: isActive ? Array.from(participants) : [],
+        });
+      });
+
+      socket.on('room:webrtc:join', (data: { roomId: string }) => {
+        let participants = activeVideoCalls.get(data.roomId);
+        if (!participants) {
+          participants = new Set();
+          activeVideoCalls.set(data.roomId, participants);
+        }
+
+        // Tell the joining user who is already in the call
+        const existingParticipants = Array.from(participants).filter(id => id !== userId);
+        socket.emit('room:webrtc:existing-participants', {
+          roomId: data.roomId,
+          participants: existingParticipants,
+        });
+
+        // Add the new user AFTER we've captured the existing list
+        participants.add(userId);
+
+        // Notify everyone else that a new user joined
+        socket.to(`room:${data.roomId}`).emit('room:webrtc:user-joined', {
+          roomId: data.roomId,
+          userId,
+        });
+        logger.info(`[Socket] User ${userId} joined WebRTC group call in room ${data.roomId}. Existing: ${existingParticipants}`);
+      });
+
+      socket.on('room:webrtc:leave', (data: { roomId: string }) => {
+        const participants = activeVideoCalls.get(data.roomId);
+        if (participants) {
+          participants.delete(userId);
+          if (participants.size === 0) {
+            activeVideoCalls.delete(data.roomId);
+          }
+        }
+        socket.to(`room:${data.roomId}`).emit('room:webrtc:user-left', {
+          roomId: data.roomId,
+          userId,
+        });
+        logger.info(`[Socket] User ${userId} left WebRTC group call in room ${data.roomId}`);
+      });
 
       socket.on(
         'room:webrtc:camera-toggle',

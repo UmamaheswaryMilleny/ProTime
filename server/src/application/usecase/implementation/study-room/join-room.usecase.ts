@@ -96,7 +96,8 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
         avatar: p.profileImage || undefined
       })),
       createdAt: updatedRoom.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: updatedRoom.updatedAt?.toISOString() || new Date().toISOString()
+      updatedAt: updatedRoom.updatedAt?.toISOString() || new Date().toISOString(),
+      sessionStartedAt: updatedRoom.sessionStartedAt?.toISOString() || undefined
     };
   }
 }

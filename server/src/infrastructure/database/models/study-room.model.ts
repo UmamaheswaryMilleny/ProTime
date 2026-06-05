@@ -14,6 +14,7 @@ export interface StudyRoomDocument extends Document {
   features: RoomFeature[];
   startTime: string;
   endTime?: string;
+  sessionStartedAt?: Date;
   participantIds: Types.ObjectId[];
   createdAt: Date;
   updatedAt: Date;

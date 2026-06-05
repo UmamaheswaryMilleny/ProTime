@@ -14,6 +14,7 @@ export interface StudyRoomEntity {
   features: RoomFeature[];
   startTime?: string;
   endTime?: string;
+  sessionStartedAt?: Date;
   participantIds: string[];
   createdAt?: Date;
   updatedAt?: Date;

@@ -51,7 +51,8 @@ export class GetRoomByIdUsecase implements IGetRoomByIdUsecase {
         avatar: p.profileImage || undefined
       })),
       createdAt: room.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: room.updatedAt?.toISOString() || new Date().toISOString()
+      updatedAt: room.updatedAt?.toISOString() || new Date().toISOString(),
+      sessionStartedAt: room.sessionStartedAt?.toISOString() || undefined
     };
   }
 }

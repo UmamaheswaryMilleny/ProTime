@@ -104,7 +104,8 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
       isLive: savedRoom.status === RoomStatus.LIVE,
       participantIds: savedRoom.participantIds,
       createdAt: savedRoom.createdAt?.toISOString() || new Date().toISOString(),
-      updatedAt: savedRoom.updatedAt?.toISOString() || new Date().toISOString()
+      updatedAt: savedRoom.updatedAt?.toISOString() || new Date().toISOString(),
+      sessionStartedAt: savedRoom.sessionStartedAt?.toISOString() || undefined
     };
   }
 }

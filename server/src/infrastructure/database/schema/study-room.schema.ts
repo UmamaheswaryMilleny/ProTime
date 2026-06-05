@@ -14,6 +14,7 @@ export const StudyRoomSchema = new Schema(
     features: { type: [String], enum: Object.values(RoomFeature), default: [] },
     startTime: { type: String, default: 'IMMEDIATE' },
     endTime: { type: String },
+    sessionStartedAt: { type: Date },
     participantIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
   },
   { timestamps: true }

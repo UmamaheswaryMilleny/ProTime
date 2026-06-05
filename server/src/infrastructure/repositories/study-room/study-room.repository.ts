@@ -88,7 +88,11 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
   }
 
   async updateStatus(roomId: string, status: RoomStatus): Promise<StudyRoomEntity | null> {
-    const doc = await this.model.findByIdAndUpdate(roomId, { status }, { new: true }).exec();
+    const update: any = { status };
+    if (status === RoomStatus.LIVE) {
+      update.sessionStartedAt = new Date();
+    }
+    const doc = await this.model.findByIdAndUpdate(roomId, update, { new: true }).exec();
     return doc ? StudyRoomMapper.toDomain(doc) : null;
   }
 
