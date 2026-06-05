@@ -86,30 +86,20 @@ export const ReportsPage: React.FC = () => {
     const { user }             = useAppSelector(state => state.auth);
     const [loading, setLoading]       = useState(true);
     const [exporting, setExporting]   = useState(false);
-    const [filterType, setFilterType] = useState<'overall' | 'month-range'>('overall');
+    const [filterType, setFilterType] = useState<'overall' | 'date-range'>('overall');
     const [reportData, setReportData] = useState<ProductivityReportData | null>(null);
     const [error, setError]           = useState<string | null>(null);
 
     const isPremium = user?.isPremium ?? false;
 
-    // ── Generate dynamic recent months ─────────────────────────────────────────
-    const getRecentMonths = useCallback(() => {
-        const months = [];
-        const now = new Date();
-        for (let i = 0; i < 12; i++) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-            const year = d.getFullYear();
-            const monthVal = String(d.getMonth() + 1).padStart(2, '0');
-            const value = `${year}-${monthVal}`;
-            const label = d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            months.push({ value, label: i === 0 ? `${label} (Current Month)` : label });
-        }
-        return months;
-    }, []);
-
-    const recentMonths = getRecentMonths();
-    const [startMonth, setStartMonth] = useState<string>(recentMonths[Math.min(3, recentMonths.length - 1)]?.value || '');
-    const [endMonth, setEndMonth] = useState<string>(recentMonths[0]?.value || '');
+    const [startDate, setStartDate] = useState<string>(() => {
+        const d = new Date();
+        d.setDate(d.getDate() - 30);
+        return d.toISOString().slice(0, 10);
+    });
+    const [endDate, setEndDate] = useState<string>(() => {
+        return new Date().toISOString().slice(0, 10);
+    });
 
     // ── Format period nicely for UI, CSV & PDF ────────────────────────────────
     const getDisplayPeriod = useCallback(() => {
@@ -117,15 +107,15 @@ export const ReportsPage: React.FC = () => {
             return 'Overall Progress';
         }
         
-        const formatMonthName = (mStr: string) => {
-            if (!mStr) return '';
-            const [year, m] = mStr.split('-').map(Number);
-            const d = new Date(Date.UTC(year, m - 1, 1));
-            return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric', timeZone: 'UTC' });
+        const formatDate = (dateStr: string) => {
+            if (!dateStr) return '';
+            const [year, month, day] = dateStr.split('-').map(Number);
+            const d = new Date(Date.UTC(year, month - 1, day));
+            return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
         };
         
-        return `${formatMonthName(startMonth)} to ${formatMonthName(endMonth)}`;
-    }, [filterType, startMonth, endMonth]);
+        return `${formatDate(startDate)} to ${formatDate(endDate)}`;
+    }, [filterType, startDate, endDate]);
 
     // ── Fetch real data ──────────────────────────────────────────────────────
     const fetchReport = useCallback(async (range: string, month?: string) => {
@@ -146,23 +136,23 @@ export const ReportsPage: React.FC = () => {
         if (filterType === 'overall') {
             fetchReport('all');
         } else {
-            fetchReport('custom', `${startMonth}_${endMonth}`);
+            fetchReport('custom', `${startDate}_${endDate}`);
         }
-    }, [filterType, startMonth, endMonth, fetchReport]);
+    }, [filterType, startDate, endDate, fetchReport]);
 
-    const handleStartMonthChange = (val: string) => {
+    const handleStartDateChange = (val: string) => {
         setLoading(true);
-        setStartMonth(val);
-        if (val > endMonth) {
-            setEndMonth(val);
+        setStartDate(val);
+        if (endDate && val > endDate) {
+            setEndDate(val);
         }
     };
 
-    const handleEndMonthChange = (val: string) => {
+    const handleEndDateChange = (val: string) => {
         setLoading(true);
-        setEndMonth(val);
-        if (val < startMonth) {
-            setStartMonth(val);
+        setEndDate(val);
+        if (startDate && val < startDate) {
+            setStartDate(val);
         }
     };
 
@@ -175,7 +165,7 @@ export const ReportsPage: React.FC = () => {
         setExporting(true);
         try {
             const r = filterType === 'overall' ? 'all' : 'custom';
-            const m = filterType === 'month-range' ? `${startMonth}_${endMonth}` : undefined;
+            const m = filterType === 'date-range' ? `${startDate}_${endDate}` : undefined;
             const blob     = await reportsService.exportReportCsv(r, m);
             const url      = URL.createObjectURL(blob);
             const link     = document.createElement('a');
@@ -256,7 +246,7 @@ export const ReportsPage: React.FC = () => {
                 headStyles: { fillColor: [40, 40, 40] }
             });
 
-            const filenameRange = filterType === 'month-range' ? `${startMonth}_${endMonth}` : 'overall';
+            const filenameRange = filterType === 'date-range' ? `${startDate}_${endDate}` : 'overall';
             doc.save(`protime-report-${filenameRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
             toast.success('PDF downloaded successfully! 🎉', { id: toastId });
         } catch (err) {
@@ -313,49 +303,37 @@ export const ReportsPage: React.FC = () => {
                                 value={filterType}
                                 onChange={(e) => {
                                     setLoading(true);
-                                    setFilterType(e.target.value as 'overall' | 'month-range');
+                                    setFilterType(e.target.value as 'overall' | 'date-range');
                                 }}
                                 className="bg-transparent text-white text-sm outline-none pl-9 pr-8 py-2 appearance-none cursor-pointer"
                             >
                                 <option value="overall" className="bg-zinc-900 text-white">Overall Progress</option>
-                                <option value="month-range" className="bg-zinc-900 text-white">Month to Month</option>
+                                <option value="date-range" className="bg-zinc-900 text-white">Date Range</option>
                             </select>
                             <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
                         </div>
 
-                        {/* Dropdowns for Month Range */}
-                        {filterType === 'month-range' && (
+                        {/* Inputs for Date Range */}
+                        {filterType === 'date-range' && (
                             <div className="flex flex-wrap items-center gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                                 <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
                                     <span className="text-xs text-zinc-500 absolute left-3">From:</span>
-                                    <select
-                                        value={startMonth}
-                                        onChange={(e) => handleStartMonthChange(e.target.value)}
-                                        className="bg-transparent text-white text-sm outline-none pl-14 pr-8 py-2 appearance-none cursor-pointer"
-                                    >
-                                        {recentMonths.map(m => (
-                                            <option key={m.value} value={m.value} className="bg-zinc-900 text-white">
-                                                {m.label.replace(' (Current Month)', '')}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
+                                    <input
+                                        type="date"
+                                        value={startDate}
+                                        onChange={(e) => handleStartDateChange(e.target.value)}
+                                        className="bg-transparent text-white text-sm outline-none pl-14 pr-3 py-2 cursor-pointer [color-scheme:dark]"
+                                    />
                                 </div>
 
                                 <div className="flex items-center bg-zinc-900 border border-white/10 rounded-xl p-1 relative">
                                     <span className="text-xs text-zinc-500 absolute left-3">To:</span>
-                                    <select
-                                        value={endMonth}
-                                        onChange={(e) => handleEndMonthChange(e.target.value)}
-                                        className="bg-transparent text-white text-sm outline-none pl-10 pr-8 py-2 appearance-none cursor-pointer"
-                                    >
-                                        {recentMonths.map(m => (
-                                            <option key={m.value} value={m.value} className="bg-zinc-900 text-white">
-                                                {m.label.replace(' (Current Month)', '')}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <ChevronDown size={14} className="text-zinc-500 absolute right-3 pointer-events-none" />
+                                    <input
+                                        type="date"
+                                        value={endDate}
+                                        onChange={(e) => handleEndDateChange(e.target.value)}
+                                        className="bg-transparent text-white text-sm outline-none pl-10 pr-3 py-2 cursor-pointer [color-scheme:dark]"
+                                    />
                                 </div>
                             </div>
                         )}
@@ -422,7 +400,7 @@ export const ReportsPage: React.FC = () => {
                     <p className="text-red-400 font-semibold text-lg mb-2">Failed to Load Report</p>
                     <p className="text-zinc-400 text-sm mb-4">{error}</p>
                     <button
-                        onClick={() => fetchReport(filterType === 'overall' ? 'all' : 'custom', filterType === 'month-range' ? `${startMonth}_${endMonth}` : undefined)}
+                        onClick={() => fetchReport(filterType === 'overall' ? 'all' : 'custom', filterType === 'date-range' ? `${startDate}_${endDate}` : undefined)}
                         className="px-4 py-2 bg-[blueviolet] text-white rounded-xl text-sm font-medium hover:bg-purple-700 transition-colors"
                     >
                         Retry

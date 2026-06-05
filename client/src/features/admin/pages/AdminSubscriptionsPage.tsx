@@ -343,9 +343,13 @@ const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
       const res = await ProTimeBackend.get(`${API_ROUTES.ADMIN_SUBSCRIPTIONS}?search=${uid}&limit=1`);
       const subs: AdminSubscription[] = res.data?.data?.subscriptions ?? [];
       const match = subs.find(s => s.userId === uid || s.user?.id === uid);
-      if (match) setCurrentSub({ plan: match.plan, status: match.status });
+      if (match) {
+        setCurrentSub({ plan: match.plan, status: match.status });
+      } else {
+        setCurrentSub({ plan: 'FREE', status: 'ACTIVE' });
+      }
     } catch {
-      // not found — that's fine
+      setCurrentSub({ plan: 'FREE', status: 'ACTIVE' });
     } finally {
       setSubLoading(false);
     }

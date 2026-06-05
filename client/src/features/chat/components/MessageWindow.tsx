@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import type { RootState } from '../../../store/store';
 import { chatApi, type DirectMessageResponseDTO, ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
@@ -32,6 +32,7 @@ interface MessageWindowProps {
 export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { conversations, onlineUsers, isAILoading } = useSelector((state: RootState) => state.chat);
 
   // ─── Fix 1: simple selector — no JWT decoding, always reliable ───────────
@@ -472,8 +473,11 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
             {/* Mobile Back Button */}
             <button
               onClick={() => {
-                const isFindBuddyChat = window.location.search.includes('tab=messages') || window.location.pathname.includes('find-buddy');
-                navigate(isFindBuddyChat ? '/dashboard/find-buddy?tab=messages' : '/dashboard/chat');
+                const isFindBuddyChat = location.search.includes('tab=messages') || 
+                                        location.pathname.includes('find-buddy') ||
+                                        location.pathname.includes('my-buddies') ||
+                                        location.pathname.includes('buddy-requests');
+                navigate(isFindBuddyChat ? `${location.pathname}?tab=messages` : '/dashboard/chat');
               }}
               className="md:hidden mr-3 p-2 text-zinc-400 hover:text-zinc-100 hover:bg-white/5 rounded-lg transition-colors flex items-center justify-center"
               aria-label="Back to chat list"

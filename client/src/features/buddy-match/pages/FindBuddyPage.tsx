@@ -335,8 +335,8 @@ export const FindBuddyPage: React.FC = () => {
             isMinimized={activeMinimized} 
             onToggle={() => setIsSidebarMinimized(!isSidebarMinimized)} 
             activeConversationId={selectedConvId}
-            onSelectConversation={(id) => navigate(`/dashboard/find-buddy?tab=messages&convId=${id}`)}
-            onBack={() => navigate('/dashboard/find-buddy')}
+            onSelectConversation={(id) => navigate(`${location.pathname}?tab=messages&convId=${id}`)}
+            onBack={() => navigate(location.pathname)}
           />
         </div>
 
