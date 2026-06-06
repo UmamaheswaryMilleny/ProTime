@@ -26,10 +26,10 @@ export class CheckCreationLimitUsecase implements ICheckCreationLimitUsecase {
     }
 
     // Free users: limit is 5 rooms per calendar month
-    const limit = 5;
+    const limit = 1;
     const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const startOfMonth = new Date(now.getDay());
+    const endOfMonth = new Date(now.getDay());
 
     const count = await this.studyRoomRepo.countCreatedByHostInMonth(userId, startOfMonth, endOfMonth);
 

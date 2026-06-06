@@ -14,7 +14,7 @@ export class FindBuddyMatchesRequestDTO {
   @IsInt()
   @Min(1)
   @Max(20)
-  limit: number = 10;
+  limit: number = 1;
 
   @IsOptional()
   @IsString()
