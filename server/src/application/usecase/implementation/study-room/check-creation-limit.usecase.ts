@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { ICheckCreationLimitUsecase } from "../../interface/study-room/check-creation-limit.usecase.interface";
-import { StudyRoomLimitResponseDTO } from "../../../dtos/study-room.dto";
+import { StudyRoomLimitResponseDTO } from "../../../dto/study-room/request/study-room.dto";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
 
@@ -26,10 +26,10 @@ export class CheckCreationLimitUsecase implements ICheckCreationLimitUsecase {
     }
 
     // Free users: limit is 5 rooms per calendar month
-    const limit = 1;
+    const limit = 5;
     const now = new Date();
-    const startOfMonth = new Date(now.getDay());
-    const endOfMonth = new Date(now.getDay());
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
 
     const count = await this.studyRoomRepo.countCreatedByHostInMonth(userId, startOfMonth, endOfMonth);
 

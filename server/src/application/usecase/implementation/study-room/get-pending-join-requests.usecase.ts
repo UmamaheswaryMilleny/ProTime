@@ -1,6 +1,6 @@
 import { inject, injectable } from "tsyringe";
 import type { IGetPendingJoinRequestsUsecase } from "../../interface/study-room/get-pending-join-requests.usecase.interface";
-import { RoomJoinRequestResponseDTO } from "../../../dtos/study-room.dto";
+import { RoomJoinRequestResponseDTO } from "../../../dto/study-room/request/study-room.dto";
 import type { IRoomJoinRequestRepository } from "../../../../domain/repositories/study-room/room-join-request.repository.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
 import type { IStudyRoomRepository } from "../../../../domain/repositories/study-room/study-room.repository.interface";
