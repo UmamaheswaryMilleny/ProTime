@@ -19,8 +19,6 @@ import {
   UserCircle,
   Mail,
   Shield,
-  Edit2,
-  Save,
 } from 'lucide-react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { ProTimeBackend } from '../../../api/instance';
@@ -111,189 +109,7 @@ const SummaryCard = ({ title, value, detail, icon, loading, color }: { title: st
   );
 };
 
-// ── Edit Subscription Modal ───────────────────────────────────────────────────
-interface EditModalProps {
-  sub: AdminSubscription;
-  onClose: () => void;
-  onSaved: () => void;
-}
-const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
-  const [plan,   setPlan]   = useState<'FREE' | 'PREMIUM'>(sub.plan);
-  const [status, setStatus] = useState<'ACTIVE' | 'CANCELLED' | 'EXPIRED'>(sub.status);
-  const [periodEnd, setPeriodEnd] = useState(
-    sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString().slice(0, 10) : ''
-  );
-  const [saving, setSaving] = useState(false);
 
-  const isAlreadyEnded = sub.status === 'CANCELLED' || sub.status === 'EXPIRED';
-
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const originalPeriodEnd = sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString().slice(0, 10) : '';
-    const hasDateChanged = plan === 'PREMIUM' && periodEnd !== originalPeriodEnd;
-
-    // Guard: already on the Free plan
-    if (sub.plan === 'FREE' && plan === 'FREE') {
-      toast.error('User is already on the Free plan');
-      return;
-    }
-
-    // Guard: already has the same Premium status and date has not changed
-    if (sub.plan === 'PREMIUM' && plan === 'PREMIUM' && sub.status === status && !hasDateChanged) {
-      toast.error(`User is already on the Premium plan with ${status.toLowerCase()} status`);
-      return;
-    }
-
-    // Guard: trying to cancel/expire something already ended
-    if (isAlreadyEnded && (status === 'CANCELLED' || status === 'EXPIRED')) {
-      toast(
-        `This subscription is already ${sub.status.toLowerCase()}. No changes were made.`,
-        {
-          icon: '⚠️',
-          style: { background: '#18181B', border: '1px solid #3F3F46', color: '#FCD34D', borderRadius: '12px' },
-        }
-      );
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const userId = sub.user.id;
-      await ProTimeBackend.patch(API_ROUTES.ADMIN_UPDATE_SUBSCRIPTION(userId), {
-        plan,
-        status,
-        currentPeriodEnd: periodEnd || undefined,
-      });
-      toast.success('Subscription updated successfully');
-      onSaved();
-      onClose();
-    } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to update subscription');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-[#2563EB]/10">
-              <Edit2 size={18} className="text-[#2563EB]" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Edit Subscription</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">{sub.user.fullName}</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Already-ended warning banner */}
-        {isAlreadyEnded && (
-          <div className="mb-4 flex items-start gap-3 p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-            <span className="text-amber-400 text-base mt-0.5">⚠️</span>
-            <div>
-              <p className="text-xs font-bold text-amber-400">Subscription Already {sub.status === 'CANCELLED' ? 'Cancelled' : 'Expired'}</p>
-              <p className="text-[11px] text-amber-300/70 mt-0.5">
-                This subscription was already {sub.status.toLowerCase()}. You can reactivate it by switching the status to <span className="font-semibold">ACTIVE</span>.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <form onSubmit={handleSave} className="space-y-4">
-          {/* Plan */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Plan</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['FREE', 'PREMIUM'] as const).map(p => (
-                <button
-                  key={p} type="button"
-                  onClick={() => setPlan(p)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${plan === p
-                    ? p === 'PREMIUM'
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'bg-zinc-700 border-zinc-600 text-white'
-                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
-                  }`}
-                >
-                  {p === 'PREMIUM' ? '⚡ PREMIUM' : 'FREE'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['ACTIVE', 'CANCELLED', 'EXPIRED'] as const).map(s => (
-                <button
-                  key={s} type="button"
-                  onClick={() => setStatus(s)}
-                  className={`py-2 rounded-xl text-xs font-semibold border transition-all ${status === s
-                    ? s === 'ACTIVE'
-                      ? 'bg-green-500/20 border-green-500/40 text-green-300'
-                      : s === 'CANCELLED'
-                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                        : 'bg-red-500/20 border-red-500/40 text-red-300'
-                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Period End — only relevant for PREMIUM */}
-          {plan === 'PREMIUM' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Period End Date</label>
-              <input
-                type="date"
-                value={periodEnd}
-                onChange={e => setPeriodEnd(e.target.value)}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#2563EB] transition-colors [color-scheme:dark]"
-              />
-              <p className="text-[10px] text-zinc-500">Leave blank to keep the existing period end date unchanged.</p>
-            </div>
-          )}
-
-          {/* Info row */}
-          <div className="p-3 rounded-xl bg-[#1F1F23] flex items-start gap-2.5">
-            <Mail size={14} className="text-zinc-500 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-0.5">User</p>
-              <p className="text-xs text-zinc-300">{sub.user.email}</p>
-            </div>
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all">
-              Cancel
-            </button>
-            <button
-              type="submit" disabled={saving}
-              className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-            >
-              {saving ? <Loader size={14} className="animate-spin" /> : <Save size={14} />}
-              {saving ? 'Saving…' : 'Save Changes'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const AdminSubscriptionsPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
@@ -312,7 +128,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<AdminSubscription | null>(null);
-  const [editSub, setEditSub] = useState<AdminSubscription | null>(null);
 
   const fetchStats = async () => {
     setIsStatsLoading(true);
@@ -377,7 +192,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
     return pages;
   };
 
-  const onSaved = () => { fetchSubscriptions(); fetchStats(); };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-10">
@@ -547,15 +361,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        {/* Edit button */}
-                        <button
-                          onClick={() => setEditSub(sub)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-[#2563EB]/10 text-[#2563EB] hover:bg-[#2563EB]/20 border border-[#2563EB]/20 transition-all"
-                          title="Edit subscription"
-                        >
-                          <Edit2 size={12} />
-                          Edit
-                        </button>
                         {/* View detail button */}
                         <button
                           onClick={() => setSelectedSub(sub)}
@@ -758,26 +563,11 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 );
               })()}
 
-              {/* Quick Edit button from view modal */}
-              <button
-                onClick={() => { setEditSub(selectedSub); setSelectedSub(null); }}
-                className="w-full py-2.5 rounded-xl bg-[#2563EB]/10 border border-[#2563EB]/20 text-[#2563EB] text-sm font-semibold hover:bg-[#2563EB]/20 transition-all flex items-center justify-center gap-2"
-              >
-                <Edit2 size={14} /> Edit This Subscription
-              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Edit Modal ───────────────────────────────────────────────── */}
-      {editSub && (
-        <EditModal
-          sub={editSub}
-          onClose={() => setEditSub(null)}
-          onSaved={onSaved}
-        />
-      )}
     </div>
   );
 };
