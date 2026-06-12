@@ -12,6 +12,7 @@ export enum TodoStatus{
 }
 
 export const ESTIMATED_TIME_OPTIONS: Record<TodoPriority, number[]> = {
+  //The [] here are object property brackets, not array brackets.
   [TodoPriority.LOW]: [10, 15, 20],
   [TodoPriority.MEDIUM]: [25, 30, 35, 40, 45],
   [TodoPriority.HIGH]: [60, 90, 120, 180],

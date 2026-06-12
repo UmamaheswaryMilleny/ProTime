@@ -61,14 +61,3 @@ export class PomodoroNotPausedError extends DomainError {
     super('Pomodoro is not currently paused');
   }
 }
-// export class LowPriorityBreakTimeError extends DomainError {
-//   constructor() {
-//     super(`Break time is not available for LOW priority tasks`);
-//   }
-// }
-
-// export class BreakTimeRequiredError extends DomainError {
-//   constructor() {
-//     super('Break time is required when Pomodoro is enabled for MEDIUM or HIGH priority tasks');
-//   }
-// }

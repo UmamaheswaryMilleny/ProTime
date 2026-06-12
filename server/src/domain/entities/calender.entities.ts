@@ -2,7 +2,6 @@ import type { SessionStatus, CalendarEventType, ScheduleConfirmStatus } from '..
 
 
 // ─── BuddySessionEntity ───────────────────────────────────────────────────────
-// notes removed — notes are private per user, stored in SessionNoteEntity
 export interface BuddySessionEntity {
   id:                string;
   conversationId:    string;

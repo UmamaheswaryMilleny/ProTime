@@ -30,7 +30,7 @@ export interface IBuddyPreferenceRepository
     >>,
   ): Promise<{ profiles: BuddyPreferenceEntity[]; total: number }>;
 
-  // Create if not exists, update if exists
+  // Create buddy pref if not exists, update if exists
   upsertByUserId(
     userId: string,
     data: Partial<Omit<BuddyPreferenceEntity, 'id' | 'userId' | 'createdAt' | 'updatedAt'>>,

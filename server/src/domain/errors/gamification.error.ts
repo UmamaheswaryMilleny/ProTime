@@ -33,8 +33,3 @@ export class PremiumBadgeRequiredError extends DomainError {
 
 
 
-// export class DailyXpCapReachedError extends DomainError {
-//   constructor() {
-//     super('Daily XP cap reached. Tasks still count but no XP until tomorrow.');
-//   }
-// }

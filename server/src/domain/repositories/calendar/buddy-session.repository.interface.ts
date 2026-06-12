@@ -30,5 +30,5 @@ export interface IBuddySessionRepository
     data?:  Partial<Pick<BuddySessionEntity, 'startedAt' | 'endedAt'>>,
   ): Promise<BuddySessionEntity | null>;
 
-  // updateNotes removed — notes moved to SessionNoteEntity (private per user)
+ 
 }

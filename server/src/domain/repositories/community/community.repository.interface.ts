@@ -4,7 +4,7 @@ import type { CommunityChatEntity } from '../../entities/community.entity';
 export interface ICommunityMessageRepository
   extends IBaseRepository<CommunityChatEntity> {
 
-  //So before is just telling the database:"give me messages older than THIS timestamp"
+ 
   findMessages(params: {
     limit: number;
     before?: Date;
