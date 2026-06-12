@@ -18,7 +18,7 @@ import type { IKickUserUsecase } from "../../../application/usecase/interface/st
 import type { IInviteToRoomUsecase } from "../../../application/usecase/interface/study-room/invite-to-room.usecase.interface";
 import type { ICheckCreationLimitUsecase } from "../../../application/usecase/interface/study-room/check-creation-limit.usecase.interface";
 import type { ICloudinaryService } from "../../../application/service_interface/cloudinary.service.interface";
-import { CreateRoomRequestDTO, GetRoomsRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from "../../../application/dtos/study-room.dto";
+import { CreateRoomRequestDTO, GetRoomsRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from "../../../application/dto/study-room/request/study-room.dto";
 import { HTTP_STATUS } from "../../../shared/constants/constants";
 
 @injectable()

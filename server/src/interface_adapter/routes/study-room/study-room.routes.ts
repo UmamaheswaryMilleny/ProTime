@@ -9,7 +9,7 @@ import { BlockedUserMiddleware } from '../../middlewares/blocked-user.middleware
 import { StudyRoomController } from '../../controllers/study-room/study-room.controller';
 import { UserRole } from '../../../domain/enums/user.enums';
 import { ROUTES } from '../../../shared/constants/constants.routes';
-import { CreateRoomRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from '../../../application/dtos/study-room.dto';
+import { CreateRoomRequestDTO, RespondToJoinRequestDTO, SendStudyRoomMessageDTO } from "../../../application/dto/study-room/request/study-room.dto";
 import { chatUploadMiddleware } from '../../middlewares/upload.middleware';
 
 @injectable()

@@ -20,7 +20,6 @@ import {
   Mail,
   Shield,
   Edit2,
-  Plus,
   Save,
 } from 'lucide-react';
 import { useDebounce } from '../../../hooks/useDebounce';
@@ -295,283 +294,6 @@ const EditModal: React.FC<EditModalProps> = ({ sub, onClose, onSaved }) => {
     </div>
   );
 };
-// ── Add Subscription Modal ────────────────────────────────────────────────────
-interface AddModalProps {
-  onClose: () => void;
-  onSaved: () => void;
-}
-const AddModal: React.FC<AddModalProps> = ({ onClose, onSaved }) => {
-  const [userId,    setUserId]    = useState('');
-  const [plan,      setPlan]      = useState<'FREE' | 'PREMIUM'>('PREMIUM');
-  const [status,    setStatus]    = useState<'ACTIVE' | 'CANCELLED' | 'EXPIRED'>('ACTIVE');
-  const [periodEnd, setPeriodEnd] = useState(() => {
-    const d = new Date();
-    d.setMonth(d.getMonth() + 1);
-    return d.toISOString().slice(0, 10);
-  });
-  const [saving, setSaving] = useState(false);
-
-  // Selected user's current subscription info
-  const [currentSub, setCurrentSub] = useState<{ plan: string; status: string } | null>(null);
-  const [subLoading, setSubLoading] = useState(false);
-
-  // User search
-  const [userSearch, setUserSearch] = useState('');
-  const [selectedUserName, setSelectedUserName] = useState('');
-  const [userResults, setUserResults] = useState<{ id: string; fullName: string; email: string }[]>([]);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const debouncedSearch = useDebounce(userSearch, 400);
-
-  useEffect(() => {
-    if (!debouncedSearch.trim()) { setUserResults([]); return; }
-    setSearchLoading(true);
-    ProTimeBackend.get(`${API_ROUTES.ADMIN_USERS}?search=${encodeURIComponent(debouncedSearch)}&limit=8`)
-      .then(res => {
-        setUserResults(res.data?.data?.users ?? []);
-        setShowDropdown(true);
-      })
-      .catch(() => setUserResults([]))
-      .finally(() => setSearchLoading(false));
-  }, [debouncedSearch]);
-
-  // Fetch the selected user's current subscription
-  const fetchUserSub = async (uid: string) => {
-    setSubLoading(true);
-    setCurrentSub(null);
-    try {
-      const res = await ProTimeBackend.get(`${API_ROUTES.ADMIN_SUBSCRIPTIONS}?search=${uid}&limit=1`);
-      const subs: AdminSubscription[] = res.data?.data?.subscriptions ?? [];
-      const match = subs.find(s => s.userId === uid || s.user?.id === uid);
-      if (match) {
-        setCurrentSub({ plan: match.plan, status: match.status });
-      } else {
-        setCurrentSub({ plan: 'FREE', status: 'ACTIVE' });
-      }
-    } catch {
-      setCurrentSub({ plan: 'FREE', status: 'ACTIVE' });
-    } finally {
-      setSubLoading(false);
-    }
-  };
-
-  const selectUser = (u: { id: string; fullName: string; email: string }) => {
-    setUserId(u.id);
-    setSelectedUserName(`${u.fullName} (${u.email})`);
-    setUserSearch(`${u.fullName} (${u.email})`);
-    setUserResults([]);
-    setShowDropdown(false);
-    fetchUserSub(u.id);
-  };
-
-  const isAlreadyPremium = currentSub?.plan === 'PREMIUM' && currentSub?.status === 'ACTIVE';
-
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!userId) { toast.error('Please select a user first'); return; }
-
-    const userName = selectedUserName.split(' (')[0] || 'User';
-
-    // Guard: already on the Free plan
-    if (currentSub?.plan === 'FREE' && plan === 'FREE') {
-      toast.error(`${userName} is already on the Free plan`);
-      return;
-    }
-
-    // Guard: already has the same Premium status
-    if (currentSub?.plan === 'PREMIUM' && plan === 'PREMIUM' && currentSub?.status === status) {
-      toast.error(`${userName} is already on the Premium plan with ${status.toLowerCase()} status`);
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await ProTimeBackend.post(API_ROUTES.ADMIN_SUBSCRIPTION_ADD, {
-        userId,
-        plan,
-        status,
-        currentPeriodEnd: plan === 'PREMIUM' ? periodEnd : undefined,
-      });
-      toast.success('Subscription assigned successfully');
-      onSaved();
-      onClose();
-    } catch (err) {
-      const error = err as { response?: { data?: { message?: string } } };
-      toast.error(error?.response?.data?.message || 'Failed to assign subscription');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl animate-in fade-in zoom-in-95 duration-200" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-purple-500/10">
-              <Plus size={18} className="text-purple-400" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-white">Add / Assign Subscription</h3>
-              <p className="text-xs text-zinc-500 mt-0.5">Manually grant a plan to any user</p>
-            </div>
-          </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all">
-            <X size={18} />
-          </button>
-        </div>
-
-        <form onSubmit={handleAdd} className="space-y-4">
-          {/* User Search */}
-          <div className="space-y-1.5 relative">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Search User</label>
-            <div className="relative">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-              <input
-                type="text"
-                value={userSearch}
-                onChange={e => { setUserSearch(e.target.value); setUserId(''); setCurrentSub(null); }}
-                placeholder="Type user name or email…"
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl pl-8 pr-3 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
-              />
-              {(searchLoading || subLoading) && <Loader size={13} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 animate-spin" />}
-            </div>
-
-            {/* Dropdown */}
-            {showDropdown && userResults.length > 0 && (
-              <div className="absolute z-20 w-full bg-[#1F1F23] border border-[#27272A] rounded-xl shadow-2xl overflow-hidden">
-                {userResults.map(u => (
-                  <button
-                    key={u.id} type="button"
-                    onClick={() => selectUser(u)}
-                    className="w-full px-4 py-2.5 text-left hover:bg-zinc-700/50 transition-colors border-b border-[#27272A] last:border-b-0"
-                  >
-                    <p className="text-sm font-medium text-white">{u.fullName}</p>
-                    <p className="text-xs text-zinc-500">{u.email}</p>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* ── Current subscription status banner ── */}
-          {userId && !subLoading && currentSub && (
-            <div className={`flex items-start gap-3 p-3.5 rounded-xl border text-xs ${
-              isAlreadyPremium
-                ? 'bg-purple-500/10 border-purple-500/25 text-purple-300'
-                : currentSub.status === 'CANCELLED' || currentSub.status === 'EXPIRED'
-                ? 'bg-amber-500/10 border-amber-500/20 text-amber-300'
-                : 'bg-zinc-800/50 border-zinc-700 text-zinc-400'
-            }`}>
-              <span className="text-base mt-0.5 shrink-0">
-                {isAlreadyPremium ? '⚡' : currentSub.status === 'ACTIVE' ? '✅' : '⚠️'}
-              </span>
-              <div>
-                {isAlreadyPremium ? (
-                  <>
-                    <p className="font-bold text-purple-300">Already on Active Premium</p>
-                    <p className="text-purple-300/70 mt-0.5">This user already has an active Premium subscription. Reassigning will overwrite it.</p>
-                  </>
-                ) : currentSub.status === 'CANCELLED' ? (
-                  <>
-                    <p className="font-bold">Subscription Cancelled</p>
-                    <p className="text-amber-300/70 mt-0.5">This user's {currentSub.plan} plan was cancelled. Assigning a new plan will overwrite it.</p>
-                  </>
-                ) : currentSub.status === 'EXPIRED' ? (
-                  <>
-                    <p className="font-bold">Subscription Expired</p>
-                    <p className="text-amber-300/70 mt-0.5">This user's {currentSub.plan} plan has expired. You can reassign a new one.</p>
-                  </>
-                ) : (
-                  <>
-                    <p className="font-bold text-zinc-300">Current: {currentSub.plan} ({currentSub.status})</p>
-                    <p className="text-zinc-500 mt-0.5">Assigning a new plan will overwrite the existing one.</p>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Plan */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Plan</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(['FREE', 'PREMIUM'] as const).map(p => (
-                <button
-                  key={p} type="button"
-                  onClick={() => setPlan(p)}
-                  className={`py-2.5 rounded-xl text-sm font-semibold border transition-all ${plan === p
-                    ? p === 'PREMIUM'
-                      ? 'bg-purple-500/20 border-purple-500/40 text-purple-300'
-                      : 'bg-zinc-700 border-zinc-600 text-white'
-                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
-                  }`}
-                >
-                  {p === 'PREMIUM' ? '⚡ PREMIUM' : 'FREE'}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Status */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Status</label>
-            <div className="grid grid-cols-3 gap-2">
-              {(['ACTIVE', 'CANCELLED', 'EXPIRED'] as const).map(s => (
-                <button
-                  key={s} type="button"
-                  onClick={() => setStatus(s)}
-                  className={`py-2 rounded-xl text-xs font-semibold border transition-all ${status === s
-                    ? s === 'ACTIVE'
-                      ? 'bg-green-500/20 border-green-500/40 text-green-300'
-                      : s === 'CANCELLED'
-                        ? 'bg-orange-500/20 border-orange-500/40 text-orange-300'
-                        : 'bg-red-500/20 border-red-500/40 text-red-300'
-                    : 'bg-[#1F1F23] border-[#27272A] text-zinc-500 hover:border-zinc-600'
-                  }`}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Period End */}
-          {plan === 'PREMIUM' && (
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Period End Date</label>
-              <input
-                type="date"
-                value={periodEnd}
-                onChange={e => setPeriodEnd(e.target.value)}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3 py-2.5 text-sm text-white outline-none focus:border-[#2563EB] transition-colors [color-scheme:dark]"
-              />
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all">
-              Cancel
-            </button>
-            <button
-              type="submit" disabled={saving || !userId}
-              className={`flex-1 py-2.5 rounded-xl disabled:opacity-50 text-white text-sm font-semibold transition-all flex items-center justify-center gap-2 shadow-lg ${
-                isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE'
-                  ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20'
-                  : 'bg-purple-600 hover:bg-purple-500 shadow-purple-500/20'
-              }`}
-            >
-              {saving ? <Loader size={14} className="animate-spin" /> : <Plus size={14} />}
-              {saving ? 'Assigning…' : isAlreadyPremium && plan === 'PREMIUM' && status === 'ACTIVE' ? 'Overwrite Plan' : 'Assign Plan'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-};
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const AdminSubscriptionsPage: React.FC = () => {
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
@@ -591,7 +313,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<AdminSubscription | null>(null);
   const [editSub, setEditSub] = useState<AdminSubscription | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
 
   const fetchStats = async () => {
     setIsStatsLoading(true);
@@ -666,13 +387,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-white">Subscription Management</h1>
           <p className="text-[#A1A1AA] text-sm mt-1">Overview of platform revenue and active plans.</p>
         </div>
-        <button
-          onClick={() => setShowAddModal(true)}
-          className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-sm font-semibold transition-all shadow-lg shadow-purple-500/20 self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          Add Subscription
-        </button>
       </div>
 
       {/* Summary Cards */}
@@ -1061,14 +775,6 @@ export const AdminSubscriptionsPage: React.FC = () => {
         <EditModal
           sub={editSub}
           onClose={() => setEditSub(null)}
-          onSaved={onSaved}
-        />
-      )}
-
-      {/* ─── Add Modal ────────────────────────────────────────────────── */}
-      {showAddModal && (
-        <AddModal
-          onClose={() => setShowAddModal(false)}
           onSaved={onSaved}
         />
       )}
