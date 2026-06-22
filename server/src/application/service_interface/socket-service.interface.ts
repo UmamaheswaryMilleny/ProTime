@@ -13,7 +13,7 @@ export interface ISocketService {
   setUserOnline(userId: string, socketId: string): void;
 
   //Unregisters the user when they close the app or log out.
-  setUserOffline(userId: string): void;
+  setUserOffline(userId: string, socketId?: string): void;
 
   //If I am already inside Chat A, don't show me a "New Message" popup for Chat A. 
   // But if a message comes for Chat B (which I'm not looking at), show me a notification.

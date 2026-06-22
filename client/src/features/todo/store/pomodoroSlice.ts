@@ -27,6 +27,8 @@ interface PomodoroState {
     buddyPhase: TimerPhase;
     buddyConversationId: string | null;
     ownConversationId: string | null;
+    conversationType: 'DIRECT' | 'ROOM' | null;
+    isRoomHost: boolean;
     lastUpdatedAt: number;
 }
 
@@ -49,6 +51,8 @@ const initialState: PomodoroState = {
     buddyPhase: 'FOCUS',
     buddyConversationId: null,
     ownConversationId: null,
+    conversationType: null,
+    isRoomHost: false,
     lastUpdatedAt: 0,
 };
 const loadState = (): PomodoroState => {
@@ -158,6 +162,8 @@ const pomodoroSlice = createSlice({
             phase: TimerPhase;
             isSmartBreaksEnabled: boolean;
             conversationId?: string;
+            conversationType?: 'DIRECT' | 'ROOM' | null;
+            isRoomHost?: boolean;
         }>) => {
             state.activeTask = action.payload.task;
             state.timeRemaining = action.payload.duration;
@@ -168,6 +174,8 @@ const pomodoroSlice = createSlice({
             state.isMinimized = false;
             state.totalPausedSeconds = 0;
             state.ownConversationId = action.payload.conversationId || null;
+            state.conversationType = action.payload.conversationType || (action.payload.conversationId ? 'DIRECT' : null);
+            state.isRoomHost = action.payload.isRoomHost || false;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -236,6 +244,8 @@ const pomodoroSlice = createSlice({
             state.isMinimized = false;
             state.totalPausedSeconds = 0;
             state.ownConversationId = null;
+            state.conversationType = null;
+            state.isRoomHost = false;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -300,6 +310,9 @@ const pomodoroSlice = createSlice({
             state.activeTask = null;
             state.isRunning = false;
             state.isMinimized = false;
+            state.ownConversationId = null;
+            state.conversationType = null;
+            state.isRoomHost = false;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         });
