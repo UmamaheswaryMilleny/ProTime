@@ -125,6 +125,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       duration: offer.duration,
       phase: 'FOCUS',
       isSmartBreaksEnabled: true,
+      conversationId: roomId,
+      conversationType: 'ROOM',
+      isRoomHost: false
     }));
     setHasAcceptedFocusSession(true);
     socketService.emit('room:pomodoro:accept', { roomId });
@@ -141,6 +144,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       duration: offer.timeRemaining,
       phase: 'FOCUS',
       isSmartBreaksEnabled: true,
+      conversationId: roomId,
+      conversationType: 'ROOM',
+      isRoomHost: false
     }));
     setHasAcceptedFocusSession(true);
     socketService.emit('room:pomodoro:accept', { roomId });
@@ -162,6 +168,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               duration: payload.duration,
               phase: 'BREAK',
               isSmartBreaksEnabled: true,
+              conversationId: roomId,
+              conversationType: 'ROOM',
+              isRoomHost: false
             }));
             toast.success('Focus session complete! Entering 5-minute group break. ☕');
             setHasAcceptedFocusSession(false);
@@ -175,6 +184,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               duration: payload.duration,
               phase: 'FOCUS',
               isSmartBreaksEnabled: true,
+              conversationId: roomId,
+              conversationType: 'ROOM',
+              isRoomHost: false
             }));
             setHasAcceptedFocusSession(true);
             socketService.emit('room:pomodoro:accept', { roomId });
@@ -373,6 +385,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           duration: 5 * 60,
           phase: 'BREAK',
           isSmartBreaksEnabled: true,
+          conversationId: roomId,
+          conversationType: 'ROOM',
+          isRoomHost: true
         }));
         socketService.emit('room:pomodoro:start', {
           roomId,
@@ -1212,6 +1227,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                                     duration: (todo.estimatedTime || 25) * 60,
                                     phase: 'FOCUS',
                                     isSmartBreaksEnabled: true,
+                                    conversationId: roomId,
+                                    conversationType: 'ROOM',
+                                    isRoomHost: true
                                   }));
                                   socketService.emit('room:pomodoro:start', {
                                     roomId,

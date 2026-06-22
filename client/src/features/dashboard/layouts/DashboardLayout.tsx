@@ -16,7 +16,7 @@ export const DashboardLayout: React.FC = () => {
     const user = useAppSelector((state: RootState) => state.auth.user);
     const { 
         activeTask, isRunning, timeRemaining, phase, ownConversationId,
-        buddyActiveTask, buddyIsRunning 
+        conversationType, isRoomHost, buddyActiveTask, buddyIsRunning 
     } = useAppSelector((state: RootState) => state.pomodoro);
 
     const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(() => {
@@ -47,12 +47,20 @@ export const DashboardLayout: React.FC = () => {
             interval = window.setInterval(() => {
                 dispatch(tick());
                 
-                // Emit tick to sync with buddy every 5 seconds if WE are the one running the timer
+                // Emit tick to sync with buddy or room every 5 seconds if WE are the one running the timer
                 if (activeTask && isRunning && timeRemaining % 5 === 0 && ownConversationId) {
-                    socketService.emit('pomodoro:tick', { 
-                        conversationId: ownConversationId, 
-                        timeRemaining 
-                     });
+                    if (conversationType === 'ROOM' && isRoomHost) {
+                        socketService.emit('room:pomodoro:tick', {
+                            roomId: ownConversationId,
+                            timeRemaining,
+                            phase
+                        });
+                    } else if (conversationType === 'DIRECT') {
+                        socketService.emit('pomodoro:tick', { 
+                            conversationId: ownConversationId, 
+                            timeRemaining 
+                        });
+                    }
                 }
             }, 1000);
         } else if (activeTask && !isRunning) {
@@ -64,7 +72,7 @@ export const DashboardLayout: React.FC = () => {
         return () => {
             if (interval) window.clearInterval(interval);
         };
-    }, [activeTask, isRunning, timeRemaining, buddyActiveTask, buddyIsRunning, dispatch, ownConversationId]);
+    }, [activeTask, isRunning, timeRemaining, buddyActiveTask, buddyIsRunning, dispatch, ownConversationId, conversationType, isRoomHost, phase]);
 
     // Global Completion Logic
     React.useEffect(() => {

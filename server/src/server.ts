@@ -232,8 +232,25 @@ export class App {
       });
 
       socket.on('disconnect', () => {
-        socketService.setUserOffline(userId);
+        socketService.setUserOffline(userId, socket.id);
         this.io.emit('user:offline', { userId });
+
+        // Clean up user from active WebRTC group calls
+        for (const [roomId, participants] of activeVideoCalls.entries()) {
+          if (participants.has(userId)) {
+            participants.delete(userId);
+            // Notify other participants in the room
+            socket.to(`room:${roomId}`).emit('room:webrtc:user-left', {
+              roomId,
+              userId,
+            });
+            logger.info(`[Socket] Cleaned up disconnected user ${userId} from WebRTC call in room ${roomId}`);
+            if (participants.size === 0) {
+              activeVideoCalls.delete(roomId);
+            }
+          }
+        }
+
         logger.info(`[Socket] User disconnected: ${userId}`);
       });
 

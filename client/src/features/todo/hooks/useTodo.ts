@@ -2,12 +2,15 @@ import { useState, useCallback, useEffect, useRef } from 'react';
 import type { TodoItem, CreateTodoDTO } from '../types/todo.types';
 import { todoService } from '../services/todo.service';
 import toast from 'react-hot-toast';
-import { useAppDispatch } from '../../../store/hooks';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
 import { addBadgeNotification, updateGamificationLocal } from '../../gamification/store/gamificationSlice';
 import { addNotification } from '../../notifications/store/notificationSlice';
+import { stopPomodoro } from '../store/pomodoroSlice';
+import { socketService } from '../../../shared/services/socketService';
 
 export const useTodo = () => {
     const dispatch = useAppDispatch();
+    const { activeTask, ownConversationId, conversationType } = useAppSelector((state) => state.pomodoro);
     const [todos, setTodos] = useState<TodoItem[]>([]);
     const [stats, setStats] = useState({ total: 0, completed: 0, expired: 0, shared: 0, progress: 0 });
     const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -220,6 +223,19 @@ export const useTodo = () => {
         try {
             await todoService.deleteTodo(id);
             toast.success('Task deleted successfully');
+
+            // If the deleted task is currently the active Pomodoro task, stop the Pomodoro
+            if (activeTask && activeTask.id === id) {
+                dispatch(stopPomodoro());
+                if (ownConversationId) {
+                    if (conversationType === 'ROOM') {
+                        socketService.emit('room:pomodoro:stop', { roomId: ownConversationId });
+                    } else if (conversationType === 'DIRECT') {
+                        socketService.emit('pomodoro:stop', { conversationId: ownConversationId });
+                    }
+                }
+            }
+
             void fetchTodos();
         } catch {
             toast.error('Failed to delete task');

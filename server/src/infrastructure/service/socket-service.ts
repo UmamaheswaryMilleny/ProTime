@@ -20,9 +20,11 @@ export class SocketIOService implements ISocketService {
   }
 
   // Called from server.ts on disconnect
-  setUserOffline(userId: string): void {
-    this.onlineUsers.delete(userId);
-    this.activeRooms.delete(userId);
+  setUserOffline(userId: string, socketId?: string): void {
+    if (!socketId || this.onlineUsers.get(userId) === socketId) {
+      this.onlineUsers.delete(userId);
+      this.activeRooms.delete(userId);
+    }
   }
 
   isUserOnline(userId: string): boolean {
