@@ -19,4 +19,8 @@ export class StudyRoomMessageRepository extends BaseRepository<StudyRoomMessageD
     ]);
     return { messages: docs.map(StudyRoomMessageMapper.toDomain), total };
   }
+
+  async deleteByRoomId(roomId: string): Promise<void> {
+    await this.model.deleteMany({ roomId }).exec();
+  }
 }

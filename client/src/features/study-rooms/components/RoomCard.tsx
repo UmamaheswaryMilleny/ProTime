@@ -40,9 +40,21 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
 
   const { activeRoom } = useAppSelector(state => state.studyRoom);
 
+  const isRoomExpired = (r: typeof activeRoom): boolean => {
+    if (!r) return false;
+    const isEnded = r.status === 'ENDED';
+    const now = new Date();
+    const isPast = r.endTime
+      ? new Date(r.endTime) < now
+      : (r.startTime && r.startTime !== 'IMMEDIATE'
+          ? new Date(r.startTime).getTime() + (4 * 60 * 60 * 1000) < now.getTime()
+          : false);
+    return isEnded || (isPast && r.status !== 'LIVE');
+  };
+
   const handleAction = () => {
     if (isExpired) return;
-    if (activeRoom && activeRoom.id !== room.id) {
+    if (activeRoom && !isRoomExpired(activeRoom) && activeRoom.id !== room.id) {
       toast.error('You are already in a study room. Please leave your current room before entering another one.');
       return;
     }

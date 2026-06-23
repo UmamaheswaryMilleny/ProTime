@@ -15,6 +15,18 @@ type FilterType = 'ALL' | 'PUBLIC' | 'PRIVATE';
 
 import { RequestsTab } from '../components/RequestsTab';
 
+const isRoomExpired = (r: any): boolean => {
+  if (!r) return false;
+  const isEnded = r.status === 'ENDED';
+  const now = new Date();
+  const isPast = r.endTime
+    ? new Date(r.endTime) < now
+    : (r.startTime && r.startTime !== 'IMMEDIATE'
+        ? new Date(r.startTime).getTime() + (4 * 60 * 60 * 1000) < now.getTime()
+        : false);
+  return isEnded || (isPast && r.status !== 'LIVE');
+};
+
 export const StudyRoomsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -61,7 +73,7 @@ export const StudyRoomsPage: React.FC = () => {
   }, [dispatch, tab, filter, search]);
 
   const handleJoin = useCallback(async (roomId: string) => {
-    if (activeRoom && activeRoom.id !== roomId) {
+    if (activeRoom && !isRoomExpired(activeRoom) && activeRoom.id !== roomId) {
       toast.error('You are already in a study room. Please leave your current room before joining another one.');
       return;
     }
@@ -102,7 +114,7 @@ export const StudyRoomsPage: React.FC = () => {
   }, [dispatch, navigate, fetchLimit]);
 
   const handleCreateRoomClick = () => {
-    if (activeRoom) {
+    if (activeRoom && !isRoomExpired(activeRoom)) {
       toast.error('You are already in a study room. Please leave your current room before creating a new one.');
       return;
     }

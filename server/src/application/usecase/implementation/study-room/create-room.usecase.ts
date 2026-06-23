@@ -47,7 +47,7 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
     const roomEntity: Partial<StudyRoomEntity> = {
       hostId,
       name: dto.name,
-      description: dto.description,
+      description: dto.description || '',
       type: dto.type || RoomType.PUBLIC,
       status: RoomStatus.WAITING,
       maxParticipants: dto.maxParticipants,

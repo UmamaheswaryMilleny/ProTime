@@ -128,11 +128,12 @@ export class HandleStripeWebhookUsecase implements IHandleStripeWebhookUsecase {
   private async handleInvoicePaymentSucceeded(
     invoice: Stripe.Invoice,
   ): Promise<void> {
-    const parent = invoice.parent as Stripe.Invoice.Parent | null;
+    const inv = invoice as any;
     const stripeSubscriptionId =
-      parent?.type === 'subscription_details'
-        ? (parent.subscription_details?.subscription as string | undefined)
-        : undefined;
+      (typeof inv.subscription === 'string'
+        ? inv.subscription
+        : inv.subscription?.id) ||
+      inv.parent?.subscription_details?.subscription;
 
     if (!stripeSubscriptionId) return;
 

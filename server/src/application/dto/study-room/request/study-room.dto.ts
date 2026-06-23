@@ -6,9 +6,10 @@ export class CreateRoomRequestDTO {
   @MaxLength(100)
   name!: string;
 
+  @IsOptional()
   @IsString()
   @MaxLength(500)
-  description!: string;
+  description?: string;
 
   @IsEnum(RoomType)
   type!: RoomType;

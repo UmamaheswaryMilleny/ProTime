@@ -453,6 +453,12 @@ export const TodoPage: React.FC = () => {
                 onClose={() => setTodoToDelete(null)}
                 onConfirm={async () => {
                     if (todoToDelete) {
+                        if (activeTaskId === todoToDelete) {
+                            pause();
+                            setActiveTaskId(null);
+                            setIsPomodoroMinimized(false);
+                            setIsPomodoroModalOpen(false);
+                        }
                         await deleteTodo(todoToDelete);
                         setTodoToDelete(null);
                     }

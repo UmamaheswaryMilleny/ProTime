@@ -329,6 +329,7 @@ export const GroupVideoCall: React.FC = () => {
       localStreamRef.current = null;
       setLocalStream(null);
       setPeers(new Map());
+      sessionStorage.removeItem(`in_group_call_${groupCallRoomId}`);
       dispatch(endGroupCall());
     };
 
@@ -400,6 +401,7 @@ export const GroupVideoCall: React.FC = () => {
     } else {
       // Member leaving — only notifies peers, host call continues
       socketService.emit('room:webrtc:leave', { roomId: groupCallRoomId });
+      sessionStorage.setItem(`declined_video_call_${groupCallRoomId}`, 'true');
     }
 
     // Clean up all peer connections
@@ -413,6 +415,7 @@ export const GroupVideoCall: React.FC = () => {
     localStreamRef.current = null;
     setLocalStream(null);
 
+    sessionStorage.removeItem(`in_group_call_${groupCallRoomId}`);
     dispatch(endGroupCall());
   };
 

@@ -229,6 +229,11 @@ export class App {
 
       socket.on('leave:room', (roomId: string) => {
         socket.leave(`room:${roomId}`);
+        const clients = this.io.sockets.adapter.rooms.get(`room:${roomId}`);
+        if (!clients || clients.size === 0) {
+          roomPomodoros.delete(roomId);
+          activeVideoCalls.delete(roomId);
+        }
       });
 
       socket.on('disconnect', () => {
@@ -248,6 +253,16 @@ export class App {
             if (participants.size === 0) {
               activeVideoCalls.delete(roomId);
             }
+          }
+        }
+
+        // Clean up orphaned room pomodoros/video calls for empty rooms
+        for (const roomId of roomPomodoros.keys()) {
+          const clients = this.io.sockets.adapter.rooms.get(`room:${roomId}`);
+          if (!clients || clients.size === 0) {
+            roomPomodoros.delete(roomId);
+            activeVideoCalls.delete(roomId);
+            logger.info(`[Socket] Cleaned up orphaned Room Pomodoro/Video for empty room ${roomId}`);
           }
         }
 

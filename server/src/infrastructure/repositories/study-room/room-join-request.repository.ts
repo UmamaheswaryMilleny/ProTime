@@ -46,4 +46,8 @@ export class RoomJoinRequestRepository extends BaseRepository<RoomJoinRequestDoc
     const doc = await this.model.findByIdAndUpdate(id, { status, respondedAt }, { new: true }).exec();
     return doc ? RoomJoinRequestMapper.toDomain(doc) : null;
   }
+
+  async deleteByRoomId(roomId: string): Promise<void> {
+    await this.model.deleteMany({ roomId }).exec();
+  }
 }

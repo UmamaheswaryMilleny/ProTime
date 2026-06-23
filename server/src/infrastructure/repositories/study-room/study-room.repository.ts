@@ -76,8 +76,18 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
   }
 
   async addParticipant(roomId: string, userId: string): Promise<StudyRoomEntity | null> {
-    const update = { $addToSet: { participantIds: userId } };
-    const doc = await this.model.findByIdAndUpdate(roomId, update as any, { new: true }).exec();
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const doc = await this.model.findOneAndUpdate(
+      {
+        _id: roomId,
+        $or: [
+          { participantIds: userObjectId },
+          { $expr: { $lt: [{ $size: "$participantIds" }, "$maxParticipants"] } }
+        ]
+      },
+      { $addToSet: { participantIds: userObjectId } } as any,
+      { new: true }
+    ).exec();
     return doc ? StudyRoomMapper.toDomain(doc) : null;
   }
 

@@ -1,6 +1,8 @@
 import { inject, injectable } from 'tsyringe';
 import type { IDeleteExpiredRoomsUsecase } from '../../interface/study-room/delete-expired-rooms.usecase.interface';
 import type { IStudyRoomRepository } from '../../../../domain/repositories/study-room/study-room.repository.interface';
+import type { IStudyRoomMessageRepository } from '../../../../domain/repositories/study-room/study-room-message.repository.interface';
+import type { IRoomJoinRequestRepository } from '../../../../domain/repositories/study-room/room-join-request.repository.interface';
 import { logger } from '../../../../infrastructure/config/logger.config';
 
 /**
@@ -22,6 +24,10 @@ export class DeleteExpiredRoomsUsecase implements IDeleteExpiredRoomsUsecase {
   constructor(
     @inject('IStudyRoomRepository')
     private readonly studyRoomRepo: IStudyRoomRepository,
+    @inject('IStudyRoomMessageRepository')
+    private readonly messageRepo: IStudyRoomMessageRepository,
+    @inject('IRoomJoinRequestRepository')
+    private readonly joinRequestRepo: IRoomJoinRequestRepository,
   ) {}
 
   async execute(): Promise<void> {
@@ -46,7 +52,9 @@ export class DeleteExpiredRoomsUsecase implements IDeleteExpiredRoomsUsecase {
     for (const room of expiredRooms) {
       try {
         await this.studyRoomRepo.deleteById(room.id!);
-        logger.info(`[DeleteExpiredRoomsUsecase] Deleted room "${room.name}" (${room.id})`);
+        await this.messageRepo.deleteByRoomId(room.id!);
+        await this.joinRequestRepo.deleteByRoomId(room.id!);
+        logger.info(`[DeleteExpiredRoomsUsecase] Deleted room "${room.name}" (${room.id}) and cleaned up messages/requests`);
       } catch (err: unknown) {
         // One failure must not block the rest
         logger.error(

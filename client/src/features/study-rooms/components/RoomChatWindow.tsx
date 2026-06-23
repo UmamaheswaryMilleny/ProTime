@@ -79,10 +79,17 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   acceptedTaskIdsRef.current = acceptedTaskIds;
   ignoredTaskIdsRef.current = ignoredTaskIds;
   const [sessionTimeRemaining, setSessionTimeRemaining] = useState<number | null>(null);
-  const [sessionExtensionSeconds, setSessionExtensionSeconds] = useState(0);
+  const [sessionExtensionSeconds, setSessionExtensionSeconds] = useState(() => {
+    const saved = sessionStorage.getItem(`session_extension_${roomId}`);
+    return saved ? parseInt(saved, 10) : 0;
+  });
   const sessionEndPromptShownRef = useRef(false);
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isHostCallActive, setIsHostCallActive] = useState(false);
+  const [showRingingOverlay, setShowRingingOverlay] = useState(false);
+  const isHost = activeRoom?.hostId === user?.id;
+
+  console.log('[RoomChatWindow] Render states:', { isHost, isHostCallActive, showRingingOverlay, isInGroupCall, roomId });
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -102,7 +109,6 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     setContent((prev) => prev + emojiData.emoji);
   };
 
-  const isHost = activeRoom?.hostId === user?.id;
   const participantCount = activeRoom ? activeRoom.participantIds.length : 0;
   const reportableParticipants = activeRoom?.participants?.filter(p => p.id !== user?.id) || [];
   const isExpired = activeRoom?.status === 'WAITING' && activeRoom?.endTime && new Date(activeRoom.endTime) < currentTime;
@@ -315,45 +321,59 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     if (!roomId) return;
 
     const handleVideoStarted = (payload: { roomId: string }) => {
+      console.log('[Socket] room:video:started received on client:', payload);
       if (payload.roomId !== roomId) return;
-      if (!isHost) setIsHostCallActive(true);
+      setIsHostCallActive(true);
+      if (!isHost) setShowRingingOverlay(true);
     };
 
     const handleVideoEnded = (payload: { roomId: string }) => {
+      console.log('[Socket] room:video:ended received on client:', payload);
       if (payload.roomId !== roomId) return;
       setIsHostCallActive(false);
+      setShowRingingOverlay(false);
+      sessionStorage.removeItem(`in_group_call_${roomId}`);
+      sessionStorage.removeItem(`declined_video_call_${roomId}`);
       // If member was in the call, close their overlay too
       dispatch(endGroupCall());
     };
 
     const handleVideoStatusResponse = (payload: { roomId: string; isActive: boolean }) => {
+      console.log('[Socket] room:video:status-response received on client:', payload);
       if (payload.roomId !== roomId) return;
-      if (!isHost) setIsHostCallActive(payload.isActive);
+      setIsHostCallActive(payload.isActive);
+      
+      const wasInCall = sessionStorage.getItem(`in_group_call_${roomId}`) === 'true';
+      const hasDeclined = sessionStorage.getItem(`declined_video_call_${roomId}`) === 'true';
+      if (payload.isActive) {
+        if (wasInCall) {
+          console.log('[Refreshed] User was in the call, auto-rejoining');
+          dispatch(startGroupCall(roomId));
+        } else if (!isHost && !isInGroupCall && !hasDeclined) {
+          setShowRingingOverlay(true);
+        }
+      } else {
+        sessionStorage.removeItem(`in_group_call_${roomId}`);
+        sessionStorage.removeItem(`declined_video_call_${roomId}`);
+      }
     };
 
     socketService.on('room:video:started', handleVideoStarted);
     socketService.on('room:video:ended', handleVideoEnded);
     socketService.on('room:video:status-response', handleVideoStatusResponse);
 
-    // Members query call status on mount
-    if (!isHost) {
-      const t = setTimeout(() => {
-        socketService.emit('room:video:request-status', { roomId });
-      }, 600);
-      return () => {
-        clearTimeout(t);
-        socketService.off('room:video:started', handleVideoStarted);
-        socketService.off('room:video:ended', handleVideoEnded);
-        socketService.off('room:video:status-response', handleVideoStatusResponse);
-      };
-    }
+    // Query call status on mount
+    const t = setTimeout(() => {
+      socketService.emit('room:video:request-status', { roomId });
+    }, 600);
 
     return () => {
+      clearTimeout(t);
       socketService.off('room:video:started', handleVideoStarted);
       socketService.off('room:video:ended', handleVideoEnded);
       socketService.off('room:video:status-response', handleVideoStatusResponse);
     };
-  }, [roomId, isHost, dispatch]);
+  }, [roomId, dispatch, isHost, isInGroupCall]);
 
   // Host: Emit time remaining tick every 5 seconds to room
   useEffect(() => {
@@ -458,6 +478,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                     onClick={async () => {
                       toast.dismiss(t.id);
                       try {
+                        sessionStorage.removeItem(`session_extension_${roomId}`);
                         await dispatch(endRoom(roomId)).unwrap();
                         navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
                       } catch (e: any) {
@@ -471,7 +492,11 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                     className="flex-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-[blueviolet] text-white hover:bg-[blueviolet]/80 transition-colors"
                     onClick={() => {
                       toast.dismiss(t.id);
-                      setSessionExtensionSeconds(prev => prev + 30 * 60);
+                      setSessionExtensionSeconds(prev => {
+                        const next = prev + 30 * 60;
+                        sessionStorage.setItem(`session_extension_${roomId}`, String(next));
+                        return next;
+                      });
                       socketService.emit('room:session:extended', { roomId });
                       toast.success('Session extended by 30 minutes! ⏰');
                     }}
@@ -503,7 +528,11 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   useEffect(() => {
     const handleSessionExtended = () => {
       if (!isHost) {
-        setSessionExtensionSeconds(prev => prev + 30 * 60);
+        setSessionExtensionSeconds(prev => {
+          const next = prev + 30 * 60;
+          sessionStorage.setItem(`session_extension_${roomId}`, String(next));
+          return next;
+        });
         toast.success('Host extended the session by 30 minutes! ⏰', {
           style: { background: '#18181b', color: '#fff', border: '1px solid rgba(255,255,255,0.1)' },
         });
@@ -511,7 +540,18 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     };
     socketService.on('room:session:extended', handleSessionExtended);
     return () => socketService.off('room:session:extended', handleSessionExtended);
-  }, [isHost]);
+  }, [isHost, roomId]);
+
+  // Persist session extension seconds to sessionStorage and handle cleanup on end
+  useEffect(() => {
+    if (roomId) {
+      if (activeRoom?.status === 'ENDED') {
+        sessionStorage.removeItem(`session_extension_${roomId}`);
+      } else if (sessionExtensionSeconds > 0) {
+        sessionStorage.setItem(`session_extension_${roomId}`, String(sessionExtensionSeconds));
+      }
+    }
+  }, [sessionExtensionSeconds, roomId, activeRoom?.status]);
 
   // Keep track of current time to dynamically determine room expiration
   useEffect(() => {
@@ -575,9 +615,11 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     if (isInGroupCall) {
       // Host is ending the call for everyone
       socketService.emit('room:video:end', { roomId });
+      sessionStorage.removeItem(`in_group_call_${roomId}`);
       dispatch(endGroupCall());
     } else {
       // Host starting a new call
+      sessionStorage.setItem(`in_group_call_${roomId}`, 'true');
       dispatch(startGroupCall(roomId));
       socketService.emit('room:video:start', { roomId });
     }
@@ -588,6 +630,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       toast.error("You cannot join a group video call while in a 1:1 call. Please end your 1:1 call first.");
       return;
     }
+    sessionStorage.setItem(`in_group_call_${roomId}`, 'true');
+    sessionStorage.removeItem(`declined_video_call_${roomId}`);
     dispatch(startGroupCall(roomId));
   };
 
@@ -607,6 +651,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             onClick={async () => {
               toast.dismiss(t.id);
               try {
+                sessionStorage.removeItem(`in_group_call_${roomId}`);
+                sessionStorage.removeItem(`session_extension_${roomId}`);
                 await dispatch(endRoom(roomId)).unwrap();
                 navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
               } catch (e: any) {
@@ -637,6 +683,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             onClick={async () => {
               toast.dismiss(t.id);
               try {
+                sessionStorage.removeItem(`in_group_call_${roomId}`);
+                sessionStorage.removeItem(`session_extension_${roomId}`);
                 await dispatch(leaveRoom(roomId)).unwrap();
                 navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
               } catch (e: any) {
@@ -1119,43 +1167,6 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 </div>
               </div>
             ))}
-            {/* Attend Video Call Ringing Overlay — shown to members as an incoming ringing modal */}
-      {!isHost && isHostCallActive && !isInGroupCall && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
-            {/* Pulsing Video Icon */}
-            <div className="relative mb-6">
-              <div className="absolute inset-0 rounded-full bg-[blueviolet] animate-ping opacity-25" />
-              <div className="w-16 h-16 rounded-full bg-[blueviolet]/20 border border-[blueviolet]/30 flex items-center justify-center text-[blueviolet]">
-                <Video size={32} className="animate-bounce" />
-              </div>
-            </div>
-            
-            <h3 className="text-lg font-bold text-white mb-1">Incoming Group Video Call</h3>
-            <p className="text-xs text-zinc-400 text-center mb-6">
-              {activeRoom?.hostName || 'The host'} has started a group video call in this room.
-            </p>
-
-            <div className="flex gap-4 w-full">
-              <button
-                onClick={() => {
-                  setIsHostCallActive(false);
-                  dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }));
-                }}
-                className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-white/10 text-sm font-semibold transition-colors"
-              >
-                Decline
-              </button>
-              <button
-                onClick={handleJoinGroupCall}
-                className="flex-1 py-2.5 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/85 text-sm font-semibold transition-colors shadow-lg shadow-[blueviolet]/20"
-              >
-                Accept
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
           </div>
         </div>
       )}
@@ -1307,6 +1318,55 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             } catch (e) {
               // ignore parse errors
             }
+          }
+
+          if (msg.content && (msg.content === '📹 Started a video call' || msg.content.includes('Declined the video call request'))) {
+            if (msg.content.includes('Declined')) {
+              return (
+                <div key={msg.id || idx} className="flex justify-center py-1">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-red-500/10 border border-red-500/20 text-red-400 text-[11px] font-medium max-w-[90%]">
+                    <span>{msg.content}</span>
+                  </div>
+                </div>
+              );
+            }
+
+            return (
+              <div key={msg.id || idx} className="flex justify-center py-2 w-full">
+                <div className="flex flex-col items-center gap-3 px-6 py-4 rounded-2xl bg-[blueviolet]/10 border border-[blueviolet]/20 text-center max-w-[85%] sm:max-w-[70%] shadow-lg shadow-[blueviolet]/5 animate-in fade-in duration-200">
+                  <div className="w-10 h-10 rounded-full bg-[blueviolet]/25 border border-[blueviolet]/40 flex items-center justify-center text-[blueviolet] shadow-md shadow-[blueviolet]/10">
+                    <Video size={20} className="animate-pulse" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-white">
+                      {msg.senderName || 'The host'} started a video call
+                    </p>
+                    <p className="text-[10px] text-zinc-400 mt-0.5">
+                      Join to study and collaborate together.
+                    </p>
+                  </div>
+                  {isHostCallActive ? (
+                    !isInGroupCall ? (
+                      <button
+                        onClick={handleJoinGroupCall}
+                        className="px-4 py-1.5 rounded-xl bg-[blueviolet] hover:bg-[blueviolet]/85 text-white text-xs font-bold transition-all shadow-md shadow-[blueviolet]/20 flex items-center gap-1.5"
+                      >
+                        <Video size={12} />
+                        Join Call
+                      </button>
+                    ) : (
+                      <span className="text-xs text-zinc-500 font-semibold italic bg-zinc-800/50 px-3 py-1 rounded-lg border border-white/5">
+                        You are in this call
+                      </span>
+                    )
+                  ) : (
+                    <span className="text-xs text-zinc-500 font-semibold italic bg-zinc-800/50 px-3 py-1 rounded-lg border border-white/5">
+                      Call ended
+                    </span>
+                  )}
+                </div>
+              </div>
+            );
           }
 
           return (
@@ -1736,6 +1796,48 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
             >
               Awesome!
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Attend Video Call Ringing Overlay — shown to members as an incoming ringing modal */}
+      {!isHost && showRingingOverlay && !isInGroupCall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Pulsing Video Icon */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 rounded-full bg-[blueviolet] animate-ping opacity-25" />
+              <div className="w-16 h-16 rounded-full bg-[blueviolet]/20 border border-[blueviolet]/30 flex items-center justify-center text-[blueviolet]">
+                <Video size={32} className="animate-bounce" />
+              </div>
+            </div>
+            
+            <h3 className="text-lg font-bold text-white mb-1">Incoming Group Video Call</h3>
+            <p className="text-xs text-zinc-400 text-center mb-6">
+              {activeRoom?.hostName || 'The host'} has started a group video call in this room.
+            </p>
+
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={() => {
+                  setShowRingingOverlay(false);
+                  sessionStorage.setItem(`declined_video_call_${roomId}`, 'true');
+                  dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }));
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-white/10 text-sm font-semibold transition-colors"
+              >
+                Decline
+              </button>
+              <button
+                onClick={() => {
+                  setShowRingingOverlay(false);
+                  handleJoinGroupCall();
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/85 text-sm font-semibold transition-colors shadow-lg shadow-[blueviolet]/20"
+              >
+                Accept
+              </button>
+            </div>
           </div>
         </div>
       )}

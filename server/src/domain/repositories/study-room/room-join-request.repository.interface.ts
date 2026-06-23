@@ -10,4 +10,5 @@ export interface IRoomJoinRequestRepository extends IBaseRepository<RoomJoinRequ
   findInvitationsByUserId(userId: string): Promise<RoomJoinRequestEntity[]>;
   findExistingRequest(roomId: string, userId: string): Promise<RoomJoinRequestEntity | null>;
   updateStatus(id: string, status: JoinRequestStatus, respondedAt: Date): Promise<RoomJoinRequestEntity | null>;
+  deleteByRoomId(roomId: string): Promise<void>;
 }

@@ -5,16 +5,19 @@ import type { RefreshTokenResponseDTO } from "../../../dto/auth/response/refresh
 import { InvalidTokenError } from "../../../../domain/errors/user.error";
 import type { IRefreshTokenStore } from "../../../service_interface/refresh-token-store-service.interface";
 import type { IUserRepository } from "../../../../domain/repositories/user/user.repository.interface";
+import type { IProfileRepository } from "../../../../domain/repositories/profile/profile.repository.interface";
 
 @injectable()
 export class RefreshTokenUseCase implements IRefreshTokenUsecase {
   constructor(
-@inject("ITokenService")
-private tokenPort: ITokenService,
+    @inject("ITokenService")
+    private tokenPort: ITokenService,
     @inject("IRefreshTokenStore")
     private refreshTokenStore: IRefreshTokenStore,
-       @inject("IUserRepository")
-    private readonly userRepository: IUserRepository
+    @inject("IUserRepository")
+    private readonly userRepository: IUserRepository,
+    @inject("IProfileRepository")
+    private readonly profileRepository: IProfileRepository,
   ) {}
 
   async execute(refreshToken: string): Promise<RefreshTokenResponseDTO> {
@@ -36,30 +39,27 @@ private tokenPort: ITokenService,
       throw new InvalidTokenError();
     }
 
-    // if(!payload.id || !payload.email || !payload.role){
-    //   throw new InvalidTokenError()
-    // }
-
-
-
-    // const newPayload = {
-    //   id: payload.id,
-    //   email: payload.email,
-    //   role: payload.role,
-    // };
-
     //4. Load User
-
-    const user = await this.userRepository.findById(payload.id)
+    const user = await this.userRepository.findById(payload.id);
 
     if(!user || user.isBlocked || user.isDeleted){
-      throw new InvalidTokenError()
+      throw new InvalidTokenError();
     }
+
+    // Load Profile to get username
+    const profile = await this.profileRepository.findByUserId(user.id);
+
     //4. generate new access token
-    const accessToken = this.tokenPort.generateAccess({id:user.id,email:user.email,role:user.role,isPremium:user.isPremium,fullName:user.fullName});
+    const accessToken = this.tokenPort.generateAccess({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+      isPremium: user.isPremium,
+      fullName: user.fullName,
+      username: profile?.username || user.email.split('@')[0],
+    });
 
     //5. return new access token
-
     return {
       accessToken,
     };

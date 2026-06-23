@@ -48,6 +48,10 @@ export class LoginUsecase implements ILoginUsecase {
       throw new UserDeletedError();
     }
 
+    if (!user.passwordHash) {
+      throw new InvalidPasswordError();
+    }
+
     //3. Verify passaword
     const isPasswordMatch = await this.passwordHasherService.compare(
       password,

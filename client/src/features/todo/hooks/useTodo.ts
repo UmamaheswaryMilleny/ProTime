@@ -224,6 +224,15 @@ export const useTodo = () => {
             await todoService.deleteTodo(id);
             toast.success('Task deleted successfully');
 
+            // Clear any local storage timer state for this task
+            const timerKey = `pomodoro_${id}`;
+            localStorage.removeItem(`${timerKey}_phaseIndex`);
+            localStorage.removeItem(`${timerKey}_timeRemaining`);
+            localStorage.removeItem(`${timerKey}_isRunning`);
+            localStorage.removeItem(`${timerKey}_smartBreaks`);
+            localStorage.removeItem(`${timerKey}_totalPausedSeconds`);
+            localStorage.removeItem(`${timerKey}_lastUpdated`);
+
             // If the deleted task is currently the active Pomodoro task, stop the Pomodoro
             if (activeTask && activeTask.id === id) {
                 dispatch(stopPomodoro());
@@ -244,7 +253,21 @@ export const useTodo = () => {
 
     const updateTodo = async (id: string, updates: Partial<CreateTodoDTO>) => {
         try {
-            await todoService.updateTodo(id, updates);
+            const updated = await todoService.updateTodo(id, updates);
+            
+            // Clear stale timer storage for this task if timer-affecting properties changed
+            if (updates.priority !== undefined || updates.estimatedTime !== undefined || updates.smartBreaks !== undefined) {
+                const timerKey = `pomodoro_${id}`;
+                localStorage.removeItem(`${timerKey}_phaseIndex`);
+                localStorage.removeItem(`${timerKey}_timeRemaining`);
+                localStorage.removeItem(`${timerKey}_isRunning`);
+                localStorage.removeItem(`${timerKey}_smartBreaks`);
+                localStorage.removeItem(`${timerKey}_totalPausedSeconds`);
+                localStorage.removeItem(`${timerKey}_lastUpdated`);
+            }
+
+            // Optimistically update local state immediately
+            setTodos(prev => prev.map(t => t.id === id ? { ...t, ...updated } : t));
             toast.success('Task updated successfully');
             void fetchTodos();
             return true;

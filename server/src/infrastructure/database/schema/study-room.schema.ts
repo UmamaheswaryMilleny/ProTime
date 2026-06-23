@@ -5,7 +5,7 @@ export const StudyRoomSchema = new Schema(
   {
     hostId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     name: { type: String, required: true, maxlength: 100 },
-    description: { type: String, required: true, maxlength: 500 },
+    description: { type: String, maxlength: 500, default: '' },
     type: { type: String, enum: Object.values(RoomType), required: true },
     status: { type: String, enum: Object.values(RoomStatus), default: RoomStatus.WAITING },
     maxParticipants: { type: Number, required: true, min: 2, max: 50 },
