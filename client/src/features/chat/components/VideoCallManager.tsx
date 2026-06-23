@@ -20,6 +20,7 @@ import type { CreateTodoDTO } from '../../todo/types/todo.types';
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
   const { incomingCall, activeCall, conversations } = useSelector((state: RootState) => state.chat);
+  const { isInGroupCall } = useSelector((state: RootState) => state.studyRoom);
   const currentUserFullName = useSelector((state: RootState) => state.auth.user?.fullName ?? 'Someone');
 
   const { todos, isLoading: isTodosLoading, addTodo } = useTodo();
@@ -183,6 +184,17 @@ export const VideoCallOverlay: React.FC = () => {
       renegotiate();
     }
   }, [activeCall, incomingCall, dispatch]);
+
+  // Auto-decline incoming 1:1 calls if we are currently inside a group video call
+  useEffect(() => {
+    if (incomingCall && isInGroupCall) {
+      socketService.emit('webrtc:call-ended', { conversationId: incomingCall.conversationId });
+      dispatch(setIncomingCall(null));
+      const conv = conversationsRef.current.find(c => c.id === incomingCall.conversationId);
+      const callerName = conv?.otherUser?.fullName || incomingCall.callerName || 'Buddy';
+      toast(`Missed 1:1 call from ${callerName} (You are in a group call)`, { icon: '📞' });
+    }
+  }, [incomingCall, isInGroupCall, dispatch]);
 
   // Close settings dropdown when clicking outside
   useEffect(() => {

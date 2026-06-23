@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Users, Globe, Lock, Video, Monitor, Clock } from 'lucide-react';
 import type { StudyRoomDTO } from '../api/studyRoomApi';
 import { ROUTES } from '../../../shared/constants/constants.routes';
+import { useAppSelector } from '../../../store/hooks';
+import toast from 'react-hot-toast';
 
 interface RoomCardProps {
   room: StudyRoomDTO;
@@ -36,8 +38,14 @@ export const RoomCard: React.FC<RoomCardProps> = ({ room, currentUserId, onJoin,
         : false);
   const isExpired = isEnded || (isPast && !isLive);
 
+  const { activeRoom } = useAppSelector(state => state.studyRoom);
+
   const handleAction = () => {
     if (isExpired) return;
+    if (activeRoom && activeRoom.id !== room.id) {
+      toast.error('You are already in a study room. Please leave your current room before entering another one.');
+      return;
+    }
     if (isMember) {
       navigate(ROUTES.DASHBOARD_STUDY_ROOMS + `/${room.id}`);
       return;
