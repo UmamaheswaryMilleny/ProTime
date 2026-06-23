@@ -18,7 +18,7 @@ import { RequestsTab } from '../components/RequestsTab';
 export const StudyRoomsPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { rooms, myRooms, invitations, isLoading } = useAppSelector(s => s.studyRoom);
+  const { rooms, myRooms, invitations, isLoading, activeRoom } = useAppSelector(s => s.studyRoom);
   const { user } = useAppSelector(s => s.auth);
 
   const [tab, setTab] = useState<ActiveTab>('EXPLORE');
@@ -61,6 +61,10 @@ export const StudyRoomsPage: React.FC = () => {
   }, [dispatch, tab, filter, search]);
 
   const handleJoin = useCallback(async (roomId: string) => {
+    if (activeRoom && activeRoom.id !== roomId) {
+      toast.error('You are already in a study room. Please leave your current room before joining another one.');
+      return;
+    }
     try {
       setJoiningRoomId(roomId);
       await dispatch(joinRoom(roomId)).unwrap();
@@ -71,7 +75,7 @@ export const StudyRoomsPage: React.FC = () => {
     } finally {
       setJoiningRoomId(null);
     }
-  }, [dispatch, navigate]);
+  }, [dispatch, navigate, activeRoom]);
 
   const handleRequest = useCallback(async (roomId: string) => {
     try {
@@ -96,6 +100,14 @@ export const StudyRoomsPage: React.FC = () => {
       setIsCreating(false);
     }
   }, [dispatch, navigate, fetchLimit]);
+
+  const handleCreateRoomClick = () => {
+    if (activeRoom) {
+      toast.error('You are already in a study room. Please leave your current room before creating a new one.');
+      return;
+    }
+    setShowCreateModal(true);
+  };
 
   // In Explore tab: hide rooms that are expired (ENDED status or their session time
   // has already passed). My Rooms always shows the user's full history.
@@ -143,7 +155,7 @@ export const StudyRoomsPage: React.FC = () => {
         <div className="relative group flex-shrink-0">
           <button
             disabled={limitData?.isLimitReached}
-            onClick={() => setShowCreateModal(true)}
+            onClick={handleCreateRoomClick}
             className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold transition-all flex-shrink-0 ${
               limitData?.isLimitReached
                 ? 'bg-zinc-800 text-zinc-500 cursor-not-allowed border border-white/5'

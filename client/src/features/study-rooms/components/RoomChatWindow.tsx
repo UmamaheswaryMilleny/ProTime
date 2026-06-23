@@ -30,6 +30,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const { activeRoom, messages, isSending, pendingRequests, isInGroupCall } = useAppSelector(s => s.studyRoom);
   const { user } = useAppSelector(s => s.auth);
   const { activeTask, isRunning, timeRemaining, phase } = useAppSelector(s => s.pomodoro);
+  const { activeCall } = useAppSelector(s => s.chat);
 
 
   const [content, setContent] = useState('');
@@ -125,6 +126,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       duration: offer.duration,
       phase: 'FOCUS',
       isSmartBreaksEnabled: true,
+      conversationId: roomId,
+      conversationType: 'ROOM',
+      isRoomHost: false
     }));
     setHasAcceptedFocusSession(true);
     socketService.emit('room:pomodoro:accept', { roomId });
@@ -141,6 +145,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       duration: offer.timeRemaining,
       phase: 'FOCUS',
       isSmartBreaksEnabled: true,
+      conversationId: roomId,
+      conversationType: 'ROOM',
+      isRoomHost: false
     }));
     setHasAcceptedFocusSession(true);
     socketService.emit('room:pomodoro:accept', { roomId });
@@ -162,6 +169,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               duration: payload.duration,
               phase: 'BREAK',
               isSmartBreaksEnabled: true,
+              conversationId: roomId,
+              conversationType: 'ROOM',
+              isRoomHost: false
             }));
             toast.success('Focus session complete! Entering 5-minute group break. ☕');
             setHasAcceptedFocusSession(false);
@@ -175,6 +185,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               duration: payload.duration,
               phase: 'FOCUS',
               isSmartBreaksEnabled: true,
+              conversationId: roomId,
+              conversationType: 'ROOM',
+              isRoomHost: false
             }));
             setHasAcceptedFocusSession(true);
             socketService.emit('room:pomodoro:accept', { roomId });
@@ -373,6 +386,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           duration: 5 * 60,
           phase: 'BREAK',
           isSmartBreaksEnabled: true,
+          conversationId: roomId,
+          conversationType: 'ROOM',
+          isRoomHost: true
         }));
         socketService.emit('room:pomodoro:start', {
           roomId,
@@ -565,6 +581,14 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       dispatch(startGroupCall(roomId));
       socketService.emit('room:video:start', { roomId });
     }
+  };
+
+  const handleJoinGroupCall = () => {
+    if (activeCall) {
+      toast.error("You cannot join a group video call while in a 1:1 call. Please end your 1:1 call first.");
+      return;
+    }
+    dispatch(startGroupCall(roomId));
   };
 
   const handleEndRoom = () => {
@@ -952,16 +976,21 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           {isHost && (
             <button
               onClick={handleVideoCall}
-              // disabled={isRoomEnded}
-              disabled={!!isRoomEnded}
+              disabled={!!isRoomEnded || activeRoom?.status !== 'LIVE'}
               className={`p-2 rounded-xl transition-colors border ${
-                isRoomEnded
+                isRoomEnded || activeRoom?.status !== 'LIVE'
                   ? 'opacity-40 cursor-not-allowed bg-zinc-800 text-zinc-500 border-white/5'
                   : isInGroupCall
                   ? 'bg-green-500 text-white border-green-500 shadow-lg shadow-green-500/20'
                   : 'bg-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-700 border-white/10'
               }`}
-              title={isRoomEnded ? "Session ended" : "Video Call"}
+              title={
+                isRoomEnded
+                  ? "Session ended"
+                  : activeRoom?.status !== 'LIVE'
+                  ? "Start session to use video call"
+                  : "Video Call"
+              }
             >
               <Video size={16} />
             </button>
@@ -1090,38 +1119,43 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 </div>
               </div>
             ))}
+            {/* Attend Video Call Ringing Overlay — shown to members as an incoming ringing modal */}
+      {!isHost && isHostCallActive && !isInGroupCall && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
+            {/* Pulsing Video Icon */}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 rounded-full bg-[blueviolet] animate-ping opacity-25" />
+              <div className="w-16 h-16 rounded-full bg-[blueviolet]/20 border border-[blueviolet]/30 flex items-center justify-center text-[blueviolet]">
+                <Video size={32} className="animate-bounce" />
+              </div>
+            </div>
+            
+            <h3 className="text-lg font-bold text-white mb-1">Incoming Group Video Call</h3>
+            <p className="text-xs text-zinc-400 text-center mb-6">
+              {activeRoom?.hostName || 'The host'} has started a group video call in this room.
+            </p>
+
+            <div className="flex gap-4 w-full">
+              <button
+                onClick={() => {
+                  setIsHostCallActive(false);
+                  dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }));
+                }}
+                className="flex-1 py-2.5 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white border border-white/10 text-sm font-semibold transition-colors"
+              >
+                Decline
+              </button>
+              <button
+                onClick={handleJoinGroupCall}
+                className="flex-1 py-2.5 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/85 text-sm font-semibold transition-colors shadow-lg shadow-[blueviolet]/20"
+              >
+                Accept
+              </button>
+            </div>
           </div>
         </div>
       )}
-
-      {/* Attend Video Call Banner — shown to members only when host has an active call */}
-      {!isHost && isHostCallActive && !isInGroupCall && (
-        <div className="mx-4 mt-3 p-4 rounded-2xl bg-gradient-to-r from-[blueviolet]/15 to-purple-900/10 border border-[blueviolet]/30 flex items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2 duration-300 shadow-lg shadow-[blueviolet]/10">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[blueviolet]/25 flex items-center justify-center shrink-0">
-              <Video size={20} className="text-[blueviolet] animate-pulse" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-zinc-100">Host started a video call</p>
-              <p className="text-xs text-zinc-400 mt-0.5">Join the group video session?</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <button
-              onClick={() => {
-                setIsHostCallActive(false);
-                dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }));
-              }}
-              className="px-3 py-1.5 rounded-xl bg-zinc-800 text-zinc-300 text-xs font-semibold hover:bg-zinc-700 border border-white/10 transition-colors"
-            >
-              Decline
-            </button>
-            <button
-              onClick={() => dispatch(startGroupCall(roomId))}
-              className="px-4 py-1.5 rounded-xl bg-[blueviolet] text-white text-xs font-semibold hover:bg-[blueviolet]/85 transition-colors shadow-lg shadow-[blueviolet]/20"
-            >
-              Join Call
-            </button>
           </div>
         </div>
       )}
@@ -1212,6 +1246,9 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                                     duration: (todo.estimatedTime || 25) * 60,
                                     phase: 'FOCUS',
                                     isSmartBreaksEnabled: true,
+                                    conversationId: roomId,
+                                    conversationType: 'ROOM',
+                                    isRoomHost: true
                                   }));
                                   socketService.emit('room:pomodoro:start', {
                                     roomId,

@@ -199,6 +199,16 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
     };
   }, []);
 
+  const { isInGroupCall } = useAppSelector(state => state.studyRoom);
+
+  const handleStartBuddyVideoCall = () => {
+    if (isInGroupCall) {
+      toast.error("You cannot start a 1:1 call while inside a group video call. Please leave the group call first.");
+      return;
+    }
+    dispatch(setActiveCall({ conversationId, isCaller: true }));
+  };
+
   const conversation = conversations.find(c => c.id === conversationId);
   const otherUser = conversation?.otherUser;
   const isOnline = otherUser ? onlineUsers[otherUser.userId] : false;
@@ -530,7 +540,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
             <div className="hidden md:flex items-center space-x-2 lg:space-x-4">
               <button
                 title="Start Video Call"
-                onClick={() => dispatch(setActiveCall({ conversationId, isCaller: true }))}
+                onClick={handleStartBuddyVideoCall}
                 className="p-2 text-gray-500 hover:text-indigo-600 transition-colors"
               >
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -589,7 +599,7 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
                     <button
                       onClick={() => {
                         setIsActionsOpen(false);
-                        dispatch(setActiveCall({ conversationId, isCaller: true }));
+                        handleStartBuddyVideoCall();
                       }}
                       className="w-full flex items-center px-4 py-2.5 text-sm text-zinc-300 hover:bg-white/10 transition-colors gap-3"
                     >

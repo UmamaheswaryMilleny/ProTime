@@ -49,6 +49,11 @@ export const GroupVideoCall: React.FC = () => {
     return p ? p.name : id.slice(0, 6);
   }, [activeRoom]);
 
+  const getParticipantNameRef = useRef(getParticipantName);
+  useEffect(() => {
+    getParticipantNameRef.current = getParticipantName;
+  }, [getParticipantName]);
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -91,7 +96,7 @@ export const GroupVideoCall: React.FC = () => {
         const existing = next.get(remoteUserId);
         next.set(remoteUserId, {
           userId: remoteUserId,
-          userName: getParticipantName(remoteUserId),
+          userName: existing?.userName ?? remoteUserId.slice(0, 6),
           stream,
           isVideoOn: existing?.isVideoOn ?? true,
           isAudioOn: existing?.isAudioOn ?? true,
@@ -110,7 +115,7 @@ export const GroupVideoCall: React.FC = () => {
 
     peerConnections.current.set(remoteUserId, pc);
     return pc;
-  }, [groupCallRoomId, getParticipantName]);
+  }, [groupCallRoomId]);
 
   // ── Flush any pending ICE candidates ───────────────────────────────────────
   const flushPendingCandidates = useCallback(async (remoteUserId: string) => {
@@ -197,7 +202,7 @@ export const GroupVideoCall: React.FC = () => {
           if (!next.has(remoteUserId)) {
             next.set(remoteUserId, {
               userId: remoteUserId,
-              userName: getParticipantName(remoteUserId),
+              userName: getParticipantNameRef.current(remoteUserId),
               stream: null,
               isVideoOn: true,
               isAudioOn: true,
@@ -228,7 +233,7 @@ export const GroupVideoCall: React.FC = () => {
         if (!next.has(data.userId)) {
           next.set(data.userId, {
             userId: data.userId,
-            userName: getParticipantName(data.userId),
+            userName: getParticipantNameRef.current(data.userId),
             stream: null,
             isVideoOn: true,
             isAudioOn: true,
@@ -260,7 +265,7 @@ export const GroupVideoCall: React.FC = () => {
         if (!next.has(data.senderId)) {
           next.set(data.senderId, {
             userId: data.senderId,
-            userName: getParticipantName(data.senderId),
+            userName: getParticipantNameRef.current(data.senderId),
             stream: null,
             isVideoOn: true,
             isAudioOn: true,
@@ -367,7 +372,7 @@ export const GroupVideoCall: React.FC = () => {
       socketService.off('room:webrtc:camera-toggle', handleCameraToggle);
       socketService.off('room:webrtc:mic-toggle', handleMicToggle);
     };
-  }, [groupCallRoomId, localStream, user?.id, dispatch, createPeerConnection, flushPendingCandidates, getParticipantName]);
+  }, [groupCallRoomId, localStream, user?.id, dispatch, createPeerConnection, flushPendingCandidates]);
 
   // ── Controls ────────────────────────────────────────────────────────────────
   const toggleAudio = () => {
@@ -498,7 +503,7 @@ export const GroupVideoCall: React.FC = () => {
               ) : (
                 <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 gap-3">
                   <div className="w-16 h-16 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xl font-bold text-zinc-300">
-                    {peer.userName.substring(0, 2).toUpperCase()}
+                    {(peer.userName || '').substring(0, 2).toUpperCase()}
                   </div>
                   <span className="text-xs text-zinc-500">Connecting…</span>
                 </div>
@@ -506,12 +511,12 @@ export const GroupVideoCall: React.FC = () => {
               {peer.stream && !peer.isVideoOn && (
                 <div className="absolute inset-0 flex items-center justify-center bg-zinc-900">
                   <div className="w-16 h-16 rounded-full bg-zinc-800 border border-white/10 flex items-center justify-center text-xl font-bold text-zinc-300">
-                    {peer.userName.substring(0, 2).toUpperCase()}
+                    {(peer.userName || '').substring(0, 2).toUpperCase()}
                   </div>
                 </div>
               )}
               <div className="absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 bg-black/60 backdrop-blur-sm rounded-lg">
-                <span className="text-xs font-medium text-white truncate max-w-[100px]">{peer.userName}</span>
+                <span className="text-xs font-medium text-white truncate max-w-[100px]">{peer.userName || ''}</span>
                 {!peer.isAudioOn && <MicOff size={10} className="text-red-400" />}
               </div>
             </div>
@@ -565,8 +570,13 @@ const VideoTile: React.FC<{ stream: MediaStream }> = ({ stream }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (videoRef.current && videoRef.current.srcObject !== stream) {
-      videoRef.current.srcObject = stream;
+    if (videoRef.current) {
+      if (videoRef.current.srcObject !== stream) {
+        videoRef.current.srcObject = stream;
+      }
+      videoRef.current.play().catch((err) => {
+        console.warn('[WebRTC] Autoplay stream failed or paused:', err);
+      });
     }
   }, [stream]);
 
