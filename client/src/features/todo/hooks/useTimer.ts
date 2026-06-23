@@ -1,279 +1,185 @@
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import toast from 'react-hot-toast';
+import { useCallback, useMemo } from 'react';
+import { useAppDispatch, useAppSelector } from '../../../store/hooks';
+import {
+    startPomodoro,
+    pausePomodoro,
+    resumePomodoro,
+    resetTimer,
+    setPhase,
+    completeActivePomodoro
+} from '../store/pomodoroSlice';
 import type { TodoItem } from '../types/todo.types';
+import type { TimerPhase } from '../store/pomodoroSlice';
+import { socketService } from '../../../shared/services/socketService';
 
 interface UseTimerProps {
     task?: TodoItem | null;
-    timerKey?: string; // Key to persist state
+    timerKey?: string;
     onComplete?: (totalPausedSeconds: number) => void;
 }
 
-export type TimerPhase = 'FOCUS' | 'BREAK';
-export interface PhaseConfig {
-    phase: TimerPhase;
-    duration: number; // in seconds
-}
+export const getPhaseSequence = (task: TodoItem | null, isSmartBreaksEnabled: boolean) => {
+    if (!task) return [{ phase: 'FOCUS' as TimerPhase, duration: 25 * 60 }];
 
-export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
+    if (!isSmartBreaksEnabled || task.priority === 'LOW') {
+        const focusMinutes = task.estimatedTime;
+        return [{ phase: 'FOCUS' as TimerPhase, duration: focusMinutes * 60 }];
+    }
 
-    const lastProcessedPhaseIndex = useRef<number | null>(null);
+    if (task.priority === 'MEDIUM') {
+        const focusDuration = task.estimatedTime * 60;
+        const breakDuration = Math.round(task.estimatedTime * 0.2) * 60;
+        return [
+            { phase: 'FOCUS' as TimerPhase, duration: focusDuration },
+            { phase: 'BREAK' as TimerPhase, duration: breakDuration }
+        ];
+    }
 
-    const [isSmartBreaksEnabled] = useState<boolean>(() => {
-        if (!timerKey) return task?.smartBreaks ?? true;
-        const saved = localStorage.getItem(`${timerKey}_smartBreaks`);
-        return saved ? saved === 'true' : (task?.smartBreaks ?? true);
-    });
+    if (task.priority === 'HIGH') {
+        const sequence: { phase: TimerPhase; duration: number }[] = [];
+        let remainingMinutes = task.estimatedTime;
 
-    const phaseSequence = useMemo<PhaseConfig[]>(() => {
-        if (!task) return [{ phase: 'FOCUS', duration: 25 * 60 }];
-
-        // If smart breaks are disabled, or priority is LOW, it's a single continuous focus block
-        if (!isSmartBreaksEnabled || (task && task.priority === 'LOW')) {
-            const focusMinutes = task ? task.estimatedTime : 25; // Use 25 only as a very last resort if task is null
-            return [{ phase: 'FOCUS', duration: focusMinutes * 60 }];
-        }
-
-        if (task.priority === 'MEDIUM') {
-            const focusDuration = task.estimatedTime * 60;
-            const breakDuration = Math.round(task.estimatedTime * 0.2) * 60;
-            return [
-                { phase: 'FOCUS', duration: focusDuration },
-                { phase: 'BREAK', duration: breakDuration }
-            ];
-        }
-
-        if (task.priority === 'HIGH') {
-            const sequence: PhaseConfig[] = [];
-            let remainingMinutes = task.estimatedTime;
-
-            // Split High priority into 50m focus / 10m break cycles
-            while (remainingMinutes > 0) {
-                if (remainingMinutes >= 60) {
-                    sequence.push({ phase: 'FOCUS', duration: 50 * 60 });
-                    sequence.push({ phase: 'BREAK', duration: 10 * 60 });
-                    remainingMinutes -= 60;
-                } else {
-                    sequence.push({ phase: 'FOCUS', duration: remainingMinutes * 60 });
-                    remainingMinutes = 0;
-                }
+        while (remainingMinutes > 0) {
+            if (remainingMinutes >= 60) {
+                sequence.push({ phase: 'FOCUS' as TimerPhase, duration: 50 * 60 });
+                sequence.push({ phase: 'BREAK' as TimerPhase, duration: 10 * 60 });
+                remainingMinutes -= 60;
+            } else {
+                sequence.push({ phase: 'FOCUS' as TimerPhase, duration: remainingMinutes * 60 });
+                remainingMinutes = 0;
             }
-            return sequence;
         }
+        return sequence;
+    }
 
-        return [{ phase: 'FOCUS', duration: task.estimatedTime * 60 }];
+    return [{ phase: 'FOCUS' as TimerPhase, duration: task.estimatedTime * 60 }];
+};
+
+export const useTimer = ({ task }: UseTimerProps) => {
+    const dispatch = useAppDispatch();
+    const reduxPomodoro = useAppSelector((state) => state.pomodoro);
+
+    const isCurrentTask = reduxPomodoro.activeTask?.id === task?.id;
+
+    const isSmartBreaksEnabled = isCurrentTask
+        ? reduxPomodoro.isSmartBreaksEnabled
+        : (task?.smartBreaks ?? true);
+
+    const phaseSequence = useMemo(() => {
+        return getPhaseSequence(task || null, isSmartBreaksEnabled);
     }, [task, isSmartBreaksEnabled]);
 
-    // 2. Initialize State
-    const [currentPhaseIndex, setCurrentPhaseIndex] = useState<number>(() => {
-        if (!timerKey) return 0;
-        const saved = localStorage.getItem(`${timerKey}_phaseIndex`);
-        return saved ? parseInt(saved, 10) : 0;
-    });
+    const currentPhaseIndex = isCurrentTask ? reduxPomodoro.currentPhaseIndex : 0;
+    const isRunning = isCurrentTask ? reduxPomodoro.isRunning : false;
+    const timeRemaining = isCurrentTask ? reduxPomodoro.timeRemaining : phaseSequence[0].duration;
+    const totalPausedSeconds = isCurrentTask ? reduxPomodoro.totalPausedSeconds : 0;
+    const currentPhase = isCurrentTask ? reduxPomodoro.phase : 'FOCUS';
+    const initialTime = isCurrentTask ? reduxPomodoro.initialTime : phaseSequence[0].duration;
 
-    const [timeRemaining, setTimeRemaining] = useState<number>(() => {
-        if (timerKey) {
-            const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
-            if (savedTime) return parseInt(savedTime, 10);
-        }
-        return phaseSequence[0].duration;
-    });
+    const start = useCallback((targetTask?: TodoItem) => {
+        const taskToStart = targetTask || task;
+        if (taskToStart) {
+            // Check if this task is already active and paused, then resume it
+            if (reduxPomodoro.activeTask?.id === taskToStart.id && !reduxPomodoro.isRunning) {
+                dispatch(resumePomodoro());
+                const ownConversationId = reduxPomodoro.ownConversationId;
+                const conversationType = reduxPomodoro.conversationType;
 
-    const [isRunning, setIsRunning] = useState<boolean>(() => {
-        if (!timerKey) return false;
-        return localStorage.getItem(`${timerKey}_isRunning`) === 'true';
-    });
-
-    const [totalPausedSeconds, setTotalPausedSeconds] = useState<number>(() => {
-        if (!timerKey) return 0;
-        const saved = localStorage.getItem(`${timerKey}_totalPausedSeconds`);
-        return saved ? parseInt(saved, 10) : 0;
-    });
-
-    // 3. Sync state when task/timerKey changes
-    useEffect(() => {
-        lastProcessedPhaseIndex.current = null;
-        // If we have a timer key but NO task yet, we are likely waiting for data during refresh.
-        // DO NOT reset state to 0/false here, otherwise the timer stops on refresh.
-        if (!timerKey) {
-            queueMicrotask(() => {
-                setCurrentPhaseIndex(0);
-                setTimeRemaining(phaseSequence[0].duration);
-                setIsRunning(false);
-                setTotalPausedSeconds(0);
-            });
-            return;
-        }
-
-        // If task is still null, but timerKey exists, we wait for the task to load
-        if (!task) return;
-
-        const savedIndex = localStorage.getItem(`${timerKey}_phaseIndex`);
-        const savedTime = localStorage.getItem(`${timerKey}_timeRemaining`);
-        const savedPaused = localStorage.getItem(`${timerKey}_totalPausedSeconds`);
-        const savedIsRunning = localStorage.getItem(`${timerKey}_isRunning`) === 'true';
-        const lastUpdated = localStorage.getItem(`${timerKey}_lastUpdated`);
-
-        const index = savedIndex ? parseInt(savedIndex, 10) : 0;
-        const safeIndex = index < phaseSequence.length ? index : 0;
-
-        queueMicrotask(() => {
-            setCurrentPhaseIndex(safeIndex);
-
-            let time = savedTime && index === safeIndex
-                ? parseInt(savedTime, 10)
-                : phaseSequence[safeIndex].duration;
-
-            // ELAPSED TIME RECOVERY: If it was running, subtract the time passed since last update
-            if (savedIsRunning && lastUpdated) {
-                const elapsedSeconds = Math.floor((Date.now() - parseInt(lastUpdated, 10)) / 1000);
-                time = Math.max(0, time - elapsedSeconds);
-
-                // If time ran out during refresh, it will be handled by the main timer effect
-            }
-
-            setTimeRemaining(time);
-            setIsRunning(savedIsRunning);
-            setTotalPausedSeconds(savedPaused ? parseInt(savedPaused, 10) : 0);
-        });
-
-    }, [timerKey, task, phaseSequence]);
-
-    // 4. Save to Local Storage
-    useEffect(() => {
-        if (timerKey) {
-            localStorage.setItem(`${timerKey}_phaseIndex`, currentPhaseIndex.toString());
-            localStorage.setItem(`${timerKey}_timeRemaining`, timeRemaining.toString());
-            localStorage.setItem(`${timerKey}_isRunning`, isRunning.toString());
-            localStorage.setItem(`${timerKey}_smartBreaks`, isSmartBreaksEnabled.toString());
-            localStorage.setItem(`${timerKey}_totalPausedSeconds`, totalPausedSeconds.toString());
-            localStorage.setItem(`${timerKey}_lastUpdated`, Date.now().toString());
-        }
-    }, [currentPhaseIndex, timeRemaining, isRunning, isSmartBreaksEnabled, totalPausedSeconds, timerKey]);
-
-    const playSoftBeep = useCallback(() => {
-        try {
-            const AudioCtx =
-                window.AudioContext ||
-                (window as typeof window & { webkitAudioContext?: typeof AudioContext })
-                    .webkitAudioContext;
-
-            if (!AudioCtx) return;
-
-            const ctx = new AudioCtx();
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, ctx.currentTime);
-
-            gain.gain.setValueAtTime(0, ctx.currentTime);
-            gain.gain.linearRampToValueAtTime(0.5, ctx.currentTime + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
-
-            osc.start(ctx.currentTime);
-            osc.stop(ctx.currentTime + 0.8);
-        } catch {
-            // silently fail
-        }
-    }, []);
-
-    // 5. Timer Interval & Phase Transitions
-    useEffect(() => {
-        let interval: number;
-
-        if (isRunning && timeRemaining > 0) {
-            interval = window.setInterval(() => {
-                setTimeRemaining((prev) => prev - 1);
-            }, 1000);
-        } else if (!isRunning && timeRemaining > 0 && timeRemaining < phaseSequence[currentPhaseIndex].duration) {
-            // Timer is PAUSED and has started (not at initial state)
-            interval = window.setInterval(() => {
-                setTotalPausedSeconds((prev) => {
-                    const next = prev + 1;
-                    if (next >= 900) { // 15 minutes
-                        reset();
-                        toast.error("Maximum pause time reached. Pomodoro session has been reset.", {
-                            id: 'pause-limit-toast',
-                            duration: 5000
-                        });
-                        return 0;
+                if (ownConversationId) {
+                    if (conversationType === 'ROOM') {
+                        socketService.emit('room:pomodoro:resume', { roomId: ownConversationId });
+                    } else if (conversationType === 'DIRECT') {
+                        socketService.emit('pomodoro:resume', { conversationId: ownConversationId });
                     }
-                    return next;
-                });
-            }, 1000);
-        } else if (isRunning && timeRemaining === 0) {
-            if (lastProcessedPhaseIndex.current === currentPhaseIndex) {
+                }
                 return;
             }
-            lastProcessedPhaseIndex.current = currentPhaseIndex;
 
-            queueMicrotask(() => setIsRunning(false));
+            const sequence = getPhaseSequence(taskToStart, isSmartBreaksEnabled);
+            const currentSeq = sequence[0];
+            
+            dispatch(startPomodoro({
+                task: taskToStart,
+                duration: currentSeq.duration,
+                phase: currentSeq.phase,
+                isSmartBreaksEnabled,
+                currentPhaseIndex: 0
+            }));
 
-            const completingPhase = phaseSequence[currentPhaseIndex].phase;
+            const ownConversationId = reduxPomodoro.ownConversationId;
+            const conversationType = reduxPomodoro.conversationType;
 
-            if (completingPhase === 'BREAK') {
-                playSoftBeep();
-                toast('Ready to continue?', { icon: '🔄', duration: 4000 });
-            } else if (
-                completingPhase === 'FOCUS' &&
-                currentPhaseIndex < phaseSequence.length - 1
-            ) {
-                playSoftBeep();
-                toast.success('Break Time! Relax your eyes.', { duration: 4000 });
-            }
-
-            const nextIndex = currentPhaseIndex + 1;
-
-            if (nextIndex < phaseSequence.length) {
-                queueMicrotask(() => {
-                    setCurrentPhaseIndex(nextIndex);
-                    setTimeRemaining(phaseSequence[nextIndex].duration);
-                });
-
-                setTimeout(() => setIsRunning(true), 200);
-            } else {
-                onComplete?.(totalPausedSeconds);
+            if (ownConversationId) {
+                if (conversationType === 'ROOM') {
+                    socketService.emit('room:pomodoro:start', {
+                        roomId: ownConversationId,
+                        task: taskToStart,
+                        duration: currentSeq.duration,
+                        phase: currentSeq.phase,
+                        startedByName: 'Host'
+                    });
+                } else if (conversationType === 'DIRECT') {
+                    socketService.emit('pomodoro:start', {
+                        conversationId: ownConversationId,
+                        task: taskToStart,
+                        duration: currentSeq.duration
+                    });
+                }
             }
         }
-        return () => window.clearInterval(interval);
-    }, [isRunning, timeRemaining, currentPhaseIndex, phaseSequence, onComplete, playSoftBeep]);
+    }, [task, isSmartBreaksEnabled, dispatch, reduxPomodoro.ownConversationId, reduxPomodoro.conversationType, reduxPomodoro.activeTask, reduxPomodoro.isRunning]);
 
-    // 6. Controls
-    const start = useCallback(() => setIsRunning(true), []);
-    const pause = useCallback(() => setIsRunning(false), []);
+    const pause = useCallback(() => {
+        dispatch(pausePomodoro());
+        const ownConversationId = reduxPomodoro.ownConversationId;
+        const conversationType = reduxPomodoro.conversationType;
+
+        if (ownConversationId) {
+            if (conversationType === 'ROOM') {
+                socketService.emit('room:pomodoro:pause', { roomId: ownConversationId });
+            } else if (conversationType === 'DIRECT') {
+                socketService.emit('pomodoro:pause', { conversationId: ownConversationId });
+            }
+        }
+    }, [dispatch, reduxPomodoro.ownConversationId, reduxPomodoro.conversationType]);
+
+    const resume = useCallback(() => {
+        dispatch(resumePomodoro());
+        const ownConversationId = reduxPomodoro.ownConversationId;
+        const conversationType = reduxPomodoro.conversationType;
+
+        if (ownConversationId) {
+            if (conversationType === 'ROOM') {
+                socketService.emit('room:pomodoro:resume', { roomId: ownConversationId });
+            } else if (conversationType === 'DIRECT') {
+                socketService.emit('pomodoro:resume', { conversationId: ownConversationId });
+            }
+        }
+    }, [dispatch, reduxPomodoro.ownConversationId, reduxPomodoro.conversationType]);
+
     const reset = useCallback(() => {
-        setIsRunning(false);
-        setCurrentPhaseIndex(0);
-        setTimeRemaining(phaseSequence[0].duration);
-        lastProcessedPhaseIndex.current = null;
-        if (timerKey) {
-            localStorage.removeItem(`${timerKey}_phaseIndex`);
-            localStorage.removeItem(`${timerKey}_timeRemaining`);
-            localStorage.removeItem(`${timerKey}_isRunning`);
-        }
-    }, [phaseSequence, timerKey]);
+        dispatch(resetTimer());
+    }, [dispatch]);
 
     const skipBreak = useCallback(() => {
-        if (phaseSequence[currentPhaseIndex]?.phase === 'BREAK') {
-            setIsRunning(false);
-            lastProcessedPhaseIndex.current = null;
-            setTimeRemaining(0); // Trigger transition on next render
-            setTimeout(() => setIsRunning(true), 100);
+        const nextIndex = currentPhaseIndex + 1;
+        if (nextIndex < phaseSequence.length) {
+            const nextPhase = phaseSequence[nextIndex];
+            dispatch(setPhase({
+                phase: nextPhase.phase,
+                duration: nextPhase.duration,
+                currentPhaseIndex: nextIndex
+            }));
+        } else {
+            dispatch(completeActivePomodoro() as any);
         }
-    }, [phaseSequence, currentPhaseIndex]);
-
+    }, [phaseSequence, currentPhaseIndex, dispatch]);
 
     const formatTime = (totalSeconds: number) => {
         const minutes = Math.floor(totalSeconds / 60);
         const seconds = totalSeconds % 60;
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     };
-
-    const currentPhase = phaseSequence[currentPhaseIndex]?.phase || 'FOCUS';
-    const initialTime = phaseSequence[currentPhaseIndex]?.duration || 0;
 
     return {
         timeRemaining,
@@ -285,6 +191,7 @@ export const useTimer = ({ task, timerKey, onComplete }: UseTimerProps) => {
         totalPausedSeconds,
         start,
         pause,
+        resume,
         reset,
         skipBreak
     };

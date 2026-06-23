@@ -30,6 +30,7 @@ interface PomodoroState {
     conversationType: 'DIRECT' | 'ROOM' | null;
     isRoomHost: boolean;
     lastUpdatedAt: number;
+    currentPhaseIndex: number;
 }
 
 const initialState: PomodoroState = {
@@ -54,6 +55,7 @@ const initialState: PomodoroState = {
     conversationType: null,
     isRoomHost: false,
     lastUpdatedAt: 0,
+    currentPhaseIndex: 0,
 };
 const loadState = (): PomodoroState => {
     try {
@@ -164,6 +166,7 @@ const pomodoroSlice = createSlice({
             conversationId?: string;
             conversationType?: 'DIRECT' | 'ROOM' | null;
             isRoomHost?: boolean;
+            currentPhaseIndex?: number;
         }>) => {
             state.activeTask = action.payload.task;
             state.timeRemaining = action.payload.duration;
@@ -176,6 +179,7 @@ const pomodoroSlice = createSlice({
             state.ownConversationId = action.payload.conversationId || null;
             state.conversationType = action.payload.conversationType || (action.payload.conversationId ? 'DIRECT' : null);
             state.isRoomHost = action.payload.isRoomHost || false;
+            state.currentPhaseIndex = action.payload.currentPhaseIndex || 0;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -229,10 +233,13 @@ const pomodoroSlice = createSlice({
             state.isMinimized = action.payload;
             saveState(state);
         },
-        setPhase: (state, action: PayloadAction<{ phase: TimerPhase; duration: number }>) => {
+        setPhase: (state, action: PayloadAction<{ phase: TimerPhase; duration: number; currentPhaseIndex?: number }>) => {
             state.phase = action.payload.phase;
             state.timeRemaining = action.payload.duration;
             state.initialTime = action.payload.duration;
+            if (action.payload.currentPhaseIndex !== undefined) {
+                state.currentPhaseIndex = action.payload.currentPhaseIndex;
+            }
             state.totalPausedSeconds = 0;
             state.lastUpdatedAt = Date.now();
             saveState(state);
@@ -246,6 +253,7 @@ const pomodoroSlice = createSlice({
             state.ownConversationId = null;
             state.conversationType = null;
             state.isRoomHost = false;
+            state.currentPhaseIndex = 0;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -313,6 +321,7 @@ const pomodoroSlice = createSlice({
             state.ownConversationId = null;
             state.conversationType = null;
             state.isRoomHost = false;
+            state.currentPhaseIndex = 0;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         });

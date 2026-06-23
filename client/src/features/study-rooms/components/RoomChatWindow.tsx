@@ -17,6 +17,7 @@ import { buddyService } from '../../buddy-match/services/buddy.service';
 import type { BuddyConnection } from '../../buddy-match/types/buddy.types';
 import { ShareTodoModal } from '../../chat/components/ShareTodoModal';
 import type { TodoItem } from '../../todo/types/todo.types';
+import { SharedTodoCard } from '../../todo/components/SharedTodoCard';
 
 interface RoomChatWindowProps {
   roomId: string;
@@ -800,6 +801,30 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     setIsShareTodoOpen(false);
   };
 
+  const handleStartRoomPomodoroForSharedTask = (todo: TodoItem) => {
+    if (activeTask?.id && isRunning && activeTask.id !== todo.id) {
+      toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
+      return;
+    }
+    dispatch(startPomodoro({
+      task: todo,
+      duration: (todo.estimatedTime || 25) * 60,
+      phase: 'FOCUS',
+      isSmartBreaksEnabled: true,
+      conversationId: roomId,
+      conversationType: 'ROOM',
+      isRoomHost: true
+    }));
+    socketService.emit('room:pomodoro:start', {
+      roomId,
+      task: todo,
+      duration: (todo.estimatedTime || 25) * 60,
+      phase: 'FOCUS',
+      startedByName: user?.fullName || 'Host'
+    });
+    toast.success('Group Pomodoro started for shared task!');
+  };
+
   const formatTime = (seconds: number) => {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -1196,97 +1221,23 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                     <div className={`text-xs text-zinc-400 mb-1 px-1 ${isMe ? 'text-right' : 'text-left'}`}>
                       {isMe ? 'You shared a To-Do list:' : `${msg.senderName || 'Unknown'} shared a To-Do list:`}
                     </div>
-                    {todos.map(todo => {
-                      const priorityColor = todo.priority === 'HIGH' ? 'text-red-500 bg-red-500/10 border-red-500/20' : todo.priority === 'MEDIUM' ? 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' : 'text-green-500 bg-green-500/10 border-green-500/20';
-                      return (
-                        <div key={todo.id} className="bg-zinc-900 border border-white/10 p-4 rounded-2xl flex flex-col gap-3 shadow-lg hover:bg-zinc-800/80 transition-colors w-full text-left">
-                          <div className="flex justify-between items-start gap-4">
-                            <div className="flex-1 min-w-0">
-                              <h4 className="text-sm font-bold text-white truncate">{todo.title}</h4>
-                              {todo.description && <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{todo.description}</p>}
-                            </div>
-                            <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border whitespace-nowrap ${priorityColor}`}>{todo.priority}</span>
-                          </div>
-                          
-                          <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-medium pt-1">
-                            <span>{todo.estimatedTime} Min</span>
-                            <span>{todo.pomodoroEnabled ? 'Pomodoro' : 'Standard'}</span>
-                            <span className="bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20">
-                              {todo.priority === 'HIGH' ? '5XP' : todo.priority === 'MEDIUM' ? '3XP' : '2XP'}
-                            </span>
-                          </div>
-
-                          <div className="border-t border-white/5 pt-3 flex items-center justify-end gap-2">
-                            {!isMe && (
-                              <>
-                                {acceptedTaskIds.includes(todo.id) ? (
-                                  <span className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-green-500/10 text-green-400 text-xs font-semibold border border-green-500/20">
-                                    <Check size={12} />
-                                    Accepted
-                                  </span>
-                                ) : ignoredTaskIds.includes(todo.id) ? (
-                                  <span className="text-[10px] text-zinc-500 font-medium italic px-2">Ignored</span>
-                                ) : (
-                                  <>
-                                    <button
-                                      onClick={() => handleIgnoreSharedTask(todo.id)}
-                                      className="py-2 px-3 rounded-xl bg-zinc-800 hover:bg-zinc-700 border border-white/10 text-zinc-400 hover:text-white font-semibold text-xs transition-colors"
-                                    >
-                                      Ignore
-                                    </button>
-                                    <button
-                                      onClick={() => handleAcceptSharedTask(todo.id, todo.title)}
-                                      className="flex items-center gap-1.5 py-2 px-3 rounded-xl bg-[blueviolet] hover:bg-[blueviolet]/80 text-white font-semibold text-xs transition-all shadow-lg shadow-[blueviolet]/20"
-                                    >
-                                      <Check size={12} />
-                                      Accept
-                                    </button>
-                                  </>
-                                )}
-                              </>
-                            )}
-                            {todo.pomodoroEnabled && isHost && (
-                              <button 
-                                onClick={() => {
-                                  if (activeTask?.id && isRunning && activeTask.id !== todo.id) {
-                                    toast.error(`A Pomodoro is already running for "${activeTask.title}". Stop it to start a new one.`);
-                                    return;
-                                  }
-                                  dispatch(startPomodoro({
-                                    task: todo,
-                                    duration: (todo.estimatedTime || 25) * 60,
-                                    phase: 'FOCUS',
-                                    isSmartBreaksEnabled: true,
-                                    conversationId: roomId,
-                                    conversationType: 'ROOM',
-                                    isRoomHost: true
-                                  }));
-                                  socketService.emit('room:pomodoro:start', {
-                                    roomId,
-                                    task: todo,
-                                    duration: (todo.estimatedTime || 25) * 60,
-                                    phase: 'FOCUS',
-                                    startedByName: user?.fullName || 'Host'
-                                  });
-                                  toast.success('Group Pomodoro started for shared task!');
-                                }}
-                                className={`${
-                                  activeTask?.id === todo.id
-                                    ? (isRunning 
-                                        ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[#22c55e]/20' 
-                                        : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20')
-                                    : 'bg-[blueviolet] hover:bg-[#7c2ae8] text-white shadow-[blueviolet]/20'
-                                } text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg`}
-                              >
-                                {activeTask?.id === todo.id 
-                                  ? (isRunning ? 'Started' : 'Paused') 
-                                  : 'Start Timer'}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                    {todos.map(todo => (
+                      <SharedTodoCard
+                        key={todo.id}
+                        todoId={todo.id}
+                        initialTodo={todo}
+                        type="room"
+                        isMe={isMe}
+                        isHost={isHost}
+                        activeTask={activeTask}
+                        isRunning={isRunning}
+                        acceptedTaskIds={acceptedTaskIds}
+                        ignoredTaskIds={ignoredTaskIds}
+                        handleAcceptSharedTask={handleAcceptSharedTask}
+                        handleIgnoreSharedTask={handleIgnoreSharedTask}
+                        onStartTodoPomodoro={handleStartRoomPomodoroForSharedTask}
+                      />
+                    ))}
                   </div>
                   <span className="text-[10px] text-zinc-600 mt-1 px-1">
                     {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}

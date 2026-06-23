@@ -4,6 +4,7 @@ import type { CustomRequest } from '../../middlewares/auth.middleware';
 export interface ITodoController {
   createTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   getTodos(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
+  getTodoById(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   updateTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   deleteTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;
   completeTodo(req: CustomRequest, res: Response, next: NextFunction): Promise<void>;

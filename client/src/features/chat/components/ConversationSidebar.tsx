@@ -115,7 +115,12 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                    : conv.lastMessageBy === otherUser.userId
                      ? `${otherUser.fullName.split(' ')[0]}: `
                      : 'You: ';
-                 previewText = `${prefix}${conv.lastMessageContent}`;
+                 
+                 let displayContent = conv.lastMessageContent;
+                 if (displayContent.startsWith('[TODO_SHARE_DATA]') && displayContent.endsWith('[/TODO_SHARE_DATA]')) {
+                   displayContent = 'shared a To-Do list';
+                 }
+                 previewText = `${prefix}${displayContent}`;
               } else if (conv.lastMessageBy) {
                  previewText = conv.lastMessageBy === otherUser.userId
                   ? `${otherUser.fullName.split(' ')[0]}: sent a message`

@@ -2,6 +2,7 @@ import React from 'react';
 import { FileText, Download, ExternalLink } from 'lucide-react';
 import type { DirectMessageResponseDTO } from '../api/chatApi';
 import type { TodoItem } from '../../todo/types/todo.types';
+import { SharedTodoCard } from '../../todo/components/SharedTodoCard';
 
 interface MessageBubbleProps {
   message: DirectMessageResponseDTO;
@@ -60,7 +61,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     try {
       const todos = JSON.parse(jsonStr) as TodoItem[];
       return (
-        <div className={`flex flex-col mb-3 ${isOwn ? 'items-end' : 'items-start'}`}>
+        <div className={`flex flex-col mb-3 ${isOwn ? 'items-end' : 'items-start'} w-full`}>
           {!isOwn && showSenderInfo && message.fullName && (
             <span className="text-xs text-zinc-500 mb-1 ml-1">{message.fullName}</span>
           )}
@@ -68,50 +69,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             <div className={`text-xs text-zinc-400 mb-1 px-1 ${isOwn ? 'text-right' : 'text-left'}`}>
               {isOwn ? 'You shared a To-Do list:' : `${message.fullName} shared a To-Do list:`}
             </div>
-            {todos.map(todo => {
-                const priorityColor = todo.priority === 'HIGH' ? 'text-red-500 bg-red-500/10 border-red-500/20' : todo.priority === 'MEDIUM' ? 'text-yellow-500 bg-yellow-500/10 border-yellow-500/20' : 'text-green-500 bg-green-500/10 border-green-500/20';
-                return (
-               <div key={todo.id} className="bg-zinc-900 border border-white/10 p-4 rounded-2xl flex flex-col gap-3 shadow-lg hover:bg-zinc-800/80 transition-colors w-full text-left">
-                  <div className="flex justify-between items-start gap-4">
-                     <div className="flex-1 min-w-0">
-                       <h4 className="text-sm font-bold text-white truncate">{todo.title}</h4>
-                       {todo.description && <p className="text-xs text-zinc-400 mt-1 line-clamp-2">{todo.description}</p>}
-                     </div>
-                     <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded border whitespace-nowrap ${priorityColor}`}>{todo.priority}</span>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-medium pt-1">
-                     <span>{todo.estimatedTime} Min</span>
-                     <span>{todo.pomodoroEnabled ? 'Pomodoro' : 'Standard'}</span>
-                     <span className="bg-yellow-500/10 text-yellow-500 px-1.5 py-0.5 rounded border border-yellow-500/20">
-                         {todo.priority === 'HIGH' ? '5XP' : todo.priority === 'MEDIUM' ? '3XP' : '2XP'}
-                     </span>
-                  </div>
-
-                  {todo.pomodoroEnabled && (
-                     <div className="border-t border-white/5 pt-3 flex justify-end">
-                       {isOwn ? (
-                          <button 
-                            onClick={() => onStartTodoPomodoro && onStartTodoPomodoro(todo)} 
-                            className={`${
-                              activeTaskId === todo.id
-                                ? (isTimerRunning 
-                                    ? 'bg-[#22c55e] hover:bg-[#16a34a] text-white shadow-[#22c55e]/20' 
-                                    : 'bg-amber-500 hover:bg-amber-600 text-white shadow-amber-500/20')
-                                : 'bg-[blueviolet] hover:bg-[#7c2ae8] text-white shadow-[blueviolet]/20'
-                            } text-xs font-semibold px-4 py-2 rounded-xl transition-colors shadow-lg`}
-                          >
-                             {activeTaskId === todo.id 
-                               ? (isTimerRunning ? 'Started' : 'Paused') 
-                               : 'Start Timer'}
-                          </button>
-                       ) : (
-                          <span className="text-[10px] text-zinc-500 font-medium italic mt-1 pb-1">Timer available to owner</span>
-                       )}
-                     </div>
-                  )}
-               </div>
-            )})}
+            {todos.map(todo => (
+              <SharedTodoCard
+                key={todo.id}
+                todoId={todo.id}
+                initialTodo={todo}
+                type="chat"
+                isOwn={isOwn}
+                onStartTodoPomodoro={onStartTodoPomodoro}
+                activeTaskId={activeTaskId}
+                isTimerRunning={isTimerRunning}
+              />
+            ))}
           </div>
           <div className={`flex items-center mt-1 text-[10px] text-zinc-500 space-x-1 px-1 ${isOwn ? 'justify-end' : 'justify-start'}`}>
             <span>{timeString}</span>

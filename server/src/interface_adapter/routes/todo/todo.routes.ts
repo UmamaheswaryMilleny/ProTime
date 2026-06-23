@@ -43,6 +43,12 @@ export class TodoRoutes extends BaseRoute {
       asyncHandler(ctrl.getTodos.bind(ctrl)),
     );
 
+    // GET /api/v1/todos/:todoId
+    this.router.get(
+      ROUTES.TODO.BY_ID,
+      asyncHandler(ctrl.getTodoById.bind(ctrl)),
+    );
+
     // POST /api/v1/todos
     this.router.post(
       ROUTES.TODO.ROOT,

@@ -52,6 +52,7 @@ import type { IGoogleAuthUsecase } from '../../application/usecase/interface/aut
 
 import { CreateTodoUsecase } from '../../application/usecase/implementation/todo/todo.create.usecase';
 import { GetTodosUsecase } from '../../application/usecase/implementation/todo/todos.get.usecase';
+import { GetTodoByIdUsecase } from '../../application/usecase/implementation/todo/get-todo-by-id.usecase';
 import { UpdateTodoUsecase } from '../../application/usecase/implementation/todo/todo.update.usecase';
 import { DeleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.delete.usecase';
 import { CompleteTodoUsecase } from '../../application/usecase/implementation/todo/todo.complete.usecase';
@@ -64,6 +65,7 @@ import { GetProductivityReportUsecase } from '../../application/usecase/implemen
 //todo
 import type { ICreateTodoUsecase } from '../../application/usecase/interface/todo/todo-create.usecase.interface';
 import type { IGetTodosUsecase } from '../../application/usecase/interface/todo/todos-get.usecase.interface';
+import type { IGetTodoByIdUsecase } from '../../application/usecase/interface/todo/get-todo-by-id.usecase.interface';
 import type { IUpdateTodoUsecase } from '../../application/usecase/interface/todo/todo-update.usecase.interface';
 import type { IDeleteTodoUsecase } from '../../application/usecase/interface/todo/todo.delete.usecase.interface';
 import type { ICompleteTodoUsecase } from '../../application/usecase/interface/todo/todo.complete.usecase.interface';
@@ -305,6 +307,10 @@ export class UsecaseRegistry {
 
     container.register<IGetTodosUsecase>('IGetTodosUsecase', {
       useClass: GetTodosUsecase,
+    });
+
+    container.register<IGetTodoByIdUsecase>('IGetTodoByIdUsecase', {
+      useClass: GetTodoByIdUsecase,
     });
 
     container.register<IUpdateTodoUsecase>('IUpdateTodoUsecase', {

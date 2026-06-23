@@ -15,6 +15,18 @@ export const todoService = {
         return response.data.data;
     },
 
+    getTodoById: async (id: string): Promise<TodoItem | null> => {
+        try {
+            const response = await api.get(API_ROUTES.TODO_BY_ID(id));
+            return response.data.data;
+        } catch (error: any) {
+            if (error.response && error.response.status === 404) {
+                return null;
+            }
+            throw error;
+        }
+    },
+
     addTodo: async (dto: CreateTodoDTO): Promise<TodoItem> => {
         const response = await api.post(API_ROUTES.TODO_ROOT, dto);
         return response.data.data;

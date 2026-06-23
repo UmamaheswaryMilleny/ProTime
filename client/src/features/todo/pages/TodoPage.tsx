@@ -13,9 +13,12 @@ import { useTimer } from '../hooks/useTimer';
 
 import { useGamification } from '../../gamification/hooks/useGamification';
 import type { TodoItem } from '../types/todo.types';
-import { useAppSelector } from '../../../store/hooks';
+import { useAppSelector, useAppDispatch } from '../../../store/hooks';
+import { setMinimized, stopPomodoro, dismissCompletedModal } from '../store/pomodoroSlice';
+import { socketService } from '../../../shared/services/socketService';
 
 export const TodoPage: React.FC = () => {
+    const dispatch = useAppDispatch();
     const {
         todos,
         isLoading,
@@ -36,7 +39,6 @@ export const TodoPage: React.FC = () => {
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [editingTodo, setEditingTodo] = useState<TodoItem | null>(null);
     const [todoToDelete, setTodoToDelete] = useState<string | null>(null);
-    const [lastEarnedXp, setLastEarnedXp] = useState<number>(0);
 
     const handleFilterChange = (val: string) => {
         const newFilter =
@@ -48,54 +50,15 @@ export const TodoPage: React.FC = () => {
         setPage(1);
     };
 
-    // Pomodoro State - Persistent
-    const [activeTaskId, setActiveTaskId] = useState<string | null>(() => {
-        return localStorage.getItem('pomodoro_activeTaskId') || null;
-    });
-    const [isPomodoroModalOpen, setIsPomodoroModalOpen] = useState(() => {
-        return localStorage.getItem('pomodoro_isModalOpen') === 'true';
-    });
-    const [isPomodoroMinimized, setIsPomodoroMinimized] = useState(() => {
-        return localStorage.getItem('pomodoro_isMinimized') === 'true';
-    });
-    const [isPomodoroCompletedOpen, setIsPomodoroCompletedOpen] = useState(false);
-
     const reduxPomodoro = useAppSelector((state) => state.pomodoro);
+    const activeTaskId = reduxPomodoro.activeTask?.id || null;
+    const isPomodoroModalOpen = reduxPomodoro.activeTask !== null && !reduxPomodoro.isMinimized;
+    const isPomodoroMinimized = reduxPomodoro.activeTask !== null && reduxPomodoro.isMinimized;
+    const isPomodoroCompletedOpen = reduxPomodoro.showCompletedModal;
 
     const activeTask = React.useMemo(() => {
-        return todos.find(t => t.id === activeTaskId) || null;
-    }, [todos, activeTaskId]);
-
-    // Save UI state to localStorage when it changes
-    React.useEffect(() => {
-        if (activeTaskId) {
-            localStorage.setItem('pomodoro_activeTaskId', activeTaskId);
-            if (activeTask) {
-                localStorage.setItem('pomodoro_activeTaskTitle', activeTask.title);
-            }
-        } else {
-            localStorage.removeItem('pomodoro_activeTaskId');
-            localStorage.removeItem('pomodoro_activeTaskTitle');
-        }
-        localStorage.setItem('pomodoro_isModalOpen', isPomodoroModalOpen.toString());
-        localStorage.setItem('pomodoro_isMinimized', isPomodoroMinimized.toString());
-    }, [activeTaskId, activeTask, isPomodoroModalOpen, isPomodoroMinimized]);
-
-    const handlePomodoroComplete = React.useCallback(async (pausedSeconds: number) => {
-        let earnedXp = 0;
-        if (activeTask && activeTask.status !== 'COMPLETED') {
-            const timeSpent = activeTask.estimatedTime * 60;
-            const result = await toggleTodo(activeTask.id, timeSpent, pausedSeconds);
-            if (result && result.earnedXp !== undefined) {
-                earnedXp = result.earnedXp;
-            }
-        }
-        setLastEarnedXp(earnedXp);
-        refreshGamification();
-        setIsPomodoroModalOpen(false);
-        setIsPomodoroMinimized(false);
-        setIsPomodoroCompletedOpen(true);
-    }, [activeTask, toggleTodo, refreshGamification]);
+        return todos.find(t => t.id === activeTaskId) || reduxPomodoro.activeTask;
+    }, [todos, activeTaskId, reduxPomodoro.activeTask]);
 
     const {
         timeRemaining,
@@ -110,16 +73,12 @@ export const TodoPage: React.FC = () => {
         skipBreak,
         totalPausedSeconds
     } = useTimer({
-        task: activeTask,
-        timerKey: activeTaskId ? `pomodoro_${activeTaskId}` : undefined,
-        onComplete: handlePomodoroComplete
+        task: activeTask
     });
 
     const handleStartTimer = (id: string) => {
         if (activeTaskId === id) {
-            // Re-open modal if clicking started task
-            setIsPomodoroMinimized(false);
-            setIsPomodoroModalOpen(true);
+            dispatch(setMinimized(false));
         } else {
             // Check if another task is already running in Redux (chat/room)
             const isReduxRunning = reduxPomodoro.isRunning && reduxPomodoro.activeTask;
@@ -135,28 +94,10 @@ export const TodoPage: React.FC = () => {
                 return;
             }
 
-            // Check if another task is already running locally in TodoPage
-            if (activeTaskId && isRunning) {
-                const localTitle = activeTask?.title || 'another task';
-                toast.error(`A Pomodoro is already running for "${localTitle}". Stop it to start a new one.`, {
-                    icon: '⏳',
-                    style: {
-                        borderRadius: '10px',
-                        background: '#333',
-                        color: '#fff',
-                    },
-                });
-                return;
-            }
-
             const targetTask = todos.find(t => t.id === id);
             if (targetTask) {
-                localStorage.setItem('pomodoro_activeTaskTitle', targetTask.title);
+                start(targetTask);
             }
-            setActiveTaskId(id);
-            setIsPomodoroMinimized(false);
-            setIsPomodoroModalOpen(true);
-            // It resets automatically via useEffect
         }
     };
 
@@ -174,10 +115,16 @@ export const TodoPage: React.FC = () => {
                     <button
                         onClick={() => {
                             toast.dismiss(t.id);
-                            pause();
-                            setActiveTaskId(null);
-                            setIsPomodoroMinimized(false);
-                            setIsPomodoroModalOpen(false);
+                            dispatch(stopPomodoro());
+                            const ownConversationId = reduxPomodoro.ownConversationId;
+                            const conversationType = reduxPomodoro.conversationType;
+                            if (ownConversationId) {
+                                if (conversationType === 'ROOM') {
+                                    socketService.emit('room:pomodoro:stop', { roomId: ownConversationId });
+                                } else if (conversationType === 'DIRECT') {
+                                    socketService.emit('pomodoro:stop', { conversationId: ownConversationId });
+                                }
+                            }
                         }}
                         className="px-4 py-1.5 text-xs font-semibold bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors shadow-sm cursor-pointer"
                     >
@@ -221,8 +168,7 @@ export const TodoPage: React.FC = () => {
                         onPause={pause}
                         onStop={handleStopTimer}
                         onMaximize={() => {
-                            setIsPomodoroMinimized(false);
-                            setIsPomodoroModalOpen(true);
+                            dispatch(setMinimized(false));
                         }}
                     />
 
@@ -454,10 +400,16 @@ export const TodoPage: React.FC = () => {
                 onConfirm={async () => {
                     if (todoToDelete) {
                         if (activeTaskId === todoToDelete) {
-                            pause();
-                            setActiveTaskId(null);
-                            setIsPomodoroMinimized(false);
-                            setIsPomodoroModalOpen(false);
+                            dispatch(stopPomodoro());
+                            const ownConversationId = reduxPomodoro.ownConversationId;
+                            const conversationType = reduxPomodoro.conversationType;
+                            if (ownConversationId) {
+                                if (conversationType === 'ROOM') {
+                                    socketService.emit('room:pomodoro:stop', { roomId: ownConversationId });
+                                } else if (conversationType === 'DIRECT') {
+                                    socketService.emit('pomodoro:stop', { conversationId: ownConversationId });
+                                }
+                            }
                         }
                         await deleteTodo(todoToDelete);
                         setTodoToDelete(null);
@@ -471,15 +423,16 @@ export const TodoPage: React.FC = () => {
                 task={activeTask}
                 timeRemainingFormatted={timeRemainingFormatted}
                 isRunning={isRunning}
-                onStart={start}
+                onStart={() => {
+                    if (activeTask) start(activeTask);
+                }}
                 onPause={pause}
                 onReset={() => reset()}
                 onMinimize={() => {
-                    setIsPomodoroModalOpen(false);
-                    setIsPomodoroMinimized(true);
+                    dispatch(setMinimized(true));
                 }}
                 onClose={handleStopTimer}
-                progressPercentage={(timeRemaining / initialTime) * 100}
+                progressPercentage={initialTime > 0 ? (timeRemaining / initialTime) * 100 : 100}
                 phase={phase}
                 onSkipBreak={skipBreak}
                 isSmartBreaksEnabled={isSmartBreaksEnabled}
@@ -489,15 +442,10 @@ export const TodoPage: React.FC = () => {
             {/* Pomodoro Completed Success Modal */}
             <PomodoroCompletedModal
                 isOpen={isPomodoroCompletedOpen}
-                task={activeTask}
-                earnedXp={lastEarnedXp}
+                task={reduxPomodoro.lastCompletedTask}
+                earnedXp={reduxPomodoro.earnedXp}
                 onClose={() => {
-                    setIsPomodoroCompletedOpen(false);
-                    setActiveTaskId(null);
-                    if (activeTask) {
-                        localStorage.removeItem(`pomodoro_${activeTask.id}_timeRemaining`);
-                        localStorage.removeItem(`pomodoro_${activeTask.id}_isRunning`);
-                    }
+                    dispatch(dismissCompletedModal());
                 }}
             />
         </div>

@@ -4,6 +4,7 @@ import { inject, injectable } from 'tsyringe';
 import type { ITodoController } from '../../interfaces/todo/todo.controller.interface';
 import type { ICreateTodoUsecase } from '../../../application/usecase/interface/todo/todo-create.usecase.interface';
 import type { IGetTodosUsecase } from '../../../application/usecase/interface/todo/todos-get.usecase.interface';
+import type { IGetTodoByIdUsecase } from '../../../application/usecase/interface/todo/get-todo-by-id.usecase.interface';
 import type { IUpdateTodoUsecase } from '../../../application/usecase/interface/todo/todo-update.usecase.interface';
 import type { IDeleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.delete.usecase.interface';
 import type { ICompleteTodoUsecase } from '../../../application/usecase/interface/todo/todo.complete.usecase.interface';
@@ -23,6 +24,9 @@ export class TodoController implements ITodoController {
 
     @inject('IGetTodosUsecase')
     private readonly getTodosUsecase: IGetTodosUsecase,
+
+    @inject('IGetTodoByIdUsecase')
+    private readonly getTodoByIdUsecase: IGetTodoByIdUsecase,
 
     @inject('IUpdateTodoUsecase')
     private readonly updateTodoUsecase: IUpdateTodoUsecase,
@@ -80,6 +84,25 @@ export class TodoController implements ITodoController {
       const result = await this.getTodosUsecase.execute(req.user.id, filter, page, limit);
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.FETCHED, result);
+    } catch (error: unknown) {
+      next(error);
+    }
+  }
+
+  // ─── Get Todo By Id ───────────────────────────────────────────────────────
+
+  async getTodoById(req: CustomRequest, res: Response, next: NextFunction): Promise<void> {
+    try {
+      if (!req.user) {
+        ResponseHelper.error(res, 'Unauthorized', HTTP_STATUS.UNAUTHORIZED);
+        return;
+      }
+
+      const todoId = req.params.todoId as string;
+
+      const todo = await this.getTodoByIdUsecase.execute(req.user.id, todoId);
+
+      ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.FETCHED, todo);
     } catch (error: unknown) {
       next(error);
     }
