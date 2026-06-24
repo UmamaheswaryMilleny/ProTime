@@ -32,6 +32,9 @@ export class TodoMapper {
       sharedWith: todo.sharedWith,
 
       completedAt: todo.completedAt ? todo.completedAt.toISOString() : null,
+      completionType: todo.completionType,
+      completedWithBuddyName: todo.completedWithBuddyName,
+      completedInRoomName: todo.completedInRoomName,
       createdAt: todo.createdAt.toISOString(),
       updatedAt: todo.updatedAt.toISOString(),
     };

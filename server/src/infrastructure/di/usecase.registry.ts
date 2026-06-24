@@ -245,6 +245,8 @@ import { DeleteExpiredRoomsUsecase } from '../../application/usecase/implementat
 import type { IDeleteExpiredRoomsUsecase } from '../../application/usecase/interface/study-room/delete-expired-rooms.usecase.interface';
 import { CheckCreationLimitUsecase } from '../../application/usecase/implementation/study-room/check-creation-limit.usecase';
 import type { ICheckCreationLimitUsecase } from '../../application/usecase/interface/study-room/check-creation-limit.usecase.interface';
+import { ExpireStudyRoomsUsecase } from '../../application/usecase/implementation/study-room/expire-study-rooms.usecase';
+import type { IExpireStudyRoomsUsecase } from '../../application/usecase/interface/study-room/expire-study-rooms.usecase.interface';
 
 export class UsecaseRegistry {
   static register(): void {
@@ -506,5 +508,6 @@ container.register<IGetReportByIdUsecase> ('IGetReportByIdUsecase',  { useClass:
     container.register<IInviteToRoomUsecase>('IInviteToRoomUsecase', { useClass: InviteToRoomUsecase });
     container.register<IDeleteExpiredRoomsUsecase>('IDeleteExpiredRoomsUsecase', { useClass: DeleteExpiredRoomsUsecase });
     container.register<ICheckCreationLimitUsecase>('ICheckCreationLimitUsecase', { useClass: CheckCreationLimitUsecase });
+    container.register<IExpireStudyRoomsUsecase>('IExpireStudyRoomsUsecase', { useClass: ExpireStudyRoomsUsecase });
   }
 }

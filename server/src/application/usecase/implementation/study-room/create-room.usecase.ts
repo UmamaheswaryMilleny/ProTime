@@ -105,7 +105,8 @@ export class CreateRoomUsecase implements ICreateRoomUsecase {
       participantIds: savedRoom.participantIds,
       createdAt: savedRoom.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: savedRoom.updatedAt?.toISOString() || new Date().toISOString(),
-      sessionStartedAt: savedRoom.sessionStartedAt?.toISOString() || undefined
+      sessionStartedAt: savedRoom.sessionStartedAt?.toISOString() || undefined,
+      sessionExtensionSeconds: savedRoom.sessionExtensionSeconds || 0
     };
   }
 }

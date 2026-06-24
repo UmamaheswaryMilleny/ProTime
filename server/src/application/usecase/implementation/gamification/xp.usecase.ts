@@ -9,7 +9,8 @@ import { GamificationNotFoundError } from '../../../../domain/errors/gamificatio
 import {
   getLevelFromXp,
   getTitleForLevel,
-  BADGE_XP_BONUS,
+  BADGE_XP_BONUS_PREMIUM,
+  BADGE_XP_BONUS_FREE,
   FREE_MAX_LEVEL,
 } from '../../../../domain/enums/gamification.enums';
 import { XpSource } from '../../../../domain/enums/gamification.enums';
@@ -99,7 +100,8 @@ export class AwardXpUsecase implements IAwardXpUsecase {
     // 9. Award badge XP bonuses if any badges earned
     let badgeBonusXp = 0;
     if (newBadges.length > 0) {
-      badgeBonusXp = newBadges.filter((b) => b.xpAwarded).length * BADGE_XP_BONUS;
+      const awardedCount = newBadges.filter((b) => b.xpAwarded).length;
+      badgeBonusXp = awardedCount * (isPremium ? BADGE_XP_BONUS_PREMIUM : BADGE_XP_BONUS_FREE);
 
       if (badgeBonusXp > 0) {
         const withBadgeXp = finalTotalXp + badgeBonusXp;

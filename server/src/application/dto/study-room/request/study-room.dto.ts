@@ -79,6 +79,7 @@ export interface StudyRoomResponseDTO {
   createdAt: string;
   updatedAt: string;
   sessionStartedAt?: string;
+  sessionExtensionSeconds?: number;
 }
 
 export interface RoomJoinRequestResponseDTO {

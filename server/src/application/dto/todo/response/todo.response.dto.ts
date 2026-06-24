@@ -28,6 +28,9 @@ export interface TodoResponseDTO{
     sharedWith:string[];
 
     completedAt:string|null;
+    completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+    completedWithBuddyName?: string | null;
+    completedInRoomName?: string | null;
     createdAt:string;
     updatedAt:string;
 }

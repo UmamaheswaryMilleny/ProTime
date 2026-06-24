@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Download, Lock, Calendar as CalendarIcon, Loader2, ChevronDown } from 'lucide-react';
+import { Download, Lock, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { useAppSelector, useAppDispatch } from '../../../store/hooks';
 import { updateUser } from '../../auth/store/authSlice';
@@ -88,7 +88,6 @@ export const ReportsPage: React.FC = () => {
     const { user }             = useAppSelector(state => state.auth);
     const dispatch             = useAppDispatch();
     const [loading, setLoading]       = useState(true);
-    const [exporting, setExporting]   = useState(false);
     const [filterType, setFilterType] = useState<'overall' | 'date-range'>('overall');
     const [reportData, setReportData] = useState<ProductivityReportData | null>(null);
     const [error, setError]           = useState<string | null>(null);
@@ -175,32 +174,7 @@ export const ReportsPage: React.FC = () => {
     };
 
     // ── Export handlers ───────────────────────────────────────────────────────
-    const handleExportCsv = async () => {
-        if (!isPremium) return;
-        if (exporting) return;
 
-        const toastId = toast.loading('Generating your CSV report…');
-        setExporting(true);
-        try {
-            const r = filterType === 'overall' ? 'all' : 'custom';
-            const m = filterType === 'date-range' ? `${startDate}_${endDate}` : undefined;
-            const blob     = await reportsService.exportReportCsv(r, m);
-            const url      = URL.createObjectURL(blob);
-            const link     = document.createElement('a');
-            link.href      = url;
-            const filenameRange = m ? m : r;
-            link.download  = `protime-report-${filenameRange}-${new Date().toISOString().slice(0, 10)}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            toast.success('CSV downloaded successfully! 🎉', { id: toastId });
-        } catch {
-            toast.error('Export failed. Please try again.', { id: toastId });
-        } finally {
-            setExporting(false);
-        }
-    };
 
     const handleExportPdf = () => {
         if (!isPremium || !reportData) return;
@@ -264,6 +238,30 @@ export const ReportsPage: React.FC = () => {
                 headStyles: { fillColor: [40, 40, 40] }
             });
 
+            // Study Rooms Table
+            if (reportData.rooms && reportData.rooms.length > 0) {
+                doc.setFontSize(14);
+                doc.setTextColor(0);
+                doc.text('Study Room Sessions', 14, (doc as any).lastAutoTable.finalY + 15);
+                
+                const roomData = reportData.rooms.map(r => [
+                    r.name.length > 30 ? r.name.substring(0, 30) + '...' : r.name,
+                    r.role,
+                    `${r.durationMinutes} mins`,
+                    r.status,
+                    r.features.join(', '),
+                    new Date(r.date).toLocaleDateString()
+                ]);
+
+                autoTable(doc, {
+                    startY: (doc as any).lastAutoTable.finalY + 20,
+                    head: [['Room Name', 'Role', 'Duration', 'Status', 'Features', 'Date']],
+                    body: roomData,
+                    theme: 'grid',
+                    headStyles: { fillColor: [13, 148, 136] }
+                });
+            }
+
             const filenameRange = filterType === 'date-range' ? `${startDate}_${endDate}` : 'overall';
             doc.save(`protime-report-${filenameRange}-${new Date().toISOString().slice(0, 10)}.pdf`);
             toast.success('PDF downloaded successfully! 🎉', { id: toastId });
@@ -295,6 +293,7 @@ export const ReportsPage: React.FC = () => {
         name:     b.name,
         icon:     b.icon,
         unlocked: b.unlocked,
+        description: b.description,
     }));
 
     const insights = reportData ? buildInsights(reportData) : [];
@@ -360,20 +359,7 @@ export const ReportsPage: React.FC = () => {
                     {/* Export Buttons — Premium only */}
                     <div className="relative flex items-center gap-2 group w-full md:w-auto justify-end md:justify-start">
                         <button
-                            disabled={!isPremium || exporting}
-                            onClick={handleExportCsv}
-                            className={`flex items-center gap-2 px-3 py-2 bg-white text-black font-semibold rounded-xl text-sm transition-all shadow-lg ${
-                                !isPremium
-                                    ? 'opacity-50 cursor-not-allowed grayscale'
-                                    : 'hover:bg-zinc-200 active:scale-95 shadow-white/10 hover:shadow-white/20'
-                            }`}
-                        >
-                            {exporting ? <Loader2 size={16} className="animate-spin" /> : (isPremium ? <Download size={16} /> : <Lock size={16} />)}
-                            CSV
-                        </button>
-
-                        <button
-                            disabled={!isPremium || exporting}
+                            disabled={!isPremium}
                             onClick={handleExportPdf}
                             className={`flex items-center gap-2 px-3 py-2 bg-[blueviolet] text-white font-semibold rounded-xl text-sm transition-all shadow-lg ${
                                 !isPremium
@@ -382,7 +368,7 @@ export const ReportsPage: React.FC = () => {
                             }`}
                         >
                             {isPremium ? <Download size={16} /> : <Lock size={16} />}
-                            PDF
+                            Export PDF
                         </button>
 
                         {/* Premium Tooltip */}
@@ -390,7 +376,7 @@ export const ReportsPage: React.FC = () => {
                             <div className="absolute top-full mt-2 right-0 w-64 bg-zinc-800 border border-white/10 p-3 rounded-xl shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-30">
                                 <p className="text-sm text-white mb-2 font-medium">Premium Feature</p>
                                 <p className="text-xs text-zinc-400 mb-3">
-                                    Upgrade to Premium to export your reports as CSV or PDF.
+                                    Upgrade to Premium to export your reports as PDF.
                                 </p>
                                 <a href="/dashboard/subscription" className="text-xs font-semibold text-[blueviolet] hover:text-purple-400">
                                     View Plans →
@@ -443,6 +429,7 @@ export const ReportsPage: React.FC = () => {
                         tasksPomodoro={summary!.tasksWithPomodoro}
                         tasksNonPomodoro={summary!.tasksWithoutPomodoro}
                         currentStreak={summary!.currentStreak}
+                        longestStreak={summary!.longestStreak}
                         focusTimeStr={focusStr}
                     />
 
@@ -462,7 +449,7 @@ export const ReportsPage: React.FC = () => {
                         badges={badges}
                     />
 
-                    <ReportTaskTable tasks={tasks} />
+                    <ReportTaskTable tasks={tasks} badges={badges} rooms={reportData.rooms || []} isPremium={isPremium} />
                 </div>
             )}
         </div>

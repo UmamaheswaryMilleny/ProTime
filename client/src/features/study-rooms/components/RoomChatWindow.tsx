@@ -813,7 +813,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       isSmartBreaksEnabled: true,
       conversationId: roomId,
       conversationType: 'ROOM',
-      isRoomHost: true
+      isRoomHost: true,
+      completedInRoomName: activeRoom?.name || null
     }));
     socketService.emit('room:pomodoro:start', {
       roomId,

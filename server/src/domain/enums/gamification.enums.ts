@@ -143,10 +143,9 @@ export const STREAK_BONUS_XP_PREMIUM: Record<number, number> = {
   75: 100,
   100: 200,
 };
-
-// Premium-only badges: bonus only awarded if user is PREMIUM at time of earning.
-export const BADGE_XP_BONUS = 50;
-
+// Badge XP reward amounts
+export const BADGE_XP_BONUS_PREMIUM = 50;
+export const BADGE_XP_BONUS_FREE = 20;
 
 export type XpSource =
   | 'TODO_LOW'

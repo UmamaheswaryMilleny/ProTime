@@ -17,6 +17,7 @@ export class StudyRoomMapper {
       startTime: doc.startTime,
       endTime: doc.endTime,
       sessionStartedAt: doc.sessionStartedAt,
+      sessionExtensionSeconds: doc.sessionExtensionSeconds || 0,
       participantIds: doc.participantIds.map(id => id.toString()),
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,

@@ -13,4 +13,6 @@ export interface IStudyRoomRepository extends IBaseRepository<StudyRoomEntity> {
   findEndedBefore(date: Date): Promise<StudyRoomEntity[]>;
   countCreatedByHostInMonth(hostId: string, startDate: Date, endDate: Date): Promise<number>;
   countJoinedOrHostedInMonth(userId: string, startDate: Date, endDate: Date): Promise<number>;
+  findAllLive(): Promise<StudyRoomEntity[]>;
+  findJoinedOrHostedInRange(userId: string, startDate: Date, endDate: Date): Promise<StudyRoomEntity[]>;
 }

@@ -28,6 +28,7 @@ import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 import { ConversationModel } from './infrastructure/database/models/conversation.model';
 import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
 import { CalendarRoutes } from './interface_adapter/routes/calendar/calendar.routes';
+import type { IStudyRoomRepository } from './domain/repositories/study-room/study-room.repository.interface';
 import { StudyRoomRoutes } from './interface_adapter/routes/study-room/study-room.routes';
 import { startMarkMissedSessionsCron } from './infrastructure/cron/mark-missed-sessions.cron';
 import { startExpireScheduleRequestsCron } from './infrastructure/cron/expire-schedule-requests.cron';
@@ -35,6 +36,7 @@ import { startExpireTodosCron } from './infrastructure/cron/expire-todos.cron';
 import { startSubscriptionNotificationsCron } from './infrastructure/cron/subscription-notifications.cron';
 import { startExpireSubscriptionsCron } from './infrastructure/cron/expire-subscriptions.cron';
 import { startDeleteExpiredRoomsCron } from './infrastructure/cron/delete-expired-rooms.cron';
+import { startExpireStudyRoomsCron } from './infrastructure/cron/expire-study-rooms.cron';
 import { ProBuddyRoutes } from './interface_adapter/routes/probuddy/probuddy.routes';
 import { startUnblockExpiredBlocksCron } from './infrastructure/cron/unblock-expired-blocks.cron';
 
@@ -798,7 +800,21 @@ export class App {
       });
 
       // ─── Study Room Session Extension ─────────────────────────────────────
-      socket.on('room:session:extended', (data: { roomId: string }) => {
+      socket.on('room:session:extended', async (data: { roomId: string }) => {
+        try {
+          const studyRoomRepo = container.resolve<IStudyRoomRepository>('IStudyRoomRepository');
+          const room = await studyRoomRepo.findById(data.roomId);
+          if (room) {
+            const currentExt = room.sessionExtensionSeconds || 0;
+            const updated = await studyRoomRepo.updateById(data.roomId, {
+              sessionExtensionSeconds: currentExt + 30 * 60
+            });
+            logger.info(`[Socket] Database updated sessionExtensionSeconds to ${updated?.sessionExtensionSeconds} for room ${data.roomId}`);
+          }
+        } catch (error) {
+          logger.error(`[Socket] Failed to update session extension for room ${data.roomId}:`, error);
+        }
+
         // Relay extension event to all other members of the room
         socket
           .to(`room:${data.roomId}`)
@@ -839,5 +855,6 @@ export const bootstrap = async (): Promise<void> => {
   startSubscriptionNotificationsCron();
   startExpireSubscriptionsCron(); // Safety net: downgrades missed-webhook expired subscriptions
   startDeleteExpiredRoomsCron(); // Deletes ENDED study rooms after 3 days
+  startExpireStudyRoomsCron(); // Auto-expires active sessions after grace period
   startUnblockExpiredBlocksCron(); // Auto-unblocks users whose 24h temporary block expired
 };

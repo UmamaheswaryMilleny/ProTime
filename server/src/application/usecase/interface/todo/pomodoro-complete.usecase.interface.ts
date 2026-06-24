@@ -4,5 +4,14 @@ import type { TodoResponseDTO } from "../../../dto/todo/response/todo.response.d
 // Pomodoro completes → frontend immediately gets the updated todo
 // → updates the card on screen instantly
 export interface ICompletePomodoroUsecase {
-    execute(userId: string, todoId: string, actualPomodoroTime?: number): Promise<TodoResponseDTO>
+    execute(
+        userId: string, 
+        todoId: string, 
+        actualPomodoroTime?: number,
+        metadata?: {
+            completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+            completedWithBuddyName?: string | null;
+            completedInRoomName?: string | null;
+        }
+    ): Promise<TodoResponseDTO>
 }

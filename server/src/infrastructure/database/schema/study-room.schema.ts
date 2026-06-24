@@ -15,6 +15,7 @@ export const StudyRoomSchema = new Schema(
     startTime: { type: String, default: 'IMMEDIATE' },
     endTime: { type: String },
     sessionStartedAt: { type: Date },
+    sessionExtensionSeconds: { type: Number, default: 0 },
     participantIds: { type: [{ type: Schema.Types.ObjectId, ref: 'User' }], default: [] },
   },
   { timestamps: true }

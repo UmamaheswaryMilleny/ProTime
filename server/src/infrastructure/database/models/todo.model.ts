@@ -26,6 +26,9 @@ export interface TodoDocument extends Document {
   sharedWith: Types.ObjectId[];
   expiryDate?: Date | null;
   completedAt?: Date | null;
+  completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+  completedWithBuddyName?: string | null;
+  completedInRoomName?: string | null;
   createdAt: Date;
   updatedAt: Date;
 }

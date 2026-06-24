@@ -31,6 +31,11 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
     userId: string,
     todoId: string,
     actualPomodoroTime?: number,
+    metadata?: {
+      completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+      completedWithBuddyName?: string | null;
+      completedInRoomName?: string | null;
+    }
   ): Promise<TodoResponseDTO> {
     // 1. Find the todo
     const todo = await this.todoRepository.findById(todoId);
@@ -54,6 +59,9 @@ export class CompletePomodoroUsecase implements ICompletePomodoroUsecase {
     const updated = await this.todoRepository.updateById(todoId, {
       pomodoroCompleted: meetsMinimum,
       actualPomodoroTime: actualPomodoroTime,
+      completionType: metadata?.completionType || 'SOLO',
+      completedWithBuddyName: metadata?.completedWithBuddyName || null,
+      completedInRoomName: metadata?.completedInRoomName || null,
     });
 
     if (!updated) throw new TodoNotFoundError();

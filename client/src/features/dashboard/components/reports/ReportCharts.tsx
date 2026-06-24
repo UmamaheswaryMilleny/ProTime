@@ -12,6 +12,7 @@ import {
     Legend,
     ReferenceLine
 } from 'recharts';
+import { Info, ChevronDown } from 'lucide-react';
 
 interface ReportChartsProps {
     xpData: { date: string; xp: number }[];
@@ -20,6 +21,8 @@ interface ReportChartsProps {
 }
 
 export const ReportCharts: React.FC<ReportChartsProps> = ({ xpData, taskData, heatmapData }) => {
+    const [selectedPeriod, setSelectedPeriod] = React.useState<string>('Current');
+    const [isDropdownOpen, setIsDropdownOpen] = React.useState<boolean>(false);
 
     const CustomTooltip = ({ active, payload, label }: any) => {
         if (active && payload && payload.length) {
@@ -33,6 +36,107 @@ export const ReportCharts: React.FC<ReportChartsProps> = ({ xpData, taskData, he
         }
         return null;
     };
+
+    // Helper to get the year from date string (format is like "Wed, 6/24/2026")
+    const getYear = (dateStr: string): string => {
+        const parts = dateStr.split('/');
+        return parts[parts.length - 1] || '';
+    };
+
+    // Filter heatmapData based on selectedPeriod
+    const filteredHeatmapData = React.useMemo(() => {
+        const currentYear = new Date().getFullYear();
+        let yearToFilter = currentYear;
+        if (selectedPeriod === 'Last Year') {
+            yearToFilter = currentYear - 1;
+        } else if (selectedPeriod === 'Year Before Last') {
+            yearToFilter = currentYear - 2;
+        }
+        const yearStr = yearToFilter.toString();
+        return heatmapData.filter(day => getYear(day.date) === yearStr);
+    }, [heatmapData, selectedPeriod]);
+
+    // Calculate stats based on filtered data
+    const totalPeriodTasks = React.useMemo(() => {
+        return filteredHeatmapData.reduce((sum, day) => sum + day.value, 0);
+    }, [filteredHeatmapData]);
+
+    const activeDays = React.useMemo(() => {
+        return filteredHeatmapData.filter(day => day.value > 0).length;
+    }, [filteredHeatmapData]);
+
+    const maxStreak = React.useMemo(() => {
+        let max = 0;
+        let current = 0;
+        for (const day of filteredHeatmapData) {
+            if (day.value > 0) {
+                current++;
+                if (current > max) max = current;
+            } else {
+                current = 0;
+            }
+        }
+        return max;
+    }, [filteredHeatmapData]);
+
+    // Helper to group heatmapData into 7-row grid columns (Sunday to Saturday)
+    const getGridColumns = (data: typeof heatmapData) => {
+        if (!data || data.length === 0) return [];
+        
+        const weekdayMap: Record<string, number> = {
+            'Sun': 0, 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5, 'Sat': 6
+        };
+        const getDayIndex = (dateStr: string) => {
+            const prefix = dateStr.slice(0, 3);
+            return weekdayMap[prefix] ?? 0;
+        };
+
+        const firstDayOfWeek = getDayIndex(data[0].date);
+        
+        const cols: (typeof heatmapData[0] | null)[][] = [];
+        let currentCol: (typeof heatmapData[0] | null)[] = Array(7).fill(null);
+        
+        let dayIdx = firstDayOfWeek;
+        
+        for (const item of data) {
+            currentCol[dayIdx] = item;
+            dayIdx++;
+            if (dayIdx > 6) {
+                cols.push(currentCol);
+                currentCol = Array(7).fill(null);
+                dayIdx = 0;
+            }
+        }
+        
+        if (dayIdx > 0) {
+            cols.push(currentCol);
+        }
+        
+        return cols;
+    };
+
+    const gridColumns = getGridColumns(filteredHeatmapData);
+    const monthNames = ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    
+    // Align month labels at the bottom of the columns
+    const getColMonthLabels = () => {
+        const renderedMonths = new Set<number>();
+        return gridColumns.map((col) => {
+            for (const day of col) {
+                if (!day) continue;
+                const parts = day.date.split(', ')[1]?.split('/');
+                if (!parts) continue;
+                const monthNum = parseInt(parts[0], 10);
+                if (!renderedMonths.has(monthNum)) {
+                    renderedMonths.add(monthNum);
+                    return monthNames[monthNum] || '';
+                }
+            }
+            return '';
+        });
+    };
+
+    const colMonthLabels = getColMonthLabels();
 
     return (
         <div className="flex flex-col gap-6 mb-8">
@@ -77,36 +181,118 @@ export const ReportCharts: React.FC<ReportChartsProps> = ({ xpData, taskData, he
             </div>
 
             {/* Streak Activity Heatmap */}
-            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm overflow-x-auto custom-scrollbar">
-                <h3 className="text-white font-semibold mb-4">Streak Activity (Last 30 Days)</h3>
-                <div className="flex gap-1 items-end min-w-max">
-                    {heatmapData.map((day, idx) => {
-                        // value is 0-4
-                        let bgClass = "bg-zinc-800"; // 0
-                        if (day.value === 1) bgClass = "bg-[#4a2e85]";
-                        if (day.value === 2) bgClass = "bg-[#6c40cc]";
-                        if (day.value === 3) bgClass = "bg-[#8b5cf6]";
-                        if (day.value === 4) bgClass = "bg-[#a78bfa]";
-
-                        return (
-                            <div key={idx} className="flex flex-col items-center gap-2 group relative">
-                                <div className={`w-4 h-4 rounded-sm ${bgClass} transition-colors hover:ring-2 ring-white/50 cursor-pointer`} />
-                                {/* Simple Tooltip */}
-                                <div className="absolute bottom-6 opacity-0 group-hover:opacity-100 transition-opacity bg-black text-white text-[10px] px-2 py-1 rounded pointer-events-none whitespace-nowrap z-10">
-                                    {day.date}
-                                </div>
+            <div className="bg-zinc-900 border border-white/5 rounded-2xl p-6 shadow-sm overflow-x-auto scrollbar-none">
+                
+                {/* LeetCode Header Design */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 border-b border-white/5 pb-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-white font-bold text-lg">
+                            {totalPeriodTasks}
+                        </span>
+                        <span className="text-zinc-400 text-sm">
+                            tasks completed {selectedPeriod === 'Current' ? 'in the selected period' : `in ${selectedPeriod}`}
+                        </span>
+                        <div className="text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer group relative">
+                            <Info size={14} />
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block bg-zinc-950 text-white text-[10px] p-2 rounded shadow-lg border border-white/10 pointer-events-none whitespace-nowrap z-50">
+                                Counts all completed tasks in this period
                             </div>
-                        )
-                    })}
+                        </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-6 self-end sm:self-auto">
+                        <span className="text-xs text-zinc-400">
+                            Total active days: <span className="text-white font-semibold">{activeDays}</span>
+                        </span>
+                        <span className="text-xs text-zinc-400">
+                            Max streak: <span className="text-white font-semibold">{maxStreak}</span>
+                        </span>
+                        
+                        {/* Year Dropdown */}
+                        <div className="relative">
+                            <button 
+                                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-[#2c2c2c] hover:bg-zinc-800 border border-white/10 rounded-lg text-xs font-medium text-zinc-200 transition-colors cursor-pointer"
+                            >
+                                {selectedPeriod}
+                                <ChevronDown size={12} className="text-zinc-400" />
+                            </button>
+                            
+                            {isDropdownOpen && (
+                                <>
+                                    <div className="fixed inset-0 z-40" onClick={() => setIsDropdownOpen(false)} />
+                                    <div className="absolute right-0 top-full mt-1.5 w-32 bg-[#2c2c2c] border border-white/10 rounded-lg shadow-xl z-50 overflow-hidden py-1 animate-in fade-in slide-in-from-top-1 duration-150">
+                                        {['Current', 'Last Year', 'Year Before Last'].map(p => (
+                                            <button
+                                                key={p}
+                                                onClick={() => {
+                                                    setSelectedPeriod(p);
+                                                    setIsDropdownOpen(false);
+                                                }}
+                                                className="w-full text-left px-4 py-2 text-xs text-zinc-300 hover:bg-zinc-800 hover:text-white flex items-center justify-between transition-colors cursor-pointer"
+                                            >
+                                                {p}
+                                                {selectedPeriod === p && <span className="text-green-400 font-semibold text-[10px]">✓</span>}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
                 </div>
-                <div className="flex items-center gap-2 mt-4 text-xs text-zinc-500">
-                    <span>Less</span>
-                    <div className="w-3 h-3 rounded-sm bg-zinc-800"></div>
-                    <div className="w-3 h-3 rounded-sm bg-[#4a2e85]"></div>
-                    <div className="w-3 h-3 rounded-sm bg-[#6c40cc]"></div>
-                    <div className="w-3 h-3 rounded-sm bg-[#8b5cf6]"></div>
-                    <div className="w-3 h-3 rounded-sm bg-[#a78bfa]"></div>
-                    <span>More</span>
+
+                {/* Contribution Grid */}
+                <div className="flex min-w-max py-2">
+                    <div className="flex gap-[3px]">
+                        {gridColumns.map((col, colIdx) => {
+                            const isNewMonth = colIdx > 0 && colMonthLabels[colIdx] !== "";
+                            return (
+                                <div 
+                                    key={colIdx} 
+                                    className={`flex flex-col gap-[3px] relative pb-6 ${isNewMonth ? 'ml-[10px]' : ''}`}
+                                >
+                                    {col.map((day, rowIdx) => {
+                                        if (!day) {
+                                            return (
+                                                <div 
+                                                    key={rowIdx} 
+                                                    className="w-2.5 h-2.5 rounded-[2px] bg-transparent" 
+                                                />
+                                            );
+                                        }
+
+                                        const bgClass = day.value > 0 ? "bg-[blueviolet]" : "bg-[#2c2c2c]";
+
+                                        return (
+                                            <div key={rowIdx} className="group relative">
+                                                <div className={`w-2.5 h-2.5 rounded-[2px] ${bgClass} transition-colors hover:ring-1 hover:ring-white/40 cursor-pointer`} />
+                                                {/* Tooltip */}
+                                                <div className="absolute bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity bg-zinc-950 text-white text-[9px] px-2 py-0.5 rounded pointer-events-none whitespace-nowrap z-50 shadow-lg border border-white/10">
+                                                    {day.value === 0 ? 'No completed tasks' : `${day.value} task${day.value > 1 ? 's' : ''}`} on {day.date}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    
+                                    {/* Month label at the bottom */}
+                                    {colMonthLabels[colIdx] && (
+                                        <span className="absolute left-0 bottom-0 text-[9px] text-zinc-500 font-semibold whitespace-nowrap font-sans">
+                                            {colMonthLabels[colIdx]}
+                                        </span>
+                                    )}
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+
+                {/* Legend */}
+                <div className="flex items-center gap-2 mt-2 text-[10px] text-zinc-500">
+                    <span>No tasks</span>
+                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[#2c2c2c]"></div>
+                    <div className="w-2.5 h-2.5 rounded-[2px] bg-[blueviolet]"></div>
+                    <span>Active day</span>
                 </div>
             </div>
         </div>

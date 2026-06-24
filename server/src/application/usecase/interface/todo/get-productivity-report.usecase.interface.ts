@@ -5,6 +5,13 @@ export interface CustomDateRange {
   endDate:   string; // ISO date string YYYY-MM-DD
 }
 
+export interface XpBreakdown {
+  tasks: number;
+  pomodoro: number;
+  badges: number;
+  streaks: number;
+}
+
 export interface ProductivitySummary {
   totalXp:              number;
   currentStreak:        number;
@@ -18,6 +25,7 @@ export interface ProductivitySummary {
   roomsJoined:          number;
   roomsJoinedFirstHalf?: number;
   roomsJoinedSecondHalf?: number;
+  xpBreakdown: XpBreakdown;
 }
 
 export interface XpTrendPoint {
@@ -45,6 +53,9 @@ export interface ReportTaskItem {
   xpEarned:     number;
   status:       'Completed' | 'Expired';
   date:         string;
+  completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+  completedWithBuddyName?: string | null;
+  completedInRoomName?: string | null;
 }
 
 export interface ReportBadgeItem {
@@ -53,6 +64,19 @@ export interface ReportBadgeItem {
   icon:     string;
   unlocked: boolean;
   earnedAt?: string;
+  description?: string;
+}
+
+export interface ReportRoomItem {
+  id: string;
+  name: string;
+  role: 'Host' | 'Participant';
+  durationMinutes: number;
+  date: string;
+  status: 'WAITING' | 'LIVE' | 'ENDED';
+  features: string[];
+  maxParticipants: number;
+  currentParticipants: number;
 }
 
 export interface ProductivityReportDTO {
@@ -62,6 +86,7 @@ export interface ProductivityReportDTO {
   heatmap:        HeatmapPoint[];
   tasks:          ReportTaskItem[];
   badges:         ReportBadgeItem[];
+  rooms:          ReportRoomItem[];
 }
 
 

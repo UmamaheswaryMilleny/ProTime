@@ -15,6 +15,7 @@ export interface StudyRoomEntity {
   startTime?: string;
   endTime?: string;
   sessionStartedAt?: Date;
+  sessionExtensionSeconds?: number;
   participantIds: string[];
   createdAt?: Date;
   updatedAt?: Date;

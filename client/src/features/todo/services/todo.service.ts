@@ -41,13 +41,31 @@ export const todoService = {
         await api.delete(API_ROUTES.TODO_BY_ID(id));
     },
 
-    completeTodo: async (id: string): Promise<CompleteTodoResponse> => {
-        const response = await api.patch(API_ROUTES.TODO_COMPLETE(id));
+    completeTodo: async (
+        id: string,
+        metadata?: {
+            completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+            completedWithBuddyName?: string | null;
+            completedInRoomName?: string | null;
+        }
+    ): Promise<CompleteTodoResponse> => {
+        const response = await api.patch(API_ROUTES.TODO_COMPLETE(id), metadata);
         return response.data.data;
     },
 
-    completePomodoro: async (id: string, actualPomodoroTime: number): Promise<TodoItem> => {
-        const response = await api.patch(API_ROUTES.TODO_POMODORO_COMPLETE(id), { actualPomodoroTime });
+    completePomodoro: async (
+        id: string,
+        actualPomodoroTime: number,
+        metadata?: {
+            completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+            completedWithBuddyName?: string | null;
+            completedInRoomName?: string | null;
+        }
+    ): Promise<TodoItem> => {
+        const response = await api.patch(API_ROUTES.TODO_POMODORO_COMPLETE(id), {
+            actualPomodoroTime,
+            ...metadata
+        });
         return response.data.data;
     }
 };

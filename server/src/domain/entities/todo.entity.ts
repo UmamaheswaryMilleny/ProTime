@@ -17,6 +17,9 @@ export interface TodoEntity {
   // breakTime?: number;
   smartBreaks: boolean | null; // null if pomodoro enabled false
   completedAt: Date | null;
+  completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+  completedWithBuddyName?: string | null;
+  completedInRoomName?: string | null;
   expiryDate: Date | null; 
   baseXp: number;
   bonusXp: number;

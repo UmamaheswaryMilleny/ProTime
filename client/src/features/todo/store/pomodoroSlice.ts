@@ -31,6 +31,8 @@ interface PomodoroState {
     isRoomHost: boolean;
     lastUpdatedAt: number;
     currentPhaseIndex: number;
+    completedWithBuddyName: string | null;
+    completedInRoomName: string | null;
 }
 
 const initialState: PomodoroState = {
@@ -56,6 +58,8 @@ const initialState: PomodoroState = {
     isRoomHost: false,
     lastUpdatedAt: 0,
     currentPhaseIndex: 0,
+    completedWithBuddyName: null,
+    completedInRoomName: null,
 };
 const loadState = (): PomodoroState => {
     try {
@@ -112,11 +116,18 @@ export const completeActivePomodoro = createAsyncThunk(
             const totalPausedSeconds = state.totalPausedSeconds;
             const actualPomodoroTime = Math.floor((pomodoroTimeSeconds - totalPausedSeconds) / 60);
 
+            const completionType: 'SOLO' | 'BUDDY' | 'ROOM' = state.conversationType === 'DIRECT' ? 'BUDDY' : state.conversationType === 'ROOM' ? 'ROOM' : 'SOLO';
+            const metadata = {
+                completionType,
+                completedWithBuddyName: state.completedWithBuddyName,
+                completedInRoomName: state.completedInRoomName
+            };
+
             // 1. Complete Pomodoro session
-            await todoService.completePomodoro(task.id, Math.max(0, actualPomodoroTime));
+            await todoService.completePomodoro(task.id, Math.max(0, actualPomodoroTime), metadata);
 
             // 2. Automatically complete the task itself
-            const { xpResult } = await todoService.completeTodo(task.id);
+            const { xpResult } = await todoService.completeTodo(task.id, metadata);
             const earnedXp = xpResult.xpAwarded;
 
             // Show badge notifications
@@ -167,6 +178,8 @@ const pomodoroSlice = createSlice({
             conversationType?: 'DIRECT' | 'ROOM' | null;
             isRoomHost?: boolean;
             currentPhaseIndex?: number;
+            completedWithBuddyName?: string | null;
+            completedInRoomName?: string | null;
         }>) => {
             state.activeTask = action.payload.task;
             state.timeRemaining = action.payload.duration;
@@ -180,6 +193,8 @@ const pomodoroSlice = createSlice({
             state.conversationType = action.payload.conversationType || (action.payload.conversationId ? 'DIRECT' : null);
             state.isRoomHost = action.payload.isRoomHost || false;
             state.currentPhaseIndex = action.payload.currentPhaseIndex || 0;
+            state.completedWithBuddyName = action.payload.completedWithBuddyName || null;
+            state.completedInRoomName = action.payload.completedInRoomName || null;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -254,6 +269,8 @@ const pomodoroSlice = createSlice({
             state.conversationType = null;
             state.isRoomHost = false;
             state.currentPhaseIndex = 0;
+            state.completedWithBuddyName = null;
+            state.completedInRoomName = null;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         },
@@ -322,6 +339,8 @@ const pomodoroSlice = createSlice({
             state.conversationType = null;
             state.isRoomHost = false;
             state.currentPhaseIndex = 0;
+            state.completedWithBuddyName = null;
+            state.completedInRoomName = null;
             state.lastUpdatedAt = Date.now();
             saveState(state);
         });

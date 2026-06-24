@@ -157,8 +157,13 @@ export class TodoController implements ITodoController {
 
       const todoId = req.params.todoId as string;
       const isPremium=req.user.isPremium
+      const { completionType, completedWithBuddyName, completedInRoomName } = req.body;
 
-      const result = await this.completeTodoUsecase.execute(req.user.id, todoId,isPremium);
+      const result = await this.completeTodoUsecase.execute(req.user.id, todoId, isPremium, {
+        completionType,
+        completedWithBuddyName,
+        completedInRoomName,
+      });
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.COMPLETED, result);
     } catch (error: unknown) {
@@ -176,12 +181,17 @@ export class TodoController implements ITodoController {
       }
 
       const todoId = req.params.todoId as string;
-      const { actualPomodoroTime } = req.body;
+      const { actualPomodoroTime, completionType, completedWithBuddyName, completedInRoomName } = req.body;
 
       const todo = await this.completePomodoroUsecase.execute(
         req.user.id,
         todoId,
         actualPomodoroTime,
+        {
+          completionType,
+          completedWithBuddyName,
+          completedInRoomName,
+        }
       );
 
       ResponseHelper.success(res, HTTP_STATUS.OK, SUCCESS_MESSAGE.TODO.POMODORO_COMPLETED, todo);

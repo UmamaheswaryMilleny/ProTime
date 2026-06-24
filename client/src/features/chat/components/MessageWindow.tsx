@@ -145,7 +145,9 @@ export const MessageWindow: React.FC<MessageWindowProps> = ({ conversationId }) 
       }
     }
 
-    startTodoTimer(todo, 25 * 60, conversationId);
+    const conv = conversations.find(c => c.id === conversationId);
+    const buddyName = conv?.otherUser?.fullName || undefined;
+    startTodoTimer(todo, 25 * 60, conversationId, buddyName);
     setIsTodoPomodoroModalOpen(true);
   };
 

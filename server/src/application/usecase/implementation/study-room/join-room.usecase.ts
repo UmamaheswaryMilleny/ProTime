@@ -103,7 +103,8 @@ export class JoinRoomUsecase implements IJoinRoomUsecase {
       })),
       createdAt: updatedRoom.createdAt?.toISOString() || new Date().toISOString(),
       updatedAt: updatedRoom.updatedAt?.toISOString() || new Date().toISOString(),
-      sessionStartedAt: updatedRoom.sessionStartedAt?.toISOString() || undefined
+      sessionStartedAt: updatedRoom.sessionStartedAt?.toISOString() || undefined,
+      sessionExtensionSeconds: updatedRoom.sessionExtensionSeconds || 0
     };
   }
 }

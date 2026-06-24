@@ -1,6 +1,13 @@
 // ─── Productivity Report Types ───────────────────────────────────────────────
 // Mirrors the server-side ProductivityReportDTO
 
+export interface XpBreakdown {
+  tasks: number;
+  pomodoro: number;
+  badges: number;
+  streaks: number;
+}
+
 export interface ProductivitySummary {
   totalXp:              number;
   currentStreak:        number;
@@ -14,6 +21,7 @@ export interface ProductivitySummary {
   roomsJoined:          number;
   roomsJoinedFirstHalf?: number;
   roomsJoinedSecondHalf?: number;
+  xpBreakdown: XpBreakdown;
 }
 
 export interface XpTrendPoint {
@@ -41,6 +49,9 @@ export interface ReportTask {
   xpEarned:     number;
   status:       'Completed' | 'Expired';
   date:         string;
+  completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+  completedWithBuddyName?: string | null;
+  completedInRoomName?: string | null;
 }
 
 export interface ReportBadge {
@@ -49,6 +60,19 @@ export interface ReportBadge {
   icon:     string;
   unlocked: boolean;
   earnedAt?: string;
+  description?: string;
+}
+
+export interface ReportRoom {
+  id: string;
+  name: string;
+  role: 'Host' | 'Participant';
+  durationMinutes: number;
+  date: string;
+  status: 'WAITING' | 'LIVE' | 'ENDED';
+  features: string[];
+  maxParticipants: number;
+  currentParticipants: number;
 }
 
 export interface ProductivityReportData {
@@ -58,4 +82,5 @@ export interface ProductivityReportData {
   heatmap:        HeatmapPoint[];
   tasks:          ReportTask[];
   badges:         ReportBadge[];
+  rooms?:         ReportRoom[];
 }

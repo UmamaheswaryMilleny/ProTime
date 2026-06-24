@@ -30,6 +30,9 @@ expiryDate:doc.expiryDate??null,
       sharedWith: doc.sharedWith.map((id) => id.toString()),
 
       completedAt: doc.completedAt ?? null,
+      completionType: doc.completionType as 'SOLO' | 'BUDDY' | 'ROOM' ?? 'SOLO',
+      completedWithBuddyName: doc.completedWithBuddyName ?? null,
+      completedInRoomName: doc.completedInRoomName ?? null,
       createdAt: doc.createdAt,
       updatedAt: doc.updatedAt,
     };
@@ -65,6 +68,9 @@ if (data.expiryDate !== undefined) result.expiryDate = data.expiryDate;
     }
 
     if (data.completedAt !== undefined) result.completedAt = data.completedAt;
+    if (data.completionType !== undefined) result.completionType = data.completionType;
+    if (data.completedWithBuddyName !== undefined) result.completedWithBuddyName = data.completedWithBuddyName;
+    if (data.completedInRoomName !== undefined) result.completedInRoomName = data.completedInRoomName;
 
     return result;
   }

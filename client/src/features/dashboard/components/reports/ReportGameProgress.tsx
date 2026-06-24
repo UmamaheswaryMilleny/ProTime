@@ -6,6 +6,7 @@ interface Badge {
     name: string;
     icon: string;
     unlocked: boolean;
+    description?: string;
 }
 
 interface ReportGameProgressProps {
@@ -62,15 +63,21 @@ export const ReportGameProgress: React.FC<ReportGameProgressProps> = ({ level, t
                         </h4>
                         <span className="text-xs text-[blueviolet] cursor-pointer hover:underline">View all</span>
                     </div>
-                    <div className="flex gap-3 overflow-x-auto custom-scrollbar pb-2">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                         {unlockedBadges.length > 0 ? (
                             unlockedBadges.map(badge => (
                                 <div 
                                     key={badge.id}
-                                    className="flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center border-2 border-yellow-500 bg-yellow-500/10 relative group cursor-pointer"
-                                    title={badge.name}
+                                    className="flex items-center gap-3 p-2 bg-white/[0.02] border border-white/5 rounded-xl hover:bg-white/[0.04] transition-all group relative cursor-pointer"
+                                    title={`${badge.name}: ${badge.description || 'Unlocked achievement'}`}
                                 >
-                                    <span className="text-2xl">{badge.icon}</span>
+                                    <div className="w-10 h-10 rounded-full flex items-center justify-center border-2 border-yellow-500 bg-yellow-500/10 flex-shrink-0 shadow-sm shadow-yellow-500/5">
+                                        <span className="text-xl">{badge.icon}</span>
+                                    </div>
+                                    <div className="min-w-0">
+                                        <p className="text-white text-xs font-bold truncate group-hover:text-yellow-400 transition-colors">{badge.name}</p>
+                                        <p className="text-zinc-400 text-[10px] truncate max-w-[150px] sm:max-w-none">{badge.description || 'Unlocked Achievement'}</p>
+                                    </div>
                                 </div>
                             ))
                         ) : (

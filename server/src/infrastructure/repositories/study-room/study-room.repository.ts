@@ -136,4 +136,30 @@ export class StudyRoomRepository extends BaseRepository<StudyRoomDocument, Study
       }
     }).exec();
   }
+
+  async findAllLive(): Promise<StudyRoomEntity[]> {
+    const docs = await this.model.find({ status: RoomStatus.LIVE }).exec();
+    return docs.map(StudyRoomMapper.toDomain);
+  }
+
+  async findJoinedOrHostedInRange(userId: string, startDate: Date, endDate: Date): Promise<StudyRoomEntity[]> {
+    const userObjectId = new mongoose.Types.ObjectId(userId);
+    const docs = await this.model.find({
+      $and: [
+        {
+          $or: [
+            { hostId: userObjectId },
+            { participantIds: userObjectId }
+          ]
+        },
+        {
+          $or: [
+            { createdAt: { $gte: startDate, $lte: endDate } },
+            { updatedAt: { $gte: startDate, $lte: endDate } }
+          ]
+        }
+      ]
+    }).sort({ createdAt: -1 }).exec();
+    return docs.map(StudyRoomMapper.toDomain);
+  }
 }

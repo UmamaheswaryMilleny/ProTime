@@ -48,6 +48,11 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
     userId: string,
     todoId: string,
     isPremium: boolean,
+    metadata?: {
+      completionType?: 'SOLO' | 'BUDDY' | 'ROOM';
+      completedWithBuddyName?: string | null;
+      completedInRoomName?: string | null;
+    }
   ): Promise<CompleteTodoResponseDTO> {
     // 1. Find the todo
     const todo = await this.todoRepository.findById(todoId);
@@ -86,6 +91,9 @@ export class CompleteTodoUsecase implements ICompleteTodoUsecase {
       baseXp: Math.min(todo.baseXp, xpToAward),
       bonusXp,      // baseXp updated based on actual xpToAward
       xpCounted,
+      completionType: metadata?.completionType || 'SOLO',
+      completedWithBuddyName: metadata?.completedWithBuddyName || null,
+      completedInRoomName: metadata?.completedInRoomName || null,
     });
     if (!updated) throw new TodoNotFoundError();
 

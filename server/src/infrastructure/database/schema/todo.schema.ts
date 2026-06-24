@@ -100,6 +100,19 @@ export const TodoSchema = new Schema(
       type: Date,
       default: null,
     },
+    completionType: {
+      type: String,
+      enum: ['SOLO', 'BUDDY', 'ROOM'],
+      default: 'SOLO',
+    },
+    completedWithBuddyName: {
+      type: String,
+      default: null,
+    },
+    completedInRoomName: {
+      type: String,
+      default: null,
+    },
 
     // ─── Dedup guard: ensures the expiry notification is sent exactly once ────
     expiredNotificationSent: {

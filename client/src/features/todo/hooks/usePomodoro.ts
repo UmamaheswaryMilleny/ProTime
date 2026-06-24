@@ -35,7 +35,7 @@ export const usePomodoro = () => {
         return `${mins}:${secs.toString().padStart(2, '0')}`;
     };
 
-    const start = (task: TodoItem, duration: number, conversationId?: string) => {
+    const start = (task: TodoItem, duration: number, conversationId?: string, buddyName?: string) => {
         // Guard against starting if a local storage TodoPage timer is running
         const localActiveTaskId = localStorage.getItem('pomodoro_activeTaskId');
         if (localActiveTaskId) {
@@ -52,7 +52,9 @@ export const usePomodoro = () => {
             duration, 
             phase: 'FOCUS', 
             isSmartBreaksEnabled: true,
-            conversationId
+            conversationId,
+            conversationType: 'DIRECT',
+            completedWithBuddyName: buddyName || null
         }));
         if (conversationId) {
             socketService.emit('pomodoro:start', { conversationId, task, duration });

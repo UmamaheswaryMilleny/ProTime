@@ -5,8 +5,10 @@ import type { IGamificationRepository }   from '../../../../domain/repositories/
 import type { IUserBadgeRepository }       from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IBadgeDefinitionRepository } from '../../../../domain/repositories/gamification/gamification.repository.interface';
 import type { IStudyRoomRepository }      from '../../../../domain/repositories/study-room/study-room.repository.interface';
+import type { ISubscriptionRepository }   from '../../../../domain/repositories/subscription/subscription.repository.interface';
 
 import { TodoStatus, TodoPriority }  from '../../../../domain/enums/todo.enums';
+import { RoomStatus } from '../../../../domain/enums/study-room.enums';
 import type {
   IGetProductivityReportUsecase,
   ProductivityReportDTO,
@@ -16,6 +18,7 @@ import type {
   HeatmapPoint,
   ReportTaskItem,
   ReportBadgeItem,
+  ReportRoomItem,
 } from '../../interface/todo/get-productivity-report.usecase.interface';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -26,7 +29,7 @@ const toDateKey = (d: Date): string => d.toISOString().slice(0, 10);
 /** Format a date string as short weekday label "Mon 14" */
 const toLabel = (iso: string): string => {
   const d = new Date(iso + 'T00:00:00Z');
-  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', timeZone: 'UTC' });
+  return d.toLocaleDateString('en-US', { weekday: 'short', month: 'numeric', day: 'numeric', year: 'numeric', timeZone: 'UTC' });
 };
 
 /** Capitalise first letter */
@@ -51,6 +54,9 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
 
     @inject('IStudyRoomRepository')
     private readonly studyRoomRepository: IStudyRoomRepository,
+
+    @inject('ISubscriptionRepository')
+    private readonly subscriptionRepository: ISubscriptionRepository,
   ) {}
 
   async execute(userId: string, range: ReportRange, month?: string): Promise<ProductivityReportDTO> {
@@ -223,18 +229,40 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
       { name: 'High',   ...priorityMap[TodoPriority.HIGH] },
     ];
 
-    // ── 6. Heatmap — completed tasks per day (0–4 clamped) ────────────────────
-    const countByDay = new Map<string, number>(dayKeys.map(k => [k, 0]));
-    completedTodos.forEach(t => {
-      if (t.completedAt) {
+    // ── 6. Heatmap — completed tasks per day (always calendar years Jan 1st - Dec 31st) ──
+    const endYear = new Date().getFullYear();
+    let startYear = endYear - 2; // cover current, last year, year before last (e.g. 2026, 2025, 2024)
+    allTodos.forEach(t => {
+      if (t.status === TodoStatus.COMPLETED && t.completedAt) {
+        const y = new Date(t.completedAt).getFullYear();
+        if (y < startYear) startYear = y;
+      }
+    });
+    const heatmapDayKeys: string[] = [];
+    
+    for (let y = startYear; y <= endYear; y++) {
+      const yearStart = new Date(Date.UTC(y, 0, 1, 0, 0, 0, 0));
+      const yearEnd = new Date(Date.UTC(y, 11, 31, 23, 59, 59, 999));
+      const temp = new Date(yearStart);
+      while (temp <= yearEnd) {
+        heatmapDayKeys.push(toDateKey(temp));
+        temp.setUTCDate(temp.getUTCDate() + 1);
+      }
+    }
+
+    const countByDayHeatmap = new Map<string, number>(heatmapDayKeys.map(k => [k, 0]));
+    allTodos.forEach(t => {
+      if (t.status === TodoStatus.COMPLETED && t.completedAt) {
         const key = toDateKey(new Date(t.completedAt));
-        if (countByDay.has(key)) countByDay.set(key, (countByDay.get(key) ?? 0) + 1);
+        if (countByDayHeatmap.has(key)) {
+          countByDayHeatmap.set(key, (countByDayHeatmap.get(key) ?? 0) + 1);
+        }
       }
     });
 
-    const heatmap: HeatmapPoint[] = dayKeys.map(k => ({
+    const heatmap: HeatmapPoint[] = heatmapDayKeys.map(k => ({
       date:  toLabel(k),
-      value: Math.min(countByDay.get(k) ?? 0, 4),
+      value: countByDayHeatmap.get(k) ?? 0,
     }));
 
     // ── 7. Task table ─────────────────────────────────────────────────────────
@@ -252,7 +280,10 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         pomodoroUsed: t.pomodoroCompleted,
         xpEarned:     t.xpCounted ? t.baseXp + t.bonusXp : 0,
         status:       t.status === TodoStatus.COMPLETED ? 'Completed' : 'Expired',
-        date:         (t.completedAt ?? t.updatedAt ?? t.createdAt).toISOString().slice(0, 10),
+        date:         (t.completedAt ?? t.updatedAt ?? t.createdAt).toISOString(),
+        completionType: t.completionType ?? 'SOLO',
+        completedWithBuddyName: t.completedWithBuddyName ?? null,
+        completedInRoomName: t.completedInRoomName ?? null,
       }));
 
     // ── 8. Badges ─────────────────────────────────────────────────────────────
@@ -265,6 +296,7 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         icon:     def.iconUrl ?? '🏅',
         unlocked: Boolean(earned),
         earnedAt: earned?.earnedAt?.toISOString(),
+        description: def.description,
       };
     });
 
@@ -277,9 +309,82 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
       currentTitle:  'Beginner - Starting Point',
     };
 
+    // Calculate XP breakdown
+    let periodTaskBase = 0;
+    let periodTaskPomodoro = 0;
+    completedTodos.forEach(t => {
+      if (t.xpCounted) {
+        periodTaskBase += t.baseXp;
+        periodTaskPomodoro += t.bonusXp;
+      }
+    });
+
+    const sub = await this.subscriptionRepository.findByUserId(userId);
+    const userIsPremium = sub ? sub.plan !== 'FREE' && sub.status === 'ACTIVE' : false;
+    const badgeXpFactor = userIsPremium ? 50 : 20;
+
+    const periodBadgesEarned = userBadges.filter(ub => {
+      if (!ub.earnedAt) return false;
+      const earnedAt = new Date(ub.earnedAt);
+      return earnedAt >= since && earnedAt <= until;
+    });
+    const periodBadgeXp = periodBadgesEarned.length * badgeXpFactor;
+
+    let lifetimeTaskBase = 0;
+    let lifetimeTaskPomodoro = 0;
+    allTodos.forEach(t => {
+      if (t.status === TodoStatus.COMPLETED && t.xpCounted) {
+        lifetimeTaskBase += t.baseXp;
+        lifetimeTaskPomodoro += t.bonusXp;
+      }
+    });
+    const lifetimeBadgeXp = userBadges.length * badgeXpFactor;
+    const lifetimeStreakXp = Math.max(0, gami.totalXp - (lifetimeTaskBase + lifetimeTaskPomodoro + lifetimeBadgeXp));
+
+    let periodStreakXp = 0;
+    if (range === 'all') {
+      periodStreakXp = lifetimeStreakXp;
+    }
+
+    const xpBreakdown = {
+      tasks: periodTaskBase,
+      pomodoro: periodTaskPomodoro,
+      badges: periodBadgeXp,
+      streaks: periodStreakXp,
+    };
+
+    // Fetch study rooms joined or hosted by the user in this range
+    const studyRooms = await this.studyRoomRepository.findJoinedOrHostedInRange(userId, since, until);
+    const rooms: ReportRoomItem[] = studyRooms.map(room => {
+      const isHost = room.hostId === userId;
+      const start = room.sessionStartedAt ? new Date(room.sessionStartedAt) : null;
+      let durationMinutes = 0;
+      if (start) {
+        if (room.status === RoomStatus.LIVE) {
+          durationMinutes = Math.max(0, Math.round((Date.now() - start.getTime()) / 60000));
+        } else if (room.status === RoomStatus.ENDED) {
+          const end = room.updatedAt ? new Date(room.updatedAt) : new Date();
+          durationMinutes = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60000));
+        }
+      }
+      return {
+        id: room.id!,
+        name: room.name,
+        role: isHost ? 'Host' : 'Participant',
+        durationMinutes,
+        date: (room.sessionStartedAt || room.createdAt || new Date()).toISOString(),
+        status: room.status,
+        features: room.features || [],
+        maxParticipants: room.maxParticipants,
+        currentParticipants: room.participantIds.length
+      };
+    });
+
+    const calculatedTotalXp = periodTaskBase + periodTaskPomodoro + periodBadgeXp + periodStreakXp;
+
     return {
       summary: {
-        totalXp:              xpTrend.reduce((sum, p) => sum + p.xp, 0),
+        totalXp:              calculatedTotalXp,
         currentStreak:        gami.currentStreak,
         longestStreak:        gami.longestStreak,
         currentLevel:         gami.currentLevel,
@@ -291,12 +396,14 @@ export class GetProductivityReportUsecase implements IGetProductivityReportUseca
         roomsJoined,
         roomsJoinedFirstHalf:  firstHalfRooms,
         roomsJoinedSecondHalf: secondHalfRooms,
+        xpBreakdown,
       },
       xpTrend,
       taskByPriority,
       heatmap,
       tasks,
       badges,
+      rooms,
     };
   }
 }

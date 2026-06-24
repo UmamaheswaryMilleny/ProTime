@@ -81,9 +81,8 @@ export class CheckAndAwardBadgesUsecase implements ICheckAndAwardBadgesUsecase {
 
             if (!conditionMet) continue;
 
-            // Award badge — xpAwarded only if premium or badge is free
-            // const xpAwarded = isPremium || !badge.premiumRequired;
-            const xpAwarded = isPremium;
+            // Award badge — all users receive XP points (premium = 50, free = 20)
+            const xpAwarded = true;
 
             const userBadge = await this.userBadgeRepository.save({
                 userId,
