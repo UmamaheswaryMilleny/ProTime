@@ -243,6 +243,8 @@ const studyRoomSlice = createSlice({
       if (!action.payload) {
         state.messages = [];
         state.pendingRequests = [];
+        state.isInGroupCall = false;
+        state.groupCallRoomId = null;
       }
     },
     addIncomingMessage: (state, action: PayloadAction<RoomMessageDTO>) => {
@@ -344,6 +346,8 @@ const studyRoomSlice = createSlice({
     builder.addCase(leaveRoom.fulfilled, (state) => {
       state.activeRoom = null;
       state.messages = [];
+      state.isInGroupCall = false;
+      state.groupCallRoomId = null;
     });
     // For kickUser, state refresh may be handled by sockets, but we can also handle it locally if needed.
     // Host kicks someone, wait for socket event to refresh list, or do it immediately:
@@ -356,6 +360,8 @@ const studyRoomSlice = createSlice({
     builder.addCase(endRoom.fulfilled, (state) => {
       state.activeRoom = null;
       state.messages = [];
+      state.isInGroupCall = false;
+      state.groupCallRoomId = null;
     });
     
     // startRoom

@@ -70,6 +70,7 @@ export const useStudyRoomSocket = (roomId: string | null) => {
       socketService.off('room:started', handleRoomStarted);
       socketService.off('room:ended', handleRoomEnded);
       socketService.emit('leave:room', roomId);
+      dispatch(setActiveRoom(null));
     };
   }, [roomId, dispatch, user?.id]);
 };

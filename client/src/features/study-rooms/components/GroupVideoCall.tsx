@@ -196,8 +196,9 @@ export const GroupVideoCall: React.FC = () => {
       peerConnections.current.clear();
       pendingCandidates.current.clear();
       setPeers(new Map());
+      dispatch(endGroupCall());
     };
-  }, [groupCallRoomId, localStream]);
+  }, [groupCallRoomId, localStream, dispatch]);
 
   // ── Socket signaling handlers ───────────────────────────────────────────────
   useEffect(() => {
