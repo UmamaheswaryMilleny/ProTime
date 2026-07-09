@@ -71,6 +71,8 @@ export class AuthController implements IAuthController {
         SUCCESS_MESSAGE.AUTHORIZATION.ACCOUNT_CREATED
       );
     } catch (error: unknown) {
+
+      
       next(error);
     }
   }

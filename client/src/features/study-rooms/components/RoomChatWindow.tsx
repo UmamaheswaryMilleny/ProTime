@@ -321,11 +321,22 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   useEffect(() => {
     if (!roomId) return;
 
+    // Clear stale decline on mount/room change so they can receive active/new calls
+    console.log('[Socket] RoomChatWindow mounted for room. Clearing stale decline status:', roomId);
+    sessionStorage.removeItem(`declined_video_call_${roomId}`);
+
     const handleVideoStarted = (payload: { roomId: string }) => {
       console.log('[Socket] room:video:started received on client:', payload);
-      if (payload.roomId !== roomId) return;
+      if (payload.roomId !== roomId) {
+        console.log('[Socket] room:video:started payload roomId mismatch:', { payloadRoomId: payload.roomId, currentRoomId: roomId });
+        return;
+      }
       setIsHostCallActive(true);
-      if (!isHost) setShowRingingOverlay(true);
+      console.log('[Socket] room:video:started isHost check:', { isHost });
+      if (!isHost) {
+        console.log('[Socket] room:video:started showing ringing overlay for member');
+        setShowRingingOverlay(true);
+      }
     };
 
     const handleVideoEnded = (payload: { roomId: string }) => {
@@ -346,11 +357,13 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       
       const wasInCall = sessionStorage.getItem(`in_group_call_${roomId}`) === 'true';
       const hasDeclined = sessionStorage.getItem(`declined_video_call_${roomId}`) === 'true';
+      console.log('[Socket] room:video:status-response checks:', { isActive: payload.isActive, wasInCall, isHost, isInGroupCall, hasDeclined });
       if (payload.isActive) {
         if (wasInCall) {
           console.log('[Refreshed] User was in the call, auto-rejoining');
           dispatch(startGroupCall(roomId));
         } else if (!isHost && !isInGroupCall && !hasDeclined) {
+          console.log('[Socket] showing ringing overlay from status response');
           setShowRingingOverlay(true);
         }
       } else {
@@ -364,6 +377,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     socketService.on('room:video:status-response', handleVideoStatusResponse);
 
     // Query call status on mount
+    console.log('[Socket] Requesting video call status on mount for room:', roomId);
     const t = setTimeout(() => {
       socketService.emit('room:video:request-status', { roomId });
     }, 600);

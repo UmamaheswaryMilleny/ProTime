@@ -6,6 +6,7 @@ export abstract class DomainError extends Error {
     this.name = new.target.name //new.target refers to the class that was actually instantiated.
     //Stack trace shows where the error occurred.
     Error.captureStackTrace(this, this.constructor)
+    // Error.captureStackTrace(currentErrorObject, currentErrorClass)
     //this.constructor → UserAlreadyExistsError
     //this mean throw new UserAlreadyExistsError(email)
   }

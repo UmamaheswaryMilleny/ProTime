@@ -90,14 +90,19 @@ export const GroupVideoCall: React.FC = () => {
 
     // Remote stream
     pc.ontrack = (e) => {
-      const stream = e.streams[0];
+      console.log(`[WebRTC] ontrack fired for user ${remoteUserId}, track: ${e.track.kind}`);
       setPeers(prev => {
         const next = new Map(prev);
         const existing = next.get(remoteUserId);
+        
+        // Collect all tracks currently received on this peer connection
+        const tracks = pc.getReceivers().map(r => r.track).filter(Boolean);
+        const newStream = new MediaStream(tracks);
+
         next.set(remoteUserId, {
           userId: remoteUserId,
           userName: existing?.userName ?? remoteUserId.slice(0, 6),
-          stream,
+          stream: newStream,
           isVideoOn: existing?.isVideoOn ?? true,
           isAudioOn: existing?.isAudioOn ?? true,
         });
@@ -138,15 +143,16 @@ export const GroupVideoCall: React.FC = () => {
 
     const initMedia = async () => {
       try {
+        console.log('[GroupVideo] Requesting user media (video+audio)...');
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        console.log('[GroupVideo] Acquired user media stream:', stream.id);
         setLocalStream(stream);
         localStreamRef.current = stream;
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-      } catch {
+      } catch (err) {
+        console.warn('[GroupVideo] Failed to acquire video+audio, trying audio-only:', err);
         try {
           const audioOnly = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+          console.log('[GroupVideo] Acquired audio-only stream:', audioOnly.id);
           setLocalStream(audioOnly);
           localStreamRef.current = audioOnly;
           setIsVideoOn(false);
@@ -159,11 +165,23 @@ export const GroupVideoCall: React.FC = () => {
     initMedia();
 
     return () => {
+      console.log('[GroupVideo] Cleaning up local media stream tracks');
       localStreamRef.current?.getTracks().forEach(t => t.stop());
       localStreamRef.current = null;
       setLocalStream(null);
     };
   }, [groupCallRoomId]);
+
+  // Bind local stream to video element
+  useEffect(() => {
+    console.log('[GroupVideo] Binding local stream to video element. Stream:', localStream?.id, 'Ref exists:', !!localVideoRef.current);
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch(err => {
+        console.warn('[GroupVideo] Failed to play local video:', err);
+      });
+    }
+  }, [localStream]);
 
   // ── Join the call once local media is ready ─────────────────────────────────
   useEffect(() => {

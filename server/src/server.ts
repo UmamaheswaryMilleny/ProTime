@@ -227,12 +227,15 @@ export class App {
       // Study Rooms
       socket.on('join:room', (roomId: string) => {
         socket.join(`room:${roomId}`);
+        logger.info(`[Socket] User ${userId} joined room ${roomId}`);
       });
 
       socket.on('leave:room', (roomId: string) => {
         socket.leave(`room:${roomId}`);
+        logger.info(`[Socket] User ${userId} left room ${roomId}`);
         const clients = this.io.sockets.adapter.rooms.get(`room:${roomId}`);
         if (!clients || clients.size === 0) {
+          logger.info(`[Socket] Room ${roomId} has no active clients. Cleaning up timers and calls.`);
           roomPomodoros.delete(roomId);
           activeVideoCalls.delete(roomId);
         }
@@ -510,11 +513,12 @@ export class App {
 
       socket.on('room:video:request-status', (data: { roomId: string }) => {
         const participants = activeVideoCalls.get(data.roomId);
-        const isActive = !!participants && participants.size > 0;
+        const isActive = activeVideoCalls.has(data.roomId);
+        logger.info(`[Socket] Status request for room ${data.roomId}. Active call: ${isActive}, Participants: ${participants ? participants.size : 0}`);
         socket.emit('room:video:status-response', {
           roomId: data.roomId,
           isActive,
-          participants: isActive ? Array.from(participants) : [],
+          participants: participants ? Array.from(participants) : [],
         });
       });
 
