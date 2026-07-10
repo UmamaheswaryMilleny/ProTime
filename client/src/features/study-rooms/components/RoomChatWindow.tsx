@@ -90,16 +90,6 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   const [showRingingOverlay, setShowRingingOverlay] = useState(false);
   const isHost = activeRoom?.hostId === user?.id;
 
-  const isHostRef = useRef(isHost);
-  useEffect(() => {
-    isHostRef.current = isHost;
-  }, [isHost]);
-
-  const isInGroupCallRef = useRef(isInGroupCall);
-  useEffect(() => {
-    isInGroupCallRef.current = isInGroupCall;
-  }, [isInGroupCall]);
-
   console.log('[RoomChatWindow] Render states:', { isHost, isHostCallActive, showRingingOverlay, isInGroupCall, roomId });
 
   useEffect(() => {
@@ -331,22 +321,11 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   useEffect(() => {
     if (!roomId) return;
 
-    // Clear stale decline on mount/room change so they can receive active/new calls
-    console.log('[Socket] RoomChatWindow mounted for room. Clearing stale decline status:', roomId);
-    sessionStorage.removeItem(`declined_video_call_${roomId}`);
-
     const handleVideoStarted = (payload: { roomId: string }) => {
       console.log('[Socket] room:video:started received on client:', payload);
-      if (payload.roomId !== roomId) {
-        console.log('[Socket] room:video:started payload roomId mismatch:', { payloadRoomId: payload.roomId, currentRoomId: roomId });
-        return;
-      }
+      if (payload.roomId !== roomId) return;
       setIsHostCallActive(true);
-      console.log('[Socket] room:video:started isHost check:', { isHost: isHostRef.current });
-      if (!isHostRef.current) {
-        console.log('[Socket] room:video:started showing ringing overlay for member');
-        setShowRingingOverlay(true);
-      }
+      if (!isHost) setShowRingingOverlay(true);
     };
 
     const handleVideoEnded = (payload: { roomId: string }) => {
@@ -367,13 +346,11 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       
       const wasInCall = sessionStorage.getItem(`in_group_call_${roomId}`) === 'true';
       const hasDeclined = sessionStorage.getItem(`declined_video_call_${roomId}`) === 'true';
-      console.log('[Socket] room:video:status-response checks:', { isActive: payload.isActive, wasInCall, isHost: isHostRef.current, isInGroupCall: isInGroupCallRef.current, hasDeclined });
       if (payload.isActive) {
         if (wasInCall) {
           console.log('[Refreshed] User was in the call, auto-rejoining');
           dispatch(startGroupCall(roomId));
-        } else if (!isHostRef.current && !isInGroupCallRef.current && !hasDeclined) {
-          console.log('[Socket] showing ringing overlay from status response');
+        } else if (!isHost && !isInGroupCall && !hasDeclined) {
           setShowRingingOverlay(true);
         }
       } else {
@@ -387,7 +364,6 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     socketService.on('room:video:status-response', handleVideoStatusResponse);
 
     // Query call status on mount
-    console.log('[Socket] Requesting video call status on mount for room:', roomId);
     const t = setTimeout(() => {
       socketService.emit('room:video:request-status', { roomId });
     }, 600);
@@ -398,7 +374,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       socketService.off('room:video:ended', handleVideoEnded);
       socketService.off('room:video:status-response', handleVideoStatusResponse);
     };
-  }, [roomId, dispatch]);
+  }, [roomId, dispatch, isHost, isInGroupCall]);
 
   // Host: Emit time remaining tick every 5 seconds to room
   useEffect(() => {
@@ -419,19 +395,13 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
           id: `study-room-break-${roomId}-${Date.now()}`,
           title: `Group Break: 5 Min`,
           description: 'Study room group session break timer',
-          status: 'PENDING',
+          status: 'IN_PROGRESS',
           priority: 'LOW',
-          estimatedTime: 5,
-          pomodoroEnabled: true,
-          pomodoroCompleted: false,
-          baseXp: 0,
-          bonusXp: 0,
-          xpCounted: false,
-          isShared: false,
-          sharedWith: [],
+          estimatedPomodoros: 1,
+          completedPomodoros: 0,
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
-        };
+        } as any;
         dispatch(startPomodoro({
           task: breakTask,
           duration: 5 * 60,
@@ -512,9 +482,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                         sessionStorage.removeItem(`session_extension_${roomId}`);
                         await dispatch(endRoom(roomId)).unwrap();
                         navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
-                      } catch (err: unknown) {
-                        const msg = err instanceof Error ? err.message : 'Failed to end room';
-                        toast.error(msg);
+                      } catch (e: any) {
+                        toast.error(e || 'Failed to end room');
                       }
                     }}
                   >
@@ -554,7 +523,6 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     }, 1000);
 
     return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeRoom?.status, activeRoom?.updatedAt, sessionExtensionSeconds, isHost, dispatch, roomId, navigate]);
 
   // Sync session extension to all participants
@@ -601,7 +569,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
         try {
           const data = await buddyService.getBuddyList();
           setBuddies(data || []);
-        } catch {
+        } catch (e: any) {
           toast.error('Failed to load buddies.');
         } finally {
           setIsLoadingBuddies(false);
@@ -616,9 +584,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       setInvitingIds(prev => [...prev, userId]);
       await dispatch(inviteToRoom({ roomId, userId })).unwrap();
       toast.success('Invitation sent successfully!');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to send invitation';
-      toast.error(msg);
+    } catch (e: any) {
+      toast.error(e || 'Failed to send invitation');
     } finally {
       setInvitingIds(prev => prev.filter(id => id !== userId));
     }
@@ -689,9 +656,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 sessionStorage.removeItem(`session_extension_${roomId}`);
                 await dispatch(endRoom(roomId)).unwrap();
                 navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
-              } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : 'Failed to end room';
-                toast.error(msg);
+              } catch (e: any) {
+                toast.error(e || 'Failed to end room');
               }
             }}
           >
@@ -722,9 +688,8 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 sessionStorage.removeItem(`session_extension_${roomId}`);
                 await dispatch(leaveRoom(roomId)).unwrap();
                 navigate(ROUTES.DASHBOARD_STUDY_ROOMS);
-              } catch (err: unknown) {
-                const msg = err instanceof Error ? err.message : 'Failed to leave room';
-                toast.error(msg);
+              } catch (e: any) {
+                toast.error(e || 'Failed to leave room');
               }
             }}
           >
@@ -744,30 +709,21 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     try {
       await dispatch(startRoom(roomId)).unwrap();
       toast.success('Session Started! Room is now active.');
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to start session';
-      toast.error(msg);
+    } catch (e: any) {
+      toast.error(e || 'Failed to start session');
     }
   };
 
   // const handleStartFocusSession = () => {
-  //   const groupStudyTask: TodoItem = {
+  //   const groupStudyTask = {
   //     id: `study-room-${roomId}-${Date.now()}`,
   //     title: `Group Study: ${activeRoom?.name}`,
   //     description: 'Study room group session timer',
-  //     status: 'PENDING',
+  //     status: 'IN_PROGRESS',
   //     priority: 'MEDIUM',
-  //     estimatedTime: 25,
-  //     pomodoroEnabled: true,
-  //     pomodoroCompleted: false,
-  //     baseXp: 0,
-  //     bonusXp: 0,
-  //     xpCounted: false,
-  //     isShared: false,
-  //     sharedWith: [],
-  //     createdAt: new Date().toISOString(),
-  //     updatedAt: new Date().toISOString(),
-  //   };
+  //     estimatedPomodoros: 1,
+  //     completedPomodoros: 0,
+  //   } as any;
   //   dispatch(startPomodoro({ task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', isSmartBreaksEnabled: true }));
   //   socketService.emit('room:pomodoro:start', { roomId, task: groupStudyTask, duration: 25 * 60, phase: 'FOCUS', startedByName: user?.fullName || 'Host' });
   //   toast.success('Focus session started! Participants have been invited.');
@@ -1311,7 +1267,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                   </div>
                 </div>
               );
-            } catch {
+            } catch (e) {
               // ignore parse errors
             }
           }
@@ -1543,7 +1499,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
                 if (isHost) {
                   dispatch(kickUser({ roomId, userId: reportingUserId }));
                 }
-              } catch {
+              } catch (e) {
                 // silent
               }
             }

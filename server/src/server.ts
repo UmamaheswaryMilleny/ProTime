@@ -55,6 +55,8 @@ export class App {
             config.client.URI,
             'http://localhost:5173',
             'http://localhost:5174',
+            'https://pro-time.online',
+            'https://www.pro-time.online',
           ];
           if (
             !origin ||

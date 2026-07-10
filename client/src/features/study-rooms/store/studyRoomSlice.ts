@@ -12,7 +12,6 @@ interface StudyRoomState {
   invitations: RoomJoinRequestDTO[];
   allRequests: RoomJoinRequestDTO[];
   isLoading: boolean;
-  isRefreshing: boolean; // background refresh flag — does not unmount RoomChatWindow
   isLoadingMessages: boolean;
   isSending: boolean;
   error: string | null;
@@ -31,7 +30,6 @@ const initialState: StudyRoomState = {
   invitations: [],
   allRequests: [],
   isLoading: false,
-  isRefreshing: false,
   isLoadingMessages: false,
   isSending: false,
   error: null,
@@ -42,23 +40,14 @@ const initialState: StudyRoomState = {
 
 // ─── Thunks ──────────────────────────────────────────────────────────────────
 
-/** Extract a human-readable error message from an unknown API error */
-const apiErr = (err: unknown, fallback: string): string => {
-  if (err && typeof err === 'object' && 'response' in err) {
-    const r = (err as { response?: { data?: { message?: string } } }).response;
-    return r?.data?.message || fallback;
-  }
-  return fallback;
-};
-
 export const fetchRooms = createAsyncThunk(
   'studyRoom/fetchRooms',
   async (params: GetRoomsParams | undefined, { rejectWithValue }) => {
     try {
       const res = await studyRoomApi.getRooms(params);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to fetch rooms'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to fetch rooms');
     }
   }
 );
@@ -69,8 +58,8 @@ export const fetchMyRooms = createAsyncThunk(
     try {
       const res = await studyRoomApi.getMyRooms();
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to fetch my rooms'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to fetch my rooms');
     }
   }
 );
@@ -81,8 +70,8 @@ export const fetchRoomById = createAsyncThunk(
     try {
       const res = await studyRoomApi.getRoomById(roomId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Room not found'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Room not found');
     }
   }
 );
@@ -93,8 +82,8 @@ export const createRoom = createAsyncThunk(
     try {
       const res = await studyRoomApi.createRoom(payload);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to create room'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to create room');
     }
   }
 );
@@ -105,8 +94,8 @@ export const joinRoom = createAsyncThunk(
     try {
       const res = await studyRoomApi.joinRoom(roomId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to join room'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to join room');
     }
   }
 );
@@ -117,8 +106,8 @@ export const requestToJoin = createAsyncThunk(
     try {
       const res = await studyRoomApi.requestToJoin(roomId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to send request'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to send request');
     }
   }
 );
@@ -129,8 +118,8 @@ export const fetchPendingRequests = createAsyncThunk(
     try {
       const res = await studyRoomApi.getPendingRequests(roomId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to fetch requests'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to fetch requests');
     }
   }
 );
@@ -141,8 +130,8 @@ export const respondToJoinRequest = createAsyncThunk(
     try {
       const res = await studyRoomApi.respondToRequest(requestId, action);
       return { data: res.data, requestId };
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to respond to request'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to respond to request');
     }
   }
 );
@@ -153,8 +142,8 @@ export const leaveRoom = createAsyncThunk(
     try {
       await studyRoomApi.leaveRoom(roomId);
       return roomId;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to leave room'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to leave room');
     }
   }
 );
@@ -165,8 +154,8 @@ export const kickUser = createAsyncThunk(
     try {
       await studyRoomApi.kickUser(roomId, userId);
       return { roomId, userId };
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to kick user'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to kick user');
     }
   }
 );
@@ -177,8 +166,8 @@ export const inviteToRoom = createAsyncThunk(
     try {
       const res = await studyRoomApi.inviteToRoom(roomId, userId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to invite buddy'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to invite buddy');
     }
   }
 );
@@ -189,8 +178,8 @@ export const endRoom = createAsyncThunk(
     try {
       await studyRoomApi.endRoom(roomId);
       return roomId;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to end room'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to end room');
     }
   }
 );
@@ -201,8 +190,8 @@ export const startRoom = createAsyncThunk(
     try {
       const res = await studyRoomApi.startRoom(roomId);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to start room'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to start room');
     }
   }
 );
@@ -213,8 +202,8 @@ export const fetchRoomMessages = createAsyncThunk(
     try {
       const res = await studyRoomApi.getMessages(roomId, page || 1);
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to fetch messages'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to fetch messages');
     }
   }
 );
@@ -225,8 +214,8 @@ export const sendRoomMessage = createAsyncThunk(
     try {
       const res = await studyRoomApi.sendMessage(roomId, { content, file });
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to send message'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to send message');
     }
   }
 );
@@ -237,12 +226,11 @@ export const fetchAllRequests = createAsyncThunk(
     try {
       const res = await studyRoomApi.getAllRequests();
       return res.data;
-    } catch (err: unknown) {
-      return rejectWithValue(apiErr(err, 'Failed to fetch all requests'));
+    } catch (e: any) {
+      return rejectWithValue(e?.response?.data?.message || 'Failed to fetch all requests');
     }
   }
 );
-
 
 // ─── Slice ───────────────────────────────────────────────────────────────────
 
@@ -255,8 +243,6 @@ const studyRoomSlice = createSlice({
       if (!action.payload) {
         state.messages = [];
         state.pendingRequests = [];
-        state.isInGroupCall = false;
-        state.groupCallRoomId = null;
       }
     },
     addIncomingMessage: (state, action: PayloadAction<RoomMessageDTO>) => {
@@ -301,23 +287,13 @@ const studyRoomSlice = createSlice({
     });
 
     // fetchRoomById
-    builder.addCase(fetchRoomById.pending, (state) => {
-      if (state.activeRoom) {
-        // Background refresh: don't show full-page spinner, just set a quiet flag
-        state.isRefreshing = true;
-      } else {
-        // Initial load: show full-page spinner
-        state.isLoading = true;
-      }
-    });
+    builder.addCase(fetchRoomById.pending, (state) => { state.isLoading = true; });
     builder.addCase(fetchRoomById.fulfilled, (state, action) => {
       state.isLoading = false;
-      state.isRefreshing = false;
       state.activeRoom = action.payload;
     });
     builder.addCase(fetchRoomById.rejected, (state, action) => {
       state.isLoading = false;
-      state.isRefreshing = false;
       state.error = action.payload as string;
     });
 
@@ -368,8 +344,6 @@ const studyRoomSlice = createSlice({
     builder.addCase(leaveRoom.fulfilled, (state) => {
       state.activeRoom = null;
       state.messages = [];
-      state.isInGroupCall = false;
-      state.groupCallRoomId = null;
     });
     // For kickUser, state refresh may be handled by sockets, but we can also handle it locally if needed.
     // Host kicks someone, wait for socket event to refresh list, or do it immediately:
@@ -382,8 +356,6 @@ const studyRoomSlice = createSlice({
     builder.addCase(endRoom.fulfilled, (state) => {
       state.activeRoom = null;
       state.messages = [];
-      state.isInGroupCall = false;
-      state.groupCallRoomId = null;
     });
     
     // startRoom
