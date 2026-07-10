@@ -326,6 +326,7 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
             <table className="w-full text-left text-sm text-zinc-400">
               <thead className="text-xs uppercase bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60">
                 <tr>
+                  <th className="px-6 py-4 font-semibold w-16 text-center">#</th>
                   <th className="px-6 py-4 font-semibold">User</th>
                   <th className="px-6 py-4 font-semibold">Level / Title</th>
                   <th className="px-6 py-4 font-semibold text-right">Total XP</th>
@@ -335,12 +336,15 @@ const UsersTab = ({ data, isLoading, filters, setFilters, searchInput, setSearch
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/60">
-                {data.users.map((user: any) => (
+                {data.users.map((user: any, index: number) => (
                   <tr
                     key={user.userId}
                     onClick={() => onRowClick(user.userId)}
                     className="hover:bg-zinc-800/30 transition-colors cursor-pointer"
                   >
+                    <td className="px-6 py-4 text-center text-zinc-500 font-mono text-xs">
+                      {(filters.page - 1) * filters.limit + index + 1}
+                    </td>
                     <td className="px-6 py-4">
                       <div className="font-medium text-white">{user.fullName}</div>
                       <div className="text-xs text-zinc-500">{user.email}</div>
@@ -742,7 +746,7 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling, filters, setFil
             <>
               {/* ── Mobile card list (hidden sm+) ── */}
               <div className="sm:hidden divide-y divide-zinc-800/60">
-                {data.badges.map((badge: any) => (
+                {data.badges.map((badge: any, index: number) => (
                   <div key={badge.id} className="p-4 space-y-3">
                     {/* Top row: icon + name + status */}
                     <div className="flex items-start gap-3">
@@ -750,7 +754,9 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling, filters, setFil
                         {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-8 h-8 rounded" /> : '🏆'}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-white text-sm truncate">{badge.name}</p>
+                        <p className="font-semibold text-white text-sm truncate">
+                          {(filters.page - 1) * filters.limit + index + 1}. {badge.name}
+                        </p>
                         <p className="text-[10px] text-zinc-500 font-mono bg-zinc-800/50 inline-block px-1.5 py-0.5 rounded mt-0.5">{badge.key}</p>
                       </div>
                       <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold uppercase rounded-full border ${
@@ -812,6 +818,7 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling, filters, setFil
                 <table className="w-full text-left text-sm text-zinc-400">
                   <thead className="bg-[#0D0D10] text-[#A1A1AA] border-b border-zinc-800/60 text-xs uppercase">
                     <tr>
+                      <th className="px-6 py-4 font-semibold w-12 text-center">#</th>
                       <th className="px-6 py-4 font-semibold w-16 text-center">Icon</th>
                       <th className="px-6 py-4 font-semibold">Badge</th>
                       <th className="px-6 py-4 font-semibold">Description / Criteria</th>
@@ -823,8 +830,11 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling, filters, setFil
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60">
-                    {data.badges.map((badge: any) => (
+                    {data.badges.map((badge: any, index: number) => (
                       <tr key={badge.id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4 text-center text-zinc-500 font-mono text-xs">
+                          {(filters.page - 1) * filters.limit + index + 1}
+                        </td>
                         <td className="px-6 py-4 text-center text-2xl">
                           {badge.iconUrl ? <img src={badge.iconUrl} alt="icon" className="w-6 h-6 inline-block rounded" /> : '🏆'}
                         </td>

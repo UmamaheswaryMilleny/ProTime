@@ -1,16 +1,16 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { 
-  Search, 
-  Loader, 
-  ChevronLeft, 
-  ChevronRight, 
-  ChevronDown, 
-  Eye, 
-  X, 
-  Users, 
-  Zap, 
-  UserPlus, 
+import {
+  Search,
+  Loader,
+  ChevronLeft,
+  ChevronRight,
+  ChevronDown,
+  Eye,
+  X,
+  Users,
+  Zap,
+  UserPlus,
   IndianRupee,
   Copy,
   CheckCircle2,
@@ -28,12 +28,31 @@ import { ProTimeBackend } from '../../../api/instance';
 import { API_ROUTES } from '../../../shared/constants/constants.routes';
 import toast from 'react-hot-toast';
 
+const PREDEFINED_FEATURES = [
+  'Unlimited Todos & Pomodoro',
+  'Unlimited Buddy Matches & Rooms',
+  'Create your own Study Rooms',
+  'Unlimited Community Chat',
+  'Level Cap: Level 20 (Master)',
+  '100 AI Tokens per day',
+  'Download Monthly Reports',
+  'Premium Badges & Advanced Filters',
+  'Bonus Streak XP Rewards',
+  'Everything in Free Plan',
+  '5 Buddy Matches per month',
+  '3 Group Room joins per month',
+  '10 Community Chats per day',
+  'Level Cap: Level 6 (Learner)',
+  '30 AI Tokens per month',
+  'View Monthly Reports'
+];
+
 interface SubscriptionStats {
-  totalUsers:     number;
-  premiumCount:   number;
-  freeCount:      number;
+  totalUsers: number;
+  premiumCount: number;
+  freeCount: number;
   cancelledCount: number;
-  expiredCount:   number;
+  expiredCount: number;
   monthlyRevenue: number;
 }
 
@@ -46,10 +65,10 @@ interface AdminSubscription {
   currentPeriodStart: string;
   currentPeriodEnd: string;
   user: {
-    id:        string;
-    fullName:  string;
-    email:     string;
-    username:  string;
+    id: string;
+    fullName: string;
+    email: string;
+    username: string;
     createdAt: string;
   };
 }
@@ -73,9 +92,9 @@ const PlanBadge = ({ plan }: { plan: string }) => {
 
 const StatusBadge = ({ status }: { status: string }) => {
   const styles: Record<string, string> = {
-    ACTIVE:    'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/10',
+    ACTIVE: 'bg-[#22C55E]/10 text-[#22C55E] border-[#22C55E]/10',
     CANCELLED: 'bg-orange-500/10 text-orange-400 border-orange-500/10',
-    EXPIRED:   'bg-red-500/10 text-red-400 border-red-500/10'
+    EXPIRED: 'bg-red-500/10 text-red-400 border-red-500/10'
   };
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold border ${styles[status] || styles.ACTIVE}`}>
@@ -86,10 +105,10 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 const SummaryCard = ({ title, value, detail, icon, loading, color }: { title: string, value: string | number, detail?: string, icon: React.ReactNode, loading: boolean, color: string }) => {
   const colors: Record<string, string> = {
-    blue:   'from-blue-500/20 to-transparent text-blue-400 border-blue-500/20',
+    blue: 'from-blue-500/20 to-transparent text-blue-400 border-blue-500/20',
     purple: 'from-purple-500/20 to-transparent text-purple-400 border-purple-500/20',
-    green:  'from-green-500/20 to-transparent text-green-400 border-green-500/20',
-    zinc:   'from-zinc-500/20 to-transparent text-zinc-400 border-zinc-500/20'
+    green: 'from-green-500/20 to-transparent text-green-400 border-green-500/20',
+    zinc: 'from-zinc-500/20 to-transparent text-zinc-400 border-zinc-500/20'
   };
   return (
     <div className={`bg-[#18181B] border rounded-2xl p-5 relative overflow-hidden transition-all hover:scale-[1.02] ${colors[color] || colors.zinc}`}>
@@ -140,11 +159,11 @@ export const AdminSubscriptionsPage: React.FC = () => {
   // Plan Form states
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
   const [editingPlan, setEditingPlan] = useState<any | null>(null);
-  const [planForm, setPlanForm] = useState({
+  const [planForm, setPlanForm] = useState<{name: string, code: string, price: number, features: string[], isActive: boolean}>({
     name: '',
     code: '',
     price: 0,
-    featuresString: '',
+    features: [],
     isActive: true,
   });
 
@@ -239,9 +258,9 @@ export const AdminSubscriptionsPage: React.FC = () => {
     if (!planForm.name.trim()) return toast.error('Plan name is required');
     if (!planForm.code.trim()) return toast.error('Plan code is required');
 
-    const keyRegex = /^[A-Z0-9_]+$/;
-    if (!keyRegex.test(planForm.code.toUpperCase())) {
-      return toast.error('Plan code must be uppercase alphanumeric and underscores only');
+    const keyRegex = /^[A-Za-z0-9_]+$/;
+    if (!keyRegex.test(planForm.code)) {
+      return toast.error('Plan code must be alphanumeric and underscores only');
     }
 
     try {
@@ -249,7 +268,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
         name: planForm.name.trim(),
         code: planForm.code.toUpperCase().trim(),
         price: Number(planForm.price) || 0,
-        features: planForm.featuresString.split('\n').map(f => f.trim()).filter(Boolean),
+        features: planForm.features,
         isActive: planForm.isActive,
       };
 
@@ -397,23 +416,11 @@ export const AdminSubscriptionsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-white">Subscription Management</h1>
           <p className="text-[#A1A1AA] text-sm mt-1">Overview of platform revenue and active plans.</p>
         </div>
-        {activeTab === 'subscriptions' ? (
-          <button
-            onClick={() => {
-              setEditingSub(null);
-              setSubForm({ userId: '', plan: plans[0]?.code || 'FREE', status: 'ACTIVE', currentPeriodEnd: '' });
-              setIsSubModalOpen(true);
-            }}
-            className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#2563EB]/25 cursor-pointer"
-          >
-            <Plus size={16} />
-            <span className="text-sm font-semibold">Assign Subscription</span>
-          </button>
-        ) : (
+        {activeTab === 'plans' && (
           <button
             onClick={() => {
               setEditingPlan(null);
-              setPlanForm({ name: '', code: '', price: 0, featuresString: '', isActive: true });
+              setPlanForm({ name: '', code: '', price: 0, features: [], isActive: true });
               setIsPlanModalOpen(true);
             }}
             className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#2563EB]/25 cursor-pointer"
@@ -428,22 +435,20 @@ export const AdminSubscriptionsPage: React.FC = () => {
       <div className="flex gap-1 sm:gap-4 border-b border-zinc-800 pb-px">
         <button
           onClick={() => setActiveTab('subscriptions')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${
-            activeTab === 'subscriptions'
-              ? 'border-[#2563EB] text-[#2563EB]'
-              : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${activeTab === 'subscriptions'
+            ? 'border-[#2563EB] text-[#2563EB]'
+            : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
+            }`}
         >
           <CreditCard size={14} />
           User Subscriptions
         </button>
         <button
           onClick={() => setActiveTab('plans')}
-          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${
-            activeTab === 'plans'
-              ? 'border-[#2563EB] text-[#2563EB]'
-              : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
-          }`}
+          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${activeTab === 'plans'
+            ? 'border-[#2563EB] text-[#2563EB]'
+            : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
+            }`}
         >
           <Zap size={14} />
           Manage Plans
@@ -454,31 +459,31 @@ export const AdminSubscriptionsPage: React.FC = () => {
         <>
           {/* Summary Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <SummaryCard 
-              title="Total Users" 
+            <SummaryCard
+              title="Total Users"
               value={stats?.totalUsers ?? 0}
               icon={<Users size={20} />}
               loading={isStatsLoading}
               color="blue"
             />
-            <SummaryCard 
-              title="Premium Users" 
+            <SummaryCard
+              title="Premium Users"
               value={stats?.premiumCount ?? 0}
               detail={`${stats ? ((stats.premiumCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
               icon={<Zap size={20} />}
               loading={isStatsLoading}
               color="purple"
             />
-            <SummaryCard 
-              title="Free Users" 
+            <SummaryCard
+              title="Free Users"
               value={stats?.freeCount ?? 0}
               detail={`${stats ? ((stats.freeCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
               icon={<UserPlus size={20} />}
               loading={isStatsLoading}
               color="zinc"
             />
-            <SummaryCard 
-              title="Monthly Rev" 
+            <SummaryCard
+              title="Monthly Rev"
               value={`₹${stats?.monthlyRevenue.toLocaleString() ?? '0'}`}
               detail={`${stats?.premiumCount ?? 0} × ₹499`}
               icon={<IndianRupee size={20} />}
@@ -581,7 +586,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                           {sub.stripeSubscriptionId ? (
                             <div className="flex items-center gap-1.5 text-xs text-zinc-400">
                               <span className="font-mono truncate max-w-[100px]">{sub.stripeSubscriptionId}</span>
-                              <button 
+                              <button
                                 onClick={() => handleCopy(sub.stripeSubscriptionId!)}
                                 className="p-1 hover:text-white transition-colors"
                                 title="Copy ID"
@@ -685,7 +690,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 >
                   <ChevronLeft size={16} />
                 </button>
-                
+
                 <div className="flex items-center gap-1 mx-1">
                   {getPageNumbers().map((pg, i) => (
                     pg === '...' ? (
@@ -694,9 +699,8 @@ export const AdminSubscriptionsPage: React.FC = () => {
                       <button
                         key={pg}
                         onClick={() => setPage(pg as number)}
-                        className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
-                          page === pg ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'text-zinc-400 hover:bg-zinc-800 border border-transparent hover:border-[#27272A]'
-                        }`}
+                        className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${page === pg ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'text-zinc-400 hover:bg-zinc-800 border border-transparent hover:border-[#27272A]'
+                          }`}
                       >
                         {pg}
                       </button>
@@ -759,11 +763,10 @@ export const AdminSubscriptionsPage: React.FC = () => {
                         </p>
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
-                          p.isActive
-                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10'
-                            : 'bg-red-500/10 text-red-400 border-red-500/10'
-                        }`}>
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${p.isActive
+                          ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10'
+                          : 'bg-red-500/10 text-red-400 border-red-500/10'
+                          }`}>
                           {p.isActive ? 'ACTIVE' : 'INACTIVE'}
                         </span>
                       </td>
@@ -776,7 +779,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                                 name: p.name,
                                 code: p.code,
                                 price: p.price,
-                                featuresString: p.features.join('\n'),
+                                features: p.features || [],
                                 isActive: p.isActive,
                               });
                               setIsPlanModalOpen(true);
@@ -849,14 +852,18 @@ export const AdminSubscriptionsPage: React.FC = () => {
                   <p className="text-sm text-zinc-200">{selectedSub.user.email}</p>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-3">
                 <div className="flex flex-col gap-1 p-4 rounded-xl bg-[#1F1F23]">
-                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Current Plan</p>
+                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                    Current Plan
+                  </p>
                   <PlanBadge plan={selectedSub.plan} />
                 </div>
+
                 <div className="flex flex-col gap-1 p-4 rounded-xl bg-[#1F1F23]">
-                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">Status</p>
+                  <p className="text-[10px] font-semibold text-zinc-500 uppercase tracking-wider mb-1">
+                    Status
+                  </p>
                   <StatusBadge status={selectedSub.status} />
                 </div>
               </div>
@@ -868,9 +875,9 @@ export const AdminSubscriptionsPage: React.FC = () => {
                   <div className="flex items-center justify-between mt-1">
                     <p className="text-xs font-mono text-zinc-300 truncate max-w-[200px]">{selectedSub.stripeSubscriptionId || 'N/A'}</p>
                     {selectedSub.stripeSubscriptionId && (
-                      <button 
+                      <button
                         onClick={() => handleCopy(selectedSub.stripeSubscriptionId!)}
-                        className="text-zinc-500 hover:text-white transition-colors cursor-pointer"
+                        className="text-zinc-500 hover:text-white transition-colors"
                       >
                         {copiedId === selectedSub.stripeSubscriptionId ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
                       </button>
@@ -896,54 +903,30 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 </div>
               </div>
 
-              {selectedSub.plan !== 'FREE' && (() => {
-                const periodEnd = new Date(selectedSub.currentPeriodEnd);
-                const isExpired = periodEnd < new Date();
-                let label = 'Next Billing Date';
-                if (selectedSub.status === 'CANCELLED') label = 'Premium Access Until';
-                if (selectedSub.status === 'EXPIRED' || isExpired) label = 'Expired On';
-                return (
-                  <div className={`flex items-center justify-between p-4 rounded-xl border ${
-                    isExpired
-                      ? 'bg-red-500/10 border-red-500/20'
-                      : selectedSub.status === 'CANCELLED'
-                        ? 'bg-orange-500/10 border-orange-500/20'
-                        : 'bg-[rgb(168,85,247,0.1)] border-[rgba(168,85,247,0.2)]'
-                  }`}>
-                    <div className="flex items-center gap-3">
-                      <Zap size={16} className={isExpired ? 'text-red-400' : selectedSub.status === 'CANCELLED' ? 'text-orange-400' : 'text-purple-400'} />
-                      <span className={`text-xs font-semibold uppercase tracking-wide ${
-                        isExpired ? 'text-red-300' : selectedSub.status === 'CANCELLED' ? 'text-orange-200' : 'text-purple-200'
-                      }`}>{label}</span>
-                    </div>
-                    <div className="flex flex-col items-end gap-0.5">
-                      <span className="text-xs font-bold text-white">{periodEnd.toLocaleDateString()}</span>
-                      {isExpired && selectedSub.status === 'ACTIVE' && (
-                        <span className="text-[10px] text-red-400 font-semibold">⚠ Stale — webhook missed</span>
-                      )}
-                    </div>
+              {selectedSub.plan === 'PREMIUM' && (
+                <div className="flex items-center justify-between p-4 rounded-xl bg-[rgb(168,85,247,0.1)] border border-[rgba(168,85,247,0.2)]">
+                  <div className="flex items-center gap-3">
+                    <Zap size={16} className="text-purple-400" />
+                    <span className="text-xs font-semibold text-purple-200 uppercase tracking-wide">Next Billing Date</span>
                   </div>
-                );
-              })()}
-
+                  <span className="text-xs font-bold text-white">{new Date(selectedSub.currentPeriodEnd).toLocaleDateString()}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── Add/Edit Plan Modal ─────────────────────────────────────── */}
+      {/* ─── Plan Edit / Add Modal ────────────────────────────────────── */}
       {isPlanModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <form
-            onSubmit={handleSavePlan}
-            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200 space-y-4"
+          <div
+            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200"
+            onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-white">
-                {editingPlan ? 'Edit Subscription Plan' : 'Add New Plan'}
-              </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-white">{editingPlan ? 'Edit Plan' : 'Add New Plan'}</h3>
               <button
-                type="button"
                 onClick={() => setIsPlanModalOpen(false)}
                 className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
               >
@@ -951,101 +934,105 @@ export const AdminSubscriptionsPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Plan Name</label>
-              <input
-                type="text"
-                value={planForm.name}
-                onChange={e => setPlanForm({ ...planForm, name: e.target.value })}
-                placeholder="e.g. Pro Monthly"
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors"
-                required
-              />
-            </div>
+            <form onSubmit={handleSavePlan} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Plan Name</label>
+                <input
+                  type="text"
+                  value={planForm.name}
+                  onChange={e => setPlanForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="e.g. Pro Monthly"
+                  className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Plan Code (Uppercase Unique ID)</label>
-              <input
-                type="text"
-                value={planForm.code}
-                onChange={e => setPlanForm({ ...planForm, code: e.target.value })}
-                placeholder="e.g. PRO"
-                disabled={!!editingPlan && (editingPlan.code === 'FREE' || editingPlan.code === 'PREMIUM')}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors uppercase disabled:opacity-50"
-                required
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Plan Code</label>
+                <input
+                  type="text"
+                  value={planForm.code}
+                  onChange={e => setPlanForm(prev => ({ ...prev, code: e.target.value }))}
+                  placeholder="e.g. Premium Plus"
+                  disabled={!!editingPlan}
+                  className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Monthly Price (INR)</label>
-              <input
-                type="number"
-                value={planForm.price}
-                onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })}
-                placeholder="e.g. 799"
-                disabled={!!editingPlan && editingPlan.code === 'FREE'}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
-                required
-                min={0}
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Monthly Price (₹)</label>
+                <input
+                  type="number"
+                  value={planForm.price}
+                  onChange={e => setPlanForm(prev => ({ ...prev, price: Number(e.target.value) }))}
+                  placeholder="e.g. 499"
+                  className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
+                />
+              </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Features (one per line)</label>
-              <textarea
-                value={planForm.featuresString}
-                onChange={e => setPlanForm({ ...planForm, featuresString: e.target.value })}
-                placeholder="Unlimited buddy match&#10;Unlimited study rooms"
-                rows={4}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors resize-none"
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Features</label>
+                <div className="bg-[#1F1F23] border border-[#27272A] rounded-xl p-3 max-h-48 overflow-y-auto space-y-2">
+                  {PREDEFINED_FEATURES.map((feature, idx) => (
+                    <label key={idx} className="flex items-start gap-2 cursor-pointer group">
+                      <input
+                        type="checkbox"
+                        checked={planForm.features.includes(feature)}
+                        onChange={(e) => {
+                          if (e.target.checked) {
+                            setPlanForm(prev => ({ ...prev, features: [...prev.features, feature] }));
+                          } else {
+                            setPlanForm(prev => ({ ...prev, features: prev.features.filter(f => f !== feature) }));
+                          }
+                        }}
+                        className="mt-0.5 w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+                      />
+                      <span className="text-sm text-zinc-300 group-hover:text-white transition-colors select-none">{feature}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
 
-            <div className="flex items-center gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="plan_active_chk"
-                checked={planForm.isActive}
-                onChange={e => setPlanForm({ ...planForm, isActive: e.target.checked })}
-                className="rounded text-[#2563EB] focus:ring-0 bg-[#1F1F23] border-[#27272A] cursor-pointer"
-              />
-              <label htmlFor="plan_active_chk" className="text-sm text-zinc-300 cursor-pointer select-none">
-                This plan is active and available
-              </label>
-            </div>
+              <div className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  id="plan-is-active"
+                  checked={planForm.isActive}
+                  onChange={e => setPlanForm(prev => ({ ...prev, isActive: e.target.checked }))}
+                  className="w-4 h-4 rounded border-zinc-700 bg-zinc-800 text-blue-600 focus:ring-blue-500 focus:ring-offset-zinc-900 cursor-pointer"
+                />
+                <label htmlFor="plan-is-active" className="text-sm text-zinc-300 select-none cursor-pointer">Active and visible to users</label>
+              </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setIsPlanModalOpen(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-xl bg-[#2563EB] text-white hover:bg-blue-600 transition-colors text-sm font-semibold cursor-pointer"
-              >
-                Save Plan
-              </button>
-            </div>
-          </form>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsPlanModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-all cursor-pointer"
+                >
+                  {editingPlan ? 'Save Changes' : 'Create Plan'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 
-      {/* ─── Add/Edit User Subscription Modal ────────────────────────── */}
+      {/* ─── User Subscription Edit Modal ─────────────────────────────── */}
       {isSubModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <form
-            onSubmit={handleSaveSubscription}
-            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200 space-y-4"
+          <div
+            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200"
+            onClick={e => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-lg font-bold text-white">
-                {editingSub ? 'Update User Subscription' : 'Assign User Subscription'}
-              </h3>
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-white">{editingSub ? 'Edit Subscription' : 'Assign Subscription'}</h3>
               <button
-                type="button"
                 onClick={() => setIsSubModalOpen(false)}
                 className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
               >
@@ -1053,81 +1040,79 @@ export const AdminSubscriptionsPage: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">User ID</label>
-              <input
-                type="text"
-                value={subForm.userId}
-                onChange={e => setSubForm({ ...subForm, userId: e.target.value })}
-                placeholder="User's MongoDB Object ID"
-                disabled={!!editingSub}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
-                required
-              />
-            </div>
-
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Select Plan</label>
-              <div className="relative">
-                <select
-                  value={subForm.plan}
-                  onChange={e => setSubForm({ ...subForm, plan: e.target.value })}
-                  className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-3.5 py-2 outline-none focus:border-[#2563EB] cursor-pointer uppercase"
-                  required
-                >
-                  {plans.map(p => (
-                    <option key={p.code} value={p.code}>{p.code}</option>
-                  ))}
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            <form onSubmit={handleSaveSubscription} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">User ID</label>
+                <input
+                  type="text"
+                  value={subForm.userId}
+                  onChange={e => setSubForm(prev => ({ ...prev, userId: e.target.value }))}
+                  placeholder="e.g. 60d5ec49f83f2311b0123456"
+                  disabled={!!editingSub}
+                  className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
+                />
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Status</label>
-              <div className="relative">
-                <select
-                  value={subForm.status}
-                  onChange={e => setSubForm({ ...subForm, status: e.target.value })}
-                  className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-3.5 py-2 outline-none focus:border-[#2563EB] cursor-pointer"
-                  required
-                >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="EXPIRED">EXPIRED</option>
-                  <option value="CANCELLED">CANCELLED</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Plan</label>
+                <div className="relative">
+                  <select
+                    value={subForm.plan}
+                    onChange={e => setSubForm(prev => ({ ...prev, plan: e.target.value }))}
+                    className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer"
+                  >
+                    <option value="" disabled>Select a plan</option>
+                    {plans.map(p => (
+                      <option key={p.code} value={p.code}>{p.name} ({p.code})</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-zinc-400 uppercase">Period End Date (Expiry)</label>
-              <input
-                type="date"
-                value={subForm.currentPeriodEnd}
-                onChange={e => setSubForm({ ...subForm, currentPeriodEnd: e.target.value })}
-                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors"
-                disabled={subForm.plan === 'FREE'}
-                required={subForm.plan !== 'FREE'}
-              />
-            </div>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Status</label>
+                <div className="relative">
+                  <select
+                    value={subForm.status}
+                    onChange={e => setSubForm(prev => ({ ...prev, status: e.target.value }))}
+                    className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-4 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer"
+                  >
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="CANCELLED">CANCELLED</option>
+                    <option value="EXPIRED">EXPIRED</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+                </div>
+              </div>
 
-            <div className="flex gap-3 pt-4">
-              <button
-                type="button"
-                onClick={() => setIsSubModalOpen(false)}
-                className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm font-semibold cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="flex-1 py-2 rounded-xl bg-[#2563EB] text-white hover:bg-blue-600 transition-colors text-sm font-semibold cursor-pointer"
-              >
-                Save
-              </button>
-            </div>
-          </form>
+              <div>
+                <label className="block text-xs font-semibold text-zinc-500 uppercase tracking-wider mb-1.5">Period End Date</label>
+                <input
+                  type="date"
+                  value={subForm.currentPeriodEnd}
+                  onChange={e => setSubForm(prev => ({ ...prev, currentPeriodEnd: e.target.value }))}
+                  className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-4 py-2.5 text-sm text-white outline-none focus:border-[#2563EB] transition-colors"
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsSubModalOpen(false)}
+                  className="flex-1 py-2.5 rounded-xl border border-[#27272A] text-zinc-300 hover:bg-zinc-800 text-sm font-semibold transition-all cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold transition-all cursor-pointer"
+                >
+                  {editingSub ? 'Save Changes' : 'Assign'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>
