@@ -475,6 +475,7 @@ export class App {
 
       socket.on('room:video:start', async (data: { roomId: string }) => {
         activeVideoCalls.set(data.roomId, new Set([userId]));
+        logger.info(`[Socket] room:video:start received from ${userId} for room ${data.roomId}`);
         
         try {
           const studyRoom = await StudyRoomModel.findById(data.roomId)
@@ -485,6 +486,9 @@ export class App {
             const hostName = (studyRoom.hostId as any)?.fullName || 'Host';
             const roomName = studyRoom.name;
 
+            logger.info(`[Socket] Room found: "${roomName}", participants: ${studyRoom.participantIds.map(p => p.toString()).join(', ')}`);
+
+            // Broadcast started to everyone in the socket room (host + members)
             socketService.emitToRoom(data.roomId, 'room:video:started', {
               roomId: data.roomId,
               hostId: userId,
@@ -492,18 +496,28 @@ export class App {
               roomName,
             });
 
+            // Per-participant ringing: emit directly to each user's socket AND via room broadcast
+            const ringPayload = {
+              roomId: data.roomId,
+              hostId: userId,
+              hostName,
+              roomName,
+            };
+
+            // Also broadcast ringing to the socket room as a fallback
+            // (caught by the RoomChatWindow listener too)
+            socketService.emitToRoom(data.roomId, 'room:video:ringing', ringPayload);
+
             studyRoom.participantIds.forEach((participantId) => {
               const pIdStr = participantId.toString();
               if (pIdStr !== userId) {
-                socketService.emitToUser(pIdStr, 'room:video:ringing', {
-                  roomId: data.roomId,
-                  hostId: userId,
-                  hostName,
-                  roomName,
-                });
+                logger.info(`[Socket] Sending room:video:ringing directly to user ${pIdStr}`);
+                // Direct emit via onlineUsers map
+                socketService.emitToUser(pIdStr, 'room:video:ringing', ringPayload);
               }
             });
           } else {
+            logger.warn(`[Socket] StudyRoom ${data.roomId} not found in DB for ringing`);
             socketService.emitToRoom(data.roomId, 'room:video:started', {
               roomId: data.roomId,
               hostId: userId,

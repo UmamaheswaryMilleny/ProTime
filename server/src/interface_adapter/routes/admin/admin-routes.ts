@@ -91,21 +91,6 @@ export class AdminRoutes extends BaseRoute {
       asyncHandler(subCtrl.getSubscriptions.bind(subCtrl)),
     );
 
-    this.router.post(
-      ROUTES.ADMIN.SUBSCRIPTION_ADD,
-      asyncHandler(subCtrl.addSubscription.bind(subCtrl)),
-    );
-
-    this.router.patch(
-      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
-      asyncHandler(subCtrl.updateSubscription.bind(subCtrl)),
-    );
-
-    this.router.delete(
-      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
-      asyncHandler(subCtrl.deleteSubscription.bind(subCtrl)),
-    );
-
     // Plans CRUD
     this.router.get(
       '/subscriptions/plans',
@@ -125,6 +110,21 @@ export class AdminRoutes extends BaseRoute {
     this.router.delete(
       '/subscriptions/plans/:planId',
       asyncHandler(subCtrl.deletePlan.bind(subCtrl)),
+    );
+
+    this.router.post(
+      ROUTES.ADMIN.SUBSCRIPTION_ADD,
+      asyncHandler(subCtrl.addSubscription.bind(subCtrl)),
+    );
+
+    this.router.patch(
+      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
+      asyncHandler(subCtrl.updateSubscription.bind(subCtrl)),
+    );
+
+    this.router.delete(
+      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
+      asyncHandler(subCtrl.deleteSubscription.bind(subCtrl)),
     );
 
     // ─── Meeting Management ───────────────────────────────────────────────

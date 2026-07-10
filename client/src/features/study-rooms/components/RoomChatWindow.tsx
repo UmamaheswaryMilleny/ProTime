@@ -321,11 +321,21 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
   useEffect(() => {
     if (!roomId) return;
 
-    const handleVideoStarted = (payload: { roomId: string }) => {
+    const handleVideoStarted = (payload: { roomId: string; hostId?: string; hostName?: string; roomName?: string }) => {
       console.log('[Socket] room:video:started received on client:', payload);
       if (payload.roomId !== roomId) return;
       setIsHostCallActive(true);
       if (!isHost) setShowRingingOverlay(true);
+    };
+
+    const handleVideoRinging = (payload: { roomId: string; hostId: string; hostName: string; roomName: string }) => {
+      console.log('[Socket] room:video:ringing received on client (inside room):', payload);
+      if (payload.roomId !== roomId) return;
+      // Only non-hosts who are not already in the call should see the ringing popup
+      if (!isHost && !isInGroupCall) {
+        dispatch(setIncomingGroupCall(payload));
+        setShowRingingOverlay(true);
+      }
     };
 
     const handleVideoEnded = (payload: { roomId: string }) => {
@@ -360,6 +370,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     };
 
     socketService.on('room:video:started', handleVideoStarted);
+    socketService.on('room:video:ringing', handleVideoRinging);
     socketService.on('room:video:ended', handleVideoEnded);
     socketService.on('room:video:status-response', handleVideoStatusResponse);
 
@@ -371,10 +382,12 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
     return () => {
       clearTimeout(t);
       socketService.off('room:video:started', handleVideoStarted);
+      socketService.off('room:video:ringing', handleVideoRinging);
       socketService.off('room:video:ended', handleVideoEnded);
       socketService.off('room:video:status-response', handleVideoStatusResponse);
     };
   }, [roomId, dispatch, isHost, isInGroupCall]);
+
 
   // Host: Emit time remaining tick every 5 seconds to room
   useEffect(() => {
