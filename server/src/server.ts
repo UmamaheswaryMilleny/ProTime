@@ -26,6 +26,7 @@ import { JwtTokenService } from './infrastructure/service/token-service';
 import { ROUTES } from './shared/constants/constants.routes';
 import { ChatRoutes } from './interface_adapter/routes/chat/chat.routes';
 import { ConversationModel } from './infrastructure/database/models/conversation.model';
+import { StudyRoomModel } from './infrastructure/database/models/study-room.model';
 import { ReportRoutes } from './interface_adapter/routes/report/report.routes';
 import { CalendarRoutes } from './interface_adapter/routes/calendar/calendar.routes';
 import type { IStudyRoomRepository } from './domain/repositories/study-room/study-room.repository.interface';
@@ -229,15 +230,12 @@ export class App {
       // Study Rooms
       socket.on('join:room', (roomId: string) => {
         socket.join(`room:${roomId}`);
-        logger.info(`[Socket] User ${userId} joined room ${roomId}`);
       });
 
       socket.on('leave:room', (roomId: string) => {
         socket.leave(`room:${roomId}`);
-        logger.info(`[Socket] User ${userId} left room ${roomId}`);
         const clients = this.io.sockets.adapter.rooms.get(`room:${roomId}`);
         if (!clients || clients.size === 0) {
-          logger.info(`[Socket] Room ${roomId} has no active clients. Cleaning up timers and calls.`);
           roomPomodoros.delete(roomId);
           activeVideoCalls.delete(roomId);
         }
@@ -476,10 +474,48 @@ export class App {
 
       socket.on('room:video:start', async (data: { roomId: string }) => {
         activeVideoCalls.set(data.roomId, new Set([userId]));
-        socketService.emitToRoom(data.roomId, 'room:video:started', {
-          roomId: data.roomId,
-          hostId: userId,
-        });
+        
+        try {
+          const studyRoom = await StudyRoomModel.findById(data.roomId)
+            .populate('hostId', 'fullName')
+            .lean();
+          
+          if (studyRoom) {
+            const hostName = (studyRoom.hostId as any)?.fullName || 'Host';
+            const roomName = studyRoom.name;
+
+            socketService.emitToRoom(data.roomId, 'room:video:started', {
+              roomId: data.roomId,
+              hostId: userId,
+              hostName,
+              roomName,
+            });
+
+            studyRoom.participantIds.forEach((participantId) => {
+              const pIdStr = participantId.toString();
+              if (pIdStr !== userId) {
+                socketService.emitToUser(pIdStr, 'room:video:ringing', {
+                  roomId: data.roomId,
+                  hostId: userId,
+                  hostName,
+                  roomName,
+                });
+              }
+            });
+          } else {
+            socketService.emitToRoom(data.roomId, 'room:video:started', {
+              roomId: data.roomId,
+              hostId: userId,
+            });
+          }
+        } catch (err) {
+          logger.error('[Socket] Failed to fetch study room for ringing:', err);
+          socketService.emitToRoom(data.roomId, 'room:video:started', {
+            roomId: data.roomId,
+            hostId: userId,
+          });
+        }
+
         logger.info(`[Socket] Video call started in room ${data.roomId} by host ${userId}`);
 
         try {
@@ -499,6 +535,21 @@ export class App {
         socketService.emitToRoom(data.roomId, 'room:video:ended', {
           roomId: data.roomId,
         });
+
+        try {
+          const studyRoom = await StudyRoomModel.findById(data.roomId).lean();
+          if (studyRoom) {
+            studyRoom.participantIds.forEach((participantId) => {
+              const pIdStr = participantId.toString();
+              socketService.emitToUser(pIdStr, 'room:video:ended', {
+                roomId: data.roomId,
+              });
+            });
+          }
+        } catch (err) {
+          logger.error('[Socket] Failed to fetch study room for ending call:', err);
+        }
+
         logger.info(`[Socket] Video call ended in room ${data.roomId}`);
 
         try {
@@ -515,12 +566,11 @@ export class App {
 
       socket.on('room:video:request-status', (data: { roomId: string }) => {
         const participants = activeVideoCalls.get(data.roomId);
-        const isActive = activeVideoCalls.has(data.roomId);
-        logger.info(`[Socket] Status request for room ${data.roomId}. Active call: ${isActive}, Participants: ${participants ? participants.size : 0}`);
+        const isActive = !!participants && participants.size > 0;
         socket.emit('room:video:status-response', {
           roomId: data.roomId,
           isActive,
-          participants: participants ? Array.from(participants) : [],
+          participants: isActive ? Array.from(participants) : [],
         });
       });
 

@@ -19,6 +19,7 @@ interface StudyRoomState {
   // Group Video Call state (similar to chat's activeCall)
   isInGroupCall: boolean;
   groupCallRoomId: string | null;
+  incomingGroupCall: { roomId: string; hostId: string; hostName: string; roomName: string } | null;
 }
 
 const initialState: StudyRoomState = {
@@ -36,6 +37,7 @@ const initialState: StudyRoomState = {
   total: 0,
   isInGroupCall: false,
   groupCallRoomId: null,
+  incomingGroupCall: null,
 };
 
 // ─── Thunks ──────────────────────────────────────────────────────────────────
@@ -267,6 +269,9 @@ const studyRoomSlice = createSlice({
     clearError: (state) => {
       state.error = null;
     },
+    setIncomingGroupCall: (state, action: PayloadAction<{ roomId: string; hostId: string; hostName: string; roomName: string } | null>) => {
+      state.incomingGroupCall = action.payload;
+    },
   },
   extraReducers: (builder) => {
     // fetchRooms
@@ -415,6 +420,7 @@ export const {
   endGroupCall,
   removePendingRequest,
   clearError,
+  setIncomingGroupCall,
 } = studyRoomSlice.actions;
 
 export default studyRoomSlice.reducer;

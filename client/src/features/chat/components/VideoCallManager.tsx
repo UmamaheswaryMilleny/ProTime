@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 import type { RootState } from '../../../store/store';
 import { setIncomingCall, setActiveCall } from '../store/chatSlice';
+import { setIncomingGroupCall, startGroupCall, sendRoomMessage } from '../../study-rooms/store/studyRoomSlice';
 import { ReportContext } from '../api/chatApi';
 import { socketService } from '../../../shared/services/socketService';
 import { Settings, Flag, Mic, MicOff, Video as VideoIcon, VideoOff, ListTodo, Calendar, Loader, Plus } from 'lucide-react';
@@ -19,8 +21,9 @@ import type { CreateTodoDTO } from '../../todo/types/todo.types';
 
 export const VideoCallOverlay: React.FC = () => {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const { incomingCall, activeCall, conversations } = useSelector((state: RootState) => state.chat);
-  const { isInGroupCall } = useSelector((state: RootState) => state.studyRoom);
+  const { isInGroupCall, incomingGroupCall } = useSelector((state: RootState) => state.studyRoom);
   const currentUserFullName = useSelector((state: RootState) => state.auth.user?.fullName ?? 'Someone');
 
   const { todos, isLoading: isTodosLoading, addTodo } = useTodo();
@@ -435,6 +438,49 @@ export const VideoCallOverlay: React.FC = () => {
       dispatch(setIncomingCall(null));
     }
   };
+
+  const handleAcceptGroupCall = () => {
+    if (incomingGroupCall) {
+      const { roomId } = incomingGroupCall;
+      if (activeCall) {
+        toast.error("You cannot join a group video call while in a 1:1 call. Please end your 1:1 call first.");
+        return;
+      }
+      sessionStorage.setItem(`in_group_call_${roomId}`, 'true');
+      sessionStorage.removeItem(`declined_video_call_${roomId}`);
+      dispatch(startGroupCall(roomId));
+      dispatch(setIncomingGroupCall(null));
+      navigate(`/dashboard/study-rooms/${roomId}`);
+    }
+  };
+
+  const handleDeclineGroupCall = () => {
+    if (incomingGroupCall) {
+      const { roomId } = incomingGroupCall;
+      sessionStorage.setItem(`declined_video_call_${roomId}`, 'true');
+      dispatch(setIncomingGroupCall(null));
+      dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }) as any);
+    }
+  };
+
+  const isViewingRoom = incomingGroupCall && window.location.pathname.includes(`/dashboard/study-rooms/${incomingGroupCall.roomId}`);
+
+  if (incomingGroupCall && !isInGroupCall && !isViewingRoom) {
+    return (
+      <div className="fixed top-8 right-8 bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-2xl z-50 flex flex-col items-center border border-[blueviolet]/30 dark:border-[blueviolet]/50">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center bg-[blueviolet]/10 dark:bg-[blueviolet]/20 text-[blueviolet] font-bold text-2xl mb-4 animate-pulse">
+          <VideoIcon size={32} />
+        </div>
+        <h4 className="text-gray-900 dark:text-white font-semibold text-lg">{incomingGroupCall.hostName}</h4>
+        <p className="text-gray-500 mb-2 font-medium tracking-wide text-center">is calling you to join</p>
+        <p className="text-sm text-[blueviolet] font-bold mb-6 text-center">"{incomingGroupCall.roomName}"</p>
+        <div className="flex space-x-4">
+          <button onClick={handleDeclineGroupCall} className="px-6 py-2 bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/40 dark:text-red-400 dark:hover:bg-red-900/60 rounded-xl font-bold transition">Decline</button>
+          <button onClick={handleAcceptGroupCall} className="px-6 py-2 bg-[blueviolet] text-white hover:bg-[blueviolet]/95 rounded-xl font-bold transition shadow-lg shadow-[blueviolet]/30">Accept</button>
+        </div>
+      </div>
+    );
+  }
 
   if (incomingCall && !activeCall) {
     // Lookup partner name for proper display

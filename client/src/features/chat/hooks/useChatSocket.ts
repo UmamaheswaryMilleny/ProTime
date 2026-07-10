@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { socketService } from '../../../shared/services/socketService';
 import { updateConversationPreview, setUserOnlineStatus, setIncomingCall, setActiveCall } from '../store/chatSlice';
+import { setIncomingGroupCall, endGroupCall } from '../../study-rooms/store/studyRoomSlice';
 import { setBuddyPomodoro } from '../../todo/store/pomodoroSlice';
 import toast from 'react-hot-toast';
 
@@ -49,6 +50,17 @@ export const useChatSocket = () => {
       dispatch(setActiveCall(null));
     };
 
+    const handleRoomVideoRinging = (data: { roomId: string; hostId: string; hostName: string; roomName: string }) => {
+      dispatch(setIncomingGroupCall(data));
+    };
+
+    const handleRoomVideoEnded = (data: { roomId: string }) => {
+      dispatch(setIncomingGroupCall(null));
+      dispatch(endGroupCall());
+      sessionStorage.removeItem(`in_group_call_${data.roomId}`);
+      sessionStorage.removeItem(`declined_video_call_${data.roomId}`);
+    };
+
     const handlePomodoroStart = (data: any) => {
       // Automatically join the buddy's Pomodoro without a toast
       dispatch(setBuddyPomodoro({ ...data, type: 'START' }));
@@ -76,6 +88,8 @@ export const useChatSocket = () => {
     socketService.on('user:offline', handleUserOffline);
     socketService.on('webrtc:offer', handleWebRTCOffer);
     socketService.on('webrtc:call-ended', handleWebRTCCallEnded);
+    socketService.on('room:video:ringing', handleRoomVideoRinging);
+    socketService.on('room:video:ended', handleRoomVideoEnded);
     socketService.on('pomodoro:start', handlePomodoroStart);
     socketService.on('pomodoro:pause', handlePomodoroPause);
     socketService.on('pomodoro:resume', handlePomodoroResume);
@@ -88,6 +102,8 @@ export const useChatSocket = () => {
       socketService.off('user:offline', handleUserOffline);
       socketService.off('webrtc:offer', handleWebRTCOffer);
       socketService.off('webrtc:call-ended', handleWebRTCCallEnded);
+      socketService.off('room:video:ringing', handleRoomVideoRinging);
+      socketService.off('room:video:ended', handleRoomVideoEnded);
       socketService.off('pomodoro:start', handlePomodoroStart);
       socketService.off('pomodoro:pause', handlePomodoroPause);
       socketService.off('pomodoro:resume', handlePomodoroResume);
