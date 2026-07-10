@@ -21,7 +21,12 @@ console.log("API URL:", import.meta.env.VITE_API_BASE_URL);
         
         this.socket = io(baseUrl, {
             auth: { token },
-            transports: ['websocket'],
+            transports: ['polling', 'websocket'], // polling first so Nginx can establish session, then upgrades to WS
+            upgrade: true,
+            reconnection: true,
+            reconnectionAttempts: Infinity,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 5000,
         });
 
         this.socket.on('connect', () => {
