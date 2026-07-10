@@ -1,5 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { inject, injectable } from 'tsyringe';
+import mongoose from 'mongoose';
+import { PlanModel } from '../../../infrastructure/database/models/plan.model';
 
 import type { IGetSubscriptionStatsUsecase } from '../../../application/usecase/interface/subscription/get-subscription-stats.usecase.interface';
 import type { IGetSubscriptionsAdminUsecase } from '../../../application/usecase/interface/subscription/get-subscriptions-admin.usecase.interface';
@@ -62,7 +64,6 @@ export class AdminSubscriptionController {
     const existing = await this.subscriptionRepository.findByUserId(userId);
     const currentPlan = existing?.plan || 'FREE';
     const currentStatus = existing?.status || 'ACTIVE';
-
     const targetPlan = plan ? plan.toUpperCase() : currentPlan;
     const targetStatus = status ? status.toUpperCase() : currentStatus;
 
@@ -76,12 +77,8 @@ export class AdminSubscriptionController {
     }
 
     if (!hasDateChanged) {
-      if (targetPlan === 'FREE' && currentPlan === 'FREE') {
-        res.status(400).json({ success: false, message: 'User is already on the Free plan' });
-        return;
-      }
-      if (targetPlan === 'PREMIUM' && currentPlan === 'PREMIUM' && targetStatus === currentStatus) {
-        res.status(400).json({ success: false, message: `User is already on the Premium plan with ${targetStatus.toLowerCase()} status` });
+      if (targetPlan === currentPlan && targetStatus === currentStatus) {
+        res.status(400).json({ success: false, message: `User is already on the ${targetPlan} plan with ${targetStatus.toLowerCase()} status` });
         return;
       }
     }
@@ -97,7 +94,7 @@ export class AdminSubscriptionController {
     const updated = await this.subscriptionRepository.updateByUserId(userId, updateData);
 
     if (updated) {
-      const isPremiumUser = updated.plan === 'PREMIUM' && (updated.status === 'ACTIVE' || updated.status === 'CANCELLED');
+      const isPremiumUser = updated.plan !== 'FREE' && (updated.status === 'ACTIVE' || updated.status === 'CANCELLED');
       await this.userRepository.updateById(userId, { isPremium: isPremiumUser });
     }
 
@@ -125,12 +122,8 @@ export class AdminSubscriptionController {
     const targetPlan = plan.toUpperCase();
     const targetStatus = (status || 'ACTIVE').toUpperCase();
 
-    if (targetPlan === 'FREE' && currentPlan === 'FREE') {
-      res.status(400).json({ success: false, message: 'User is already on the Free plan' });
-      return;
-    }
-    if (targetPlan === 'PREMIUM' && currentPlan === 'PREMIUM' && targetStatus === currentStatus) {
-      res.status(400).json({ success: false, message: `User is already on the Premium plan with ${targetStatus.toLowerCase()} status` });
+    if (targetPlan === currentPlan && targetStatus === currentStatus) {
+      res.status(400).json({ success: false, message: `User is already on the ${targetPlan} plan with ${targetStatus.toLowerCase()} status` });
       return;
     }
 
@@ -149,7 +142,7 @@ export class AdminSubscriptionController {
     });
 
     if (subscription) {
-      const isPremiumUser = subscription.plan === 'PREMIUM' && (subscription.status === 'ACTIVE' || subscription.status === 'CANCELLED');
+      const isPremiumUser = subscription.plan !== 'FREE' && (subscription.status === 'ACTIVE' || subscription.status === 'CANCELLED');
       await this.userRepository.updateById(userId, { isPremium: isPremiumUser });
     }
 
@@ -159,5 +152,92 @@ export class AdminSubscriptionController {
       'Subscription created / assigned successfully',
       subscription,
     );
+  }
+
+  // ─── Delete subscription (reset to free) ──────────────────────────────────
+  async deleteSubscription(req: Request, res: Response): Promise<void> {
+    const userId = req.params.userId as string;
+    if (!userId) {
+      res.status(400).json({ success: false, message: 'userId is required' });
+      return;
+    }
+    const deleted = await this.subscriptionRepository.deleteByUserId(userId);
+    await this.userRepository.updateById(userId, { isPremium: false });
+    
+    res.status(200).json({
+      success: true,
+      message: 'Subscription deleted successfully',
+      data: { deleted },
+    });
+  }
+
+  // ─── Plans CRUD ───────────────────────────────────────────────────────────
+  async getPlans(req: Request, res: Response): Promise<void> {
+    const plans = await PlanModel.find().lean();
+    res.status(200).json({ success: true, data: plans });
+  }
+
+  async createPlan(req: Request, res: Response): Promise<void> {
+    const { name, code, price, features } = req.body;
+    if (!name || !code) {
+      res.status(400).json({ success: false, message: 'Plan name and code are required' });
+      return;
+    }
+    const codeUpper = code.toUpperCase();
+    const existing = await PlanModel.findOne({ code: codeUpper });
+    if (existing) {
+      res.status(400).json({ success: false, message: `Plan with code ${codeUpper} already exists` });
+      return;
+    }
+    const plan = await PlanModel.create({
+      name,
+      code: codeUpper,
+      price: Number(price) || 0,
+      features: Array.isArray(features) ? features : [],
+    });
+    res.status(201).json({ success: true, data: plan });
+  }
+
+  async updatePlan(req: Request, res: Response): Promise<void> {
+    const planId = req.params.planId;
+    const { name, code, price, features, isActive } = req.body;
+    const plan = await PlanModel.findById(planId);
+    if (!plan) {
+      res.status(404).json({ success: false, message: 'Plan not found' });
+      return;
+    }
+    if (name) plan.name = name;
+    if (code) {
+      const codeUpper = code.toUpperCase();
+      if (codeUpper !== plan.code) {
+        const existing = await PlanModel.findOne({ code: codeUpper });
+        if (existing) {
+          res.status(400).json({ success: false, message: `Plan with code ${codeUpper} already exists` });
+          return;
+        }
+        plan.code = codeUpper;
+      }
+    }
+    if (price !== undefined) plan.price = Number(price);
+    if (features !== undefined) plan.features = Array.isArray(features) ? features : [];
+    if (isActive !== undefined) plan.isActive = !!isActive;
+
+    await plan.save();
+    res.status(200).json({ success: true, data: plan });
+  }
+
+  async deletePlan(req: Request, res: Response): Promise<void> {
+    const planId = req.params.planId;
+    const plan = await PlanModel.findById(planId);
+    if (!plan) {
+      res.status(404).json({ success: false, message: 'Plan not found' });
+      return;
+    }
+    if (plan.code === 'FREE' || plan.code === 'PREMIUM') {
+      res.status(400).json({ success: false, message: 'Default FREE and PREMIUM plans cannot be deleted' });
+      return;
+    }
+    await PlanModel.deleteOne({ _id: planId });
+    res.status(200).json({ success: true, message: 'Plan deleted successfully' });
   }
 }

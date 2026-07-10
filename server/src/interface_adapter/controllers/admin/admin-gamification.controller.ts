@@ -68,8 +68,10 @@ export class AdminGamificationController {
   }
 
   async getBadgesGrid(req: Request, res: Response) {
-    const data = await this.getBadgesGridUsecase.execute();
-    res.status(200).json({ success: true, data });
+    const page = parseInt(req.query.page as string) || 1;
+    const limit = parseInt(req.query.limit as string) || 10;
+    const data = await this.getBadgesGridUsecase.execute({ page, limit });
+    res.status(200).json({ success: true, data: { ...data, page, limit } });
   }
 
   async toggleBadge(req: Request, res: Response) {

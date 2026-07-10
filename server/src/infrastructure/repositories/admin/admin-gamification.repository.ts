@@ -229,8 +229,16 @@ export class AdminGamificationRepository implements IAdminGamificationRepository
     return { rankings, total };
   }
 
-  async getBadgesGrid() {
-    const badges = await BadgeDefinitionModel.find().lean();
+  async getBadgesGrid(params?: { page?: number; limit?: number }) {
+    const page = params?.page || 1;
+    const limit = params?.limit || 10;
+    const skip = (page - 1) * limit;
+
+    const total = await BadgeDefinitionModel.countDocuments();
+    const badges = await BadgeDefinitionModel.find()
+      .skip(skip)
+      .limit(limit)
+      .lean();
     
     // Gather statistics for each badge
     const badgeStats = await UserBadgeModel.aggregate([
@@ -272,6 +280,7 @@ export class AdminGamificationRepository implements IAdminGamificationRepository
 
     return {
       badges: badgesWithCounts,
+      total,
       recentAwards: recentBadgesRaw
     };
   }

@@ -101,6 +101,32 @@ export class AdminRoutes extends BaseRoute {
       asyncHandler(subCtrl.updateSubscription.bind(subCtrl)),
     );
 
+    this.router.delete(
+      ROUTES.ADMIN.SUBSCRIPTION_BY_USER_ID,
+      asyncHandler(subCtrl.deleteSubscription.bind(subCtrl)),
+    );
+
+    // Plans CRUD
+    this.router.get(
+      '/subscriptions/plans',
+      asyncHandler(subCtrl.getPlans.bind(subCtrl)),
+    );
+
+    this.router.post(
+      '/subscriptions/plans',
+      asyncHandler(subCtrl.createPlan.bind(subCtrl)),
+    );
+
+    this.router.put(
+      '/subscriptions/plans/:planId',
+      asyncHandler(subCtrl.updatePlan.bind(subCtrl)),
+    );
+
+    this.router.delete(
+      '/subscriptions/plans/:planId',
+      asyncHandler(subCtrl.deletePlan.bind(subCtrl)),
+    );
+
     // ─── Meeting Management ───────────────────────────────────────────────
     this.router.get(
       ROUTES.ADMIN.MEETINGS,

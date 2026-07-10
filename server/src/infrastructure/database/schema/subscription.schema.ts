@@ -12,9 +12,8 @@ export const SubscriptionSchema = new Schema(
 
     plan: {
       type: String,
-      enum: Object.values(SubscriptionPlan),
       required: true,
-      default: SubscriptionPlan.FREE,
+      default: 'FREE',
     },
 
     status: {

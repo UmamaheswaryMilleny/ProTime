@@ -33,7 +33,7 @@ export class ChatWithAiUsecase implements IChatWithAiUsecase {
     }
 
     // Enforce limits: 30/month for Free, 100/day for Premium (atomic — race-condition safe)
-    const isPremium = subscription.plan === SubscriptionPlan.PREMIUM;
+    const isPremium = subscription.plan !== SubscriptionPlan.FREE;
     const limit = isPremium ? PREMIUM_DAILY_AI_TOKENS : FREE_MONTHLY_AI_TOKENS;
 
     const updated = await this.subscriptionRepository.atomicIncrementAiUsage(userId, limit);

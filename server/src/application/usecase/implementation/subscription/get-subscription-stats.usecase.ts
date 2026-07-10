@@ -32,7 +32,7 @@ export class GetSubscriptionStatsUsecase implements IGetSubscriptionStatsUsecase
       expiredCount,
     ] = await Promise.all([
       this.userRepository.countDocuments({ role: UserRole.CLIENT, isDeleted: { $ne: true } }),
-      this.subscriptionRepository.countDocuments({ plan: SubscriptionPlan.PREMIUM, status: SubscriptionStatus.ACTIVE }),
+      this.subscriptionRepository.countDocuments({ plan: { $ne: SubscriptionPlan.FREE }, status: SubscriptionStatus.ACTIVE }),
       this.subscriptionRepository.countDocuments({ status: SubscriptionStatus.CANCELLED }),
       this.subscriptionRepository.countDocuments({ status: SubscriptionStatus.EXPIRED }),
     ]);

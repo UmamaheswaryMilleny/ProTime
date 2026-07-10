@@ -73,4 +73,6 @@ export interface ISubscriptionRepository extends IBaseRepository<SubscriptionEnt
 
   // Admin Dashboard
   getRevenueTrend(months: number): Promise<{ month: string; revenue: number }[]>;
+
+  deleteByUserId(userId: string): Promise<boolean>;
 }

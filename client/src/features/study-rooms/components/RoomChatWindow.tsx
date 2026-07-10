@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import EmojiPicker, { type EmojiClickData, Theme } from 'emoji-picker-react';
 import { Smile, Send, Users, Settings, Video, Timer, Bot, UserCheck, X, Check, ChevronLeft, User, AlertTriangle, Paperclip, Download, FileText, Image as ImageIcon, UserMinus, Plus, UserPlus, ListTodo, Pause, Play } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../../../store/hooks';
-import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endGroupCall, endRoom, leaveRoom, startRoom, kickUser, inviteToRoom, fetchRoomById } from '../store/studyRoomSlice';
+import { sendRoomMessage, fetchPendingRequests, respondToJoinRequest, startGroupCall, endGroupCall, endRoom, leaveRoom, startRoom, kickUser, inviteToRoom, fetchRoomById, setIncomingGroupCall } from '../store/studyRoomSlice';
 import { pausePomodoro, resumePomodoro, startPomodoro, stopPomodoro, updateTime, setPhase } from '../../todo/store/pomodoroSlice';
 import type { TimerPhase } from '../../todo/store/pomodoroSlice';
 import { socketService } from '../../../shared/services/socketService';
@@ -28,7 +28,7 @@ interface RoomChatWindowProps {
 export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode, setIsAiMode }) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { activeRoom, messages, isSending, pendingRequests, isInGroupCall } = useAppSelector(s => s.studyRoom);
+  const { activeRoom, messages, isSending, pendingRequests, isInGroupCall, incomingGroupCall } = useAppSelector(s => s.studyRoom);
   const { user } = useAppSelector(s => s.auth);
   const { activeTask, isRunning, timeRemaining, phase } = useAppSelector(s => s.pomodoro);
   const { activeCall } = useAppSelector(s => s.chat);
@@ -631,6 +631,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       toast.error("You cannot join a group video call while in a 1:1 call. Please end your 1:1 call first.");
       return;
     }
+    dispatch(setIncomingGroupCall(null));
     sessionStorage.setItem(`in_group_call_${roomId}`, 'true');
     sessionStorage.removeItem(`declined_video_call_${roomId}`);
     dispatch(startGroupCall(roomId));
@@ -1753,7 +1754,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
       )}
 
       {/* Attend Video Call Ringing Overlay — shown to members as an incoming ringing modal */}
-      {!isHost && showRingingOverlay && !isInGroupCall && (
+      {!isHost && (showRingingOverlay || (incomingGroupCall && incomingGroupCall.roomId === roomId)) && !isInGroupCall && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
           <div className="relative w-full max-w-sm bg-zinc-900 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col items-center animate-in fade-in zoom-in-95 duration-200">
             {/* Pulsing Video Icon */}
@@ -1773,6 +1774,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               <button
                 onClick={() => {
                   setShowRingingOverlay(false);
+                  dispatch(setIncomingGroupCall(null));
                   sessionStorage.setItem(`declined_video_call_${roomId}`, 'true');
                   dispatch(sendRoomMessage({ roomId, content: '❌ Declined the video call request' }));
                 }}
@@ -1783,6 +1785,7 @@ export const RoomChatWindow: React.FC<RoomChatWindowProps> = ({ roomId, isAiMode
               <button
                 onClick={() => {
                   setShowRingingOverlay(false);
+                  dispatch(setIncomingGroupCall(null));
                   handleJoinGroupCall();
                 }}
                 className="flex-1 py-2.5 rounded-xl bg-[blueviolet] text-white hover:bg-[blueviolet]/85 text-sm font-semibold transition-colors shadow-lg shadow-[blueviolet]/20"

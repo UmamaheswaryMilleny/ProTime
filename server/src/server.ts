@@ -40,6 +40,7 @@ import { startDeleteExpiredRoomsCron } from './infrastructure/cron/delete-expire
 import { startExpireStudyRoomsCron } from './infrastructure/cron/expire-study-rooms.cron';
 import { ProBuddyRoutes } from './interface_adapter/routes/probuddy/probuddy.routes';
 import { startUnblockExpiredBlocksCron } from './infrastructure/cron/unblock-expired-blocks.cron';
+import { seedDefaultPlans } from './infrastructure/database/seeds/plan.seed';
 
 export class App {
   private readonly app: Application;
@@ -900,6 +901,7 @@ export class App {
 export const bootstrap = async (): Promise<void> => {
   DependencyContainer.registerAll(); // 1. DI first
   await new MongoConnect().connectDB(); // 2. MongoDB second
+  await seedDefaultPlans(); // Seed dynamic plans
   await connectRedis(); // 3. Redis third
   const appInstance = new App(); // 4. App last
   appInstance.getHttpServer().listen(config.server.port, () => {

@@ -307,4 +307,9 @@ export class SubscriptionRepository
       revenue: item.count * 499 // Assumed price of premium subscription
     }));
   }
+
+  async deleteByUserId(userId: string): Promise<boolean> {
+    const result = await SubscriptionModel.deleteOne({ userId: new mongoose.Types.ObjectId(userId) });
+    return result.deletedCount > 0;
+  }
 }

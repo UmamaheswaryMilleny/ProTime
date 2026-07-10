@@ -19,6 +19,9 @@ import {
   UserCircle,
   Mail,
   Shield,
+  Trash2,
+  Edit2,
+  Plus,
 } from 'lucide-react';
 import { useDebounce } from '../../../hooks/useDebounce';
 import { ProTimeBackend } from '../../../api/instance';
@@ -53,17 +56,17 @@ interface AdminSubscription {
 
 // ── Utility badge components ─────────────────────────────────────────────────
 const PlanBadge = ({ plan }: { plan: string }) => {
-  if (plan === 'PREMIUM') {
+  if (plan === 'FREE') {
     return (
-      <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/10">
-        <Zap size={10} fill="currentColor" />
-        PREMIUM
+      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+        FREE
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
-      FREE
+    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-purple-500/10 text-purple-400 border border-purple-500/10">
+      <Zap size={10} fill="currentColor" />
+      {plan}
     </span>
   );
 };
@@ -112,6 +115,7 @@ const SummaryCard = ({ title, value, detail, icon, loading, color }: { title: st
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 export const AdminSubscriptionsPage: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<'subscriptions' | 'plans'>('subscriptions');
   const [subscriptions, setSubscriptions] = useState<AdminSubscription[]>([]);
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
   const [total, setTotal] = useState(0);
@@ -128,6 +132,43 @@ export const AdminSubscriptionsPage: React.FC = () => {
   const [isStatsLoading, setIsStatsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [selectedSub, setSelectedSub] = useState<AdminSubscription | null>(null);
+
+  // Dynamic Plans state
+  const [plans, setPlans] = useState<any[]>([]);
+  const [isPlansLoading, setIsPlansLoading] = useState(false);
+
+  // Plan Form states
+  const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [editingPlan, setEditingPlan] = useState<any | null>(null);
+  const [planForm, setPlanForm] = useState({
+    name: '',
+    code: '',
+    price: 0,
+    featuresString: '',
+    isActive: true,
+  });
+
+  // User Subscription Form states
+  const [isSubModalOpen, setIsSubModalOpen] = useState(false);
+  const [editingSub, setEditingSub] = useState<any | null>(null);
+  const [subForm, setSubForm] = useState({
+    userId: '',
+    plan: '',
+    status: 'ACTIVE',
+    currentPeriodEnd: '',
+  });
+
+  const fetchPlans = async () => {
+    setIsPlansLoading(true);
+    try {
+      const res = await ProTimeBackend.get('/admin/subscriptions/plans');
+      setPlans(res.data?.data ?? []);
+    } catch {
+      toast.error('Failed to load plans list.');
+    } finally {
+      setIsPlansLoading(false);
+    }
+  };
 
   const fetchStats = async () => {
     setIsStatsLoading(true);
@@ -161,7 +202,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
     }
   }, [page, limit, planFilter, statusFilter, debouncedSearch]);
 
-  useEffect(() => { fetchStats(); }, []);
+  useEffect(() => { fetchStats(); fetchPlans(); }, []);
   useEffect(() => { fetchSubscriptions(); }, [fetchSubscriptions]);
 
   const handleCopy = (id: string) => {
@@ -192,6 +233,161 @@ export const AdminSubscriptionsPage: React.FC = () => {
     return pages;
   };
 
+  // ─── Plan CRUD handlers ────────────────────────────────────────────────────
+  const handleSavePlan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!planForm.name.trim()) return toast.error('Plan name is required');
+    if (!planForm.code.trim()) return toast.error('Plan code is required');
+
+    const keyRegex = /^[A-Z0-9_]+$/;
+    if (!keyRegex.test(planForm.code.toUpperCase())) {
+      return toast.error('Plan code must be uppercase alphanumeric and underscores only');
+    }
+
+    try {
+      const payload = {
+        name: planForm.name.trim(),
+        code: planForm.code.toUpperCase().trim(),
+        price: Number(planForm.price) || 0,
+        features: planForm.featuresString.split('\n').map(f => f.trim()).filter(Boolean),
+        isActive: planForm.isActive,
+      };
+
+      if (editingPlan) {
+        await ProTimeBackend.put(`/admin/subscriptions/plans/${editingPlan._id}`, payload);
+        toast.success('Plan updated successfully');
+      } else {
+        await ProTimeBackend.post('/admin/subscriptions/plans', payload);
+        toast.success('Plan created successfully');
+      }
+      setIsPlanModalOpen(false);
+      fetchPlans();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save plan');
+    }
+  };
+
+  const handleDeletePlan = (planId: string, planName: string, planCode: string) => {
+    if (planCode === 'FREE' || planCode === 'PREMIUM') {
+      toast.error('Default FREE and PREMIUM plans cannot be deleted.');
+      return;
+    }
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-white">Delete <span className="text-red-400">{planName}</span> plan?</p>
+          <p className="text-xs text-zinc-400">This will permanently remove the plan definition.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await ProTimeBackend.delete(`/admin/subscriptions/plans/${planId}`);
+                  toast.success('Plan deleted successfully');
+                  fetchPlans();
+                } catch (error: any) {
+                  toast.error(error.response?.data?.message || 'Failed to delete plan');
+                }
+              }}
+              className="flex-1 py-1.5 bg-red-500 hover:bg-red-400 text-white text-xs font-bold rounded-lg transition-all"
+            >
+              Delete
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-semibold rounded-lg transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: 8000,
+        style: {
+          background: '#18181B',
+          border: '1px solid #3F3F46',
+          borderRadius: '14px',
+          padding: '16px',
+          minWidth: '260px',
+        },
+      }
+    );
+  };
+
+  // ─── User Subscription CRUD handlers ───────────────────────────────────────
+  const handleSaveSubscription = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!subForm.userId.trim()) return toast.error('User ID is required');
+    if (!subForm.plan) return toast.error('Plan selection is required');
+
+    try {
+      const payload = {
+        userId: subForm.userId.trim(),
+        plan: subForm.plan,
+        status: subForm.status,
+        currentPeriodEnd: subForm.currentPeriodEnd ? new Date(subForm.currentPeriodEnd) : undefined,
+      };
+
+      if (editingSub) {
+        await ProTimeBackend.patch(`${API_ROUTES.ADMIN_SUBSCRIPTIONS}/${subForm.userId}`, payload);
+        toast.success('Subscription updated successfully');
+      } else {
+        await ProTimeBackend.post(API_ROUTES.ADMIN_SUBSCRIPTION_ADD, payload);
+        toast.success('Subscription assigned successfully');
+      }
+      setIsSubModalOpen(false);
+      fetchSubscriptions();
+      fetchStats();
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to save subscription');
+    }
+  };
+
+  const handleDeleteSubscription = (userId: string, userName: string) => {
+    toast(
+      (t) => (
+        <div className="flex flex-col gap-3">
+          <p className="text-sm font-semibold text-white">Reset <span className="text-purple-400">{userName}</span>'s subscription?</p>
+          <p className="text-xs text-zinc-400">This will delete their paid subscription record and reset their plan back to FREE.</p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                try {
+                  await ProTimeBackend.delete(`${API_ROUTES.ADMIN_SUBSCRIPTIONS}/${userId}`);
+                  toast.success('Subscription deleted successfully');
+                  fetchSubscriptions();
+                  fetchStats();
+                } catch (error: any) {
+                  toast.error(error.response?.data?.message || 'Failed to delete subscription');
+                }
+              }}
+              className="flex-1 py-1.5 bg-red-500 hover:bg-red-400 text-white text-xs font-bold rounded-lg transition-all"
+            >
+              Reset to FREE
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="flex-1 py-1.5 bg-zinc-700 hover:bg-zinc-600 text-zinc-200 text-xs font-semibold rounded-lg transition-all"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: 8000,
+        style: {
+          background: '#18181B',
+          border: '1px solid #3F3F46',
+          borderRadius: '14px',
+          padding: '16px',
+          minWidth: '280px',
+        },
+      }
+    );
+  };
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 pb-10">
@@ -201,246 +397,413 @@ export const AdminSubscriptionsPage: React.FC = () => {
           <h1 className="text-2xl font-bold text-white">Subscription Management</h1>
           <p className="text-[#A1A1AA] text-sm mt-1">Overview of platform revenue and active plans.</p>
         </div>
-      </div>
-
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <SummaryCard 
-          title="Total Users" 
-          value={stats?.totalUsers ?? 0}
-          icon={<Users size={20} />}
-          loading={isStatsLoading}
-          color="blue"
-        />
-        <SummaryCard 
-          title="Premium Users" 
-          value={stats?.premiumCount ?? 0}
-          detail={`${stats ? ((stats.premiumCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
-          icon={<Zap size={20} />}
-          loading={isStatsLoading}
-          color="purple"
-        />
-        <SummaryCard 
-          title="Free Users" 
-          value={stats?.freeCount ?? 0}
-          detail={`${stats ? ((stats.freeCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
-          icon={<UserPlus size={20} />}
-          loading={isStatsLoading}
-          color="zinc"
-        />
-        <SummaryCard 
-          title="Monthly Rev" 
-          value={`₹${stats?.monthlyRevenue.toLocaleString() ?? '0'}`}
-          detail={`${stats?.premiumCount ?? 0} × ₹499`}
-          icon={<IndianRupee size={20} />}
-          loading={isStatsLoading}
-          color="green"
-        />
-      </div>
-
-      {/* Filters */}
-      <div className="flex flex-wrap gap-2 pt-2">
-        <div className="relative w-full sm:w-64">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-          <input
-            value={searchInput}
-            onChange={e => setSearchInput(e.target.value)}
-            placeholder="Search name or email..."
-            className="w-full bg-[#18181B] border border-[#27272A] rounded-xl pl-9 pr-8 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
-          />
-          {searchInput && (
-            <button onClick={() => setSearchInput('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors">
-              <X size={13} />
-            </button>
-          )}
-        </div>
-
-        <div className="relative">
-          <select
-            value={planFilter.toLowerCase()}
-            onChange={e => setPlan(e.target.value)}
-            className="appearance-none bg-[#18181B] border border-[#27272A] text-sm text-white rounded-xl pl-3 pr-9 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer"
+        {activeTab === 'subscriptions' ? (
+          <button
+            onClick={() => {
+              setEditingSub(null);
+              setSubForm({ userId: '', plan: plans[0]?.code || 'FREE', status: 'ACTIVE', currentPeriodEnd: '' });
+              setIsSubModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#2563EB]/25 cursor-pointer"
           >
-            <option value="all">All Plans</option>
-            <option value="free">FREE</option>
-            <option value="premium">PREMIUM</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-        </div>
-
-        <div className="relative">
-          <select
-            value={statusFilter.toLowerCase()}
-            onChange={e => setStatus(e.target.value)}
-            className="appearance-none bg-[#18181B] border border-[#27272A] text-sm text-white rounded-xl pl-3 pr-9 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer"
-          >
-            <option value="all">All Statuses</option>
-            <option value="active">ACTIVE</option>
-            <option value="cancelled">CANCELLED</option>
-            <option value="expired">EXPIRED</option>
-          </select>
-          <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
-        {isLoading ? (
-          <div className="flex items-center justify-center py-20">
-            <Loader className="animate-spin text-[#2563EB]" size={28} />
-          </div>
-        ) : subscriptions.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 text-[#A1A1AA]">
-            <CreditCard size={32} className="mb-3 opacity-40" />
-            <p className="font-medium text-sm">No subscriptions found</p>
-          </div>
+            <Plus size={16} />
+            <span className="text-sm font-semibold">Assign Subscription</span>
+          </button>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left border-collapse">
-              <thead>
-                <tr className="border-b border-[#27272A] text-[#A1A1AA]">
-                  <th className="px-6 py-4 font-semibold">User</th>
-                  <th className="px-6 py-4 font-semibold">Plan</th>
-                  <th className="px-6 py-4 font-semibold">Status</th>
-                  <th className="px-6 py-4 font-semibold">Stripe ID</th>
-                  <th className="px-6 py-4 font-semibold">Period</th>
-                  <th className="px-6 py-4 font-semibold text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-[#27272A]">
-                {subscriptions.map((sub) => (
-                  <tr key={sub._id} className="hover:bg-[#1F1F23]/50 transition-colors group">
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-white group-hover:text-[#2563EB] transition-colors">{sub.user.fullName}</span>
-                        <span className="text-[#A1A1AA] text-xs mt-0.5">{sub.user.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <PlanBadge plan={sub.plan} />
-                    </td>
-                    <td className="px-6 py-4">
-                      <StatusBadge status={sub.status} />
-                    </td>
-                    <td className="px-6 py-4">
-                      {sub.stripeSubscriptionId ? (
-                        <div className="flex items-center gap-2 font-mono text-xs text-zinc-500">
-                          <span className="truncate max-w-[100px]">{sub.stripeSubscriptionId}</span>
-                          <button 
-                            onClick={() => handleCopy(sub.stripeSubscriptionId!)}
-                            className="p-1 hover:text-white transition-colors"
-                            title="Copy ID"
-                          >
-                            {copiedId === sub.stripeSubscriptionId ? <CheckCircle2 size={12} className="text-green-500" /> : <Copy size={12} />}
-                          </button>
-                        </div>
-                      ) : (
-                        <span className="text-zinc-600">—</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex flex-col text-xs text-[#A1A1AA]">
-                        <div className="flex items-center gap-1.5" title="Start Date">
-                          <Calendar size={10} />
-                          <span>{new Date(sub.currentPeriodStart).toLocaleDateString()}</span>
-                        </div>
-                        {sub.plan === 'PREMIUM' ? (
-                          <div className="flex items-center gap-1.5 mt-1" title="End Date">
-                            <CreditCard size={10} />
-                            <span className={new Date(sub.currentPeriodEnd) < new Date() ? 'text-red-400' : ''}>
-                              {new Date(sub.currentPeriodEnd).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center gap-1.5 mt-1 text-zinc-600 italic">
-                            <div className="w-2.5" />
-                            <span>Lifetime access</span>
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {/* View detail button */}
-                        <button
-                          onClick={() => setSelectedSub(sub)}
-                          className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all"
-                        >
-                          <Eye size={13} /> View
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <button
+            onClick={() => {
+              setEditingPlan(null);
+              setPlanForm({ name: '', code: '', price: 0, featuresString: '', isActive: true });
+              setIsPlanModalOpen(true);
+            }}
+            className="flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-medium px-4 py-2.5 rounded-xl transition-all shadow-lg shadow-[#2563EB]/25 cursor-pointer"
+          >
+            <Plus size={16} />
+            <span className="text-sm font-semibold">Add New Plan</span>
+          </button>
         )}
       </div>
 
-      {/* Pagination */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="text-xs text-zinc-500">
-          {total > 0 && (
-            <>
-              Showing <span className="text-zinc-300 font-medium">{(page - 1) * limit + 1}</span> to <span className="text-zinc-300 font-medium">{Math.min(page * limit, total)}</span> of <span className="text-zinc-300 font-medium">{total}</span> subscriptions
-            </>
-          )}
-        </div>
+      {/* Tabs */}
+      <div className="flex gap-1 sm:gap-4 border-b border-zinc-800 pb-px">
+        <button
+          onClick={() => setActiveTab('subscriptions')}
+          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${
+            activeTab === 'subscriptions'
+              ? 'border-[#2563EB] text-[#2563EB]'
+              : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
+          }`}
+        >
+          <CreditCard size={14} />
+          User Subscriptions
+        </button>
+        <button
+          onClick={() => setActiveTab('plans')}
+          className={`flex items-center gap-1.5 px-4 py-2.5 border-b-2 text-sm font-medium transition-all ${
+            activeTab === 'plans'
+              ? 'border-[#2563EB] text-[#2563EB]'
+              : 'border-transparent text-[#A1A1AA] hover:text-white hover:border-zinc-700'
+          }`}
+        >
+          <Zap size={14} />
+          Manage Plans
+        </button>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <div className="relative mr-2">
-            <select
-              value={limit}
-              onChange={e => setLimit(Number(e.target.value))}
-              className="appearance-none bg-[#18181B] border border-[#27272A] text-xs text-zinc-400 rounded-lg pl-2 pr-7 py-1.5 outline-none focus:border-[#2563EB] cursor-pointer"
-            >
-              <option value={10}>10 / page</option>
-              <option value={25}>25 / page</option>
-              <option value={50}>50 / page</option>
-            </select>
-            <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+      {activeTab === 'subscriptions' && (
+        <>
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <SummaryCard 
+              title="Total Users" 
+              value={stats?.totalUsers ?? 0}
+              icon={<Users size={20} />}
+              loading={isStatsLoading}
+              color="blue"
+            />
+            <SummaryCard 
+              title="Premium Users" 
+              value={stats?.premiumCount ?? 0}
+              detail={`${stats ? ((stats.premiumCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
+              icon={<Zap size={20} />}
+              loading={isStatsLoading}
+              color="purple"
+            />
+            <SummaryCard 
+              title="Free Users" 
+              value={stats?.freeCount ?? 0}
+              detail={`${stats ? ((stats.freeCount / (stats.totalUsers || 1)) * 100).toFixed(1) : 0}%`}
+              icon={<UserPlus size={20} />}
+              loading={isStatsLoading}
+              color="zinc"
+            />
+            <SummaryCard 
+              title="Monthly Rev" 
+              value={`₹${stats?.monthlyRevenue.toLocaleString() ?? '0'}`}
+              detail={`${stats?.premiumCount ?? 0} × ₹499`}
+              icon={<IndianRupee size={20} />}
+              loading={isStatsLoading}
+              color="green"
+            />
           </div>
 
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => setPage(Math.max(1, page - 1))}
-                disabled={page === 1}
-                className="p-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 disabled:opacity-30 hover:bg-zinc-800 transition-colors"
-              >
-                <ChevronLeft size={16} />
-              </button>
-              
-              <div className="flex items-center gap-1 mx-1">
-                {getPageNumbers().map((pg, i) => (
-                  pg === '...' ? (
-                    <span key={`gap-${i}`} className="text-zinc-600 text-xs px-1">...</span>
-                  ) : (
-                    <button
-                      key={pg}
-                      onClick={() => setPage(pg as number)}
-                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
-                        page === pg ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'text-zinc-400 hover:bg-zinc-800 border border-transparent hover:border-[#27272A]'
-                      }`}
-                    >
-                      {pg}
-                    </button>
-                  )
-                ))}
-              </div>
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 pt-2">
+            <div className="relative w-full sm:w-64">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              <input
+                value={searchInput}
+                onChange={e => setSearchInput(e.target.value)}
+                placeholder="Search name or email..."
+                className="w-full bg-[#18181B] border border-[#27272A] rounded-xl pl-9 pr-8 py-2.5 text-sm text-white placeholder:text-zinc-600 outline-none focus:border-[#2563EB] transition-colors"
+              />
+              {searchInput && (
+                <button onClick={() => setSearchInput('')} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors">
+                  <X size={13} />
+                </button>
+              )}
+            </div>
 
-              <button
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
-                className="p-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 disabled:opacity-30 hover:bg-zinc-800 transition-colors"
+            <div className="relative">
+              <select
+                value={planFilter.toLowerCase()}
+                onChange={e => setPlan(e.target.value)}
+                className="appearance-none bg-[#18181B] border border-[#27272A] text-sm text-white rounded-xl pl-3 pr-9 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer uppercase"
               >
-                <ChevronRight size={16} />
-              </button>
+                <option value="all">All Plans</option>
+                {plans.map(p => (
+                  <option key={p.code} value={p.code.toLowerCase()}>{p.code}</option>
+                ))}
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            </div>
+
+            <div className="relative">
+              <select
+                value={statusFilter.toLowerCase()}
+                onChange={e => setStatus(e.target.value)}
+                className="appearance-none bg-[#18181B] border border-[#27272A] text-sm text-white rounded-xl pl-3 pr-9 py-2.5 outline-none focus:border-[#2563EB] cursor-pointer"
+              >
+                <option value="all">All Statuses</option>
+                <option value="active">ACTIVE</option>
+                <option value="cancelled">CANCELLED</option>
+                <option value="expired">EXPIRED</option>
+              </select>
+              <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+            </div>
+          </div>
+
+          {/* Table */}
+          <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader className="animate-spin text-[#2563EB]" size={28} />
+              </div>
+            ) : subscriptions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-20 text-[#A1A1AA]">
+                <CreditCard size={32} className="mb-3 opacity-40" />
+                <p className="font-medium text-sm">No subscriptions found</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm text-left border-collapse">
+                  <thead>
+                    <tr className="bg-[#0D0D10] text-[#A1A1AA] border-b border-[#27272A] text-xs uppercase font-semibold">
+                      <th className="px-6 py-4">User</th>
+                      <th className="px-6 py-4">Current Plan</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4">Stripe Sub ID</th>
+                      <th className="px-6 py-4">Access Period</th>
+                      <th className="px-6 py-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#27272A] text-zinc-300">
+                    {subscriptions.map((sub) => (
+                      <tr key={sub._id} className="hover:bg-zinc-800/30 transition-colors">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl bg-[#2563EB]/10 flex items-center justify-center text-[#2563EB] font-bold text-sm shrink-0 uppercase">
+                              {sub.user.fullName.slice(0, 2)}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-semibold text-white truncate max-w-[150px]">{sub.user.fullName}</p>
+                              <p className="text-xs text-zinc-500 truncate max-w-[150px]">@{sub.user.username}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <PlanBadge plan={sub.plan} />
+                        </td>
+                        <td className="px-6 py-4">
+                          <StatusBadge status={sub.status} />
+                        </td>
+                        <td className="px-6 py-4">
+                          {sub.stripeSubscriptionId ? (
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                              <span className="font-mono truncate max-w-[100px]">{sub.stripeSubscriptionId}</span>
+                              <button 
+                                onClick={() => handleCopy(sub.stripeSubscriptionId!)}
+                                className="p-1 hover:text-white transition-colors"
+                                title="Copy ID"
+                              >
+                                {copiedId === sub.stripeSubscriptionId ? <CheckCircle2 size={12} className="text-green-500" /> : <Copy size={12} />}
+                              </button>
+                            </div>
+                          ) : (
+                            <span className="text-zinc-600">—</span>
+                          )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex flex-col text-xs text-[#A1A1AA]">
+                            <div className="flex items-center gap-1.5" title="Start Date">
+                              <Calendar size={10} />
+                              <span>{new Date(sub.currentPeriodStart).toLocaleDateString()}</span>
+                            </div>
+                            {sub.plan !== 'FREE' ? (
+                              <div className="flex items-center gap-1.5 mt-1" title="End Date">
+                                <CreditCard size={10} />
+                                <span className={new Date(sub.currentPeriodEnd) < new Date() ? 'text-red-400' : ''}>
+                                  {new Date(sub.currentPeriodEnd).toLocaleDateString()}
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-1.5 mt-1 text-zinc-600 italic">
+                                <div className="w-2.5" />
+                                <span>Lifetime access</span>
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <div className="flex items-center justify-end gap-2">
+                            <button
+                              onClick={() => setSelectedSub(sub)}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all cursor-pointer"
+                              title="View details"
+                            >
+                              <Eye size={12} />
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingSub(sub);
+                                setSubForm({
+                                  userId: sub.userId,
+                                  plan: sub.plan,
+                                  status: sub.status,
+                                  currentPeriodEnd: sub.currentPeriodEnd ? new Date(sub.currentPeriodEnd).toISOString().slice(0, 10) : '',
+                                });
+                                setIsSubModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-white transition-all cursor-pointer"
+                              title="Edit user plan"
+                            >
+                              <Edit2 size={12} />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSubscription(sub.userId, sub.user.fullName)}
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold px-2 py-1.5 rounded-lg bg-zinc-800 text-zinc-300 hover:bg-red-500/10 hover:text-red-400 transition-all cursor-pointer disabled:opacity-30 border border-transparent hover:border-red-500/20"
+                              title="Reset user to FREE"
+                              disabled={sub.plan === 'FREE'}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Pagination */}
+          <div className="flex justify-between items-center text-sm text-zinc-400 px-1 mt-4">
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-zinc-500">Rows per page:</span>
+              <div className="relative">
+                <select
+                  value={limit}
+                  onChange={e => setLimit(Number(e.target.value))}
+                  className="appearance-none bg-[#18181B] border border-[#27272A] text-xs text-white rounded-lg pl-2 pr-7 py-1 outline-none cursor-pointer focus:border-[#2563EB]"
+                >
+                  <option value={5}>5</option>
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              </div>
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setPage(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="p-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 disabled:opacity-30 hover:bg-zinc-800 transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                </button>
+                
+                <div className="flex items-center gap-1 mx-1">
+                  {getPageNumbers().map((pg, i) => (
+                    pg === '...' ? (
+                      <span key={`gap-${i}`} className="text-zinc-600 text-xs px-1">...</span>
+                    ) : (
+                      <button
+                        key={pg}
+                        onClick={() => setPage(pg as number)}
+                        className={`w-8 h-8 rounded-lg text-xs font-semibold transition-all ${
+                          page === pg ? 'bg-[#2563EB] text-white shadow-lg shadow-blue-500/20' : 'text-zinc-400 hover:bg-zinc-800 border border-transparent hover:border-[#27272A]'
+                        }`}
+                      >
+                        {pg}
+                      </button>
+                    )
+                  ))}
+                </div>
+
+                <button
+                  onClick={() => setPage(Math.min(totalPages, page + 1))}
+                  disabled={page === totalPages}
+                  className="p-1.5 rounded-lg bg-[#18181B] border border-[#27272A] text-zinc-400 disabled:opacity-30 hover:bg-zinc-800 transition-colors"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </div>
+            )}
+          </div>
+        </>
+      )}
+
+      {activeTab === 'plans' && (
+        <div className="bg-[#18181B] border border-[#27272A] rounded-2xl overflow-hidden shadow-sm">
+          {isPlansLoading ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader className="animate-spin text-[#2563EB]" size={28} />
+            </div>
+          ) : plans.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 text-[#A1A1AA]">
+              <Zap size={32} className="mb-3 opacity-40" />
+              <p className="font-medium text-sm">No plans found</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left border-collapse">
+                <thead>
+                  <tr className="bg-[#0D0D10] text-[#A1A1AA] border-b border-[#27272A] text-xs uppercase font-semibold">
+                    <th className="px-6 py-4">Plan Name</th>
+                    <th className="px-6 py-4">Code</th>
+                    <th className="px-6 py-4">Monthly Price</th>
+                    <th className="px-6 py-4">Features</th>
+                    <th className="px-6 py-4">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#27272A] text-zinc-300">
+                  {plans.map((p) => (
+                    <tr key={p._id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="px-6 py-4 font-semibold text-white">{p.name}</td>
+                      <td className="px-6 py-4">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-800 text-zinc-400 border border-zinc-700/50">
+                          {p.code}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 font-bold text-emerald-400">
+                        {p.price === 0 ? 'FREE' : `₹${p.price.toLocaleString()}`}
+                      </td>
+                      <td className="px-6 py-4 max-w-xs">
+                        <p className="text-xs text-zinc-400 truncate" title={p.features.join(', ')}>
+                          {p.features.length > 0 ? p.features.join(', ') : 'No custom features'}
+                        </p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                          p.isActive
+                            ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/10'
+                            : 'bg-red-500/10 text-red-400 border-red-500/10'
+                        }`}>
+                          {p.isActive ? 'ACTIVE' : 'INACTIVE'}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setEditingPlan(p);
+                              setPlanForm({
+                                name: p.name,
+                                code: p.code,
+                                price: p.price,
+                                featuresString: p.features.join('\n'),
+                                isActive: p.isActive,
+                              });
+                              setIsPlanModalOpen(true);
+                            }}
+                            className="p-1.5 bg-zinc-800 hover:bg-[#2563EB]/20 border border-zinc-700 hover:border-[#2563EB]/40 rounded-lg text-zinc-300 hover:text-[#2563EB] transition-all cursor-pointer"
+                            title="Edit Plan"
+                          >
+                            <Edit2 size={13} />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePlan(p._id, p.name, p.code)}
+                            className="p-1.5 bg-zinc-800 hover:bg-red-500/10 border border-zinc-700 hover:border-red-500/30 rounded-lg text-zinc-300 hover:text-red-400 transition-all cursor-pointer disabled:opacity-30"
+                            title="Delete Plan"
+                            disabled={p.code === 'FREE' || p.code === 'PREMIUM'}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
-      </div>
+      )}
 
       {/* ─── View Detail Modal ───────────────────────────────────────── */}
       {selectedSub && (
@@ -462,7 +825,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
               </div>
               <button
                 onClick={() => setSelectedSub(null)}
-                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all"
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
               >
                 <X size={18} />
               </button>
@@ -507,7 +870,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                     {selectedSub.stripeSubscriptionId && (
                       <button 
                         onClick={() => handleCopy(selectedSub.stripeSubscriptionId!)}
-                        className="text-zinc-500 hover:text-white transition-colors"
+                        className="text-zinc-500 hover:text-white transition-colors cursor-pointer"
                       >
                         {copiedId === selectedSub.stripeSubscriptionId ? <CheckCircle2 size={14} className="text-green-500" /> : <Copy size={14} />}
                       </button>
@@ -533,7 +896,7 @@ export const AdminSubscriptionsPage: React.FC = () => {
                 </div>
               </div>
 
-              {selectedSub.plan === 'PREMIUM' && (() => {
+              {selectedSub.plan !== 'FREE' && (() => {
                 const periodEnd = new Date(selectedSub.currentPeriodEnd);
                 const isExpired = periodEnd < new Date();
                 let label = 'Next Billing Date';
@@ -568,6 +931,205 @@ export const AdminSubscriptionsPage: React.FC = () => {
         </div>
       )}
 
+      {/* ─── Add/Edit Plan Modal ─────────────────────────────────────── */}
+      {isPlanModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <form
+            onSubmit={handleSavePlan}
+            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200 space-y-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-white">
+                {editingPlan ? 'Edit Subscription Plan' : 'Add New Plan'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsPlanModalOpen(false)}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Plan Name</label>
+              <input
+                type="text"
+                value={planForm.name}
+                onChange={e => setPlanForm({ ...planForm, name: e.target.value })}
+                placeholder="e.g. Pro Monthly"
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Plan Code (Uppercase Unique ID)</label>
+              <input
+                type="text"
+                value={planForm.code}
+                onChange={e => setPlanForm({ ...planForm, code: e.target.value })}
+                placeholder="e.g. PRO"
+                disabled={!!editingPlan && (editingPlan.code === 'FREE' || editingPlan.code === 'PREMIUM')}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors uppercase disabled:opacity-50"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Monthly Price (INR)</label>
+              <input
+                type="number"
+                value={planForm.price}
+                onChange={e => setPlanForm({ ...planForm, price: Number(e.target.value) })}
+                placeholder="e.g. 799"
+                disabled={!!editingPlan && editingPlan.code === 'FREE'}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
+                required
+                min={0}
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Features (one per line)</label>
+              <textarea
+                value={planForm.featuresString}
+                onChange={e => setPlanForm({ ...planForm, featuresString: e.target.value })}
+                placeholder="Unlimited buddy match&#10;Unlimited study rooms"
+                rows={4}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors resize-none"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="plan_active_chk"
+                checked={planForm.isActive}
+                onChange={e => setPlanForm({ ...planForm, isActive: e.target.checked })}
+                className="rounded text-[#2563EB] focus:ring-0 bg-[#1F1F23] border-[#27272A] cursor-pointer"
+              />
+              <label htmlFor="plan_active_chk" className="text-sm text-zinc-300 cursor-pointer select-none">
+                This plan is active and available
+              </label>
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setIsPlanModalOpen(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-2 rounded-xl bg-[#2563EB] text-white hover:bg-blue-600 transition-colors text-sm font-semibold cursor-pointer"
+              >
+                Save Plan
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ─── Add/Edit User Subscription Modal ────────────────────────── */}
+      {isSubModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <form
+            onSubmit={handleSaveSubscription}
+            className="bg-[#18181B] border border-[#27272A] rounded-2xl p-6 max-w-md w-full shadow-2xl relative animate-in fade-in zoom-in duration-200 space-y-4"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-lg font-bold text-white">
+                {editingSub ? 'Update User Subscription' : 'Assign User Subscription'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsSubModalOpen(false)}
+                className="p-1.5 rounded-lg text-zinc-500 hover:text-white hover:bg-zinc-800 transition-all cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">User ID</label>
+              <input
+                type="text"
+                value={subForm.userId}
+                onChange={e => setSubForm({ ...subForm, userId: e.target.value })}
+                placeholder="User's MongoDB Object ID"
+                disabled={!!editingSub}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors disabled:opacity-50"
+                required
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Select Plan</label>
+              <div className="relative">
+                <select
+                  value={subForm.plan}
+                  onChange={e => setSubForm({ ...subForm, plan: e.target.value })}
+                  className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-3.5 py-2 outline-none focus:border-[#2563EB] cursor-pointer uppercase"
+                  required
+                >
+                  {plans.map(p => (
+                    <option key={p.code} value={p.code}>{p.code}</option>
+                  ))}
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Status</label>
+              <div className="relative">
+                <select
+                  value={subForm.status}
+                  onChange={e => setSubForm({ ...subForm, status: e.target.value })}
+                  className="w-full appearance-none bg-[#1F1F23] border border-[#27272A] text-sm text-white rounded-xl px-3.5 py-2 outline-none focus:border-[#2563EB] cursor-pointer"
+                  required
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="EXPIRED">EXPIRED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+                <ChevronDown size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 pointer-events-none" />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-zinc-400 uppercase">Period End Date (Expiry)</label>
+              <input
+                type="date"
+                value={subForm.currentPeriodEnd}
+                onChange={e => setSubForm({ ...subForm, currentPeriodEnd: e.target.value })}
+                className="w-full bg-[#1F1F23] border border-[#27272A] rounded-xl px-3.5 py-2 text-sm text-white outline-none focus:border-[#2563EB] transition-colors"
+                disabled={subForm.plan === 'FREE'}
+                required={subForm.plan !== 'FREE'}
+              />
+            </div>
+
+            <div className="flex gap-3 pt-4">
+              <button
+                type="button"
+                onClick={() => setIsSubModalOpen(false)}
+                className="flex-1 py-2 rounded-xl bg-zinc-800 text-zinc-300 hover:bg-zinc-700 transition-colors text-sm font-semibold cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="flex-1 py-2 rounded-xl bg-[#2563EB] text-white hover:bg-blue-600 transition-colors text-sm font-semibold cursor-pointer"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 };

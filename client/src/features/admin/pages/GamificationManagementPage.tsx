@@ -26,6 +26,7 @@ export const GamificationManagementPage: React.FC = () => {
 
   // Users Filters
   const [userFilters, setUserFilters] = useState({ page: 1, limit: 10, search: '', level: '', title: '', sortBy: 'xp' });
+  const [badgeFilters, setBadgeFilters] = useState({ page: 1, limit: 10 });
   const [searchInput, setSearchInput] = useState('');
   const debouncedSearch = useDebounce(searchInput, 400);
 
@@ -41,7 +42,7 @@ export const GamificationManagementPage: React.FC = () => {
   const { data: overview, isLoading: overviewLoading } = useGamificationOverview();
   const { data: usersData, isLoading: usersLoading } = useGamificationUsers(userFilters);
   const { data: leaderboardData, isLoading: leaderboardLoading } = useGamificationLeaderboard(leaderboardFilters);
-  const { data: badgesData, isLoading: badgesLoading } = useGamificationBadges();
+  const { data: badgesData, isLoading: badgesLoading } = useGamificationBadges(badgeFilters);
   const queryClient = useQueryClient();
   const toggleBadge = useToggleBadgeStatus();
 
@@ -115,6 +116,8 @@ export const GamificationManagementPage: React.FC = () => {
             isLoading={badgesLoading} 
             onToggleBadge={handleToggleBadge}
             isToggling={toggleBadge.isPending}
+            filters={badgeFilters}
+            setFilters={setBadgeFilters}
           />
         )}
 
@@ -556,7 +559,7 @@ const DEFAULT_FORM = {
   isActive: true
 };
 
-const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
+const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling, filters, setFilters }: any) => {
   const createBadgeMutation = useCreateBadge();
   const updateBadgeMutation = useUpdateBadge();
   const deleteBadgeMutation = useDeleteBadge();
@@ -891,6 +894,36 @@ const BadgesTab = ({ data, isLoading, onToggleBadge, isToggling }: any) => {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Pagination */}
+              <div className="flex justify-between items-center text-sm text-zinc-400 p-4 border-t border-zinc-800/60">
+                <span>
+                  {data?.total > 0 && (
+                    <>
+                      Showing <span className="text-white font-medium">{(filters.page - 1) * filters.limit + 1}</span> –{' '}
+                      <span className="text-white font-medium">{Math.min(filters.page * filters.limit, data.total)}</span>{' '}
+                      of <span className="text-white font-medium">{data.total}</span> badges
+                    </>
+                  )}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    disabled={filters.page === 1}
+                    onClick={() => setFilters({ ...filters, page: filters.page - 1 })}
+                    className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  <span className="text-xs text-zinc-400 px-1">Page {filters.page} of {Math.ceil((data?.total || 0) / filters.limit) || 1}</span>
+                  <button
+                    disabled={filters.page >= Math.ceil((data?.total || 0) / filters.limit)}
+                    onClick={() => setFilters({ ...filters, page: filters.page + 1 })}
+                    className="p-1.5 bg-[#18181B] border border-zinc-800 disabled:opacity-40 rounded-lg hover:bg-zinc-800 transition-colors cursor-pointer"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
               </div>
             </>
           )}

@@ -60,8 +60,12 @@ export interface IAdminGamificationRepository {
     total: number;
   }>;
 
-  getBadgesGrid(): Promise<{
+  getBadgesGrid(params?: {
+    page?: number;
+    limit?: number;
+  }): Promise<{
     badges: any[];
+    total: number;
     recentAwards: any[];
   }>;
 

@@ -8,7 +8,7 @@ export const gamificationKeys = {
   users: (filters: any) => [...gamificationKeys.all, 'users', filters] as const,
   userDetail: (userId: string) => [...gamificationKeys.all, 'users', userId] as const,
   leaderboard: (filters: any) => [...gamificationKeys.all, 'leaderboard', filters] as const,
-  badges: () => [...gamificationKeys.all, 'badges'] as const,
+  badges: (filters?: any) => [...gamificationKeys.all, 'badges', filters] as const,
 };
 
 export const useGamificationOverview = () => {
@@ -54,13 +54,14 @@ export const useGamificationLeaderboard = (filters: { page: number; limit: numbe
   });
 };
 
-export const useGamificationBadges = () => {
+export const useGamificationBadges = (filters?: { page: number; limit: number }) => {
   return useQuery({
-    queryKey: gamificationKeys.badges(),
+    queryKey: gamificationKeys.badges(filters),
     queryFn: async () => {
-      const { data } = await ProTimeBackend.get(API_ROUTES.ADMIN_GAMIFICATION_BADGES);
+      const { data } = await ProTimeBackend.get(API_ROUTES.ADMIN_GAMIFICATION_BADGES, { params: filters });
       return data.data;
     },
+    placeholderData: (prev) => prev,
   });
 };
 

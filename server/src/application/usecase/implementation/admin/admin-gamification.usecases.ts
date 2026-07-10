@@ -40,7 +40,7 @@ export class GetGamificationLeaderboardUsecase implements IGetGamificationLeader
 @injectable()
 export class GetBadgesGridUsecase implements IGetBadgesGridUsecase {
   constructor(@inject('IAdminGamificationRepository') private repo: IAdminGamificationRepository) {}
-  async execute() { return this.repo.getBadgesGrid(); }
+  async execute(params?: { page?: number; limit?: number }) { return this.repo.getBadgesGrid(params); }
 }
 
 @injectable()

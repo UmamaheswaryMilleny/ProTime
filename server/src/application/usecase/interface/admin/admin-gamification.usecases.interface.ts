@@ -15,7 +15,7 @@ export interface IGetGamificationLeaderboardUsecase {
 }
 
 export interface IGetBadgesGridUsecase {
-  execute(): Promise<any>;
+  execute(params?: { page?: number; limit?: number }): Promise<any>;
 }
 
 export interface IToggleBadgeUsecase {
