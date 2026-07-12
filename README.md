@@ -22,19 +22,6 @@ ProTime is a comprehensive, full-stack productivity and study companion platform
 - **💳 Premium Features:** Stripe integration for premium subscriptions.
 - **🛠️ Admin Panel:** Comprehensive admin dashboard to manage users and platform data.
 
-## 📸 Screenshots
-*(Add your project screenshots here)*
-
-<details>
-<summary>Click to view screenshots</summary>
-
-| Dashboard | Study Room |
-| --- | --- |
-| <img src="client/public/images/logo.png" width="400" alt="Dashboard Placeholder"> | <img src="client/public/images/logo.png" width="400" alt="Study Room Placeholder"> |
-
-*(Replace the `logo.png` paths above with actual screenshot paths like `client/public/screenshots/dashboard.png`)*
-</details>
-
 ## 💻 Tech Stack
 
 ### Frontend (Client)
