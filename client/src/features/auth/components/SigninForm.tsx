@@ -17,7 +17,7 @@ export const SigninForm = () => {
       {/* Header */}
       <div className="mb-8">
         <h2 className="text-3xl font-bold mb-2">Sign In Today</h2>
-        <p className="text-zinc-400">Welcome back to ProTime</p>
+        <p className="text-zinc-400">Welcome back to ProTime App</p>
       </div>
 
       {/* Google Button */}
